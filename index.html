@@ -1,142 +1,1283 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RevOps & Automation Studio · Gracián Baena</title>
+<title>◉ REVOPS STUDIO — Gracián Baena</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&family=Inter:wght@300;400;500;600;700&display=swap');
-  
-  :root {
-    --bg: #06101a;
-    --panel: #0f2135;
-    --panel2: #081422;
-    --line: #1a3a58;
-    --ink: #eef6fd;
-    --ink2: #9bb8d0;
-    --ink3: #6a8eab;
-    --red: #e8543f;
-    --red-glow: rgba(232,84,63,0.3);
-    --blue: #3b9eff;
-    --green: #2ecc71;
-  }
-  
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: radial-gradient(circle at 90% -10%, rgba(232,84,63,0.12), transparent 50%),
-                radial-gradient(circle at 10% 100%, rgba(59,158,255,0.1), transparent 50%), var(--bg);
-    color: var(--ink);
-    font-family: 'Inter', sans-serif;
-    line-height: 1.6;
-    padding: 20px;
-  }
-  .max-w { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
-  
-  header {
-    display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 50px;
-  }
-  .logo { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-  .logo span { width: 10px; height: 10px; background: var(--red); border-radius: 50%; box-shadow: 0 0 12px var(--red); }
-  
-  .badge { background: rgba(59,158,255,0.1); color: var(--blue); padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid rgba(59,158,255,0.3); }
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-  .hero { text-align: center; margin-bottom: 70px; }
-  .hero h1 { font-family: 'Fraunces', serif; font-size: clamp(36px, 5vw, 60px); font-weight: 400; line-height: 1.1; margin-bottom: 20px; letter-spacing: -1px; }
-  .hero h1 span { color: var(--red); }
-  .hero p { color: var(--ink2); font-size: 18px; max-width: 650px; margin: 0 auto 30px; }
+:root {
+  --bg: #030508;
+  --bg-elevated: #0a0f14;
+  --bg-card: #0d1419;
+  --border: #1a2330;
+  --border-hover: #2a3a50;
+  --text-primary: #f0f4f8;
+  --text-secondary: #8a9aae;
+  --text-tertiary: #5a6a7e;
+  --accent: #ff4d4d;
+  --accent-glow: rgba(255, 77, 77, 0.4);
+  --accent-secondary: #00d4aa;
+  --accent-tertiary: #3b9eff;
+  --gradient-1: linear-gradient(135deg, #ff4d4d 0%, #ff8080 100%);
+  --gradient-2: linear-gradient(135deg, #00d4aa 0%, #00f5c4 100%);
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
 
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--red), #c0392b);
-    color: #fff; padding: 14px 28px; border-radius: 10px; font-weight: 600; text-decoration: none;
-    box-shadow: 0 10px 25px var(--red-glow); transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .btn:hover { transform: translateY(-2px); box-shadow: 0 15px 35px var(--red-glow); }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 60px; }
-  .card {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 30px;
-    transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden;
-  }
-  .card:hover { transform: translateY(-4px); border-color: rgba(232,84,63,0.5); }
-  .card h3 { font-family: 'Fraunces', serif; font-size: 22px; margin-bottom: 12px; font-weight: 400; }
-  .card p { color: var(--ink2); font-size: 14px; margin-bottom: 20px; }
-  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
-  .tag { font-size: 11px; background: var(--panel2); color: var(--ink3); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line); }
+html {
+  scroll-behavior: smooth;
+}
 
-  .stats-bar {
-    background: var(--panel2); border: 1px solid var(--line); border-radius: 16px; padding: 30px;
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; text-align: center; margin-bottom: 60px;
-  }
-  .stat-num { font-family: 'Fraunces', serif; font-size: 38px; color: var(--ink); font-weight: 400; }
-  .stat-label { font-size: 12px; color: var(--ink3); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+  position: relative;
+}
 
-  footer { text-align: center; color: var(--ink3); font-size: 13px; border-top: 1px solid var(--line); padding-top: 30px; }
+/* Animated Background Grid */
+.bg-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(255, 77, 77, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 77, 77, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+/* Floating Orbs */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  animation: float 20s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 600px;
+  height: 600px;
+  background: var(--accent);
+  top: -200px;
+  right: -200px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 400px;
+  height: 400px;
+  background: var(--accent-secondary);
+  bottom: -100px;
+  left: -100px;
+  animation-delay: -5s;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: var(--accent-tertiary);
+  top: 50%;
+  left: 30%;
+  animation-delay: -10s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+/* Noise Texture */
+.noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Layout */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Navigation */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 20px 0;
+  background: rgba(3, 5, 8, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+nav.scrolled {
+  border-bottom-color: var(--border);
+  padding: 15px 0;
+}
+
+.nav-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.logo-mark {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.logo-mark::before {
+  content: '◉';
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: bold;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50% { box-shadow: 0 0 20px 5px var(--accent-glow); }
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.logo-text span {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.nav-links {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: var(--text-primary);
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+.nav-cta {
+  background: var(--gradient-1);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.nav-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px var(--accent-glow);
+}
+
+/* Hero Section */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-top: 80px;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 900px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.2);
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 32px;
+  font-family: var(--font-mono);
+}
+
+.hero-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 8vw, 80px);
+  font-weight: 600;
+  line-height: 1.1;
+  margin-bottom: 24px;
+  letter-spacing: -2px;
+}
+
+.hero h1 .line {
+  display: block;
+}
+
+.hero h1 .accent {
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.hero h1 .accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: var(--accent);
+  opacity: 0.2;
+  transform: skewX(-15deg);
+}
+
+.hero-description {
+  font-size: 20px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.btn-primary {
+  background: var(--gradient-1);
+  color: white;
+  box-shadow: 0 10px 40px rgba(255, 77, 77, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 50px rgba(255, 77, 77, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-3px);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin: 100px 0;
+  padding: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.5;
+}
+
+.stat {
+  text-align: center;
+  position: relative;
+}
+
+.stat:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-value .counter {
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 500;
+}
+
+/* Section Styles */
+.section {
+  padding: 120px 0;
+  position: relative;
+}
+
+.section-header {
+  margin-bottom: 60px;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-label::before {
+  content: '//';
+  color: var(--text-tertiary);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.section-subtitle {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+/* Projects Grid */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+.project-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-1);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--border-hover);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.project-card:hover::before {
+  transform: scaleX(1);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.project-icon {
+  width: 50px;
+  height: 50px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.project-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.status-live {
+  background: rgba(0, 212, 170, 0.1);
+  color: var(--accent-secondary);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+}
+
+.status-private {
+  background: rgba(255, 77, 77, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(255, 77, 77, 0.2);
+}
+
+.status-repo {
+  background: rgba(59, 158, 255, 0.1);
+  color: var(--accent-tertiary);
+  border: 1px solid rgba(59, 158, 255, 0.2);
+}
+
+.project-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.project-description {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 24px;
+  flex-grow: 1;
+}
+
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  transition: all 0.3s ease;
+}
+
+.project-card:hover .tag {
+  border-color: var(--border-hover);
+  color: var(--text-secondary);
+}
+
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: gap 0.3s ease;
+}
+
+.project-link:hover {
+  gap: 12px;
+}
+
+/* Stack Section */
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.stack-category {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.3s ease;
+}
+
+.stack-category:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+}
+
+.stack-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.stack-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stack-item {
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* Contact Section */
+.contact {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.contact-info h2 {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.contact-info p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: 30px;
+}
+
+.contact-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.contact-item strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.1);
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Footer */
+footer {
+  padding: 60px 0 30px;
+  border-top: 1px solid var(--border);
+  margin-top: 120px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-brand {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.footer-copy {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.footer-links {
+  display: flex;
+  gap: 30px;
+}
+
+.footer-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 40px; }
+  .stats-bar { grid-template-columns: 1fr; }
+  .stat:not(:last-child)::after { display: none; }
+  .contact-grid { grid-template-columns: 1fr; }
+  .contact { padding: 40px 30px; }
+  .section { padding: 80px 0; }
+}
+
+/* Scroll Reveal Animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
 </style>
 </head>
 <body>
-  <div class="max-w">
-    <header>
-      <div class="logo"><span></span> Gracián Baena</div>
-      <div class="badge">Disponibilidad para proyectos</div>
-    </header>
 
-    <section class="hero">
-      <h1>Automatización, Datos & <br><span>Sistemas B2B a Medida</span></h1>
-      <p>Transformo el caos operativo de las pymes en motores de datos eficientes, infraestructura en la nube y prospección quirúrgica con IA.</p>
-      <a href="mailto:tu-correo@ejemplo.com" class="btn">🚀 Solicitar Consultoría Técnica</a>
-    </section>
+<!-- Background Effects -->
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="noise"></div>
 
-    <div class="stats-bar">
-      <div>
-        <div class="stat-num">100%</div>
-        <div class="stat-label">Código Limpio / Vanilla</div>
+<!-- Navigation -->
+<nav id="navbar">
+  <div class="nav-content">
+    <a href="#" class="logo">
+      <div class="logo-mark"></div>
+      <div class="logo-text">REVOPS<span>STUDIO</span></div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#ecosistema">Ecosistema</a></li>
+      <li><a href="#stack">Stack</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+    <a href="#contacto" class="nav-cta">Iniciar Proyecto</a>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span></span>
+        Sistemas Operativos para PyMEs
       </div>
-      <div>
-        <div class="stat-num">Zero-Cost</div>
-        <div class="stat-label">Infraestructura escalable</div>
-      </div>
-      <div>
-        <div class="stat-num">Multi-LLM</div>
-        <div class="stat-label">Gemini, Claude & Ollama</div>
+      <h1>
+        <span class="line">Automatización</span>
+        <span class="line"><span class="accent">Datos & IA</span></span>
+        <span class="line">a Medida</span>
+      </h1>
+      <p class="hero-description">
+        Transformo el caos operativo en motores de datos eficientes. 
+        Sin SaaS costosos. Sin vendor lock-in. Solo código limpio que funciona.
+      </p>
+      <div class="hero-cta">
+        <a href="#ecosistema" class="btn btn-primary">
+          Explorar Ecosistema →
+        </a>
+        <a href="https://github.com/GracianB" target="_blank" class="btn btn-secondary">
+          Ver GitHub
+        </a>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="grid">
-      <div class="card">
-        <h3>Navarmedia Outreach</h3>
-        <p>Sistema CRM propietario y motor de prospección B2B hiper-quirúrgico con separación estricta de envío automatizado y gestión manual de redes sociales.</p>
-        <div class="tags">
-          <span class="tag">Google Apps Script</span>
-          <span class="tag">JavaScript</span>
-          <span class="tag">Multi-LLM</span>
+<!-- Stats Bar -->
+<div class="container">
+  <div class="stats-bar reveal">
+    <div class="stat">
+      <div class="stat-value"><span class="counter">100</span>%</div>
+      <div class="stat-label">Código Vanilla</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">Zero</div>
+      <div class="stat-label">Coste Infraestructura</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value"><span class="counter">3</span>x</div>
+      <div class="stat-label">Multi-LLM</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">24/7</div>
+      <div class="stat-label">Automatización</div>
+    </div>
+  </div>
+</div>
+
+<!-- Ecosystem Section -->
+<section class="section" id="ecosistema">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Despliegues Activos</div>
+      <h2 class="section-title">Ecosistema de Productos</h2>
+      <p class="section-subtitle">
+        Cada proyecto es un sistema operativo completo. Desde la prospección B2B 
+        hasta dashboards de inteligencia de negocio.
+      </p>
+    </div>
+    
+    <div class="projects-grid">
+      <!-- Vortex -->
+      <div class="project-card reveal">
+        <div class="project-header">
+          <div class="project-icon">🌪️</div>
+          <span class="project-status status-live">● Live</span>
         </div>
+        <h3 class="project-title">Vortex App</h3>
+        <p class="project-description">
+          Aplicación web interactiva de alto rendimiento. Arquitectura frontend moderna 
+          desplegada en Vercel con diseño limpio y experiencia fluida.
+        </p>
+        <div class="project-tags">
+          <span class="tag">Vercel</span>
+          <span class="tag">JavaScript</span>
+          <span class="tag">UI/UX</span>
+        </div>
+        <a href="https://vortex-gilt-xi.vercel.app/" target="_blank" class="project-link">
+          Probar en vivo →
+        </a>
       </div>
 
-      <div class="card">
-        <h3>AiGoritmo & Automatización</h3>
-        <p>Laboratorio de ingeniería de datos y desarrollo con inteligencia artificial aplicada para la optimización de flujos corporativos e integración de APIs complejas.</p>
-        <div class="tags">
+      <!-- Project Ohana -->
+      <div class="project-card reveal">
+        <div class="project-header">
+          <div class="project-icon">🌊</div>
+          <span class="project-status status-live">● Live</span>
+        </div>
+        <h3 class="project-title">Project Ohana</h3>
+        <p class="project-description">
+          Sistema de gestión operativa con flujos de trabajo optimizados. 
+          Despliegue en GitHub Pages con arquitectura ligera.
+        </p>
+        <div class="project-tags">
+          <span class="tag">GitHub Pages</span>
+          <span class="tag">HTML5/CSS3</span>
+          <span class="tag">Systems</span>
+        </div>
+        <a href="https://gracianb.github.io/project-ohana/" target="_blank" class="project-link">
+          Ver despliegue →
+        </a>
+      </div>
+
+      <!-- Yoga -->
+      <div class="project-card reveal">
+        <div class="project-header">
+          <div class="project-icon">🧘</div>
+          <span class="project-status status-live">● Live</span>
+        </div>
+        <h3 class="project-title">Yoga Instructor Portal</h3>
+        <p class="project-description">
+          Plataforma especializada sector wellness. Autoridad técnica + conocimiento 
+          de nicho. Multi-idioma, responsive, con presencia real.
+        </p>
+        <div class="project-tags">
+          <span class="tag">Frontend</span>
+          <span class="tag">i18n</span>
+          <span class="tag">Wellness</span>
+        </div>
+        <a href="https://gracianb.github.io/yoga-instructor/" target="_blank" class="project-link">
+          Explorar portal →
+        </a>
+      </div>
+
+      <!-- Navarmedia -->
+      <div class="project-card reveal">
+        <div class="project-header">
+          <div class="project-icon">🎯</div>
+          <span class="project-status status-private">● Core</span>
+        </div>
+        <h3 class="project-title">Navarmedia Outreach</h3>
+        <p class="project-description">
+          Motor de prospección B2B quirúrgico. CRM propietario con separación estricta 
+          email vs. redes sociales. Arquitectura anti-ban.
+        </p>
+        <div class="project-tags">
+          <span class="tag">Google Apps Script</span>
+          <span class="tag">Multi-LLM</span>
+          <span class="tag">Automation</span>
+        </div>
+        <span class="project-link" style="color: var(--text-tertiary); cursor: default;">
+          Disponible vía Consultoría
+        </span>
+      </div>
+
+      <!-- AiGoritmo -->
+      <div class="project-card reveal">
+        <div class="project-header">
+          <div class="project-icon">🧠</div>
+          <span class="project-status status-repo">● Repo</span>
+        </div>
+        <h3 class="project-title">AiGoritmo Lab</h3>
+        <p class="project-description">
+          Laboratorio de ingeniería de datos e IA aplicada. Integraciones FastAPI, 
+          flujos de prompt engineering y optimización de procesos.
+        </p>
+        <div class="project-tags">
           <span class="tag">Python</span>
           <span class="tag">FastAPI</span>
-          <span class="tag">Prompt Engineering</span>
+          <span class="tag">AI/ML</span>
         </div>
+        <a href="https://github.com/GracianB/aigoritmo" target="_blank" class="project-link">
+          Ver repositorio →
+        </a>
       </div>
 
-      <div class="card">
-        <h3>Dashboards & Business Intelligence</h3>
-        <p>Cuadros de mando interactivos y limpios conectados a bases de datos o Google Sheets para transformar métricas complejas en decisiones de negocio claras.</p>
-        <div class="tags">
+      <!-- BI -->
+      <div class="project-card reveal">
+        <div class="project-header">
+          <div class="project-icon">📊</div>
+          <span class="project-status status-private">● Service</span>
+        </div>
+        <h3 class="project-title">Business Intelligence</h3>
+        <p class="project-description">
+          Cuadros de mando interactivos. Conexión a bases de datos, hojas de cálculo 
+          y APIs. Transformación de métricas en decisiones.
+        </p>
+        <div class="project-tags">
           <span class="tag">Power BI</span>
           <span class="tag">SQL</span>
-          <span class="tag">Pandas & NumPy</span>
+          <span class="tag">Pandas</span>
+        </div>
+        <span class="project-link" style="color: var(--text-tertiary); cursor: default;">
+          Proyectos a Medida
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stack Section -->
+<section class="section" id="stack" style="background: var(--bg-elevated);">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Arquitectura</div>
+      <h2 class="section-title">Stack Tecnológico</h2>
+      <p class="section-subtitle">
+        Sin frameworks pesados. Sin dependencias innecesarias. 
+        Solo tecnologías sólidas que escalan.
+      </p>
+    </div>
+    
+    <div class="stack-grid reveal">
+      <div class="stack-category">
+        <div class="stack-title">Frontend</div>
+        <div class="stack-items">
+          <span class="stack-item">Vanilla JS</span>
+          <span class="stack-item">HTML5</span>
+          <span class="stack-item">CSS3</span>
+          <span class="stack-item">WebGL</span>
+        </div>
+      </div>
+      <div class="stack-category">
+        <div class="stack-title">Backend</div>
+        <div class="stack-items">
+          <span class="stack-item">Python</span>
+          <span class="stack-item">FastAPI</span>
+          <span class="stack-item">GAS</span>
+          <span class="stack-item">Node.js</span>
+        </div>
+      </div>
+      <div class="stack-category">
+        <div class="stack-title">Data & AI</div>
+        <div class="stack-items">
+          <span class="stack-item">SQL</span>
+          <span class="stack-item">Pandas</span>
+          <span class="stack-item">Claude API</span>
+          <span class="stack-item">Gemini</span>
+        </div>
+      </div>
+      <div class="stack-category">
+        <div class="stack-title">DevOps</div>
+        <div class="stack-items">
+          <span class="stack-item">Git</span>
+          <span class="stack-item">GitHub</span>
+          <span class="stack-item">Vercel</span>
+          <span class="stack-item">Docker</span>
         </div>
       </div>
     </div>
-
-    <footer>
-      <p>© 2026 Gracián Baena González · Murcia, España. Arquitectura y Operaciones RevOps.</p>
-    </footer>
   </div>
+</section>
+
+<!-- Contact Section -->
+<section class="section" id="contacto">
+  <div class="container">
+    <div class="contact reveal">
+      <div class="contact-grid">
+        <div class="contact-info">
+          <h2>¿Hablamos de tu operativa?</h2>
+          <p>
+            Implementa sistemas que eliminen el caos de tu día a día. 
+            Sin costes de licencias eternas. Sin vendor lock-in. 
+            Solo soluciones que funcionan y escalan contigo.
+          </p>
+          <div class="contact-meta">
+            <div class="contact-item">
+              <span>📍</span>
+              <strong>Murcia, España</strong> · Disponible remoto
+            </div>
+            <div class="contact-item">
+              <span>⚡</span>
+              <strong>Respuesta en 24h</strong> · Proyectos urgentes
+            </div>
+            <div class="contact-item">
+              <span>🎯</span>
+              <strong>Auditoría inicial gratuita</strong>
+            </div>
+          </div>
+        </div>
+        
+        <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+          <div class="form-group">
+            <label>Nombre / Empresa</label>
+            <input type="text" name="name" placeholder="Tu nombre o nombre de la empresa" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="correo@empresa.com" required>
+          </div>
+          <div class="form-group">
+            <label>¿Qué necesitas automatizar?</label>
+            <textarea name="message" placeholder="Describe brevemente el cuello de botella operativo que quieres eliminar..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Enviar Solicitud de Auditoría →
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-left">
+        <div class="footer-brand">◉ REVOPS STUDIO</div>
+        <div class="footer-copy">© 2026 Gracián Baena González. Todos los sistemas operativos.</div>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/GracianB" target="_blank">GitHub</a>
+        <a href="https://www.linkedin.com/in/gracianbaena" target="_blank">LinkedIn</a>
+        <a href="https://gracianb.github.io/GracianB/" target="_blank">Hub Central</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+  const navbar = document.getElementById('navbar');
+  if (window.scrollY > 50) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+});
+
+// Scroll reveal animation
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('active');
+    }
+  });
+}, observerOptions);
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Counter animation
+const counters = document.querySelectorAll('.counter');
+const speed = 200;
+
+const animateCounters = () => {
+  counters.forEach(counter => {
+    const target = +counter.getAttribute('data-target') || +counter.innerText;
+    const count = +counter.innerText;
+    const inc = target / speed;
+
+    if (count < target) {
+      counter.innerText = Math.ceil(count + inc);
+      setTimeout(animateCounters, 20);
+    } else {
+      counter.innerText = target;
+    }
+  });
+};
+
+// Trigger counters when stats bar is visible
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      animateCounters();
+      statsObserver.unobserve(entry.target);
+    }
+  });
+});
+
+const statsBar = document.querySelector('.stats-bar');
+if (statsBar) statsObserver.observe(statsBar);
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+
 </body>
 </html>
