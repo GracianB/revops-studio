@@ -166,6 +166,25 @@ function observedRows({
   });
 }
 
+function asForecastOutcomes(rows) {
+  return {
+    forecastRows: rows.map((row) => ({
+      leadId: row.leadId,
+      account: row.leadId,
+      segment: row.segment,
+      cohort: row.cohort,
+      probability: row.probability
+    })),
+    outcomes: rows.map((row) => ({
+      leadId: row.leadId,
+      terminal: true,
+      positive: Boolean(row.observedSuccess),
+      type: row.observedSuccess ? "CLOSED_WON" : "CLOSED_LOST",
+      occurredAt: row.observedAt
+    }))
+  };
+}
+
 test("V20 first report is insufficient rather than false drift", () => {
   const report = buildAdaptiveCalibrationReport({
     forecastRows: [
@@ -190,9 +209,9 @@ test("V20 stable temporal windows remain stable", () => {
     rows:previous
   }), 36);
 
+  const currentInput = asForecastOutcomes(current);
   const report = buildAdaptiveCalibrationReport({
-    forecastRows: [],
-    outcomes: [],
+    ...currentInput,
     history,
     datasetFingerprint:"D1",
     runId:"CURRENT",
@@ -216,7 +235,9 @@ test("V20 warning threshold detects temporal calibration movement", () => {
     rows:previous
   }), 36);
 
+  const currentInput = asForecastOutcomes(current);
   const report = buildAdaptiveCalibrationReport({
+    ...currentInput,
     history,
     datasetFingerprint:"D1",
     runId:"CURRENT",
@@ -240,7 +261,9 @@ test("V20 critical threshold creates controlled recalibration recommendation", (
     rows:previous
   }), 36);
 
+  const currentInput = asForecastOutcomes(current);
   const report = buildAdaptiveCalibrationReport({
+    ...currentInput,
     history,
     datasetFingerprint:"D1",
     runId:"CURRENT",
@@ -316,7 +339,9 @@ test("V20 audit trail captures snapshot, baseline and drift state", () => {
     rows:previous
   }), 36);
 
+  const currentInput = asForecastOutcomes(current);
   const report = buildAdaptiveCalibrationReport({
+    ...currentInput,
     history,
     datasetFingerprint:"D1",
     runId:"CURRENT",
@@ -338,7 +363,9 @@ test("V20 report remains deterministic for identical supplied time", () => {
     rows:previous
   }), 36);
 
+  const currentInput = asForecastOutcomes([]);
   const args = {
+    ...currentInput,
     history,
     datasetFingerprint:"D1",
     runId:"CURRENT",
