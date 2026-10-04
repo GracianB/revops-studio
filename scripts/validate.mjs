@@ -84,7 +84,7 @@ const engineJs = fs.readFileSync(path.join(root, "assets/js/revops-engine.js"), 
 const engineExports = new Set(
   [...engineJs.matchAll(/export\s+(?:function|const|let|var|class)\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
 );
-const engineImportBlock = appJs.match(/import\s*\{([\s\S]*?)\}\s*from\s*["']\.\/revops-engine\.js["']/);
+const engineImportBlock = appJs.match(/import\s*\{([^}]*)\}\s*from\s*["']\.\/revops-engine\.js["']/);
 if (!engineImportBlock) fail("app.js engine import block missing");
 const importedEngineNames = engineImportBlock[1]
   .split(",")
