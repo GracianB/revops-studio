@@ -1,0 +1,104 @@
+# RevOps Studio Operating Model
+
+RevOps Studio is intentionally built as a small, inspectable operating system rather than a collection of UI widgets.
+
+## Control loop
+
+INPUT
+  ↓
+QUALITY GATE
+  ↓
+SCORING
+  ↓
+CLASSIFICATION
+  ↓
+IMPACT ANALYSIS
+  ↓
+PRIORITISED QUEUE
+  ↓
+HUMAN APPROVAL
+  ↓
+AUDIT
+
+### Input
+
+The Control Room supports synthetic records and local CSV ingestion.
+
+CSV processing is browser-only and guarded by size and row limits. No imported records are transmitted to the project.
+
+### Quality gate
+
+Every signal must be numeric and within 0–100. Invalid records fail closed into blocked.
+
+That is deliberate. A decision system that confidently scores bad data is just a faster way to be wrong.
+
+### Scoring
+
+Four signals contribute to the score:
+
+- fit
+- intent
+- engagement
+- urgency
+
+Weights are normalised before calculation. The score exposes its contribution breakdown.
+
+### Classification
+
+Two configurable thresholds determine stage:
+
+score >= qualified threshold → qualified
+score >= nurture threshold   → nurture
+otherwise                    → new
+
+The engine prevents an invalid threshold relationship.
+
+### Impact analysis
+
+Every run is compared against the baseline model so the operator can see downstream effects:
+
+- promotions;
+- demotions;
+- new blocked records;
+- recovered records;
+- score deltas;
+- added or removed records.
+
+### Operational queue
+
+| Stage | Priority | Owner lane | SLA |
+| --- | --- | --- | --- |
+| blocked | critical | Data / RevOps | 2h |
+| qualified | high | Sales / CS | 4h |
+| nurture | medium | Lifecycle | 24h |
+| new | low | RevOps | 72h |
+
+The queue is a simulation. It does not execute CRM actions.
+
+### Human gate
+
+Sensitive transitions require explicit approval. The public demo simulates this gate and records the decision in the audit view.
+
+### Run identity
+
+Each configuration and dataset combination receives a deterministic run identifier. The timestamp is intentionally separate from the identifier so identical inputs produce the same run ID.
+
+### Shareable configuration
+
+The Control Room can generate a URL containing only:
+
+- weights;
+- stage thresholds;
+- selected scenario.
+
+CSV records are never embedded in the shareable URL.
+
+## Engineering principle
+
+The system separates:
+
+decision
+   ≠
+execution
+
+That separation is the core design constraint. A useful operations system should make decisions visible, explainable and reviewable before it touches the outside world.
