@@ -2,147 +2,110 @@
 
 **Customer Success × Data × Operations × AI × Systems**
 
-RevOps Studio is the public-facing lab of **Gracián Baena González**: a small, real project used to demonstrate how customer understanding, operational design, data and technical execution can become one system.
+RevOps Studio is the public lab of Gracián Baena González. It is both a commercial surface and a technical proof: a small RevOps system whose operating logic is inspectable instead of being hidden behind a glossy interface.
 
-Live: **https://gracianb.github.io/revops-studio/**  
-Source: **https://github.com/GracianB/revops-studio**
+Live: https://gracianb.github.io/revops-studio/  
+Source: https://github.com/GracianB/revops-studio
 
-## What this project is
+## Technical layer
 
-This repository is deliberately public and deliberately small.
+The site includes a local Pipeline Model Lab.
 
-The website acts as:
-
-- a service surface for a concrete operations problem;
-- a portfolio proof of product and frontend execution;
-- a transparent example of client-side state, analytics and controlled handoff;
-- a hub connecting the wider project ecosystem.
-
-The commercial language and the technical implementation are meant to describe the same idea:
-
-> understand the process → design the system → build the necessary piece → leave ownership and measurement behind.
-
-## Technical playground
-
-The public site now includes a deterministic RevOps engine demo using synthetic records. It makes scoring, state classification, human approval and auditability visible in the browser.
-
-See [`docs/REVOPS_ENGINE.md`](docs/REVOPS_ENGINE.md) for the domain rules.
-
-## Current architecture
-
-\`\`\`text
-Browser
-  │
-  ├── Static HTML
-  ├── Local CSS
-  ├── Local JavaScript
-  │
-  ├── Calculator
-  ├── Service filters
-  ├── Accessibility / navigation
-  └── Brief flow
-        │
-        ├── sessionStorage (this tab only)
-        │
-        └── gracias.html
-              ├── mailto generated locally
-              ├── copy brief
-              └── calendar
+\`\`\`
+synthetic records
+      ↓
+data-quality validation
+      ↓
+weighted scoring
+      ↓
+classification
+      ↓
+next action
+      ↓
+human approval gate
+      ↓
+audit event
 \`\`\`
 
-Analytics uses Plausible only for event-level interaction signals. The public page does **not** send the brief fields to a project backend.
+Visitors can change model weights and inspect how the pipeline changes. The demo is deterministic and does not call a CRM, database or external API.
 
-That is intentional for this version: a static GitHub Pages project, with explicit user-controlled email delivery, is simpler and safer than pretending a fake CRM backend is impressive.
+## Architecture
 
-## Technical decisions
+\`\`\`
+Browser
+  │
+  ├── index.html
+  ├── CSS
+  ├── application controller
+  └── deterministic RevOps engine
+          │
+          ├── score
+          ├── classify
+          ├── recommend
+          ├── gate
+          └── audit
 
-### 1. No framework dependency
+Brief:
+Form → sessionStorage → gracias.html → user-controlled email
+\`\`\`
 
-The project uses HTML, CSS and JavaScript directly. The goal is maintainability, fast loading and visible fundamentals.
+## Engineering decisions
 
-### 2. Local-first brief flow
+### Explainability
 
-The form is stored in \`sessionStorage\` under a versioned key. Nothing is sent to an API from the page.
+The engine exposes the contribution of each signal to the final score.
 
-The user reviews the generated email and chooses whether to send it.
+### Data quality
 
-### 3. No invented ROI
+Records are validated before scoring. Invalid records fail closed into a blocked state rather than receiving a misleading score.
 
-The calculator estimates annual process friction from:
+### Human-in-the-loop
 
-\`hours × people × hourly cost × 52\`
+Classification and execution are separate. Sensitive transitions require explicit approval.
 
-It is a framing tool, not a savings guarantee.
+### Local-first lead flow
 
-### 4. Progressive enhancement
+The public brief is stored only in the current browser session. No project backend receives the form fields.
 
-The important content exists as HTML. JavaScript adds navigation state, filters, calculator behavior, reveal motion and the brief flow.
+### Small dependency surface
 
-Reduced-motion preferences disable decorative motion.
-
-### 5. Small security surface
-
-There are no API keys, private tokens or server credentials in the repository.
-
-The current build adds a static secret-pattern check to GitHub Actions.
+The project uses browser-native HTML, CSS and JavaScript plus Node's built-in test runner.
 
 ## Offer
 
-| Package | From | Typical window |
+| Package | From | Window |
 | --- | ---: | --- |
 | Quick win | €900 | 1–2 weeks |
 | System | €4,000 | 3–6 weeks |
 | Operate | €600/month | when the system exists |
 
-The diagnostic is **30–45 minutes, one process**. Pricing is confirmed in writing after the diagnostic.
+Diagnostic: 30–45 minutes, one process.
 
-## Proof
+## Proof ecosystem
 
-### Bodytone
+- OHANA · Canvas 2D platformer, Isla Hoku, 10 rooms, 10 characters.
+- Vortex · WebGL interface experiment.
+- AiGoritmo · Python + FastAPI / LLM lab.
+- Yoga Instructor · bilingual ES/EN portal.
+- Navarmedia Outreach · private B2B operations core.
 
-Product support and knowledge organization. The public proof is the Help Center. No hours-saved figure is claimed here because it has not been measured on this page.
+## Quality gates
 
-### Private system
-
-**Navarmedia Outreach** remains private. The website exposes the system surface and architectural concepts without publishing proprietary source code.
-
-### Public ecosystem
-
-- **OHANA** · Canvas 2D platformer, Isla Hoku, 10 rooms, 10 characters.
-- **Vortex** · WebGL interface experiment.
-- **AiGoritmo** · Python + FastAPI / LLM lab.
-- **Yoga Instructor** · bilingual ES/EN practice portal.
-- **Business Intelligence** · analytics and dashboard work.
-
-## Files
-
-\`\`\`text
-revops-studio/
-├── index.html
-├── gracias.html
-├── README.md
-├── README.en.md
-├── robots.txt
-├── sitemap.xml
-├── .well-known/
-│   └── security.txt
-├── .github/
-│   └── workflows/
-│       └── validate.yml
-├── assets/
-│   ├── favicon.svg
-│   ├── css/
-│   │   └── main.css
-│   └── js/
-│       ├── app.js
-│       └── thanks.js
-└── docs/
-    ├── ARCHITECTURE.md
-    └── SECURITY.md
+\`\`\`bash
+npm test
+npm run validate
 \`\`\`
+
+GitHub Actions runs both checks on every push and pull request.
+
+## Security
+
+No secrets are intentionally stored in the repository. Validation includes lightweight credential-pattern screening and project-structure checks.
+
+Pattern screening is not a guarantee of absolute absence.
 
 ## Author
 
-Gracián Baena González · Murcia, España  
+Gracián Baena González · Murcia, Spain  
 LinkedIn: https://www.linkedin.com/in/gracianbaena/  
 GitHub: https://github.com/GracianB
