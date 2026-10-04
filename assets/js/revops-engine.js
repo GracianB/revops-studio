@@ -259,6 +259,87 @@ export function summariseQueue(queue) {
   };
 }
 
+export function forecastPipeline(leads, assumptions = {}) {
+  const probabilities = {
+    qualified: Number.isFinite(Number(assumptions.qualified)) ? Number(assumptions.qualified) : 0.80,
+    nurture: Number.isFinite(Number(assumptions.nurture)) ? Number(assumptions.nurture) : 0.35,
+    new: Number.isFinite(Number(assumptions.new)) ? Number(assumptions.new) : 0.10,
+    blocked: 0
+  };
+  Object.keys(probabilities).forEach((stage) => {
+    probabilities[stage] = Math.max(0, Math.min(1, probabilities[stage]));
+  });
+
+  const active = leads.filter((lead) => lead.stage !== "blocked");
+  const rows = active.map((lead) => {
+    const value = numeric(lead.value) ?? 0;
+    const probability = probabilities[lead.stage] ?? 0;
+    const expected = value * probability;
+    return {
+      leadId: lead.id,
+      account: lead.account || "Unnamed account",
+      stage: lead.stage,
+      value,
+      probability,
+      expectedValue: Math.round(expected),
+      owner: String(lead.owner || "Unassigned").trim() || "Unassigned",
+      segment: String(lead.segment || "General").trim() || "General"
+    };
+  });
+
+  const pipelineValue = rows.reduce((sum, row) => sum + row.value, 0);
+  const expectedValue = rows.reduce((sum, row) => sum + row.expectedValue, 0);
+  const weightedByScore = rows.reduce((sum, row) => {
+    const lead = leads.find((item) => String(item.id) === String(row.leadId));
+    const score = typeof lead?.score === "number" ? lead.score : 0;
+    return sum + row.value * score / 100;
+  }, 0);
+
+  const bySegment = {};
+  rows.forEach((row) => {
+    if (!bySegment[row.segment]) {
+      bySegment[row.segment] = { value: 0, expectedValue: 0, count: 0 };
+    }
+    bySegment[row.segment].value += row.value;
+    bySegment[row.segment].expectedValue += row.expectedValue;
+    bySegment[row.segment].count += 1;
+  });
+
+  const topAccounts = [...rows]
+    .sort((a, b) => b.value - a.value || String(a.leadId).localeCompare(String(b.leadId)))
+    .slice(0, 5);
+
+  return {
+    probabilities,
+    pipelineValue,
+    expectedValue,
+    weightedByScore: Math.round(weightedByScore),
+    expectedCoverage: pipelineValue ? expectedValue / pipelineValue : 0,
+    activeRecords: rows.length,
+    topAccounts,
+    bySegment
+  };
+}
+
+export function forecastScenarios(leads, assumptions = {}) {
+  const base = forecastPipeline(leads, assumptions);
+  const multipliers = {
+    downside: Number.isFinite(Number(assumptions.downside)) ? Number(assumptions.downside) : 0.75,
+    base: 1,
+    upside: Number.isFinite(Number(assumptions.upside)) ? Number(assumptions.upside) : 1.15
+  };
+
+  return Object.fromEntries(Object.entries(multipliers).map(([name, multiplier]) => [
+    name,
+    {
+      pipelineValue: base.pipelineValue,
+      expectedValue: Math.round(base.expectedValue * Math.max(0, multiplier)),
+      coverage: base.pipelineValue ? (base.expectedValue / base.pipelineValue) * Math.max(0, multiplier) : 0,
+      multiplier
+    }
+  ]));
+}
+
 export function compareEvaluations(baseLeads, currentLeads) {
   const baseById = new Map(baseLeads.map((lead) => [String(lead.id), lead]));
   const changes = [];
