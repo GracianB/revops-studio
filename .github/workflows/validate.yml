@@ -1,0 +1,49 @@
+name: validate
+
+on:
+  push:
+    branches: ["main", "revops-studio-v2"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  static-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/js/app.js
+          node --check assets/js/thanks.js
+
+      - name: Check expected project files
+        run: |
+          test -f index.html
+          test -f gracias.html
+          test -f assets/css/main.css
+          test -f assets/js/app.js
+          test -f assets/js/thanks.js
+          test -f README.md
+          test -f robots.txt
+          test -f sitemap.xml
+
+      - name: Check secrets patterns
+        shell: bash
+        run: |
+          if grep -RInE --exclude-dir=.git \
+            '(ghp_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|AIza[0-9A-Za-z_-]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY|Bearer [A-Za-z0-9._-]{20,})' .; then
+            echo "Potential credential pattern found."
+            exit 1
+          fi
+
+      - name: Check critical HTML hooks
+        run: |
+          grep -q 'id="briefForm"' index.html
+          grep -q 'id="menuBtn"' index.html
+          grep -q 'id="annualCost"' index.html
+          grep -q 'canonical' index.html
