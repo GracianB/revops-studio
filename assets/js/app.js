@@ -645,7 +645,10 @@ function initPlayground() {
       const presentOptional = evaluated.reduce((sum, lead) =>
         sum + ["value", "owner", "segment", "source", "cohort", "lastTouchDays"].filter((key) => {
           const value = lead[key];
-          return key === "lastTouchDays" ? Number.isFinite(Number(value)) : String(value ?? "").trim() !== "";
+          const numericField = key === "value" || key === "lastTouchDays";
+          return numericField
+            ? Number.isFinite(Number(value))
+            : String(value ?? "").trim() !== "";
         }).length, 0
       );
       commercial.coverage.textContent = totalOptional
@@ -1109,7 +1112,7 @@ function initPlayground() {
     const lastRun = qs("#lastRun");
     if (lastRun) lastRun.textContent = "Última ejecución " + time + " · " + lastSnapshot.runId;
     status.dataset.state = "ok";
-    status.textContent = "Evaluado localmente · sin llamadas de red · configuración guardable.";
+    status.textContent = "Evaluado en el navegador · sin llamadas de CRM/API · configuración guardable.";
     evaluated.forEach((lead) => addAudit(auditEvent("EVALUATE", lead, lead.stage + " / " + (lead.score ?? "n/a"))));
     const summary = summarisePipeline(evaluated);
     if (recordHistory) {
