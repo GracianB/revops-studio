@@ -49,6 +49,10 @@ Brief:
 Form → sessionStorage → gracias.html → user-controlled email
 \`\`\`
 
+## Model impact
+
+The active model can be compared with the baseline weights to expose promotions, demotions, blocked records and score deltas. This turns the scoring controls into a visible sensitivity test.
+
 ## Operational queue
 
 The control room translates pipeline state into a deterministic work queue with priority, operational lane, SLA and a reason for the proposed action. It is deliberately simulation-only: no CRM, no database and no external execution.
