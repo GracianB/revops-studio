@@ -397,6 +397,7 @@ function initPlayground() {
     approvals: qs("#ledgerApprovals"),
     contracts: qs("#ledgerContracts"),
     simulations: qs("#ledgerSimulations"),
+    outcomes: qs("#ledgerOutcomes"),
     replay: qs("#replayLedger"),
     events: qs("#ledgerEvents")
   };
@@ -1024,6 +1025,7 @@ function initPlayground() {
          executionLedger.approvals.textContent = String(replay.state?.counters?.approvals || 0);
          executionLedger.contracts.textContent = String(replay.state?.counters?.contracts || 0);
          executionLedger.simulations.textContent = String(replay.state?.counters?.simulations || 0);
+         if (executionLedger.outcomes) executionLedger.outcomes.textContent = String(replay.state?.counters?.outcomes || 0);
          executionLedger.events?.replaceChildren(
            ...lastExecutionLedger.events.slice(-6).reverse().map((event) => {
              const row = document.createElement("div");
@@ -1669,6 +1671,7 @@ function initPlayground() {
       executionLedger.approvals.textContent = String(replay.state?.counters?.approvals || 0);
       executionLedger.contracts.textContent = String(replay.state?.counters?.contracts || 0);
       executionLedger.simulations.textContent = String(replay.state?.counters?.simulations || 0);
+      if (executionLedger.outcomes) executionLedger.outcomes.textContent = String(replay.state?.counters?.outcomes || 0);
       executionLedger.events?.replaceChildren(...lastExecutionLedger.events.slice(-6).reverse().map((item) => {
         const row = document.createElement("div");
         row.className = "ledger-event";
