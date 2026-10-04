@@ -32,6 +32,16 @@ const numeric = (value) => {
   return Number.isFinite(result) ? result : null;
 };
 
+// Keep deterministic decimal arithmetic stable across JavaScript's binary floating point.
+// Twelve decimal places are more than sufficient for forecast probabilities and currency
+// inputs used by this local decision engine.
+const roundDecimal = (value, places = 12) => {
+  const result = numeric(value);
+  if (result === null) return null;
+  const factor = 10 ** places;
+  return Math.round((result + Number.EPSILON) * factor) / factor;
+};
+
 const clamp = (value) => {
   const result = numeric(value);
   if (result === null) return null;
@@ -301,7 +311,7 @@ export function forecastPipeline(leads, assumptions = {}) {
   const rows = active.map((lead) => {
     const value = numeric(lead.value) ?? 0;
     const probability = probabilities[lead.stage] ?? 0;
-    const expected = value * probability;
+    const expected = roundDecimal(value * probability) ?? 0;
     return {
       leadId: lead.id,
       account: lead.account || "Unnamed account",
@@ -316,7 +326,9 @@ export function forecastPipeline(leads, assumptions = {}) {
   });
 
   const pipelineValue = rows.reduce((sum, row) => sum + row.value, 0);
-  const expectedValueExact = rows.reduce((sum, row) => sum + row.expectedValueExact, 0);
+  const expectedValueExact = roundDecimal(
+    rows.reduce((sum, row) => sum + row.expectedValueExact, 0)
+  ) ?? 0;
   const expectedValue = Math.round(expectedValueExact);
   const leadById = new Map(leads.map((lead) => [String(lead.id), lead]));
   const weightedByScore = rows.reduce((sum, row) => {
@@ -370,7 +382,9 @@ export function forecastScenarios(leads, assumptions = {}) {
     name,
     {
       pipelineValue: base.pipelineValue,
-      expectedValue: Math.round(base.expectedValue * Math.max(0, multiplier)),
+      expectedValue: Math.round(
+        (base.expectedValueExact ?? 0) * Math.max(0, multiplier)
+      ),
       coverage: base.pipelineValue ? (base.expectedValueExact / base.pipelineValue) * Math.max(0, multiplier) : 0,
       multiplier
     }
