@@ -25,6 +25,10 @@ for (const file of required) {
 
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+const appJs = fs.readFileSync(path.join(root, "assets/js/app.js"), "utf8");
+const domSelectors = [...appJs.matchAll(/qs\(\s*["']#([A-Za-z0-9_-]+)["']/g)].map((match) => match[1]);
+const missingDomIds = [...new Set(domSelectors)].filter((id) => !ids.includes(id));
+if (missingDomIds.length) fail("app.js references missing DOM ids: " + missingDomIds.join(", "));
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail("duplicate ids: " + [...new Set(duplicates)].join(", "));
 
@@ -50,6 +54,12 @@ const secretPatterns = [
   /BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY/,
   /Bearer [A-Za-z0-9._-]{20,}/i
 ];
+
+const localImports = [...appJs.matchAll(/from\s*["'](\.\/[^"']+)["']/g)].map((match) => match[1]);
+for (const ref of localImports) {
+  const target = path.normalize(path.join(root, "assets/js", ref));
+  if (!fs.existsSync(target)) fail("broken JS import: " + ref);
+}
 
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",

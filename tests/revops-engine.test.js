@@ -9,6 +9,9 @@ import {
   buildActionQueue,
   summariseQueue,
   compareEvaluations,
+  evaluateScenarios,
+  createRunSnapshot,
+  normaliseThresholds,
   transition
 } from "../assets/js/revops-engine.js";
 
@@ -141,4 +144,70 @@ test("model comparison detects a newly blocked record", () => {
   const diff = compareEvaluations(base, current);
   assert.equal(diff.blocked, 1);
   assert.equal(diff.changes[0].kind, "blocked");
+});
+
+
+test("invalid stage thresholds fail safe to defaults", () => {
+  assert.deepEqual(normaliseThresholds({ qualified: 40, nurture: 60 }), {
+    qualified: 75,
+    nurture: 50
+  });
+});
+
+test("out of range signal values fail closed", () => {
+  const lead = scoreLead({ id:"T-007", fit:101, intent:50, engagement:50, urgency:50 });
+  assert.equal(lead.stage, "blocked");
+  assert.equal(lead.score, null);
+  assert.ok(lead.quality.errors.includes("fit: out_of_range"));
+});
+
+test("scenario evaluation returns a summary per preset", () => {
+  const scenarios = evaluateScenarios([
+    { id:"S-001", fit:90, intent:40, engagement:70, urgency:80 },
+    { id:"S-002", fit:50, intent:90, engagement:40, urgency:30 }
+  ], {
+    balanced: { fit:35, intent:30, engagement:20, urgency:15 },
+    growth: { fit:20, intent:50, engagement:10, urgency:20 }
+  });
+  assert.equal(Object.keys(scenarios).length, 2);
+  assert.equal(typeof scenarios.growth.averageScore, "number");
+  assert.equal(scenarios.balanced.total, 2);
+});
+
+test("run snapshot id is deterministic for identical inputs", () => {
+  const args = {
+    records: [{ id:"R-001", fit:80, intent:70, engagement:60, urgency:50 }],
+    weights: { fit:40, intent:30, engagement:20, urgency:10 },
+    thresholds: { qualified:75, nurture:50 },
+    source: "demo",
+    scenario: "balanced"
+  };
+  const first = createRunSnapshot(args);
+  const second = createRunSnapshot(args);
+  assert.equal(first.runId, second.runId);
+  assert.match(first.runId, /^RUN-[0-9A-F]{8}$/);
+});
+
+
+test("CSV parser accepts European semicolon delimiters and multiline quoted fields", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  const result = parseCsv('id;account;fit;intent;engagement;urgency\nL1;"North; Inc.\nEU";90;80;70;60');
+  assert.equal(result[0].account, "North; Inc.\nEU");
+  assert.equal(result[0].fit, 90);
+});
+
+test("CSV parser rejects duplicate headers", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  assert.throws(
+    () => parseCsv("id,fit,fit,intent,engagement,urgency\nL1,90,80,70,60,50"),
+    /Columnas duplicadas/
+  );
+});
+
+test("CSV parser rejects oversized input", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  assert.throws(
+    () => parseCsv("id,fit,intent,engagement,urgency\n" + "x".repeat(2_000_001)),
+    /CSV demasiado grande/
+  );
 });

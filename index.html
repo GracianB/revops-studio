@@ -69,7 +69,7 @@
 
     <ul class="nav-links">
       <li><a href="#sistema">Sistema</a></li>
-      <li><a href="#playground">Playground</a></li>
+      <li><a href="#playground">Control Room</a></li>
       <li><a href="#oferta">Oferta</a></li>
       <li><a href="#servicios">Servicios</a></li>
       <li><a href="#ecosistema">Ecosistema</a></li>
@@ -86,7 +86,7 @@
 
   <div class="mobile-nav" id="mobileNav">
     <a href="#sistema">Sistema</a>
-    <a href="#playground">Playground</a>
+    <a href="#playground">Control Room</a>
     <a href="#oferta">Oferta</a>
     <a href="#servicios">Servicios</a>
     <a href="#ecosistema">Ecosistema</a>
@@ -98,7 +98,7 @@
 
 <div class="notice">
   <div class="notice-inner">
-    <span><strong>DIAGNÓSTICO · 30 MIN</strong> · 1 proceso · primeras 8 plazas a 0 €</span>
+    <span><strong>CONTROL ROOM · V7</strong> · diagnóstico 30 min · sistema público e inspeccionable</span>
     <a class="text-link" href="#contacto">Ver el flujo ↘</a>
   </div>
 </div>
@@ -130,7 +130,7 @@
       <div class="terminal reveal" aria-label="Modelo de trabajo">
         <div class="terminal-top">
           <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span>METHOD / V2</span>
+          <span>METHOD / V7</span>
           <span>PUBLIC</span>
         </div>
         <div class="terminal-body">
@@ -221,7 +221,22 @@
               <label class="weight-control">Engagement <input id="weightEngagement" type="range" min="0" max="100" value="20"><b id="weightEngagementValue">20%</b></label>
               <label class="weight-control">Urgency <input id="weightUrgency" type="range" min="0" max="100" value="15"><b id="weightUrgencyValue">15%</b></label>
             </div>
-            <p class="weight-help">Los pesos se normalizan antes de puntuar. Los presets solo cambian prioridades, no la lógica de estados.</p>
+            <div class="threshold-lab">
+              <div class="weight-head"><span class="kicker">Stage thresholds</span><span class="weight-total">QUALIFIED > NURTURE</span></div>
+              <div class="threshold-grid">
+                <label class="weight-control">Qualified ≥ <input id="thresholdQualified" type="range" min="2" max="100" value="75"><b id="thresholdQualifiedValue">75</b></label>
+                <label class="weight-control">Nurture ≥ <input id="thresholdNurture" type="range" min="1" max="74" value="50"><b id="thresholdNurtureValue">50</b></label>
+              </div>
+              <p class="weight-help">Los umbrales cambian la clasificación, no el score. El motor impide configuraciones inválidas.</p>
+            </div>
+            <div class="config-strip">
+              <div><span class="kicker">Run identity</span><strong id="runId">RUN---------</strong></div>
+              <div class="config-actions">
+                <input id="shareConfig" class="share-input" type="text" readonly aria-label="Enlace de configuración">
+                <button class="btn btn-secondary" id="copyConfig" type="button">Copiar configuración ↗</button>
+              </div>
+            </div>
+            <p class="weight-help">Los pesos se normalizan antes de puntuar. Puedes guardar y compartir la configuración sin compartir registros del CSV.</p>
           </div>
           <div class="stage-chart" aria-label="Distribución del pipeline">
             <div class="weight-head"><span class="kicker">Pipeline shape</span><span class="kicker" id="shapeLabel">—</span></div>
@@ -253,6 +268,17 @@
           <div id="impactList" class="impact-list" aria-live="polite"></div>
         </section>
 
+        <section class="scenario-panel" aria-labelledby="scenario-title">
+          <div class="scenario-head">
+            <div>
+              <span class="kicker">Scenario matrix</span>
+              <h3 id="scenario-title">La misma operación. Cuatro prioridades.</h3>
+            </div>
+            <strong id="scenarioMatrixMeta">Base: BALANCED</strong>
+          </div>
+          <div class="scenario-matrix" id="scenarioMatrix" aria-live="polite"></div>
+        </section>
+
         <div class="demo-table-wrap">
           <table class="demo-table">
             <caption>Datos sintéticos o CSV local. Haz clic en un registro para inspeccionarlo.</caption>
@@ -277,6 +303,11 @@
             </div>
           </div>
           <p class="queue-copy">El scoring no ejecuta nada. Esta capa traduce el estado del pipeline en trabajo priorizado, equipo responsable y SLA de simulación.</p>
+          <div class="queue-tools">
+            <label class="queue-search-label" for="queueSearch">Buscar en cola</label>
+            <input id="queueSearch" class="queue-search" type="search" placeholder="cuenta, ID, equipo, prioridad…" autocomplete="off">
+            <span class="kicker">Atajos: R ejecutar · / buscar</span>
+          </div>
           <div id="actionQueue" class="queue-list" aria-live="polite"></div>
         </section>
 

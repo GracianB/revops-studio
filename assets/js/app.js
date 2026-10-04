@@ -7,7 +7,11 @@ import {
   summarisePipeline,
   buildActionQueue,
   summariseQueue,
-  compareEvaluations
+  compareEvaluations,
+  evaluateScenarios,
+  normaliseThresholds,
+  createRunSnapshot,
+  nextAction
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -164,46 +168,261 @@ function initPlayground() {
     fit: qs("#weightFitValue"), intent: qs("#weightIntentValue"),
     engagement: qs("#weightEngagementValue"), urgency: qs("#weightUrgencyValue")
   };
+  const thresholds = {
+    qualified: qs("#thresholdQualified"),
+    nurture: qs("#thresholdNurture")
+  };
+  const thresholdValues = {
+    qualified: qs("#thresholdQualifiedValue"),
+    nurture: qs("#thresholdNurtureValue")
+  };
   const totalWeight = qs("#weightTotal");
   const metrics = {
     total: qs("#demoTotal"), qualified: qs("#demoQualified"), nurture: qs("#demoNurture"),
     avg: qs("#demoAvgScore"), quality: qs("#demoQuality"), rate: qs("#demoRate")
   };
-  const status = qs("#demoStatus"), audit = qs("#auditLog"), detail = qs("#leadDetail"), gate = qs("#approveDemo");
+  const status = qs("#demoStatus");
+  const audit = qs("#auditLog");
+  const detail = qs("#leadInspector");
+  const gate = qs("#approveDemo");
   const queue = qs("#actionQueue");
   const queueMeta = qs("#queueMeta");
-  const impactMeta = qs("#impactMeta");
+  const queueSummary = qs("#queueSummary");
+  const datasetLabel = qs("#datasetLabel");
+  const shapeLabel = qs("#shapeLabel");
+  const runId = qs("#runId");
+  const shareConfig = qs("#shareConfig");
+  const copyConfig = qs("#copyConfig");
+  const queueSearch = qs("#queueSearch");
+  const scenarioMatrix = qs("#scenarioMatrix");
+  const scenarioMatrixMeta = qs("#scenarioMatrixMeta");
   const impact = qs("#impactList");
+  const impactMeta = qs("#impactMeta");
   const impactMetrics = {
     changed: qs("#impactChanged"), promoted: qs("#impactPromoted"),
     demoted: qs("#impactDemoted"), blocked: qs("#impactBlocked")
   };
-  const queueSummary = qs("#queueSummary");
-  const datasetLabel = qs("#datasetLabel");
-  const shapeLabel = qs("#shapeLabel");
   const bars = {
     qualified: qs("#barQualified"), nurture: qs("#barNurture"),
     new: qs("#barNew"), blocked: qs("#barBlocked")
   };
-  let evaluated = [];
-  let approved = false;
-  let dataSource = "demo";
-  let lastRunAt = null;
 
-  const scenarios = {
+  const scenarios = Object.freeze({
     balanced: { fit: 35, intent: 30, engagement: 20, urgency: 15 },
     growth: { fit: 25, intent: 40, engagement: 15, urgency: 20 },
     retention: { fit: 30, intent: 15, engagement: 40, urgency: 15 },
     speed: { fit: 20, intent: 25, engagement: 10, urgency: 45 }
+  });
+
+  const SETTINGS_KEY = "revops-studio:control-room:v7";
+  let evaluated = [];
+  let approved = false;
+  let dataSource = "demo";
+  let activeScenario = "balanced";
+  let sourceRecords = demoSeed;
+  let lastSnapshot = null;
+
+  const readStored = () => {
+    try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
+    catch { return null; }
   };
 
-  const getWeights = () => Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, Number(input.value)]));
+  const writeStored = (config) => {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(config));
+    } catch {}
+  };
+
+  const getWeights = () =>
+    Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, Number(input?.value) || 0]));
+
+  const getThresholds = () =>
+    normaliseThresholds({
+      qualified: Number(thresholds.qualified?.value),
+      nurture: Number(thresholds.nurture?.value)
+    });
+
+  const setThresholds = (next) => {
+    let qualified = Math.round(Number(next.qualified) || 75);
+    let nurture = Math.round(Number(next.nurture) || 50);
+    qualified = Math.max(2, Math.min(100, qualified));
+    nurture = Math.max(1, Math.min(99, nurture));
+    if (qualified <= nurture) {
+      if (next.changed === "qualified") nurture = Math.max(1, qualified - 1);
+      else qualified = Math.min(100, nurture + 1);
+    }
+    thresholds.qualified.value = String(qualified);
+    thresholds.nurture.value = String(nurture);
+  };
+
   const renderWeights = () => {
     const weights = getWeights();
     const sum = Object.values(weights).reduce((a, b) => a + b, 0) || 100;
-    Object.entries(values).forEach(([key, output]) => { output.textContent = Math.round(weights[key] / sum * 100) + "%"; });
+    Object.entries(values).forEach(([key, output]) => {
+      if (output) output.textContent = Math.round(weights[key] / sum * 100) + "%";
+    });
     if (totalWeight) totalWeight.textContent = Math.round(sum) + "%";
+    const currentThresholds = getThresholds();
+    if (thresholdValues.qualified) thresholdValues.qualified.textContent = String(currentThresholds.qualified);
+    if (thresholdValues.nurture) thresholdValues.nurture.textContent = String(currentThresholds.nurture);
   };
+
+  const escapeConfig = (config) => {
+    const json = JSON.stringify(config);
+    const bytes = new TextEncoder().encode(json);
+    let binary = "";
+    bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  };
+
+  const decodeConfig = (encoded) => {
+    try {
+      const normalized = encoded.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((encoded.length + 3) % 4);
+      const binary = atob(normalized);
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch { return null; }
+  };
+
+  const currentConfig = () => ({
+    weights: getWeights(),
+    thresholds: getThresholds(),
+    scenario: activeScenario
+  });
+
+  const updateShareUrl = () => {
+    const encoded = escapeConfig(currentConfig());
+    const url = new URL(window.location.href);
+    url.hash = "config=" + encoded;
+    if (shareConfig) shareConfig.value = url.toString();
+    return url.toString();
+  };
+
+  const applyConfig = (config = {}) => {
+    const weightSet = config.weights || DEFAULT_WEIGHTS;
+    Object.keys(inputs).forEach((key) => {
+      if (!inputs[key]) return;
+      const value = Number(weightSet[key]);
+      inputs[key].value = String(Number.isFinite(value) ? Math.round(value) : Math.round(DEFAULT_WEIGHTS[key] * 100));
+    });
+    setThresholds({ ...(config.thresholds || {}), changed: "qualified" });
+    if (config.scenario && scenarios[config.scenario]) activeScenario = config.scenario;
+    qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item.dataset.scenario === activeScenario));
+  };
+
+  const addAudit = (entry) => {
+    if (!audit) return;
+    const line = document.createElement("div");
+    line.className = "audit-line";
+    line.textContent = entry.at.slice(11, 19) + " · " + entry.action + " · " + entry.leadId + " · " + entry.detail;
+    audit.prepend(line);
+    while (audit.children.length > 12) audit.lastElementChild.remove();
+  };
+
+  const renderImpact = () => {
+    const baseline = evaluateBatch(sourceRecords, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS);
+    const diff = compareEvaluations(baseline, evaluated);
+    if (impactMeta) {
+      impactMeta.textContent = diff.changed + " changes · Δ avg " + (diff.averageScoreDelta > 0 ? "+" : "") + diff.averageScoreDelta;
+    }
+    Object.entries(impactMetrics).forEach(([key, output]) => {
+      if (output) output.textContent = String(diff[key] || 0);
+    });
+    if (!impact) return;
+    impact.replaceChildren();
+    if (!diff.changes.length) {
+      const empty = document.createElement("div");
+      empty.className = "impact-empty";
+      empty.textContent = "Sin cambios frente al modelo base.";
+      impact.appendChild(empty);
+      return;
+    }
+    diff.changes.slice(0, 8).forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "impact-row";
+      const account = document.createElement("strong");
+      account.textContent = item.account;
+      const stage = document.createElement("span");
+      stage.textContent = item.fromStage + " → " + item.toStage;
+      const delta = document.createElement("b");
+      delta.textContent = item.scoreDelta === null ? item.kind : (item.scoreDelta > 0 ? "+" : "") + item.scoreDelta;
+      row.append(account, stage, delta);
+      impact.appendChild(row);
+    });
+  };
+
+  const renderMatrix = () => {
+    if (!scenarioMatrix) return;
+    const summaries = evaluateScenarios(sourceRecords, scenarios, getThresholds());
+    const active = summaries[activeScenario];
+    if (scenarioMatrixMeta) {
+      scenarioMatrixMeta.textContent = "Base: " + activeScenario.toUpperCase() + " · " + active.total + " records";
+    }
+    scenarioMatrix.replaceChildren();
+    Object.entries(summaries).forEach(([name, summary]) => {
+      const row = document.createElement("div");
+      row.className = "scenario-matrix-row" + (name === activeScenario ? " is-active" : "");
+      const label = document.createElement("strong");
+      label.textContent = name;
+      const q = document.createElement("span");
+      q.textContent = (summary.byStage.qualified || 0) + " Q";
+      const n = document.createElement("span");
+      n.textContent = (summary.byStage.nurture || 0) + " N";
+      const b = document.createElement("span");
+      b.textContent = (summary.byStage.blocked || 0) + " B";
+      const avg = document.createElement("b");
+      avg.textContent = summary.averageScore + " avg";
+      row.append(label, q, n, b, avg);
+      scenarioMatrix.appendChild(row);
+    });
+  };
+
+  const renderQueue = () => {
+    const builtQueue = buildActionQueue(evaluated);
+    const term = String(queueSearch?.value || "").trim().toLowerCase();
+    const visible = builtQueue.filter((item) => !term || [item.account, item.leadId, item.stage, item.priority, item.lane, item.action].some((value) => String(value).toLowerCase().includes(term)));
+    const qSummary = summariseQueue(builtQueue);
+    if (queueMeta) queueMeta.textContent = qSummary.total + " actions · " + qSummary.urgent + " urgent";
+    if (queueSummary) queueSummary.textContent =
+      "Critical " + (qSummary.byPriority.critical || 0) +
+      " · High " + (qSummary.byPriority.high || 0) +
+      " · Medium " + (qSummary.byPriority.medium || 0) +
+      " · Low " + (qSummary.byPriority.low || 0);
+    if (!queue) return;
+    queue.replaceChildren();
+    if (!visible.length) {
+      const empty = document.createElement("div");
+      empty.className = "queue-empty";
+      empty.textContent = term ? "Sin coincidencias en la cola." : "Ejecuta el modelo para construir una cola operativa.";
+      queue.appendChild(empty);
+      return;
+    }
+    visible.slice(0, 12).forEach((item, index) => {
+      const article = document.createElement("article");
+      article.className = "queue-item";
+      const top = document.createElement("div");
+      top.className = "queue-top";
+      const rank = document.createElement("span");
+      rank.className = "queue-rank";
+      rank.textContent = String(index + 1).padStart(2, "0");
+      const title = document.createElement("strong");
+      title.textContent = item.account + " · " + item.leadId;
+      const priority = document.createElement("span");
+      priority.className = "queue-priority";
+      priority.dataset.priority = item.priority;
+      priority.textContent = item.priority.toUpperCase();
+      top.append(rank, title, priority);
+      const meta = document.createElement("div");
+      meta.className = "queue-meta";
+      meta.textContent = item.action + " · " + item.lane + " · SLA " + item.slaHours + "h";
+      const why = document.createElement("div");
+      why.className = "queue-reason";
+      why.textContent = item.reason;
+      article.append(top, meta, why);
+      queue.appendChild(article);
+    });
+  };
+
   const render = () => {
     const summary = summarisePipeline(evaluated);
     metrics.total.textContent = String(summary.total);
@@ -212,7 +431,6 @@ function initPlayground() {
     metrics.avg.textContent = String(summary.averageScore);
     metrics.quality.textContent = String(summary.qualityIssues);
     metrics.rate.textContent = Math.round(summary.qualificationRate * 100) + "%";
-
     Object.entries(bars).forEach(([stage, bar]) => {
       if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
     });
@@ -220,165 +438,172 @@ function initPlayground() {
       shapeLabel.textContent = summary.total
         ? (summary.byStage.qualified || 0) + " qualified · " +
           (summary.byStage.nurture || 0) + " nurture · " +
+          (summary.byStage.new || 0) + " new · " +
           (summary.byStage.blocked || 0) + " blocked"
         : "—";
     }
 
-    const baseline = evaluateBatch(window.__REVOPS_DATA__ || demoSeed, DEFAULT_WEIGHTS);
-    const diff = compareEvaluations(baseline, evaluated);
-    if (impactMeta) impactMeta.textContent = diff.changed + " changes vs baseline";
-    Object.entries(impactMetrics).forEach(([key, output]) => {
-      if (output) output.textContent = String(diff[key] || 0);
-    });
-    if (impact) {
-      impact.replaceChildren();
-      if (!diff.changes.length) {
-        const empty = document.createElement("div");
-        empty.className = "impact-empty";
-        empty.textContent = "Sin cambios de clasificación respecto al modelo base.";
-        impact.appendChild(empty);
-      } else {
-        diff.changes.slice(0, 6).forEach((item) => {
-          const row = document.createElement("div");
-          row.className = "impact-row";
-          const account = document.createElement("strong");
-          account.textContent = item.account;
-          const stage = document.createElement("span");
-          stage.textContent = item.fromStage + " → " + item.toStage;
-          const delta = document.createElement("b");
-          delta.textContent = item.scoreDelta === null ? "data" : (item.scoreDelta > 0 ? "+" : "") + item.scoreDelta;
-          row.append(account, stage, delta);
-          impact.appendChild(row);
-        });
-      }
-    }
-
-    const builtQueue = buildActionQueue(evaluated);
-    const qSummary = summariseQueue(builtQueue);
-    if (queueMeta) queueMeta.textContent = qSummary.total + " actions · " + qSummary.urgent + " urgent";
-    if (queueSummary) queueSummary.textContent =
-      "Critical " + (qSummary.byPriority.critical || 0) +
-      " · High " + (qSummary.byPriority.high || 0) +
-      " · Medium " + (qSummary.byPriority.medium || 0) +
-      " · Low " + (qSummary.byPriority.low || 0);
-    if (queue) {
-      queue.replaceChildren();
-      if (!builtQueue.length) {
-        const empty = document.createElement("div");
-        empty.className = "queue-empty";
-        empty.textContent = "Ejecuta el modelo para construir una cola operativa.";
-        queue.appendChild(empty);
-      } else {
-        builtQueue.slice(0, 8).forEach((item, index) => {
-          const article = document.createElement("article");
-          article.className = "queue-item";
-          const top = document.createElement("div");
-          top.className = "queue-top";
-          const rank = document.createElement("span");
-          rank.className = "queue-rank";
-          rank.textContent = String(index + 1).padStart(2, "0");
-          const title = document.createElement("strong");
-          title.textContent = item.account;
-          const priority = document.createElement("span");
-          priority.className = "queue-priority";
-          priority.dataset.priority = item.priority;
-          priority.textContent = item.priority.toUpperCase();
-          top.append(rank, title, priority);
-
-          const meta = document.createElement("div");
-          meta.className = "queue-meta";
-          meta.textContent = item.action + " · " + item.lane + " · SLA " + item.slaHours + "h";
-          const why = document.createElement("div");
-          why.className = "queue-reason";
-          why.textContent = item.reason;
-          article.append(top, meta, why);
-          queue.appendChild(article);
-        });
-      }
-    }
+    renderImpact();
+    renderMatrix();
+    renderQueue();
 
     rows.replaceChildren();
     evaluated.forEach((lead) => {
       const tr = document.createElement("tr");
       tr.tabIndex = 0;
-      [lead.id, lead.account, lead.score ?? "—", lead.stage, lead.nextAction].forEach((value, index) => {
+      tr.dataset.id = lead.id;
+      const cells = [lead.id, lead.account, lead.score ?? "—", lead.stage, lead.nextAction];
+      cells.forEach((value, index) => {
         const td = document.createElement("td");
         td.textContent = String(value);
         if (index === 3) td.dataset.state = lead.stage;
         tr.appendChild(td);
       });
       const inspect = () => {
-        if (detail) detail.textContent = lead.score === null
-          ? lead.id + " · blocked · " + lead.quality.errors.join(", ")
-          : lead.id + " · " + lead.account + " · score " + lead.score + " · " +
-            Object.entries(lead.breakdown).map(([key, value]) => key + " +" + value).join(" · ");
+        if (!detail) return;
+        if (lead.score === null) {
+          detail.innerHTML = "";
+          const title = document.createElement("strong");
+          title.textContent = lead.id + " · BLOCKED";
+          const text = document.createElement("p");
+          text.textContent = "Errores: " + lead.quality.errors.join(", ");
+          detail.append(title, text);
+          return;
+        }
+        detail.innerHTML = "";
+        const head = document.createElement("div");
+        head.className = "inspection-head";
+        const title = document.createElement("strong");
+        title.textContent = lead.account + " · " + lead.id;
+        const state = document.createElement("span");
+        state.className = "inspection-state";
+        state.dataset.state = lead.stage;
+        state.textContent = lead.stage.toUpperCase();
+        head.append(title, state);
+        const body = document.createElement("div");
+        body.className = "inspection-body";
+        const p = document.createElement("p");
+        p.textContent = "Score " + lead.score + " · " + lead.nextAction;
+        const grid = document.createElement("div");
+        grid.className = "contribution-grid";
+        Object.entries(lead.breakdown).forEach(([key, value]) => {
+          const cell = document.createElement("div");
+          cell.className = "contribution";
+          const label = document.createElement("span");
+          label.textContent = key;
+          const amount = document.createElement("b");
+          amount.textContent = "+" + value;
+          cell.append(label, amount);
+          grid.appendChild(cell);
+        });
+        body.append(p, grid);
+        detail.append(head, body);
+        qsa(".demo-table tbody tr").forEach((item) => item.classList.toggle("is-selected", item === tr));
       };
       tr.addEventListener("click", inspect);
-      tr.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspect(); } });
+      tr.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspect(); }
+      });
       rows.appendChild(tr);
     });
   };
-  const addAudit = (entry) => {
-    if (!audit) return;
-    const line = document.createElement("div");
-    line.className = "audit-line";
-    line.textContent = entry.at.slice(11, 19) + " · " + entry.action + " · " + entry.leadId + " · " + entry.detail;
-    audit.prepend(line);
-    while (audit.children.length > 8) audit.lastElementChild.remove();
-  };
-  const run = () => {
+
+  const persistAndRender = () => {
+    const config = currentConfig();
+    writeStored(config);
+    updateShareUrl();
     renderWeights();
-    evaluated = evaluateBatch(window.__REVOPS_DATA__ || demoSeed, getWeights());
-    lastRunAt = new Date();
-    const nowLabel = lastRunAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    const now = new Date();
+    const time = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    evaluated = evaluateBatch(sourceRecords, getWeights(), getThresholds());
+    lastSnapshot = createRunSnapshot({
+      records: sourceRecords,
+      weights: getWeights(),
+      thresholds: getThresholds(),
+      source: dataSource,
+      scenario: activeScenario
+    });
     if (datasetLabel) datasetLabel.textContent =
       (dataSource === "demo" ? "Demo dataset" : "CSV local") + " · " + evaluated.length + " records";
-    evaluated.forEach((lead) => addAudit(auditEvent("EVALUATE", lead, lead.stage + " / score " + (lead.score ?? "n/a"))));
-    status.dataset.state = "ok";
-    status.textContent = "Modelo evaluado localmente. " +
-      (dataSource === "demo" ? "Datos sintéticos." : "CSV leído en este navegador.") +
-      " Sin llamadas de red.";
+    if (runId) runId.textContent = lastSnapshot.runId;
     const lastRun = qs("#lastRun");
-    if (lastRun) lastRun.textContent = "Última ejecución " + nowLabel;
+    if (lastRun) lastRun.textContent = "Última ejecución " + time + " · " + lastSnapshot.runId;
+    status.dataset.state = "ok";
+    status.textContent = "Evaluado localmente · sin llamadas de red · configuración guardable.";
+    evaluated.forEach((lead) => addAudit(auditEvent("EVALUATE", lead, lead.stage + " / " + (lead.score ?? "n/a"))));
     render();
   };
 
-  Object.values(inputs).forEach((input) => input?.addEventListener("input", run));
-  qs("#runDemo")?.addEventListener("click", run);
-  qs("#resetDemo")?.addEventListener("click", () => {
-    Object.entries(DEFAULT_WEIGHTS).forEach(([key, value]) => { inputs[key].value = String(Math.round(value * 100)); });
-    window.__REVOPS_DATA__ = null;
-    dataSource = "demo";
-    evaluated = []; approved = false; audit?.replaceChildren();
-    gate.textContent = "Simular aprobación humana";
-    status.dataset.state = ""; status.textContent = "";
-    detail.textContent = "Selecciona un registro para inspeccionar la explicación.";
-    renderWeights(); run();
-  });
+  const runWithAudit = () => {
+    addAudit(auditEvent("RUN", { id: "MODEL" }, "manual execution"));
+    persistAndRender();
+  };
+
+  const loaded = readStored();
+  const hashConfig = window.location.hash.startsWith("#config=")
+    ? decodeConfig(window.location.hash.slice(8))
+    : null;
+  applyConfig(hashConfig || loaded || {});
+
+  Object.values(inputs).forEach((input) => input?.addEventListener("input", () => {
+    renderWeights();
+    persistAndRender();
+  }));
+  Object.values(thresholds).forEach((input) => input?.addEventListener("input", (event) => {
+    setThresholds({
+      qualified: Number(thresholds.qualified.value),
+      nurture: Number(thresholds.nurture.value),
+      changed: event.target.id === "thresholdQualified" ? "qualified" : "nurture"
+    });
+    renderWeights();
+    persistAndRender();
+  }));
 
   qsa("[data-scenario]").forEach((button) => {
     button.addEventListener("click", () => {
-      const values = scenarios[button.dataset.scenario];
-      if (!values) return;
-      Object.entries(values).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(value); });
+      if (!scenarios[button.dataset.scenario]) return;
+      activeScenario = button.dataset.scenario;
+      Object.entries(scenarios[activeScenario]).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(value); });
       qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item === button));
-      run();
-      addAudit(auditEvent("SCENARIO", { id: button.dataset.scenario }, "weights updated"));
+      addAudit(auditEvent("SCENARIO", { id: activeScenario }, "preset applied"));
+      persistAndRender();
     });
+  });
+
+  qs("#runDemo")?.addEventListener("click", runWithAudit);
+
+  qs("#resetDemo")?.addEventListener("click", () => {
+    Object.entries(DEFAULT_WEIGHTS).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(Math.round(value * 100)); });
+    setThresholds({ ...DEFAULT_THRESHOLDS, changed: "qualified" });
+    sourceRecords = demoSeed;
+    window.__REVOPS_DATA__ = null;
+    dataSource = "demo";
+    activeScenario = "balanced";
+    approved = false;
+    qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item.dataset.scenario === activeScenario));
+    audit?.replaceChildren();
+    if (gate) gate.textContent = "Aprobar siguiente acción";
+    if (status) status.textContent = "";
+    if (shareConfig) shareConfig.value = "";
+    renderWeights();
+    runWithAudit();
   });
 
   qs("#csvInput")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      window.__REVOPS_DATA__ = parseCsv(await file.text());
+      const imported = parseCsv(await file.text());
+      if (!imported.length) throw new Error("El CSV no contiene registros.");
+      sourceRecords = imported;
+      window.__REVOPS_DATA__ = imported;
       dataSource = "csv";
       approved = false;
-      gate.textContent = "Simular aprobación humana";
-      run();
+      if (gate) gate.textContent = "Aprobar siguiente acción";
+      addAudit(auditEvent("IMPORT", { id: "CSV" }, file.name + " · " + imported.length + " rows"));
+      runWithAudit();
       status.dataset.state = "ok";
-      status.textContent = "CSV importado localmente: " + window.__REVOPS_DATA__.length + " registros. Nada se ha subido.";
-      addAudit(auditEvent("IMPORT", { id: "CSV" }, file.name + " · " + window.__REVOPS_DATA__.length + " rows"));
+      status.textContent = "CSV procesado localmente: " + imported.length + " registros. Ningún dato ha salido del navegador.";
     } catch (error) {
       status.dataset.state = "error";
       status.textContent = "CSV rechazado: " + error.message;
@@ -387,11 +612,16 @@ function initPlayground() {
     }
   });
 
+  queueSearch?.addEventListener("input", renderQueue);
+
   qs("#exportDemo")?.addEventListener("click", () => {
     const payload = {
       exportedAt: new Date().toISOString(),
+      runId: lastSnapshot?.runId || null,
       source: dataSource,
-      weights: normaliseForExport(getWeights()),
+      scenario: activeScenario,
+      weights: getWeights(),
+      thresholds: getThresholds(),
       pipeline: summarisePipeline(evaluated),
       queue: buildActionQueue(evaluated),
       records: evaluated
@@ -400,30 +630,75 @@ function initPlayground() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "revops-run.json";
+    anchor.download = "revops-run-" + (lastSnapshot?.runId || "export").toLowerCase() + ".json";
     anchor.click();
     URL.revokeObjectURL(url);
-    addAudit(auditEvent("EXPORT", { id: "RUN" }, "JSON artifact generated"));
+    addAudit(auditEvent("EXPORT", { id: lastSnapshot?.runId || "RUN" }, "JSON artifact generated"));
   });
 
-  const normaliseForExport = (weights) => {
-    const total = Object.values(weights).reduce((sum, value) => sum + value, 0) || 1;
-    return Object.fromEntries(Object.entries(weights).map(([key, value]) => [key, Number((value / total).toFixed(4))]));
-  };
-  gate?.addEventListener("click", () => {
-    approved = !approved;
-    gate.textContent = approved ? "Aprobación activa ✓" : "Simular aprobación humana";
-    status.dataset.state = approved ? "ok" : "error";
-    status.textContent = approved ? "Gate activo: las transiciones sensibles pueden avanzar en la simulación." : "Gate desactivado: ejecución sensible bloqueada.";
-    const candidate = evaluated.find((lead) => lead.stage === "qualified");
-    if (approved && candidate) {
-      const result = transition(candidate, "qualified", true);
-      if (result.ok) addAudit(auditEvent("APPROVED", result.lead, "human gate passed"));
+  copyConfig?.addEventListener("click", async () => {
+    const url = updateShareUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      status.dataset.state = "ok";
+      status.textContent = "Configuración copiada. El enlace no contiene los registros del CSV.";
+    } catch {
+      if (shareConfig) {
+        shareConfig.focus();
+        shareConfig.select();
+      }
+      status.dataset.state = "ok";
+      status.textContent = "Enlace listo para copiar. Solo contiene configuración, no datos.";
     }
+    addAudit(auditEvent("SHARE", { id: "CONFIG" }, "configuration link generated"));
+  });
+
+  gate?.addEventListener("click", () => {
+    if (approved) {
+      approved = false;
+      gate.textContent = "Aprobar siguiente acción";
+      status.dataset.state = "error";
+      status.textContent = "Gate cerrado. No hay ejecución sensible autorizada.";
+      addAudit(auditEvent("GATE_CLOSED", { id: "MODEL" }, "manual approval revoked"));
+      return;
+    }
+
+    const candidate = evaluated.find((lead) => lead.stage === "nurture") || evaluated.find((lead) => lead.stage === "new");
+    if (!candidate) {
+      status.dataset.state = "error";
+      status.textContent = "No hay candidato seguro para simular una transición.";
+      addAudit(auditEvent("GATE_REJECTED", { id: "MODEL" }, "no transition candidate"));
+      return;
+    }
+
+    const target = candidate.stage === "nurture" ? "qualified" : "nurture";
+    const result = transition(candidate, target, true);
+    if (!result.ok) {
+      status.dataset.state = "error";
+      status.textContent = "Transición rechazada por la política.";
+      addAudit(auditEvent("GATE_REJECTED", candidate, result.reason));
+      return;
+    }
+
+    const updated = result.lead;
+    evaluated = evaluated.map((lead) => lead.id === updated.id ? { ...lead, ...updated, nextAction: nextAction(updated) } : lead);
+    approved = true;
+    gate.textContent = "Aprobación activa ✓";
+    status.dataset.state = "ok";
+    status.textContent = candidate.id + " aprobado: " + candidate.stage + " → " + target + " (simulación).";
+    addAudit(auditEvent("APPROVED", candidate, candidate.stage + " → " + target));
+    render();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const tag = event.target?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (event.key.toLowerCase() === "r") runWithAudit();
+    if (event.key === "/") { event.preventDefault(); queueSearch?.focus(); }
   });
 
   renderWeights();
-  run();
+  persistAndRender();
 }
 
 initMenu();

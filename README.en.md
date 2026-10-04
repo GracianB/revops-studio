@@ -34,6 +34,34 @@ The brief fields are not posted to a backend. The user reviews the generated ema
 
 Plausible is used for anonymous interaction events only.
 
+## Control Room
+
+The public playground is a local decision cockpit, not a decorative chart.
+
+```text
+input → quality gate → scoring → classification
+     → impact analysis → priority/SLA queue
+     → human approval → audit
+```
+
+It supports:
+
+- configurable model weights;
+- configurable stage thresholds;
+- four operating scenarios;
+- baseline sensitivity comparison;
+- per-record explanations;
+- local CSV ingestion with size/row guards;
+- operational queue with priority, owner lane and SLA;
+- deterministic run identity;
+- shareable configuration URLs that never embed CSV records;
+- JSON run export.
+
+The Control Room remains simulation-only. It has no CRM, database or external execution layer.
+
+See docs/OPERATING_MODEL.md for the full operating model.
+
+
 ## Why this exists
 
 The project is both a commercial surface and a portfolio proof.

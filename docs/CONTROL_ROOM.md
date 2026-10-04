@@ -98,3 +98,38 @@ The comparison surfaces:
 - per-record score deltas.
 
 This makes the sliders operationally meaningful: a visitor can see the downstream effect of changing priorities instead of only seeing a new aggregate score.
+
+
+## v7: cockpit controls
+
+### Thresholds
+
+Stage thresholds are configurable separately from scoring weights:
+
+- qualified threshold;
+- nurture threshold.
+
+The engine rejects invalid threshold relationships and keeps classification deterministic.
+
+### Scenario matrix
+
+All four presets are evaluated side by side against the same records so the operator can compare the operational shape of each priority model without repeatedly clicking between presets.
+
+### Configuration identity
+
+Each run receives a deterministic run ID derived from the dataset, weights, thresholds and selected scenario.
+
+### Shareable configuration
+
+The Control Room can encode only configuration in the URL. Imported CSV rows are deliberately excluded.
+
+### Queue search and keyboard controls
+
+The execution queue can be filtered locally. The public demo also exposes two small keyboard shortcuts:
+
+- R: run the model;
+- /: focus queue search.
+
+### Guarded CSV ingestion
+
+CSV input supports comma or semicolon delimiters and quoted multiline fields. The parser rejects malformed quotes, duplicate headers, oversized files and excessive row counts before evaluation.
