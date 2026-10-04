@@ -609,6 +609,7 @@ test("record fingerprint is deterministic and changes when records change", () =
     row.id === "V15-FP-2" ? { ...row, urgency: 51 } : row
   ));
   assert.equal(first, second);
+  assert.equal(first, fingerprintRecords([...records].reverse()));
   assert.notEqual(first, changed);
 });
 
@@ -630,6 +631,8 @@ test("operational plan turns queue work into explicit approval and execution sta
   assert.ok(plan.summary.total >= 3);
   assert.ok(plan.summary.approvalPending >= 1);
   assert.ok(plan.summary.blocked >= 1);
+  assert.ok(plan.actions.some((item) => item.state === "BLOCKED"));
+  assert.equal(plan.actions.some((item) => item.stage === "blocked" && item.state !== "BLOCKED"), false);
   assert.ok(plan.actions.every((item) => item.execution === "NOT_EXECUTED"));
 });
 
@@ -682,9 +685,15 @@ test("execution adapter creates a simulation-only envelope for sensitive approva
   );
   const pending = createExecutionEnvelope(trace);
   const approved = createExecutionEnvelope(trace, { approvalStatus:"approved" });
+  const blockedTrace = buildDecisionTrace(
+    scoreLead({ id:"V15-ADAPTER-BLOCK", fit:90, intent:"bad", engagement:90, urgency:90 }),
+    {}
+  );
+  const blockedEnvelope = createExecutionEnvelope(blockedTrace);
   assert.equal(pending.valid, false);
   assert.equal(pending.canExecute, false);
   assert.equal(approved.valid, true);
+  assert.equal(blockedEnvelope.valid, false);
   const result = simulateExecution(approved);
   assert.equal(result.executed, false);
   assert.equal(result.state, "NOT_EXECUTED");
