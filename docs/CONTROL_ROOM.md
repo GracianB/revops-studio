@@ -133,3 +133,27 @@ The execution queue can be filtered locally. The public demo also exposes two sm
 ### Guarded CSV ingestion
 
 CSV input supports comma or semicolon delimiters and quoted multiline fields. The parser rejects malformed quotes, duplicate headers, oversized files and excessive row counts before evaluation.
+
+## v9: commercial pulse
+
+The Control Room can now use optional commercial context:
+
+    value, owner, segment, source, last_touch_days
+
+These fields are intentionally separate from the qualification score.
+
+The dashboard exposes:
+
+- active pipeline value;
+- weighted pipeline value;
+- qualified value;
+- stale account count/rate;
+- context coverage;
+- segment distribution;
+- owner distribution.
+
+For the synthetic dataset, these values are illustrative.
+
+A record with `last_touch_days > 14` is treated as stale. Staleness raises operational queue priority but does not modify the qualification score.
+
+The pipeline table also supports local stage filtering and a stale-only view.

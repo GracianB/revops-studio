@@ -1,4 +1,5 @@
 const REQUIRED = ["id", "fit", "intent", "engagement", "urgency"];
+const OPTIONAL = ["value", "owner", "segment", "source", "last_touch_days"];
 const MAX_ROWS = 5000;
 const MAX_CHARS = 2_000_000;
 const SUPPORTED_DELIMITERS = [",", ";"];
@@ -89,7 +90,14 @@ export function parseCsv(text) {
       fit: parseNumber(raw.fit),
       intent: parseNumber(raw.intent),
       engagement: parseNumber(raw.engagement),
-      urgency: parseNumber(raw.urgency)
+      urgency: parseNumber(raw.urgency),
+      value: raw.value === undefined || String(raw.value).trim() === "" ? null : parseNumber(raw.value),
+      owner: String(raw.owner ?? "").trim(),
+      segment: String(raw.segment ?? "").trim(),
+      source: String(raw.source ?? "").trim(),
+      lastTouchDays: raw.last_touch_days === undefined || String(raw.last_touch_days).trim() === ""
+        ? null
+        : parseNumber(raw.last_touch_days)
     };
   });
 }

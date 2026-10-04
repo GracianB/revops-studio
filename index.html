@@ -191,6 +191,7 @@
           <div><span class="kicker">PIPELINE / LOCAL</span><strong id="datasetLabel">Demo dataset · 8 records</strong></div>
           <div class="control-actions">
             <label class="file-btn"><input id="csvInput" type="file" accept=".csv,text/csv">Importar CSV</label>
+            <button class="btn btn-secondary demo-btn" id="downloadCsvTemplate" type="button">Plantilla CSV</button>
             <button class="btn btn-secondary demo-btn" id="resetDemo" type="button">Reset</button>
             <button class="btn btn-primary demo-btn" id="runDemo" type="button">Ejecutar modelo →</button>
           </div>
@@ -211,6 +212,33 @@
           <div class="playground-metric"><b id="demoQuality">0</b><span>data issues</span></div>
           <div class="playground-metric"><b id="demoRate">0%</b><span>qualification</span></div>
         </div>
+
+        <section class="commercial-panel" aria-labelledby="commercial-title">
+          <div class="commercial-head">
+            <div>
+              <span class="kicker">Commercial pulse</span>
+              <h3 id="commercial-title">Del score a la oportunidad.</h3>
+            </div>
+            <span class="kicker">SIMULATED EUR</span>
+          </div>
+          <div class="commercial-grid">
+            <div class="commercial-metric"><span>Pipeline active</span><strong id="commercialPipeline">0 €</strong><small>qualified + nurture + new</small></div>
+            <div class="commercial-metric"><span>Weighted pipeline</span><strong id="commercialWeighted">0 €</strong><small>value × score</small></div>
+            <div class="commercial-metric"><span>Qualified value</span><strong id="commercialQualified">0 €</strong><small>current qualified stage</small></div>
+            <div class="commercial-metric"><span>Stale accounts</span><strong id="commercialStale">0 · 0%</strong><small>> 14 days since last touch</small></div>
+            <div class="commercial-metric"><span>Context coverage</span><strong id="commercialCoverage">0%</strong><small>optional commercial fields</small></div>
+          </div>
+          <div class="commercial-breakdowns">
+            <div>
+              <span class="kicker">Segments</span>
+              <div id="segmentBreakdown" class="breakdown-list"></div>
+            </div>
+            <div>
+              <span class="kicker">Owners</span>
+              <div id="ownerBreakdown" class="breakdown-list"></div>
+            </div>
+          </div>
+        </section>
 
         <div class="model-and-chart">
           <div class="weight-lab">
@@ -278,6 +306,18 @@
           </div>
           <div class="scenario-matrix" id="scenarioMatrix" aria-live="polite"></div>
         </section>
+
+        <div class="table-tools" role="group" aria-label="Filtros de pipeline">
+          <label for="tableStageFilter">Stage</label>
+          <select id="tableStageFilter">
+            <option value="all">Todos</option>
+            <option value="qualified">Qualified</option>
+            <option value="nurture">Nurture</option>
+            <option value="new">New</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          <label class="check-filter"><input id="staleOnly" type="checkbox"> Solo stale &gt; 14d</label>
+        </div>
 
         <div class="demo-table-wrap">
           <table class="demo-table">
@@ -349,6 +389,7 @@
           <span class="kicker">CSV schema</span>
           <p class="side-copy">Cabeceras mínimas:</p>
           <code class="schema-code">id, account, fit, intent, engagement, urgency</code>
+          <code class="schema-code schema-optional">+ value, owner, segment, source, last_touch_days</code>
           <p class="side-copy queue-schema-note">Valores 0–100. Filas con datos inválidos quedan bloqueadas.</p>
         </div>
 
