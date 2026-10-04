@@ -17,7 +17,9 @@ const required = [
   "assets/js/outcome-engine.js",
   "assets/js/calibration-engine.js",
   "assets/js/adaptive-calibration-engine.js",
-  "tests/adaptive-calibration-engine.test.js"
+  "tests/adaptive-calibration-engine.test.js",
+  "assets/js/policy-engine.js",
+  "tests/policy-engine.test.js"
 ];
 
 const fail = (message) => {
@@ -66,6 +68,9 @@ const requiredV18Ids = [
   "calibrationV20Alerts", "calibrationV20Recommendations",
   "calibrationV20WindowDays", "calibrationV20MinSamples",
   "calibrationV20MinGroupSamples", "resetCalibrationV20",
+  "calibration-v21-title", "calibrationV21Status", "calibrationV21Multiplier",
+  "calibrationV21Improvement", "calibrationV21Active", "calibrationV21Reason",
+  "approvePolicyV21", "rejectPolicyV21", "rollbackPolicyV21",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
   "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
@@ -123,7 +128,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "18.0.0") fail("package version must be 18.0.0");
+if (packageJson.version !== "21.0.0") fail("package version must be 21.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -166,7 +171,7 @@ const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
-  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js",
+  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js",
   "README.md"
 ];
 

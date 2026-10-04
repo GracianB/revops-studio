@@ -330,3 +330,24 @@ The Control Room exposes the current adaptive state locally in the browser. The 
 
 V20 adds deterministic regression coverage for temporal windows, sample sufficiency, cohort/segment drift, baseline establishment, bounded history, recommendation logic and replay-safe identities.
 
+
+
+### V21 · Controlled Recalibration Policy
+
+V21 is the approval boundary that V20 deliberately did not cross:
+
+`RECOMMENDATION → PROPOSAL → REPLAY → APPROVE / REJECT → APPLY → ROLLBACK`
+
+The policy layer:
+
+- builds a bounded probability multiplier from observed calibration bias;
+- clamps the step so a single approval cannot move stage probabilities by more than 0.15;
+- replays the candidate against the supplied outcomes and blocks it unless Brier improves;
+- requires an explicit operator decision before any forecast assumption changes;
+- applies the approved multiplier only to qualified, nurture and new probabilities;
+- leaves scoring weights, downside and upside untouched;
+- isolates decisions by dataset fingerprint;
+- supports reject and rollback without deleting the decision trail;
+- exports a V21 summary in the run artifact without exporting raw ledger rows.
+
+The public execution boundary remains simulation-only.
