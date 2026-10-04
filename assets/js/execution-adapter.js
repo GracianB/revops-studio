@@ -114,6 +114,11 @@ export function createIntegrationContract(envelope, context = {}) {
     authRequired: false,
     timeoutMs: Number.isFinite(Number(context.timeoutMs)) ? Number(context.timeoutMs) : 5000,
     payload,
+    envelopeValid: safe.valid === true,
+    approval: Object.freeze({
+      required: safe.approval?.required === true,
+      status: normaliseText(safe.approval?.status, "pending")
+    }),
     invariants: Object.freeze({
       externalCalls: 0,
       state: "NOT_EXECUTED",
@@ -128,12 +133,15 @@ export function validateIntegrationContract(contract) {
     contract?.contractType === "REVOPS_EXECUTION_CONTRACT",
     contract?.dryRun === true,
     contract?.canExecute === false,
+    contract?.envelopeValid === true,
     contract?.adapter === "CRM_PLACEHOLDER",
     contract?.endpoint === null,
     contract?.invariants?.externalCalls === 0,
     contract?.invariants?.state === "NOT_EXECUTED",
     contract?.invariants?.mode === "SIMULATION_ONLY",
-    Boolean(String(contract?.idempotencyKey || "").trim())
+    Boolean(String(contract?.idempotencyKey || "").trim()),
+    contract?.approval?.required !== true ||
+      contract?.approval?.status === "approved"
   ];
   return {
     valid: required.every(Boolean),
@@ -142,12 +150,13 @@ export function validateIntegrationContract(contract) {
       type: required[1],
       dryRun: required[2],
       canExecute: required[3],
-      adapter: required[4],
-      endpoint: required[5],
-      noExternalCalls: required[6],
-      state: required[7],
-      mode: required[8],
-      idempotencyKey: required[9]
+      envelopeValid: required[4],
+      adapter: required[5],
+      endpoint: required[6],
+      noExternalCalls: required[7],
+      state: required[8],
+      mode: required[9],
+      idempotencyKey: required[10]
     }
   };
 }
