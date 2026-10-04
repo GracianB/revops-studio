@@ -24,6 +24,7 @@
     <p>RevOps Studio</p>
     <h1>Queda apuntado. Ahora cierra la hora.</h1>
     <p>El correo con tus respuestas debería haberse abierto. Si no, escríbelo a mano a gracianbaenagonzalez@gmail.com. El calendario va ahora, no antes.</p>
+    <p><a class="btn" id="enviar" href="#">Enviar el brief por email</a></p>
     <p><a class="btn" id="reservar" href="https://calendar.app.google/n99psBFktwYyoAWi9" target="_blank" rel="noopener">Reservar 30 min ↗</a></p>
     <h2>Email de seguimiento, cinco líneas</h2>
     <p>Esto es lo que llega después de la llamada. No es un presupuesto.</p>
@@ -38,8 +39,14 @@ Gracián Baena · gracianbaenagonzalez@gmail.com</pre>
   </main>
   <script>
     window.plausible = window.plausible || function(){ (window.plausible.q = window.plausible.q || []).push(arguments) };
+    var brief = null;
     document.getElementById("reservar").addEventListener("click", function(){
       window.plausible("Reservar", {props:{place:"gracias"}});
+    });
+    document.getElementById("enviar").addEventListener("click", function(event){
+      event.preventDefault();
+      var body = document.getElementById("mail").textContent;
+      window.location.href = "mailto:gracianbaenagonzalez@gmail.com?subject=" + encodeURIComponent("RevOps Studio | Diagnóstico") + "&body=" + encodeURIComponent(body);
     });
     try {
       var data = JSON.parse(sessionStorage.getItem("revops-brief") || "null");
