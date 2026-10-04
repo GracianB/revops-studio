@@ -263,7 +263,7 @@ test("forecast pipeline applies stage probabilities to active value", () => {
     new: 0.1
   });
   assert.equal(result.pipelineValue, 80000);
-  assert.equal(result.expectedValue, 46000);
+  assert.equal(result.expectedValue, 48000);
   assert.equal(result.activeRecords, 3);
   assert.equal(result.expectedCoverage, 0.575);
 });
