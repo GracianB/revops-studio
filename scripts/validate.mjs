@@ -12,7 +12,9 @@ const required = [
   "assets/js/revops-engine.js",
   "assets/js/csv-utils.js",
   "tests/revops-engine.test.js",
-  "assets/js/execution-adapter.js"
+  "tests/outcome-engine.test.js",
+  "assets/js/execution-adapter.js",
+  "assets/js/outcome-engine.js"
 ];
 
 const fail = (message) => {
@@ -41,7 +43,7 @@ if (guidedSteps.length !== expectedGuidedSteps.length || guidedSteps.some((value
   fail("guided proof steps must expose 0,1,2,3 exactly once");
 }
 
-const requiredV17Ids = [
+const requiredV18Ids = [
   "decision-trace-title", "decisionTraceEmpty", "decisionTraceContent",
   "traceState", "traceRunId", "traceInputs", "traceDecision", "traceCommercial",
   "traceRisk", "traceProposal", "traceApproval", "traceExecution", "ownerMatrix",
@@ -54,10 +56,14 @@ const requiredV17Ids = [
   "impactQualificationDelta", "impactStageDelta", "previewWorkflowImpact",
   "execution-ledger-title", "ledgerStatus", "ledgerMeta", "ledgerSequence",
   "ledgerHead", "ledgerApprovals", "ledgerContracts", "ledgerSimulations",
-  "replayLedger", "ledgerEvents"
+  "replayLedger", "ledgerEvents",
+  "feedback-title", "feedbackLead", "feedbackType", "feedbackActualValue",
+  "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
+  "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
+  "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
 ];
-const missingV17Ids = requiredV17Ids.filter((id) => !ids.includes(id));
-if (missingV17Ids.length) fail("V17 surface missing DOM ids: " + missingV17Ids.join(", "));
+const missingV18Ids = requiredV18Ids.filter((id) => !ids.includes(id));
+if (missingV18Ids.length) fail("V18 surface missing DOM ids: " + missingV18Ids.join(", "));
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail("duplicate ids: " + [...new Set(duplicates)].join(", "));
 
@@ -105,11 +111,16 @@ if (missingEngineExports.length) fail("app.js references missing engine exports:
 
 const adapterImport = appJs.includes('from "./execution-adapter.js"');
 if (!adapterImport) fail("app.js execution adapter import missing");
+const outcomeImport = appJs.includes('from "./outcome-engine.js"');
+if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "17.0.0") fail("package version must be 17.0.0");
-const declaredTests = (fs.readFileSync(path.join(root, "tests/revops-engine.test.js"), "utf8").match(/test\(/g) || []).length;
-if (declaredTests < 72) fail("V17 regression suite must contain at least 72 tests");
+if (packageJson.version !== "18.0.0") fail("package version must be 18.0.0");
+const testFiles = fs.readdirSync(path.join(root, "tests"))
+  .filter((file) => file.endsWith(".test.js"));
+const declaredTests = testFiles.reduce((total, file) =>
+  total + (fs.readFileSync(path.join(root, "tests", file), "utf8").match(/test\(/g) || []).length, 0);
+if (declaredTests < 87) fail("V18 regression suite must contain at least 87 tests");
 const ledgerExports = [
   "createExecutionLedger",
   "appendExecutionEvent",
@@ -118,7 +129,7 @@ const ledgerExports = [
   "buildExecutionLedger"
 ];
 for (const expected of ledgerExports) {
-  if (!engineExports.has(expected)) fail("missing V17 ledger export: " + expected);
+  if (!engineExports.has(expected)) fail("missing V18 ledger export: " + expected);
 }
 
 const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
@@ -129,10 +140,24 @@ for (const expected of ["createExecutionEnvelope", "createIntegrationContract", 
   if (!adapterExports.has(expected)) fail("missing execution adapter export: " + expected);
 }
 
+const outcomeJs = fs.readFileSync(path.join(root, "assets/js/outcome-engine.js"), "utf8");
+const outcomeExports = new Set(
+  [...outcomeJs.matchAll(/export\s+(?:function|const|let|var|class)\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
+);
+for (const expected of [
+  "OUTCOME_TYPES", "POSITIVE_OUTCOMES", "validateOutcome", "createOutcomeRecord",
+  "fingerprintOutcomes", "createOutcomeLedger", "appendOutcome", "buildOutcomeSummary",
+  "actionEffectiveness", "calibrateForecast", "buildFeedbackAnalysis", "createOutcomeEvent"
+]) {
+  if (!outcomeExports.has(expected)) fail("missing V18 outcome export: " + expected);
+}
+
+
+
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
-  "assets/js/execution-adapter.js","README.md"
+  "assets/js/execution-adapter.js","assets/js/outcome-engine.js","README.md"
 ];
 
 for (const file of sourceFiles) {

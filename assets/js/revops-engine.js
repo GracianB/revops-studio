@@ -1365,6 +1365,7 @@ export function replayExecutionLedger(ledger) {
   let simulations = 0;
   let contracts = 0;
   let blocked = 0;
+  let outcomes = 0;
 
   ledger.events.forEach((event) => {
     const id = event.leadId === null ? null : String(event.leadId);
@@ -1397,6 +1398,10 @@ export function replayExecutionLedger(ledger) {
       blocked += 1;
       leads[id].state = "BLOCKED";
     }
+    if (event.type === "OUTCOME_RECORDED" && id) {
+      outcomes += 1;
+      leads[id].state = "OUTCOME_RECORDED";
+    }
   });
 
   return {
@@ -1408,7 +1413,8 @@ export function replayExecutionLedger(ledger) {
         approvals: Object.keys(approvals).length,
         contracts,
         simulations,
-        blocked
+        blocked,
+        outcomes
       }
     }
   };

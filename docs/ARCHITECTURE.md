@@ -236,3 +236,34 @@ The ledger is append-only from the application's point of view. Events are chain
 
 The adapter remains a hard integration boundary. A simulation can produce an outcome and an auditable event, but it cannot enable network execution.
 
+
+
+## V18 · Outcome and feedback control
+
+V18 adds a feedback layer after the V17 execution evidence boundary:
+
+```text
+Decision Trace
+    ↓
+Operational Plan
+    ↓
+Impact Preview
+    ↓
+Human Approval
+    ↓
+Integration Contract
+    ↓
+Simulation / Execution
+    ↓
+Outcome Record
+    ↓
+Effectiveness + Calibration
+    ↓
+Replay
+```
+
+`assets/js/outcome-engine.js` is pure and deterministic. It validates outcome contracts, creates deterministic outcome identities, maintains a local outcome ledger, aggregates action effectiveness, compares expected versus actual value and measures forecast calibration.
+
+The engine deliberately separates observed feedback from the scoring model. Outcomes do not silently mutate qualification weights or thresholds.
+
+The execution ledger can also replay `OUTCOME_RECORDED` events, keeping the operational evidence chain connected to post-action results.
