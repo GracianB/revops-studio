@@ -307,9 +307,15 @@ test("V20 segment drift is surfaced separately", () => {
   assert.equal(smb.severity, "CRITICAL");
 });
 
-test("V20 cohort drift can be distinguished from segment drift", () => {
-  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" });
-  const current = observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:true, segment:"SMB", cohort:"B" });
+test("V20 cohort drift can be distinguished from stable segment aggregate", () => {
+  const previous = [
+    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:true, segment:"SMB", cohort:"A" }),
+    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"B" })
+  ];
+  const current = [
+    ...observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" }),
+    ...observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:true, segment:"SMB", cohort:"B" })
+  ];
 
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"PREV",
@@ -328,8 +334,77 @@ test("V20 cohort drift can be distinguished from segment drift", () => {
     config:{ minSamples:8, minGroupSamples:5 }
   });
 
-  assert.ok(report.cohorts.some((item) => item.value === "B"));
-  assert.equal(report.segments.some((item) => item.value === "SMB" && item.drift), true);
+  const smb = report.segments.find((item) => item.value === "SMB");
+  const cohortA = report.cohorts.find((item) => item.value === "A");
+  const cohortB = report.cohorts.find((item) => item.value === "B");
+
+  assert.equal(report.global.severity, "STABLE");
+  assert.equal(smb.drift, false);
+  assert.equal(cohortA.drift, true);
+  assert.equal(cohortB.drift, true);
+  assert.ok(["WATCH","WARNING","CRITICAL"].includes(report.severity));
+  assert.ok(report.recommendations.some((item) => item.code === "COHORT_DRIFT"));
+});
+
+test("V20 low-volume groups do not override sufficient global calibration", () => {
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" });
+  const current = observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" });
+
+  const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
+    runId:"PREV",
+    datasetFingerprint:"D1",
+    capturedAt:"2026-10-01T00:00:00.000Z",
+    rows:previous
+  }), 36);
+
+  const currentInput = asForecastOutcomes(current);
+  const report = buildAdaptiveCalibrationReport({
+    ...currentInput,
+    history,
+    datasetFingerprint:"D1",
+    runId:"CURRENT",
+    now:"2026-10-05T00:00:00.000Z",
+    config:{ minSamples:8, minGroupSamples:20 }
+  });
+
+  assert.equal(report.global.sampleSufficient, true);
+  assert.equal(report.global.severity, "STABLE");
+  assert.equal(report.severity, "STABLE");
+  assert.ok(report.recommendations.some((item) => item.code === "GROUP_SAMPLE_GAP"));
+});
+
+test("V20 material group drift can elevate overall severity above stable global", () => {
+  const previous = [
+    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" }),
+    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"Enterprise", cohort:"A" })
+  ];
+  const current = [
+    ...observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:true, segment:"SMB", cohort:"A" }),
+    ...observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:false, segment:"Enterprise", cohort:"A" })
+  ];
+
+  const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
+    runId:"PREV",
+    datasetFingerprint:"D1",
+    capturedAt:"2026-10-01T00:00:00.000Z",
+    rows:previous
+  }), 36);
+
+  const currentInput = asForecastOutcomes(current);
+  const report = buildAdaptiveCalibrationReport({
+    ...currentInput,
+    history,
+    datasetFingerprint:"D1",
+    runId:"CURRENT",
+    now:"2026-10-05T00:00:00.000Z",
+    config:{ minSamples:8, minGroupSamples:5 }
+  });
+
+  const smb = report.segments.find((item) => item.value === "SMB");
+  assert.equal(report.global.severity, "STABLE");
+  assert.equal(smb.drift, true);
+  assert.equal(report.severity, "CRITICAL");
+  assert.ok(report.recommendations.some((item) => item.code === "SEGMENT_DRIFT"));
 });
 
 test("V20 audit trail captures snapshot, baseline and drift state", () => {
