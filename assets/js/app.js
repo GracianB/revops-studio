@@ -14,7 +14,8 @@ import {
   nextAction,
   commercialMetrics,
   forecastPipeline,
-  forecastScenarios
+  forecastScenarios,
+  executiveIntelligence
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -149,14 +150,14 @@ function initTracking() {
 }
 
 const demoSeed = [
-  { id:"L-001", account:"Northstar", fit:92, intent:88, engagement:80, urgency:74, value:42000, owner:"Ana", segment:"Enterprise", source:"Inbound", lastTouchDays:3 },
-  { id:"L-002", account:"Atlas", fit:78, intent:61, engagement:56, urgency:52, value:18500, owner:"Luis", segment:"Mid-market", source:"Partner", lastTouchDays:8 },
-  { id:"L-003", account:"Kite", fit:41, intent:30, engagement:46, urgency:35, value:7200, owner:"Marta", segment:"SMB", source:"Outbound", lastTouchDays:21 },
-  { id:"L-004", account:"Nova", fit:86, intent:90, engagement:72, urgency:91, value:67000, owner:"Ana", segment:"Enterprise", source:"Inbound", lastTouchDays:1 },
-  { id:"L-005", account:"Orbit", fit:67, intent:54, engagement:62, urgency:44, value:24000, owner:"Luis", segment:"Mid-market", source:"Event", lastTouchDays:16 },
-  { id:"L-006", account:"Pine", fit:74, intent:49, engagement:67, urgency:28, value:31000, owner:"Marta", segment:"Enterprise", source:"Referral", lastTouchDays:11 },
-  { id:"L-007", account:"Mica", fit:57, intent:79, engagement:61, urgency:72, value:12800, owner:"Ana", segment:"SMB", source:"Inbound", lastTouchDays:19 },
-  { id:"L-008", account:"Echo", fit:28, intent:35, engagement:32, urgency:18, value:4900, owner:"Luis", segment:"SMB", source:"Outbound", lastTouchDays:31 }
+  { id:"L-001", account:"Northstar", fit:92, intent:88, engagement:80, urgency:74, value:42000, owner:"Ana", segment:"Enterprise", source:"Inbound", cohort:"2026-Q4", lastTouchDays:3 },
+  { id:"L-002", account:"Atlas", fit:78, intent:61, engagement:56, urgency:52, value:18500, owner:"Luis", segment:"Mid-market", source:"Partner", cohort:"2026-Q4", lastTouchDays:8 },
+  { id:"L-003", account:"Kite", fit:41, intent:30, engagement:46, urgency:35, value:7200, owner:"Marta", segment:"SMB", source:"Outbound", cohort:"2026-Q3", lastTouchDays:21 },
+  { id:"L-004", account:"Nova", fit:86, intent:90, engagement:72, urgency:91, value:67000, owner:"Ana", segment:"Enterprise", source:"Inbound", cohort:"2026-Q4", lastTouchDays:1 },
+  { id:"L-005", account:"Orbit", fit:67, intent:54, engagement:62, urgency:44, value:24000, owner:"Luis", segment:"Mid-market", source:"Event", cohort:"2026-Q3", lastTouchDays:16 },
+  { id:"L-006", account:"Pine", fit:74, intent:49, engagement:67, urgency:28, value:31000, owner:"Marta", segment:"Enterprise", source:"Referral", cohort:"2026-Q3", lastTouchDays:11 },
+  { id:"L-007", account:"Mica", fit:57, intent:79, engagement:61, urgency:72, value:12800, owner:"Ana", segment:"SMB", source:"Inbound", cohort:"2026-Q4", lastTouchDays:19 },
+  { id:"L-008", account:"Echo", fit:28, intent:35, engagement:32, urgency:18, value:4900, owner:"Luis", segment:"SMB", source:"Outbound", cohort:"2026-Q3", lastTouchDays:31 }
 ];
 
 function initPlayground() {
@@ -234,6 +235,17 @@ function initPlayground() {
       downside: qs("#forecastDownsideMultValue"),
       upside: qs("#forecastUpsideMultValue")
     }
+  };
+  const intelligence = {
+    signal: qs("#intelSignal"),
+    health: qs("#intelHealth"),
+    risk: qs("#intelRisk"),
+    leakage: qs("#intelLeakage"),
+    anomalies: qs("#intelAnomalies"),
+    priorities: qs("#intelPriorities"),
+    opportunities: qs("#intelOpportunities"),
+    segments: qs("#intelSegments"),
+    cohorts: qs("#intelCohorts")
   };
   const impact = qs("#impactList");
   const impactMeta = qs("#impactMeta");
@@ -591,9 +603,12 @@ function initPlayground() {
     if (commercial.stale) commercial.stale.textContent =
       commerce.staleRecords + " · " + Math.round(commerce.staleRate * 100) + "%";
     if (commercial.coverage) {
-      const totalOptional = evaluated.length * 4;
+      const totalOptional = evaluated.length * 6;
       const presentOptional = evaluated.reduce((sum, lead) =>
-        sum + ["value", "owner", "segment", "source"].filter((key) => String(lead[key] ?? "").trim() !== "").length, 0
+        sum + ["value", "owner", "segment", "source", "cohort", "lastTouchDays"].filter((key) => {
+          const value = lead[key];
+          return key === "lastTouchDays" ? Number.isFinite(Number(value)) : String(value ?? "").trim() !== "";
+        }).length, 0
       );
       commercial.coverage.textContent = totalOptional
         ? Math.round(presentOptional / totalOptional * 100) + "%"
@@ -626,6 +641,7 @@ function initPlayground() {
     };
     const forecastResult = forecastPipeline(evaluated, forecastAssumptions);
     const scenarioResult = forecastScenarios(evaluated, forecastAssumptions);
+    const intelligenceResult = executiveIntelligence(evaluated, forecastAssumptions);
     const scenarioMoney = (name) => formatMoney(scenarioResult[name]?.expectedValue || 0);
 
     if (forecast.downside) forecast.downside.textContent = scenarioMoney("downside");
@@ -642,24 +658,81 @@ function initPlayground() {
     });
 
     if (forecast.rows) {
-      forecast.rows.replaceChildren();
-      Object.entries(forecastResult.bySegment)
-        .sort((a, b) => b[1].expectedValue - a[1].expectedValue)
-        .forEach(([segment, item]) => {
-          const row = document.createElement("div");
-          row.className = "forecast-segment-row";
-          const label = document.createElement("span");
-          label.textContent = segment;
-          const value = document.createElement("b");
-          value.textContent = formatMoney(item.expectedValue);
-          const meta = document.createElement("small");
-          meta.textContent = item.count + " records · " + formatMoney(item.value) + " pipeline";
-          row.append(label, value, meta);
-          forecast.rows.appendChild(row);
-        });
-    }
+       forecast.rows.replaceChildren();
+       Object.entries(forecastResult.bySegment)
+         .sort((a, b) => b[1].expectedValue - a[1].expectedValue)
+         .forEach(([segment, item]) => {
+           const row = document.createElement("div");
+           row.className = "forecast-segment-row";
+           const label = document.createElement("span");
+           label.textContent = segment;
+           const value = document.createElement("b");
+           value.textContent = formatMoney(item.expectedValue);
+           const meta = document.createElement("small");
+           meta.textContent = item.count + " records · " + formatMoney(item.value) + " pipeline";
+           row.append(label, value, meta);
+           forecast.rows.appendChild(row);
+         });
+     }
 
-    Object.entries(bars).forEach(([stage, bar]) => {
+     const intelSignalLabels = { controlled: "CONTROLLED", attention: "ATTENTION", critical: "CRITICAL" };
+     if (intelligence.signal) {
+       intelligence.signal.textContent = intelSignalLabels[intelligenceResult.signal] || "UNKNOWN";
+       intelligence.signal.dataset.state = intelligenceResult.signal;
+     }
+     if (intelligence.health) intelligence.health.textContent =
+       intelligenceResult.health.average + " · " +
+       intelligenceResult.health.healthy + " healthy · " +
+       (intelligenceResult.health.risk + intelligenceResult.health.critical) + " risk";
+     if (intelligence.risk) intelligence.risk.textContent =
+       intelligenceResult.rules.critical + " critical · " + intelligenceResult.rules.high + " high";
+     if (intelligence.leakage) intelligence.leakage.textContent = formatMoney(intelligenceResult.leakage.atRiskValue);
+     if (intelligence.anomalies) intelligence.anomalies.textContent =
+       intelligenceResult.anomalies.total + " · " + intelligenceResult.anomalies.high + " high";
+
+     const renderIntelCards = (target, items, emptyText) => {
+       if (!target) return;
+       target.replaceChildren();
+       if (!items.length) {
+         const empty = document.createElement("div");
+         empty.className = "intel-empty";
+         empty.textContent = emptyText;
+         target.appendChild(empty);
+         return;
+       }
+       items.slice(0, 6).forEach((item) => {
+         const row = document.createElement("article");
+         row.className = "intel-item";
+         const title = document.createElement("strong");
+         title.textContent = item.title;
+         const detail = document.createElement("small");
+         detail.textContent = item.detail + (item.value ? " · " + formatMoney(item.value) : "");
+         row.append(title, detail);
+         target.appendChild(row);
+       });
+     };
+
+     renderIntelCards(intelligence.priorities, intelligenceResult.priorities, "No hay riesgos críticos en este run.");
+     renderIntelCards(intelligence.opportunities, intelligenceResult.opportunities, "No hay oportunidades destacadas.");
+
+     const renderIntelMap = (target, items, labelBuilder) => {
+       if (!target) return;
+       target.replaceChildren();
+       items.slice(0, 6).forEach((item) => {
+         const row = document.createElement("div");
+         row.className = "intel-row";
+         const label = document.createElement("span");
+         label.textContent = labelBuilder(item);
+         const value = document.createElement("b");
+         value.textContent = formatMoney(item.expectedValue) + " · " + Math.round(item.qualifiedRate * 100) + "% Q";
+         row.append(label, value);
+         target.appendChild(row);
+       });
+     };
+     renderIntelMap(intelligence.segments, Object.values(intelligenceResult.segments), (item) => item.segment);
+     renderIntelMap(intelligence.cohorts, intelligenceResult.cohorts, (item) => item.cohort);
+
+     Object.entries(bars).forEach(([stage, bar]) => {
       if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
     });
     if (shapeLabel) {
@@ -909,6 +982,7 @@ function initPlayground() {
       forecast: getForecastConfig(),
       pipeline: summarisePipeline(evaluated),
       commercial: commercialMetrics(evaluated),
+      intelligence: executiveIntelligence(evaluated, getForecastConfig()),
       queue: buildActionQueue(evaluated),
       records: evaluated
     };

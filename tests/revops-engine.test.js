@@ -15,7 +15,16 @@ import {
   forecastPipeline,
   forecastScenarios,
   normaliseThresholds,
-  transition
+  normaliseIntelligenceConfig,
+  normaliseForecastAssumptions,
+  transition,
+  accountHealth,
+  segmentIntelligence,
+  cohortAnalysis,
+  applyBusinessRules,
+  detectAnomalies,
+  revenueLeakage,
+  executiveIntelligence
 } from "../assets/js/revops-engine.js";
 
 test("weights are normalised to 1", () => {
@@ -313,4 +322,142 @@ test("forecast assumptions are part of run identity", () => {
   });
   assert.notEqual(first.runId, second.runId);
   assert.equal(first.forecast.qualified, 0.8);
+});
+
+
+test("account health is deterministic and recency aware", () => {
+  const healthy = accountHealth({
+    id: "H-001", fit: 100, intent: 100, engagement: 100, urgency: 20, lastTouchDays: 2
+  });
+  assert.equal(healthy.score, 100);
+  assert.equal(healthy.status, "healthy");
+  assert.equal(healthy.confidence, "high");
+
+  const unknown = accountHealth({
+    id: "H-002", fit: 80, intent: 80, engagement: 70, urgency: 20
+  });
+  assert.equal(unknown.confidence, "medium");
+  assert.ok(unknown.reasons.includes("Recency context missing"));
+});
+
+test("segment intelligence separates record rate from value share", () => {
+  const leads = evaluateBatch([
+    { id:"SI-001", fit:100, intent:100, engagement:100, urgency:100, value:50000, segment:"Enterprise" },
+    { id:"SI-002", fit:50, intent:50, engagement:50, urgency:50, value:10000, segment:"Enterprise" },
+    { id:"SI-003", fit:100, intent:100, engagement:100, urgency:100, value:10000, segment:"SMB" }
+  ]);
+  const result = segmentIntelligence(leads, { qualified:0.8, nurture:0.35, new:0.1 });
+  assert.equal(result.Enterprise.activeRecords, 2);
+  assert.equal(result.Enterprise.qualifiedRate, 0.5);
+  assert.equal(result.Enterprise.qualifiedValueShare, 50000 / 60000);
+  assert.equal(result.Enterprise.expectedValue, 43500);
+});
+
+test("cohort analysis groups commercial context without changing scoring", () => {
+  const leads = evaluateBatch([
+    { id:"CO-001", fit:100, intent:100, engagement:100, urgency:100, value:20000, cohort:"2026-Q3" },
+    { id:"CO-002", fit:50, intent:50, engagement:50, urgency:50, value:10000, cohort:"2026-Q3" },
+    { id:"CO-003", fit:10, intent:10, engagement:10, urgency:10, value:5000, cohort:"2026-Q4" }
+  ]);
+  const result = cohortAnalysis(leads, "cohort", { qualified:0.8, nurture:0.35, new:0.1 });
+  assert.equal(result.length, 2);
+  assert.equal(result[0].cohort, "2026-Q3");
+  assert.equal(result[0].qualifiedRate, 0.5);
+  assert.equal(result[0].expectedValue, 19500);
+});
+
+test("business rules surface material operational risk", () => {
+  const leads = evaluateBatch([
+    { id:"BR-001", account:"Stale Enterprise", fit:90, intent:90, engagement:30, urgency:80, value:60000, owner:"", segment:"Enterprise", lastTouchDays:30 },
+    { id:"BR-002", account:"Broken Revenue", fit:90, intent:"bad", engagement:90, urgency:90, value:40000, owner:"Ana", segment:"Enterprise" }
+  ]);
+  const findings = applyBusinessRules(leads);
+  assert.equal(findings.some((item) => item.code === "HIGH_VALUE_STALE"), true);
+  assert.equal(findings.some((item) => item.code === "OWNERLESS_REVENUE"), true);
+  assert.equal(findings.some((item) => item.code === "INTENT_ENGAGEMENT_GAP"), true);
+  assert.equal(findings.some((item) => item.code === "BLOCKED_REVENUE"), true);
+});
+
+test("anomaly detection flags value outliers and segment clusters", () => {
+  const leads = evaluateBatch([
+    { id:"AN-001", fit:80, intent:80, engagement:80, urgency:80, value:100, segment:"A", lastTouchDays:30 },
+    { id:"AN-002", fit:80, intent:80, engagement:80, urgency:80, value:110, segment:"A", lastTouchDays:35 },
+    { id:"AN-003", fit:80, intent:80, engagement:80, urgency:80, value:120, segment:"B", lastTouchDays:1 },
+    { id:"AN-004", fit:80, intent:80, engagement:80, urgency:80, value:130, segment:"B", lastTouchDays:2 },
+    { id:"AN-005", fit:80, intent:80, engagement:80, urgency:80, value:1000, segment:"A", lastTouchDays:40 }
+  ]);
+  const result = detectAnomalies(leads);
+  assert.equal(result.items.some((item) => item.type === "value_outlier" && item.leadId === "AN-005"), true);
+  assert.equal(result.items.some((item) => item.type === "segment_stale_cluster" && item.segment === "A"), true);
+});
+
+test("revenue leakage deduplicates total exposure and keeps category totals", () => {
+  const leads = evaluateBatch([
+    { id:"RL-001", fit:100, intent:100, engagement:20, urgency:80, value:50000, owner:"", segment:"Enterprise", lastTouchDays:25 },
+    { id:"RL-002", fit:100, intent:100, engagement:100, urgency:80, value:30000, owner:"Ana", segment:"Enterprise", lastTouchDays:1 }
+  ]);
+  const result = revenueLeakage(leads);
+  assert.equal(result.totalValue, 80000);
+  assert.equal(result.atRiskValue, 50000);
+  assert.equal(result.staleRevenue, 50000);
+  assert.equal(result.ownerlessRevenue, 50000);
+  assert.equal(result.intentEngagementGapRevenue, 50000);
+  assert.equal(result.leakageRate, 0.625);
+});
+
+test("executive intelligence returns a single decision surface", () => {
+  const leads = evaluateBatch([
+    { id:"EX-001", account:"Northstar", fit:100, intent:100, engagement:100, urgency:100, value:80000, owner:"Ana", segment:"Enterprise", cohort:"2026-Q4", lastTouchDays:2 },
+    { id:"EX-002", account:"At Risk", fit:90, intent:90, engagement:20, urgency:90, value:60000, owner:"", segment:"Enterprise", cohort:"2026-Q4", lastTouchDays:30 },
+    { id:"EX-003", account:"Broken", fit:90, intent:"bad", engagement:90, urgency:90, value:40000, segment:"SMB", cohort:"2026-Q3" }
+  ]);
+  const result = executiveIntelligence(leads, { qualified:0.8, nurture:0.35, new:0.1 });
+  assert.equal(result.signal, "critical");
+  assert.ok(result.rules.critical >= 1);
+  assert.ok(result.leakage.atRiskValue >= 60000);
+  assert.ok(result.priorities.length > 0);
+  assert.ok(result.opportunities.length > 0);
+});
+
+test("run snapshot preserves forecast multipliers above 100 percent", () => {
+  const snapshot = createRunSnapshot({
+    records: [{ id:"V11-001", fit:80, intent:70, engagement:60, urgency:50, value:30000 }],
+    forecast: { qualified:0.8, nurture:0.35, new:0.1, downside:0.75, upside:1.15 }
+  });
+  assert.equal(snapshot.forecast.upside, 1.15);
+});
+
+test("CSV parser preserves optional cohort context", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  const [row] = parseCsv("id,account,fit,intent,engagement,urgency,value,segment,cohort\nCO9,Acme,90,80,70,60,42000,Enterprise,2026-Q4");
+  assert.equal(row.cohort, "2026-Q4");
+});
+
+
+test("intelligence configuration fails safe to deterministic defaults", () => {
+  const config = normaliseIntelligenceConfig({
+    staleDays: -10,
+    highValue: "bad",
+    ownerlessValue: 30000,
+    lowEngagement: 35
+  });
+  assert.equal(config.staleDays, 14);
+  assert.equal(config.highValue, 50000);
+  assert.equal(config.ownerlessValue, 30000);
+  assert.equal(config.lowEngagement, 35);
+});
+
+test("forecast assumptions clamp probabilities and multipliers independently", () => {
+  const config = normaliseForecastAssumptions({
+    qualified: 9,
+    nurture: -2,
+    new: "bad",
+    downside: 4,
+    upside: 1.5
+  });
+  assert.equal(config.qualified, 1);
+  assert.equal(config.nurture, 0);
+  assert.equal(config.new, 0.1);
+  assert.equal(config.downside, 2);
+  assert.equal(config.upside, 1.5);
 });

@@ -98,7 +98,7 @@
 
 <div class="notice">
   <div class="notice-inner">
-    <span><strong>CONTROL ROOM · V7</strong> · diagnóstico 30 min · sistema público e inspeccionable</span>
+    <span><strong>CONTROL ROOM · V11</strong> · diagnóstico 30 min · sistema público e inspeccionable</span>
     <a class="text-link" href="#contacto">Ver el flujo ↘</a>
   </div>
 </div>
@@ -288,6 +288,47 @@
           </div>
         </section>
 
+        <section class="intelligence-panel" aria-labelledby="intelligence-title">
+          <div class="intelligence-head">
+            <div>
+              <span class="kicker">Executive Intelligence · V11</span>
+              <h3 id="intelligence-title">Del pipeline a una decisión ejecutiva.</h3>
+            </div>
+            <span class="kicker">DETERMINISTIC · LOCAL</span>
+          </div>
+          <p class="intelligence-copy">Health operativo, segmentación, cohortes, reglas de negocio, anomalías y revenue leakage en una sola capa. No ejecuta acciones externas: convierte señales dispersas en prioridades revisables.</p>
+
+          <div class="intelligence-metrics" aria-live="polite">
+            <div class="intel-metric"><span>Signal</span><strong id="intelSignal" data-state="controlled">CONTROLLED</strong><small>estado ejecutivo del run</small></div>
+            <div class="intel-metric"><span>Account health</span><strong id="intelHealth">0</strong><small>media · healthy / risk</small></div>
+            <div class="intel-metric"><span>Rules</span><strong id="intelRisk">0 critical · 0 high</strong><small>riesgo operacional detectado</small></div>
+            <div class="intel-metric"><span>Revenue leakage</span><strong id="intelLeakage">0 €</strong><small>valor con señales de fuga</small></div>
+            <div class="intel-metric"><span>Anomalies</span><strong id="intelAnomalies">0</strong><small>outliers / clusters</small></div>
+          </div>
+
+          <div class="intelligence-grid">
+            <section class="intel-subpanel" aria-labelledby="priorities-title">
+              <div class="intel-subhead"><span class="kicker">Priority radar</span><h4 id="priorities-title">Lo que merece atención.</h4></div>
+              <div id="intelPriorities" class="intel-list" aria-live="polite"></div>
+            </section>
+
+            <section class="intel-subpanel" aria-labelledby="opportunities-title">
+              <div class="intel-subhead"><span class="kicker">Opportunity radar</span><h4 id="opportunities-title">Dónde concentrar esfuerzo.</h4></div>
+              <div id="intelOpportunities" class="intel-list" aria-live="polite"></div>
+            </section>
+
+            <section class="intel-subpanel" aria-labelledby="segments-title">
+              <div class="intel-subhead"><span class="kicker">Segment intelligence</span><h4 id="segments-title">Valor esperado por segmento.</h4></div>
+              <div id="intelSegments" class="intel-mini-list" aria-live="polite"></div>
+            </section>
+
+            <section class="intel-subpanel" aria-labelledby="cohorts-title">
+              <div class="intel-subhead"><span class="kicker">Cohort intelligence</span><h4 id="cohorts-title">Señal por cohorte.</h4></div>
+              <div id="intelCohorts" class="intel-mini-list" aria-live="polite"></div>
+            </section>
+          </div>
+        </section>
+
         <div class="model-and-chart">
           <div class="weight-lab">
             <div class="weight-head"><span class="kicker">Decision model</span><span class="weight-total" id="weightTotal">100%</span></div>
@@ -437,7 +478,7 @@
           <span class="kicker">CSV schema</span>
           <p class="side-copy">Cabeceras mínimas:</p>
           <code class="schema-code">id, account, fit, intent, engagement, urgency</code>
-          <code class="schema-code schema-optional">+ value, owner, segment, source, last_touch_days</code>
+          <code class="schema-code schema-optional">+ value, owner, segment, source, cohort, last_touch_days</code>
           <p class="side-copy queue-schema-note">Valores 0–100. Filas con datos inválidos quedan bloqueadas.</p>
         </div>
 

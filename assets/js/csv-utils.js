@@ -1,5 +1,5 @@
 const REQUIRED = ["id", "fit", "intent", "engagement", "urgency"];
-const OPTIONAL = ["value", "owner", "segment", "source", "last_touch_days"];
+const OPTIONAL = ["value", "owner", "segment", "source", "cohort", "last_touch_days"];
 const MAX_ROWS = 5000;
 const MAX_CHARS = 2_000_000;
 const SUPPORTED_DELIMITERS = [",", ";"];
@@ -95,6 +95,7 @@ export function parseCsv(text) {
       owner: String(raw.owner ?? "").trim(),
       segment: String(raw.segment ?? "").trim(),
       source: String(raw.source ?? "").trim(),
+      cohort: String(raw.cohort ?? "").trim(),
       lastTouchDays: raw.last_touch_days === undefined || String(raw.last_touch_days).trim() === ""
         ? null
         : parseNumber(raw.last_touch_days)

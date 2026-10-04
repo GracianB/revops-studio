@@ -259,16 +259,23 @@ export function summariseQueue(queue) {
   };
 }
 
+export function normaliseForecastAssumptions(assumptions = {}) {
+  const defaults = { qualified: 0.80, nurture: 0.35, new: 0.10, downside: 0.75, upside: 1.15 };
+  const maxByKey = { qualified: 1, nurture: 1, new: 1, downside: 2, upside: 2 };
+  return Object.fromEntries(Object.keys(defaults).map((key) => {
+    const value = numeric(assumptions?.[key]);
+    return [key, Math.max(0, Math.min(maxByKey[key], value ?? defaults[key]))];
+  }));
+}
+
 export function forecastPipeline(leads, assumptions = {}) {
+  const normalizedForecast = normaliseForecastAssumptions(assumptions);
   const probabilities = {
-    qualified: Number.isFinite(Number(assumptions.qualified)) ? Number(assumptions.qualified) : 0.80,
-    nurture: Number.isFinite(Number(assumptions.nurture)) ? Number(assumptions.nurture) : 0.35,
-    new: Number.isFinite(Number(assumptions.new)) ? Number(assumptions.new) : 0.10,
+    qualified: normalizedForecast.qualified,
+    nurture: normalizedForecast.nurture,
+    new: normalizedForecast.new,
     blocked: 0
   };
-  Object.keys(probabilities).forEach((stage) => {
-    probabilities[stage] = Math.max(0, Math.min(1, probabilities[stage]));
-  });
 
   const active = leads.filter((lead) => lead.stage !== "blocked");
   const rows = active.map((lead) => {
@@ -325,10 +332,11 @@ export function forecastPipeline(leads, assumptions = {}) {
 
 export function forecastScenarios(leads, assumptions = {}) {
   const base = forecastPipeline(leads, assumptions);
+  const normalizedForecast = normaliseForecastAssumptions(assumptions);
   const multipliers = {
-    downside: Number.isFinite(Number(assumptions.downside)) ? Number(assumptions.downside) : 0.75,
+    downside: normalizedForecast.downside,
     base: 1,
-    upside: Number.isFinite(Number(assumptions.upside)) ? Number(assumptions.upside) : 1.15
+    upside: normalizedForecast.upside
   };
 
   return Object.fromEntries(Object.entries(multipliers).map(([name, multiplier]) => [
@@ -341,6 +349,509 @@ export function forecastScenarios(leads, assumptions = {}) {
     }
   ]));
 }
+
+
+
+export const INTELLIGENCE_DEFAULTS = Object.freeze({
+  staleDays: 14,
+  highValue: 50000,
+  ownerlessValue: 25000,
+  highIntent: 80,
+  lowEngagement: 40,
+  untouchedQualifiedDays: 7,
+  unqualifiedHighValue: 30000
+});
+
+function median(values) {
+  const clean = values.filter((value) => Number.isFinite(Number(value))).map(Number).sort((a, b) => a - b);
+  if (!clean.length) return 0;
+  const middle = Math.floor(clean.length / 2);
+  return clean.length % 2 ? clean[middle] : (clean[middle - 1] + clean[middle]) / 2;
+}
+
+function percentile(values, p) {
+  const clean = values.filter((value) => Number.isFinite(Number(value))).map(Number).sort((a, b) => a - b);
+  if (!clean.length) return 0;
+  const index = (clean.length - 1) * p;
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  if (lower === upper) return clean[lower];
+  return clean[lower] + (clean[upper] - clean[lower]) * (index - lower);
+}
+
+export function normaliseIntelligenceConfig(config = {}) {
+  const result = {};
+  Object.entries(INTELLIGENCE_DEFAULTS).forEach(([key, fallback]) => {
+    const value = numeric(config?.[key]);
+    result[key] = value !== null && value >= 0 ? value : fallback;
+  });
+  return result;
+}
+
+function recencyScore(days) {
+  const value = numeric(days);
+  if (value === null || value < 0) return null;
+  if (value <= 3) return 100;
+  if (value <= 7) return 90;
+  if (value <= 14) return 75;
+  if (value <= 30) return 50;
+  if (value <= 60) return 25;
+  return 0;
+}
+
+function healthLabel(score) {
+  if (score === null) return "unknown";
+  if (score >= 75) return "healthy";
+  if (score >= 55) return "watch";
+  if (score >= 35) return "risk";
+  return "critical";
+}
+
+export function accountHealth(lead, config = {}) {
+  const options = normaliseIntelligenceConfig(config);
+  const signalValues = SIGNALS.map((key) => clamp(lead?.[key]));
+  if (signalValues.some((value) => value === null)) {
+    return {
+      score: null,
+      status: "blocked",
+      confidence: "low",
+      reasons: ["Invalid qualification signal"]
+    };
+  }
+
+  const signalWeights = { fit: 0.20, intent: 0.25, engagement: 0.20, urgency: 0.15 };
+  const recency = recencyScore(lead?.lastTouchDays);
+  let score = signalValues[0] * signalWeights.fit +
+    signalValues[1] * signalWeights.intent +
+    signalValues[2] * signalWeights.engagement +
+    signalValues[3] * signalWeights.urgency;
+  let denominator = Object.values(signalWeights).reduce((sum, value) => sum + value, 0);
+
+  if (recency !== null) {
+    score += recency * 0.20;
+    denominator += 0.20;
+  }
+
+  score = Math.round(score / denominator);
+  const reasons = [];
+  if (signalValues[1] >= options.highIntent && signalValues[2] <= options.lowEngagement) {
+    reasons.push("Intent high / engagement low");
+  }
+  if (signalValues[0] < 50 && signalValues[1] >= options.highIntent) {
+    reasons.push("Fit / intent mismatch");
+  }
+  if (recency !== null && recency < 50) reasons.push("Contact recency is weak");
+  if (recency === null) reasons.push("Recency context missing");
+
+  return {
+    score,
+    status: healthLabel(score),
+    confidence: recency === null ? "medium" : "high",
+    reasons
+  };
+}
+
+export function segmentIntelligence(leads, forecastAssumptions = {}) {
+  const rows = Array.isArray(leads) ? leads : [];
+  const forecast = forecastPipeline(rows, forecastAssumptions);
+  const groups = {};
+  rows.forEach((lead) => {
+    const segment = String(lead?.segment || "General").trim() || "General";
+    if (!groups[segment]) {
+      groups[segment] = {
+        segment,
+        records: 0,
+        activeRecords: 0,
+        blockedRecords: 0,
+        pipelineValue: 0,
+        qualifiedValue: 0,
+        qualifiedRecords: 0,
+        weightedPipeline: 0,
+        expectedValue: 0,
+        qualifiedRate: 0,
+        staleRecords: 0,
+        staleRate: 0,
+        averageScore: 0
+      };
+    }
+    const group = groups[segment];
+    group.records += 1;
+    if (lead.stage === "blocked") {
+      group.blockedRecords += 1;
+      return;
+    }
+    group.activeRecords += 1;
+    const value = numeric(lead.value) ?? 0;
+    group.pipelineValue += value;
+    if (lead.stage === "qualified") {
+      group.qualifiedValue += value;
+      group.qualifiedRecords += 1;
+    }
+    if (typeof lead.score === "number") {
+      group.weightedPipeline += value * lead.score / 100;
+      group.averageScore += lead.score;
+    }
+    if ((numeric(lead.lastTouchDays) ?? -1) > options.staleDays) {
+      group.staleRecords += 1;
+    }
+  });
+
+  Object.values(groups).forEach((group) => {
+    group.qualifiedRate = group.activeRecords ? group.qualifiedRecords / group.activeRecords : 0;
+    group.qualifiedValueShare = group.pipelineValue ? group.qualifiedValue / group.pipelineValue : 0;
+    group.staleRate = group.activeRecords ? group.staleRecords / group.activeRecords : 0;
+    group.averageScore = group.activeRecords
+      ? Math.round(group.averageScore / group.activeRecords)
+      : 0;
+    const forecastSegment = forecast.bySegment[group.segment];
+    group.expectedValue = forecastSegment?.expectedValue || 0;
+  });
+
+  const totalPipeline = Object.values(groups).reduce((sum, item) => sum + item.pipelineValue, 0);
+  const totalRecords = Object.values(groups).reduce((sum, item) => sum + item.activeRecords, 0);
+
+  return Object.fromEntries(
+    Object.entries(groups)
+      .map(([key, item]) => [key, {
+        ...item,
+        pipelineShare: totalPipeline ? item.pipelineValue / totalPipeline : 0,
+        recordShare: totalRecords ? item.activeRecords / totalRecords : 0,
+        concentrationIndex: totalPipeline && totalRecords
+          ? (item.pipelineValue / totalPipeline) / (item.activeRecords / totalRecords)
+          : 0
+      }])
+      .sort((a, b) => b[1].expectedValue - a[1].expectedValue || a[0].localeCompare(b[0]))
+  );
+}
+
+export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions = {}) {
+  const rows = Array.isArray(leads) ? leads : [];
+  const forecast = forecastPipeline(rows, forecastAssumptions);
+  const groups = {};
+
+  rows.forEach((lead) => {
+    const cohort = String(lead?.[cohortKey] || "Unspecified").trim() || "Unspecified";
+    if (!groups[cohort]) {
+      groups[cohort] = {
+        cohort,
+        records: 0,
+        activeRecords: 0,
+        blockedRecords: 0,
+        pipelineValue: 0,
+        expectedValue: 0,
+        qualifiedRecords: 0,
+        staleRecords: 0,
+        averageScore: 0
+      };
+    }
+    const group = groups[cohort];
+    group.records += 1;
+    if (lead.stage === "blocked") {
+      group.blockedRecords += 1;
+      return;
+    }
+    group.activeRecords += 1;
+    group.pipelineValue += numeric(lead.value) ?? 0;
+    if (lead.stage === "qualified") group.qualifiedRecords += 1;
+    if (typeof lead.score === "number") group.averageScore += lead.score;
+    if ((numeric(lead.lastTouchDays) ?? -1) > options.staleDays) group.staleRecords += 1;
+  });
+
+  Object.values(groups).forEach((group) => {
+    group.qualifiedRate = group.activeRecords ? group.qualifiedRecords / group.activeRecords : 0;
+    group.staleRate = group.activeRecords ? group.staleRecords / group.activeRecords : 0;
+    group.averageScore = group.activeRecords ? Math.round(group.averageScore / group.activeRecords) : 0;
+    group.expectedValue = rows
+      .filter((lead) => String(lead?.[cohortKey] || "Unspecified").trim() === group.cohort)
+      .filter((lead) => lead.stage !== "blocked")
+      .reduce((sum, lead) => {
+        const probability = forecast.probabilities[lead.stage] ?? 0;
+        return sum + Math.round((numeric(lead.value) ?? 0) * probability);
+      }, 0);
+  });
+
+  return Object.values(groups)
+    .sort((a, b) => b.expectedValue - a.expectedValue || a.cohort.localeCompare(b.cohort));
+}
+
+export function applyBusinessRules(leads, config = {}) {
+  const options = normaliseIntelligenceConfig(config);
+  const findings = [];
+
+  (Array.isArray(leads) ? leads : []).forEach((lead) => {
+    const value = numeric(lead?.value) ?? 0;
+    const stale = (numeric(lead?.lastTouchDays) ?? -1) > options.staleDays;
+    const owner = String(lead?.owner || "").trim();
+    const rules = [];
+
+    if (lead?.stage === "blocked" && value > 0) {
+      rules.push({ code: "BLOCKED_REVENUE", severity: "critical", message: "Revenue attached to blocked data." });
+    }
+    if (lead?.stage !== "blocked" && value >= options.highValue && stale) {
+      rules.push({ code: "HIGH_VALUE_STALE", severity: "high", message: "High-value account is stale." });
+    }
+    if (lead?.stage !== "blocked" && value >= options.ownerlessValue && !owner) {
+      rules.push({ code: "OWNERLESS_REVENUE", severity: "high", message: "Material pipeline has no owner." });
+    }
+    if (lead?.stage === "qualified" && (numeric(lead?.lastTouchDays) ?? 0) > options.untouchedQualifiedDays) {
+      rules.push({ code: "QUALIFIED_UNTOUCHED", severity: "high", message: "Qualified account lacks recent touch." });
+    }
+    if ((numeric(lead?.intent) ?? 0) >= options.highIntent &&
+        (numeric(lead?.engagement) ?? 100) <= options.lowEngagement) {
+      rules.push({ code: "INTENT_ENGAGEMENT_GAP", severity: "medium", message: "Strong intent with weak engagement." });
+    }
+    if ((numeric(lead?.fit) ?? 100) < 50 && (numeric(lead?.intent) ?? 0) >= options.highIntent) {
+      rules.push({ code: "FIT_INTENT_MISMATCH", severity: "medium", message: "High intent conflicts with low fit." });
+    }
+    if (lead?.stage !== "blocked" && lead?.stage !== "qualified" && value >= options.unqualifiedHighValue) {
+      rules.push({ code: "UNQUALIFIED_VALUE", severity: "medium", message: "Material value sits below qualified stage." });
+    }
+
+    rules.forEach((rule) => findings.push({
+      ...rule,
+      leadId: lead.id,
+      account: lead.account || "Unnamed account",
+      stage: lead.stage,
+      owner: owner || "Unassigned",
+      segment: String(lead?.segment || "General").trim() || "General",
+      value
+    }));
+  });
+
+  const severityRank = { critical: 4, high: 3, medium: 2, low: 1 };
+  return findings.sort((a, b) =>
+    severityRank[b.severity] - severityRank[a.severity] ||
+    b.value - a.value ||
+    String(a.leadId).localeCompare(String(b.leadId))
+  );
+}
+
+export function detectAnomalies(leads, config = {}) {
+  const options = normaliseIntelligenceConfig(config);
+  const rows = (Array.isArray(leads) ? leads : []).filter((lead) => lead.stage !== "blocked");
+  const values = rows.map((lead) => numeric(lead.value)).filter((value) => value !== null && value > 0);
+  const q1 = percentile(values, 0.25);
+  const q3 = percentile(values, 0.75);
+  const iqr = q3 - q1;
+  const valueLimit = iqr > 0 ? q3 + iqr * 1.5 : q3 > 0 ? q3 * 2 : 0;
+  const anomalies = [];
+
+  rows.forEach((lead) => {
+    const value = numeric(lead.value);
+    if (value !== null && valueLimit > 0 && value > valueLimit) {
+      anomalies.push({
+        type: "value_outlier",
+        severity: "high",
+        leadId: lead.id,
+        account: lead.account || "Unnamed account",
+        value,
+        message: "Deal value is an IQR outlier for this run."
+      });
+    }
+  });
+
+  const overallStaleRate = rows.length
+    ? rows.filter((lead) => (numeric(lead.lastTouchDays) ?? -1) > options.staleDays).length / rows.length
+    : 0;
+  const overallQualifiedRate = rows.length
+    ? rows.filter((lead) => lead.stage === "qualified").length / rows.length
+    : 0;
+  const grouped = {};
+  rows.forEach((lead) => {
+    const segment = String(lead.segment || "General").trim() || "General";
+    if (!grouped[segment]) grouped[segment] = [];
+    grouped[segment].push(lead);
+  });
+
+  Object.entries(grouped).forEach(([segment, items]) => {
+    if (items.length < 2) return;
+    const staleRate = items.filter((lead) => (numeric(lead.lastTouchDays) ?? -1) > options.staleDays).length / items.length;
+    const qualifiedRate = items.filter((lead) => lead.stage === "qualified").length / items.length;
+    const pipeline = items.reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
+    const totalPipeline = rows.reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
+    const recordShare = items.length / rows.length;
+    const pipelineShare = totalPipeline ? pipeline / totalPipeline : 0;
+
+    if (staleRate >= overallStaleRate + 0.25) {
+      anomalies.push({
+        type: "segment_stale_cluster",
+        severity: "medium",
+        segment,
+        message: "Segment stale rate is materially above run baseline.",
+        staleRate
+      });
+    }
+    if (qualifiedRate <= overallQualifiedRate - 0.25 && overallQualifiedRate > 0.25) {
+      anomalies.push({
+        type: "segment_qualification_gap",
+        severity: "medium",
+        segment,
+        message: "Segment qualification rate is materially below run baseline.",
+        qualifiedRate
+      });
+    }
+    if (pipelineShare >= 0.20 && pipelineShare > recordShare * 2) {
+      anomalies.push({
+        type: "segment_value_concentration",
+        severity: "high",
+        segment,
+        message: "Segment owns disproportionately large pipeline value.",
+        pipelineShare,
+        recordShare
+      });
+    }
+  });
+
+  const severityRank = { critical: 4, high: 3, medium: 2, low: 1 };
+  return {
+    total: anomalies.length,
+    high: anomalies.filter((item) => item.severity === "high").length,
+    medium: anomalies.filter((item) => item.severity === "medium").length,
+    items: anomalies.sort((a, b) =>
+      severityRank[b.severity] - severityRank[a.severity] ||
+      (numeric(b.value) ?? 0) - (numeric(a.value) ?? 0) ||
+      String(a.leadId || a.segment || "").localeCompare(String(b.leadId || b.segment || ""))
+    )
+  };
+}
+
+export function revenueLeakage(leads, config = {}) {
+  const options = { ...INTELLIGENCE_DEFAULTS, ...config };
+  const rows = [];
+  const categories = {
+    blockedRevenue: 0,
+    staleRevenue: 0,
+    ownerlessRevenue: 0,
+    qualifiedUntouchedRevenue: 0,
+    intentEngagementGapRevenue: 0,
+    unqualifiedHighValueRevenue: 0
+  };
+
+  (Array.isArray(leads) ? leads : []).forEach((lead) => {
+    const value = numeric(lead?.value) ?? 0;
+    if (value <= 0) return;
+    const stale = (numeric(lead?.lastTouchDays) ?? -1) > options.staleDays;
+    const ownerless = !String(lead?.owner || "").trim();
+    const reasons = [];
+
+    if (lead?.stage === "blocked") { categories.blockedRevenue += value; reasons.push("blocked_data"); }
+    if (lead?.stage !== "blocked" && stale) { categories.staleRevenue += value; reasons.push("stale"); }
+    if (lead?.stage !== "blocked" && ownerless && value >= options.ownerlessValue) {
+      categories.ownerlessRevenue += value; reasons.push("ownerless");
+    }
+    if (lead?.stage === "qualified" && (numeric(lead?.lastTouchDays) ?? 0) > options.untouchedQualifiedDays) {
+      categories.qualifiedUntouchedRevenue += value; reasons.push("qualified_untouched");
+    }
+    if ((numeric(lead?.intent) ?? 0) >= options.highIntent &&
+        (numeric(lead?.engagement) ?? 100) <= options.lowEngagement) {
+      categories.intentEngagementGapRevenue += value;
+      reasons.push("intent_engagement_gap");
+    }
+    if (lead?.stage !== "blocked" && lead?.stage !== "qualified" && value >= options.unqualifiedHighValue) {
+      categories.unqualifiedHighValueRevenue += value;
+      reasons.push("unqualified_value");
+    }
+
+    if (reasons.length) {
+      rows.push({
+        leadId: lead.id,
+        account: lead.account || "Unnamed account",
+        stage: lead.stage,
+        owner: String(lead.owner || "Unassigned").trim() || "Unassigned",
+        segment: String(lead.segment || "General").trim() || "General",
+        value,
+        reasons
+      });
+    }
+  });
+
+  const pipelineValue = (Array.isArray(leads) ? leads : [])
+    .filter((lead) => lead.stage !== "blocked")
+    .reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
+
+  const atRiskValue = rows.reduce((sum, row) => sum + row.value, 0);
+  const totalValue = (Array.isArray(leads) ? leads : []).reduce((sum, lead) => sum + Math.max(0, numeric(lead.value) ?? 0), 0);
+
+  return {
+    ...categories,
+    atRiskValue,
+    totalValue,
+    activePipelineValue: pipelineValue,
+    leakageRate: totalValue ? atRiskValue / totalValue : 0,
+    rows: rows.sort((a, b) => b.value - a.value || String(a.leadId).localeCompare(String(b.leadId)))
+  };
+}
+
+export function executiveIntelligence(leads, forecastAssumptions = {}, config = {}) {
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const options = normaliseIntelligenceConfig(config);
+  const forecast = forecastPipeline(evaluated, forecastAssumptions);
+  const healthRows = evaluated.map((lead) => ({ lead, health: accountHealth(lead, options) }));
+  const validHealth = healthRows.filter((item) => item.health.score !== null);
+  const health = {
+    average: validHealth.length
+      ? Math.round(validHealth.reduce((sum, item) => sum + item.health.score, 0) / validHealth.length)
+      : 0,
+    healthy: validHealth.filter((item) => item.health.status === "healthy").length,
+    watch: validHealth.filter((item) => item.health.status === "watch").length,
+    risk: validHealth.filter((item) => item.health.status === "risk").length,
+    critical: validHealth.filter((item) => item.health.status === "critical").length,
+    unknown: healthRows.length - validHealth.length
+  };
+  const rules = applyBusinessRules(evaluated, config);
+  const anomalies = detectAnomalies(evaluated, options);
+  const leakage = revenueLeakage(evaluated, config);
+  const segments = segmentIntelligence(evaluated, forecastAssumptions);
+  const cohorts = cohortAnalysis(evaluated, "cohort", forecastAssumptions);
+
+  const criticalCount = rules.filter((item) => item.severity === "critical").length;
+  const highCount = rules.filter((item) => item.severity === "high").length + anomalies.high;
+  const signal = criticalCount > 0 ? "critical" :
+    highCount > 0 || leakage.leakageRate >= 0.25 ? "attention" :
+      "controlled";
+
+  const priorities = [
+    ...rules.map((item) => ({ type: "rule", severity: item.severity, title: item.message, detail: item.account, value: item.value })),
+    ...anomalies.items.map((item) => ({ type: "anomaly", severity: item.severity, title: item.message, detail: item.account || item.segment || "Run", value: item.value || 0 }))
+  ].slice(0, 8);
+
+  const opportunities = [];
+  const bestSegment = Object.values(segments)[0];
+  if (bestSegment) {
+    opportunities.push({
+      type: "segment",
+      title: "Concentrate on " + bestSegment.segment,
+      detail: Math.round(bestSegment.pipelineShare * 100) + "% of pipeline · " + Math.round(bestSegment.qualifiedRate * 100) + "% qualified",
+      value: bestSegment.expectedValue
+    });
+  }
+  const topQualified = evaluated
+    .filter((lead) => lead.stage === "qualified" && (numeric(lead.value) ?? 0) > 0)
+    .sort((a, b) => (numeric(b.value) ?? 0) - (numeric(a.value) ?? 0))[0];
+  if (topQualified) {
+    opportunities.push({
+      type: "account",
+      title: "Protect " + (topQualified.account || topQualified.id),
+      detail: "Qualified value with active commercial signal",
+      value: numeric(topQualified.value) ?? 0
+    });
+  }
+
+  return {
+    config: options,
+    signal,
+    forecast,
+    health,
+    rules: { total: rules.length, critical: criticalCount, high: highCount, findings: rules },
+    anomalies,
+    leakage,
+    segments,
+    cohorts,
+    priorities,
+    opportunities
+  };
+}
+
 
 export function compareEvaluations(baseLeads, currentLeads) {
   const baseById = new Map(baseLeads.map((lead) => [String(lead.id), lead]));
@@ -449,10 +960,7 @@ export function createRunSnapshot({
 } = {}) {
   const normalizedWeights = normaliseWeights(weights);
   const normalizedThresholds = normaliseThresholds(thresholds);
-  const normalizedForecast = Object.fromEntries(
-    ["qualified", "nurture", "new", "downside", "upside"]
-      .map((key) => [key, Math.max(0, Math.min(1, numeric(forecast?.[key]) ?? 0))])
-  );
+  const normalizedForecast = normaliseForecastAssumptions(forecast);
   const payload = {
     records,
     source,
