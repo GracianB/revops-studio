@@ -1573,6 +1573,28 @@ function initPlayground() {
     qs("#exportDemo")?.click();
   });
 
+  executionLedger.replay?.addEventListener("click", () => {
+    if (!lastExecutionLedger) {
+      status.dataset.state = "error";
+      status.textContent = "No hay execution ledger disponible para verificar.";
+      return;
+    }
+    const replay = replayExecutionLedger(lastExecutionLedger);
+    executionLedger.status.textContent = replay.valid ? "LEDGER VALID" : "LEDGER REJECTED";
+    executionLedger.status.dataset.state = replay.valid ? "controlled" : "error";
+    executionLedger.meta.textContent =
+      lastExecutionLedger.ledgerId + " · " + replay.eventCount + " events · " + replay.reason;
+    status.dataset.state = replay.valid ? "ok" : "error";
+    status.textContent = replay.valid
+      ? "Ledger reproducido correctamente. La cadena de eventos coincide con su HEAD."
+      : "Ledger rechazado: la cadena de evidencia no coincide.";
+    addAudit(auditEvent(
+      replay.valid ? "LEDGER_REPLAY_OK" : "LEDGER_REPLAY_REJECTED",
+      { id: lastExecutionLedger.runId || "LEDGER" },
+      replay.reason
+    ));
+  });
+
   workflowImpact.preview?.addEventListener("click", () => {
     if (!lastWorkflowPlan) return;
     const impactResult = buildWorkflowImpact(evaluated, lastWorkflowPlan);
