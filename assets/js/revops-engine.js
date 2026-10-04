@@ -345,7 +345,7 @@ export function forecastPipeline(leads, assumptions = {}) {
     expectedValue,
     expectedValueExact,
     weightedByScore: Math.round(weightedByScore),
-    expectedCoverage: pipelineValue ? expectedValue / pipelineValue : 0,
+    expectedCoverage: pipelineValue ? expectedValueExact / pipelineValue : 0,
     activeRecords: rows.length,
     topAccounts,
     topAccountShare: pipelineValue && topAccounts.length ? topAccounts[0].value / pipelineValue : 0,
@@ -371,7 +371,7 @@ export function forecastScenarios(leads, assumptions = {}) {
     {
       pipelineValue: base.pipelineValue,
       expectedValue: Math.round(base.expectedValue * Math.max(0, multiplier)),
-      coverage: base.pipelineValue ? (base.expectedValue / base.pipelineValue) * Math.max(0, multiplier) : 0,
+      coverage: base.pipelineValue ? (base.expectedValueExact / base.pipelineValue) * Math.max(0, multiplier) : 0,
       multiplier
     }
   ]));
@@ -588,13 +588,14 @@ export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions 
     group.qualifiedRate = group.activeRecords ? group.qualifiedRecords / group.activeRecords : 0;
     group.staleRate = group.activeRecords ? group.staleRecords / group.activeRecords : 0;
     group.averageScore = group.activeRecords ? Math.round(group.averageScore / group.activeRecords) : 0;
-    group.expectedValue = rows
+    const cohortExact = rows
       .filter((lead) => String(lead?.[cohortKey] || "Unspecified").trim() === group.cohort)
       .filter((lead) => lead.stage !== "blocked")
       .reduce((sum, lead) => {
-        const probability = forecast.probabilities[lead.stage] ?? 0;
-        return sum + Math.round((numeric(lead.value) ?? 0) * probability);
+        const forecastRow = forecast.rows.find((row) => String(row.leadId) === String(lead.id));
+        return sum + (forecastRow?.expectedValueExact ?? 0);
       }, 0);
+    group.expectedValue = Math.round(cohortExact);
   });
 
   return Object.values(groups)
