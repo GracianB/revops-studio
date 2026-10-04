@@ -90,14 +90,17 @@ export function normaliseAdaptiveCalibrationConfig(config = {}) {
   const criticalDelta = clamp(config.criticalDelta, 0.001, 1) ?? defaults.criticalDelta;
 
   const ordered = warningDelta >= watchDelta && criticalDelta >= warningDelta;
+  const finalWatch = ordered ? watchDelta : defaults.watchDelta;
+  const finalWarning = ordered ? warningDelta : defaults.warningDelta;
+  const finalCritical = ordered ? criticalDelta : defaults.criticalDelta;
 
   return {
     windowDays,
     minSamples,
     minGroupSamples,
-    watchDelta,
-    warningDelta: ordered ? warningDelta : defaults.warningDelta,
-    criticalDelta: ordered ? criticalDelta : defaults.criticalDelta,
+    watchDelta: finalWatch,
+    warningDelta: finalWarning,
+    criticalDelta: finalCritical,
     historyLimit: Math.round(
       clamp(config.historyLimit, 1, 120) ?? defaults.historyLimit
     )
@@ -388,9 +391,11 @@ function highestSeverity(...severities) {
   const material = severities
     .filter((severity) => severity !== "INSUFFICIENT")
     .sort((a, b) => SEVERITY_RANK[b] - SEVERITY_RANK[a]);
+  const highest = material[0] || null;
 
-  return material[0] ||
-    (severities.includes("INSUFFICIENT") ? "INSUFFICIENT" : "STABLE");
+  if (highest && SEVERITY_RANK[highest] >= SEVERITY_RANK.WARNING) return highest;
+  if (severities.includes("INSUFFICIENT")) return "INSUFFICIENT";
+  return highest || "STABLE";
 }
 
 function buildRecommendations(global, segments, cohorts, config) {
@@ -575,9 +580,7 @@ export function buildAdaptiveCalibrationReport({
     ...cohorts.map((item) => item.severity)
   );
 
-  const baselineEstablished = establishedBeforeCurrentSnapshot ||
-    nextHistory.length > 1 &&
-    flattenCalibrationHistory(nextHistory).length >= options.minSamples * 2;
+  const baselineEstablished = establishedBeforeCurrentSnapshot;
 
   const reportId = "V20-" + stableHash(JSON.stringify({
     datasetFingerprint,
