@@ -76,3 +76,30 @@ That is the same principle the project sells.
 ## Technical engine
 
 The public playground now uses a deterministic engine with weighted scoring, data-quality validation, explainability, a state machine, a human approval gate and audit events. The engine is covered by Node's built-in test runner.
+
+
+## V11 intelligence architecture
+
+The deterministic engine is layered so commercial analysis does not contaminate qualification logic:
+
+```
+Core scoring
+    ↓
+Commercial context
+    ↓
+Forecast
+    ↓
+Intelligence functions
+ ├─ account health
+ ├─ segment intelligence
+ ├─ cohort analysis
+ ├─ business rules
+ ├─ anomaly detection
+ └─ revenue leakage
+    ↓
+Executive decision surface
+```
+
+All intelligence functions are pure calculations over the current in-browser dataset. They return structured objects that the UI renders using DOM text nodes, avoiding HTML injection from imported CSV values.
+
+Forecast multipliers are normalized separately from stage probabilities, so values above 100% such as a 115% upside assumption remain representable and reproducible in run identity.
