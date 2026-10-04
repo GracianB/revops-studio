@@ -80,6 +80,19 @@ for (const ref of localImports) {
   if (!fs.existsSync(target)) fail("broken JS import: " + ref);
 }
 
+const engineJs = fs.readFileSync(path.join(root, "assets/js/revops-engine.js"), "utf8");
+const engineExports = new Set(
+  [...engineJs.matchAll(/export\s+(?:function|const|let|var|class)\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
+);
+const engineImportBlock = appJs.match(/import\s*\{([\s\S]*?)\}\s*from\s*["']\.\/revops-engine\.js["']/);
+if (!engineImportBlock) fail("app.js engine import block missing");
+const importedEngineNames = engineImportBlock[1]
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+const missingEngineExports = importedEngineNames.filter((name) => !engineExports.has(name));
+if (missingEngineExports.length) fail("app.js references missing engine exports: " + missingEngineExports.join(", "));
+
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js","README.md"
