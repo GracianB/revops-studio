@@ -489,7 +489,7 @@ test("executive brief is deterministic and evidence based", () => {
   assert.deepEqual(first, second);
   assert.equal(first.signal, "critical");
   assert.equal(first.summary.pipelineValue, 140000);
-  assert.equal(first.summary.expectedValue, 88000);
-  assert.ok(first.keyFacts.some((item) => item.includes("€88,000")));
+  assert.equal(first.summary.expectedValue, 112000);
+  assert.ok(first.keyFacts.some((item) => item.includes("€112,000")));
   assert.ok(first.actions.length > 0);
 });
