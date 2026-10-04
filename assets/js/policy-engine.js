@@ -12,6 +12,8 @@ export const POLICY_DEFAULTS = Object.freeze({
   historyLimit: 24
 });
 
+export const POLICY_HARD_MAX_STEP = 0.15;
+
 const REVIEW_CODES = new Set([
   "CONTROLLED_RECALIBRATION",
   "REVIEW_FORECAST_ASSUMPTIONS"
@@ -55,7 +57,7 @@ const stableHash = (value) => {
 export function normalisePolicyConfig(config = {}) {
   const defaults = POLICY_DEFAULTS;
   const minSamples = Math.round(clamp(config.minSamples, 1, 10000) ?? defaults.minSamples);
-  const maxStep = clamp(config.maxStep, 0.001, 0.5) ?? defaults.maxStep;
+  const maxStep = clamp(config.maxStep, 0.001, POLICY_HARD_MAX_STEP) ?? defaults.maxStep;
   const minImprovement = clamp(config.minImprovement, 0, 1) ?? defaults.minImprovement;
   const requestedMin = numeric(config.multiplierMin);
   const requestedMax = numeric(config.multiplierMax);
@@ -156,7 +158,10 @@ export function buildRecalibrationProposal({
     configuration: options
   });
 
-  if (!materialReview(report)) return blocked("NO_MATERIAL_DRIFT");
+  if (!report || report.global?.severity !== "WARNING" && report.global?.severity !== "CRITICAL") {
+    return blocked("GLOBAL_DRIFT_REQUIRED");
+  }
+  if (report.global?.sampleSufficient !== true) return blocked("GLOBAL_SAMPLE_INSUFFICIENT");
   if (safeRows.length < options.minSamples) return blocked("SAMPLE_INSUFFICIENT");
 
   const bias = numeric(metrics.calibrationError);
@@ -298,6 +303,22 @@ export function decidePolicy({
     return reject("DATASET_MISMATCH");
   }
   if (safeDecision === "APPROVE" && !proposal.eligible) return reject("PROPOSAL_NOT_ELIGIBLE");
+  if (safeDecision === "APPROVE" && proposal.contractVersion !== POLICY_CONTRACT_VERSION) {
+    return reject("PROPOSAL_VERSION_MISMATCH");
+  }
+
+  if (safeDecision === "APPROVE") {
+    const proposedMultiplier = numeric(proposal.multiplier);
+    const lowerBound = 1 - POLICY_HARD_MAX_STEP;
+    const upperBound = 1 + POLICY_HARD_MAX_STEP;
+    if (
+      proposedMultiplier === null ||
+      proposedMultiplier < lowerBound ||
+      proposedMultiplier > upperBound
+    ) {
+      return reject("PROPOSAL_STEP_EXCEEDED");
+    }
+  }
 
   const already = current.find((event) =>
     event.proposalId === proposal.proposalId &&
