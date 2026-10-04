@@ -44,8 +44,16 @@ import {
   buildCalibrationReport
 } from "./calibration-engine.js";
 import {
-  buildAdaptiveCalibrationReport
+  buildAdaptiveCalibrationReport,
+  buildObservedCalibrationRows
 } from "./adaptive-calibration-engine.js";
+import {
+  activePolicy,
+  applyPolicyToAssumptions,
+  buildRecalibrationProposal,
+  decidePolicy,
+  summarisePolicy
+} from "./policy-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -113,6 +121,30 @@ function writeAdaptiveCalibrationHistoryV20(history = [], datasetFingerprint = n
     localStorage.setItem(
       calibrationStorageKeyV20(datasetFingerprint),
       JSON.stringify(Array.isArray(history) ? history : [])
+    );
+  } catch {}
+}
+
+const POLICY_V21_STORAGE_KEY = "revops-studio:policy:v21";
+
+function policyStorageKeyV21(datasetFingerprint = null) {
+  return POLICY_V21_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
+}
+
+function readPolicyLedgerV21(datasetFingerprint = null) {
+  try {
+    const value = JSON.parse(localStorage.getItem(policyStorageKeyV21(datasetFingerprint)) || "[]");
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePolicyLedgerV21(ledger = [], datasetFingerprint = null) {
+  try {
+    localStorage.setItem(
+      policyStorageKeyV21(datasetFingerprint),
+      JSON.stringify(Array.isArray(ledger) ? ledger : [])
     );
   } catch {}
 }
@@ -449,7 +481,15 @@ function initPlayground() {
     v20WindowDays: qs("#calibrationV20WindowDays"),
     v20MinSamples: qs("#calibrationV20MinSamples"),
     v20MinGroupSamples: qs("#calibrationV20MinGroupSamples"),
-    v20Reset: qs("#resetCalibrationV20")
+    v20Reset: qs("#resetCalibrationV20"),
+    v21Status: qs("#calibrationV21Status"),
+    v21Multiplier: qs("#calibrationV21Multiplier"),
+    v21Improvement: qs("#calibrationV21Improvement"),
+    v21Active: qs("#calibrationV21Active"),
+    v21Reason: qs("#calibrationV21Reason"),
+    v21Approve: qs("#approvePolicyV21"),
+    v21Reject: qs("#rejectPolicyV21"),
+    v21Rollback: qs("#rollbackPolicyV21")
   };
   const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
     style: "currency", currency: "EUR", maximumFractionDigits: 0
@@ -556,6 +596,41 @@ function initPlayground() {
       });
     }
 
+    lastPolicyProposalV21 = buildRecalibrationProposal({
+      report: lastAdaptiveCalibrationReportV20,
+      rows: buildObservedCalibrationRows(forecast?.rows || [], feedbackOutcomes),
+      datasetFingerprint: plan?.datasetFingerprint || null,
+      runId: plan?.runId || null,
+      now: lastAdaptiveCalibrationReportV20?.generatedAt || new Date().toISOString(),
+      config: { minSamples: adaptiveConfigV20.minSamples }
+    });
+    const policySummaryV21 = summarisePolicy({
+      proposal: lastPolicyProposalV21,
+      ledger: readPolicyLedgerV21(plan?.datasetFingerprint || null),
+      datasetFingerprint: plan?.datasetFingerprint || null
+    });
+    if (feedback.v21Status) {
+      feedback.v21Status.textContent = lastPolicyProposalV21.status;
+      feedback.v21Status.dataset.state = lastPolicyProposalV21.status.toLowerCase();
+    }
+    if (feedback.v21Multiplier) {
+      feedback.v21Multiplier.textContent = Number(lastPolicyProposalV21.multiplier || 1).toFixed(2);
+    }
+    if (feedback.v21Improvement) {
+      feedback.v21Improvement.textContent = lastPolicyProposalV21.improvement === null
+        ? "—"
+        : (lastPolicyProposalV21.improvement > 0 ? "+" : "") + lastPolicyProposalV21.improvement.toFixed(3);
+    }
+    if (feedback.v21Active) {
+      feedback.v21Active.textContent = policySummaryV21.activeMultiplier === null
+        ? "none"
+        : Number(policySummaryV21.activeMultiplier).toFixed(2);
+    }
+    if (feedback.v21Reason) {
+      feedback.v21Reason.textContent = lastPolicyProposalV21.reason +
+        (policySummaryV21.activePolicyId ? " · active " + policySummaryV21.activePolicyId : "");
+    }
+
     lastCalibrationReportV19 = buildCalibrationV19Report(
       forecast?.rows || [],
       feedbackOutcomes,
@@ -651,6 +726,7 @@ function initPlayground() {
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
   let lastCalibrationCapturedAtV20 = null;
+  let lastPolicyProposalV21 = null;
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -792,13 +868,17 @@ function initPlayground() {
     } catch { return null; }
   };
 
-  const getForecastConfig = () => ({
-    qualified: Number(forecast.probabilities.qualified?.value) / 100,
-    nurture: Number(forecast.probabilities.nurture?.value) / 100,
-    new: Number(forecast.probabilities.new?.value) / 100,
-    downside: Number(forecast.probabilities.downside?.value) / 100,
-    upside: Number(forecast.probabilities.upside?.value) / 100
-  });
+  const getForecastConfig = () => {
+    const base = {
+      qualified: Number(forecast.probabilities.qualified?.value) / 100,
+      nurture: Number(forecast.probabilities.nurture?.value) / 100,
+      new: Number(forecast.probabilities.new?.value) / 100,
+      downside: Number(forecast.probabilities.downside?.value) / 100,
+      upside: Number(forecast.probabilities.upside?.value) / 100
+    };
+    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    return applyPolicyToAssumptions(base, activePolicy(readPolicyLedgerV21(fingerprint), fingerprint));
+  };
 
   const currentConfig = () => ({
     weights: getWeights(),
@@ -1756,7 +1836,12 @@ function initPlayground() {
             auditTrail: lastAdaptiveCalibrationReportV20.auditTrail,
             snapshotId: lastAdaptiveCalibrationReportV20.snapshotId
           }
-        : null
+        : null,
+      policyV21: summarisePolicy({
+        proposal: lastPolicyProposalV21,
+        ledger: readPolicyLedgerV21(lastWorkflowPlan?.datasetFingerprint || null),
+        datasetFingerprint: lastWorkflowPlan?.datasetFingerprint || null
+      })
     };
     const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -1935,6 +2020,32 @@ function initPlayground() {
     ));
     render();
   });
+
+  const decidePolicyV21 = (decision) => {
+    if (!lastPolicyProposalV21 && decision !== "ROLLBACK") return;
+    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    const result = decidePolicy({
+      ledger: readPolicyLedgerV21(fingerprint),
+      proposal: lastPolicyProposalV21,
+      decision,
+      actor: "operator",
+      datasetFingerprint: fingerprint,
+      now: new Date().toISOString(),
+      reason: decision === "ROLLBACK" ? "operator rollback" : lastPolicyProposalV21?.reason
+    });
+    if (!result.accepted) {
+      if (feedback.v21Reason) feedback.v21Reason.textContent = result.reason;
+      addAudit(auditEvent("POLICY_V21_" + decision, { id: "V21" }, result.reason));
+      return;
+    }
+    writePolicyLedgerV21(result.ledger, fingerprint);
+    addAudit(auditEvent("POLICY_V21_" + decision, { id: "V21" }, result.reason));
+    render();
+  };
+
+  feedback.v21Approve?.addEventListener("click", () => decidePolicyV21("APPROVE"));
+  feedback.v21Reject?.addEventListener("click", () => decidePolicyV21("REJECT"));
+  feedback.v21Rollback?.addEventListener("click", () => decidePolicyV21("ROLLBACK"));
 
   feedback.record?.addEventListener("click", () => {
     if (!lastWorkflowPlan || !lastOutcomeLedger) return;
