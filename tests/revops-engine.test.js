@@ -8,6 +8,7 @@ import {
   summarisePipeline,
   buildActionQueue,
   summariseQueue,
+  compareEvaluations,
   transition
 } from "../assets/js/revops-engine.js";
 
@@ -111,4 +112,33 @@ test("queue SLA is deterministic from supplied timestamp", () => {
   ]);
   const [item] = buildActionQueue([lead], "2026-10-04T12:00:00Z");
   assert.equal(item.dueAt, "2026-10-04T16:00:00.000Z");
+});
+
+
+test("model comparison identifies promotions and demotions", () => {
+  const base = evaluateBatch([
+    { id:"D-001", account:"Stable", fit:70, intent:70, engagement:70, urgency:70 },
+    { id:"D-002", account:"Intent Heavy", fit:40, intent:95, engagement:40, urgency:40 }
+  ]);
+  const current = evaluateBatch([
+    { id:"D-001", account:"Stable", fit:70, intent:70, engagement:70, urgency:70 },
+    { id:"D-002", account:"Intent Heavy", fit:40, intent:95, engagement:40, urgency:40 }
+  ], { fit: 10, intent: 80, engagement: 5, urgency: 5 });
+
+  const diff = compareEvaluations(base, current);
+  assert.equal(diff.totalCompared, 2);
+  assert.equal(diff.changed >= 1, true);
+  assert.equal(diff.changes[0].leadId, "D-002");
+});
+
+test("model comparison detects a newly blocked record", () => {
+  const base = evaluateBatch([
+    { id:"D-003", account:"Recover", fit:80, intent:80, engagement:80, urgency:80 }
+  ]);
+  const current = evaluateBatch([
+    { id:"D-003", account:"Recover", fit:80, intent:"bad", engagement:80, urgency:80 }
+  ]);
+  const diff = compareEvaluations(base, current);
+  assert.equal(diff.blocked, 1);
+  assert.equal(diff.changes[0].kind, "blocked");
 });
