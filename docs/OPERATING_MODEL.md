@@ -308,3 +308,48 @@ The engine produces a deterministic readout from the current evaluated dataset:
 
 The readout is evidence-based and contains no generated claims about external business outcomes.
 
+
+
+## V14 · Decision Operating System
+
+The operating loop is now explicit at record level:
+
+INPUT
+  ↓
+QUALITY
+  ↓
+SCORE
+  ↓
+STAGE
+  ↓
+COMMERCIAL CONTEXT
+  ↓
+PROPOSED ACTION
+  ↓
+HUMAN APPROVAL
+  ↓
+SIMULATED EXECUTION
+  ↓
+AUDIT
+
+### Decision Trace
+
+Every inspected record can be reconstructed into a deterministic trace containing its inputs, quality result, score and contributions, stage, commercial context, health, risk findings, proposed transition, approval requirement and execution boundary.
+
+Execution is intentionally reported as NOT_EXECUTED / SIMULATION_ONLY.
+
+### Owner operating matrix
+
+Owner intelligence ranks active portfolios by expected value and exposes pipeline value, qualification rate, stale rate and high/critical risk findings. It is an operating view, not a claim about individual performance.
+
+### Data contracts
+
+Required qualification signals treat blank or malformed numeric values as invalid. CSV rows with a column count different from the header are rejected instead of silently dropping data.
+
+### Analysis contract
+
+buildRunAnalysis() produces a reusable structured analysis object for the current run so presentation code consumes one decision surface rather than independently recomputing every intelligence layer.
+
+### Integration boundary
+
+The public prototype stops before external execution. A production CRM or workflow connection would enter through a dedicated adapter after the human gate.
