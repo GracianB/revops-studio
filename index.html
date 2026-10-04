@@ -15,6 +15,8 @@
   <meta property="og:description" content="Customer Success × Data × Operations × AI × Systems. Un proyecto público de Gracián Baena.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
+  <meta property="og:image" content="https://gracianb.github.io/revops-studio/assets/og.svg">
+  <meta name="twitter:image" content="https://gracianb.github.io/revops-studio/assets/og.svg">
 
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="REVOPS STUDIO · Gracián Baena">
@@ -67,6 +69,7 @@
 
     <ul class="nav-links">
       <li><a href="#sistema">Sistema</a></li>
+      <li><a href="#playground">Playground</a></li>
       <li><a href="#oferta">Oferta</a></li>
       <li><a href="#servicios">Servicios</a></li>
       <li><a href="#ecosistema">Ecosistema</a></li>
@@ -180,44 +183,62 @@
     <div class="section-head">
       <div>
         <span class="eyebrow">Technical Playground</span>
-        <h2 id="playground-title">Un pequeño motor. Datos sintéticos. Reglas visibles.</h2>
+        <h2 id="playground-title">Prueba el modelo, cambia las prioridades, inspecciona la decisión.</h2>
       </div>
-      <p>Demo ejecutable de una capa RevOps: datos estructurados → scoring → estado → siguiente acción → trazabilidad. No toca ningún CRM real.</p>
+      <p>Un laboratorio local para enseñar cómo una capa RevOps puede convertir señales en decisiones explicables. Todo usa datos sintéticos.</p>
     </div>
+
     <div class="playground-grid">
       <article class="playground-main reveal">
         <div class="playground-top">
-          <div><span class="kicker">LOCAL / SYNTHETIC</span><h3>Pipeline evaluator</h3></div>
+          <div><span class="kicker">LOCAL / DETERMINISTIC</span><h3>Pipeline Model Lab</h3></div>
           <div class="playground-actions">
-            <button class="btn btn-secondary demo-btn" id="resetDemo" type="button">Reiniciar</button>
-            <button class="btn btn-primary demo-btn" id="runDemo" type="button">Evaluar lote →</button>
+            <button class="btn btn-secondary demo-btn" id="resetDemo" type="button">Restablecer</button>
+            <button class="btn btn-primary demo-btn" id="runDemo" type="button">Evaluar modelo →</button>
           </div>
         </div>
+
         <div class="playground-metrics" aria-live="polite">
-          <div class="playground-metric"><b id="demoTotal">0</b><span>registros</span></div>
+          <div class="playground-metric"><b id="demoTotal">8</b><span>registros</span></div>
           <div class="playground-metric"><b id="demoQualified">0</b><span>qualified</span></div>
           <div class="playground-metric"><b id="demoNurture">0</b><span>nurture</span></div>
           <div class="playground-metric"><b id="demoAvgScore">0</b><span>score medio</span></div>
+          <div class="playground-metric"><b id="demoQuality">0</b><span>data issues</span></div>
+          <div class="playground-metric"><b id="demoRate">0%</b><span>qualification rate</span></div>
         </div>
+
+        <div class="weight-lab">
+          <div class="weight-head"><span class="kicker">Model weights</span><span class="weight-total" id="weightTotal">100%</span></div>
+          <div class="weight-grid">
+            <label class="weight-control">Fit <input id="weightFit" type="range" min="0" max="100" value="35"><b id="weightFitValue">35%</b></label>
+            <label class="weight-control">Intent <input id="weightIntent" type="range" min="0" max="100" value="30"><b id="weightIntentValue">30%</b></label>
+            <label class="weight-control">Engagement <input id="weightEngagement" type="range" min="0" max="100" value="20"><b id="weightEngagementValue">20%</b></label>
+            <label class="weight-control">Urgency <input id="weightUrgency" type="range" min="0" max="100" value="15"><b id="weightUrgencyValue">15%</b></label>
+          </div>
+          <p class="weight-help">Los pesos se normalizan antes de puntuar. Puedes cambiar la prioridad del modelo sin modificar el código.</p>
+        </div>
+
         <div class="demo-table-wrap">
           <table class="demo-table">
-            <caption>Dataset sintético de ejemplo</caption>
+            <caption>Dataset sintético. Haz clic en una fila para inspeccionar la explicación.</caption>
             <thead><tr><th scope="col">ID</th><th scope="col">Cuenta</th><th scope="col">Score</th><th scope="col">Estado</th><th scope="col">Siguiente acción</th></tr></thead>
             <tbody id="demoRows"></tbody>
           </table>
         </div>
+        <p class="form-status" id="leadDetail" role="status" aria-live="polite">Selecciona un registro para inspeccionar la explicación.</p>
       </article>
+
       <aside class="playground-side reveal">
         <div class="side-block">
-          <span class="kicker">Rule trace</span>
-          <div class="rule"><code>score = fit×.35 + intent×.30 + engagement×.20 + urgency×.15</code></div>
-          <div class="rule"><code>score ≥ 75 → qualified</code></div>
+          <span class="kicker">Decision trace</span>
+          <div class="rule"><code>weighted signals → classification → next action</code></div>
+          <div class="rule"><code>≥ 75 → qualified</code></div>
           <div class="rule"><code>50–74 → nurture</code></div>
           <div class="rule"><code>&lt; 50 → new</code></div>
         </div>
         <div class="side-block">
-          <span class="kicker">Execution gate</span>
-          <p class="side-copy">El motor puede clasificar. No puede ejecutar una transición sensible sin aprobación humana.</p>
+          <span class="kicker">Human gate</span>
+          <p class="side-copy">Clasificar no es ejecutar. Las transiciones sensibles requieren aprobación explícita.</p>
           <button class="btn btn-secondary gate-btn" id="approveDemo" type="button">Simular aprobación humana</button>
           <p class="form-status" id="demoStatus" role="status" aria-live="polite"></p>
         </div>
