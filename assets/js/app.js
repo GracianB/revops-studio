@@ -876,7 +876,10 @@ function initPlayground() {
       downside: Number(forecast.probabilities.downside?.value) / 100,
       upside: Number(forecast.probabilities.upside?.value) / 100
     };
-    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    const fingerprint =
+      lastWorkflowPlan?.datasetFingerprint ||
+      lastSnapshot?.datasetFingerprint ||
+      null;
     return applyPolicyToAssumptions(base, activePolicy(readPolicyLedgerV21(fingerprint), fingerprint));
   };
 
@@ -1092,13 +1095,7 @@ function initPlayground() {
     renderMap(commercial.segments, commerce.segments);
     renderMap(commercial.owners, commerce.owners);
 
-    const forecastAssumptions = {
-      qualified: Number(forecast.probabilities.qualified?.value) / 100,
-      nurture: Number(forecast.probabilities.nurture?.value) / 100,
-      new: Number(forecast.probabilities.new?.value) / 100,
-      downside: Number(forecast.probabilities.downside?.value) / 100,
-      upside: Number(forecast.probabilities.upside?.value) / 100
-    };
+    const forecastAssumptions = getForecastConfig();
     const analysis = buildRunAnalysis(evaluated, forecastAssumptions);
     const forecastResult = analysis.forecast;
     const scenarioResult = analysis.scenarios;
