@@ -11,6 +11,7 @@ import {
   compareEvaluations,
   evaluateScenarios,
   createRunSnapshot,
+  commercialMetrics,
   normaliseThresholds,
   transition
 } from "../assets/js/revops-engine.js";
@@ -210,4 +211,39 @@ test("CSV parser rejects oversized input", async () => {
     () => parseCsv("id,fit,intent,engagement,urgency\n" + "x".repeat(2_000_001)),
     /CSV demasiado grande/
   );
+});
+
+
+test("commercial metrics calculate pipeline and weighted pipeline", () => {
+  const leads = evaluateBatch([
+    { id:"C-001", fit:100, intent:100, engagement:100, urgency:100, value:50000, owner:"Ana", segment:"Enterprise", lastTouchDays:3 },
+    { id:"C-002", fit:50, intent:50, engagement:50, urgency:50, value:20000, owner:"Luis", segment:"SMB", lastTouchDays:20 },
+    { id:"C-003", fit:10, intent:10, engagement:10, urgency:10, value:10000, owner:"Ana", segment:"SMB", lastTouchDays:30 }
+  ]);
+  const result = commercialMetrics(leads);
+  assert.equal(result.pipelineValue, 80000);
+  assert.equal(result.qualifiedValue, 50000);
+  assert.equal(result.weightedPipeline, 60000);
+  assert.equal(result.staleRecords, 2);
+  assert.equal(result.owners.Ana, 2);
+  assert.equal(result.segments.SMB, 2);
+});
+
+test("action queue marks stale context and includes owner", () => {
+  const [lead] = evaluateBatch([
+    { id:"C-004", account:"Stale Account", fit:90, intent:90, engagement:90, urgency:70, value:60000, owner:"Ana", segment:"Enterprise", lastTouchDays:20 }
+  ]);
+  const [item] = buildActionQueue([lead], "2026-10-04T12:00:00Z");
+  assert.equal(item.owner, "Ana");
+  assert.equal(item.stale, true);
+  assert.equal(item.value, 60000);
+});
+
+test("CSV parser preserves optional commercial context", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  const [row] = parseCsv("id,account,fit,intent,engagement,urgency,value,owner,segment,source,last_touch_days\nL9,Acme,90,80,70,60,42000,Ana,Enterprise,Inbound,12");
+  assert.equal(row.value, 42000);
+  assert.equal(row.owner, "Ana");
+  assert.equal(row.segment, "Enterprise");
+  assert.equal(row.lastTouchDays, 12);
 });
