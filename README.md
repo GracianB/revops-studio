@@ -152,3 +152,18 @@ The new layer remains local and network-free. It does not execute CRM actions. I
 The CSV can optionally include `cohort` for cohort analysis.
 
 Quality target for V11: **40 deterministic tests, zero external runtime dependencies, structural validation PASS**.
+
+
+## V12 · Hiring Manager Mode
+
+V12 adds a recruiter-first proof surface to the public experience.
+
+The first screen now answers three questions before a visitor touches the playground:
+
+1. What role does this project demonstrate?
+2. What was actually built?
+3. Where can the reviewer verify the work?
+
+The proof surface links the positioning, RevOps Studio itself, the wider public project ecosystem and the Professional Deck / LinkedIn. It is deliberately evidence-first: no invented business results, no fake enterprise integrations and no claims that cannot be inspected.
+
+The Control Room remains the main technical proof. V12 changes the route into it, not the underlying decision engine.
