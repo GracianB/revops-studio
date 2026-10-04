@@ -666,7 +666,7 @@
         <section class="workflow-control-panel" aria-labelledby="workflow-control-title">
           <div class="workflow-control-head">
             <div>
-              <span class="kicker">Workflow Control · V16</span>
+              <span class="kicker">Workflow Control · V17</span>
               <h3 id="workflow-control-title">Convierte decisiones en trabajo trazable.</h3>
             </div>
             <div class="workflow-control-actions">
@@ -735,6 +735,29 @@
             <span class="kicker">Projected stage delta</span>
             <strong id="impactStageDelta">Q 0 · N 0 · New 0 · Blocked 0</strong>
           </div>
+        </section>
+
+        <section class="execution-ledger-panel" aria-labelledby="execution-ledger-title">
+          <div class="execution-ledger-head">
+            <div>
+              <span class="kicker">Execution Ledger · V17</span>
+              <h3 id="execution-ledger-title">Cada paso deja una evidencia reproducible.</h3>
+            </div>
+            <button class="btn btn-secondary" id="replayLedger" type="button">Verificar ledger</button>
+          </div>
+          <p id="ledgerMeta">Ledger local · sin llamadas externas.</p>
+          <div class="execution-ledger-metrics" aria-live="polite">
+            <div class="execution-ledger-metric"><span>Status</span><strong id="ledgerStatus">—</strong></div>
+            <div class="execution-ledger-metric"><span>Sequence</span><strong id="ledgerSequence">0</strong></div>
+            <div class="execution-ledger-metric"><span>Approvals</span><strong id="ledgerApprovals">0</strong></div>
+            <div class="execution-ledger-metric"><span>Contracts</span><strong id="ledgerContracts">0</strong></div>
+            <div class="execution-ledger-metric"><span>Simulations</span><strong id="ledgerSimulations">0</strong></div>
+          </div>
+          <div class="execution-ledger-headhash">
+            <span>HEAD</span>
+            <code id="ledgerHead">—</code>
+          </div>
+          <div class="ledger-events" id="ledgerEvents" aria-live="polite"></div>
         </section>
 
         <section class="history-panel" aria-labelledby="history-title">
