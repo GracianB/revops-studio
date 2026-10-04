@@ -43,6 +43,9 @@ import {
 import {
   buildCalibrationReport
 } from "./calibration-engine.js";
+import {
+  buildAdaptiveCalibrationReport
+} from "./adaptive-calibration-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -71,6 +74,50 @@ function writeCalibrationBaselineV19(rows = [], datasetFingerprint = null) {
       JSON.stringify(Array.isArray(rows) ? rows : [])
     );
   } catch {}
+
+const CALIBRATION_V20_STORAGE_KEY = "revops-studio:calibration:v20";
+const CALIBRATION_V20_CONFIG_KEY = "revops-studio:calibration:v20:config";
+
+function readAdaptiveCalibrationConfigV20() {
+  try {
+    const value = JSON.parse(localStorage.getItem(CALIBRATION_V20_CONFIG_KEY) || "{}");
+    return value && typeof value === "object" ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeAdaptiveCalibrationConfigV20(config = {}) {
+  try {
+    localStorage.setItem(CALIBRATION_V20_CONFIG_KEY, JSON.stringify(config || {}));
+  } catch {}
+}
+
+function calibrationStorageKeyV20(datasetFingerprint = null) {
+  return CALIBRATION_V20_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
+}
+
+function readAdaptiveCalibrationHistoryV20(datasetFingerprint = null) {
+  try {
+    const value = JSON.parse(
+      localStorage.getItem(calibrationStorageKeyV20(datasetFingerprint)) || "[]"
+    );
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAdaptiveCalibrationHistoryV20(history = [], datasetFingerprint = null) {
+  try {
+    localStorage.setItem(
+      calibrationStorageKeyV20(datasetFingerprint),
+      JSON.stringify(Array.isArray(history) ? history : [])
+    );
+  } catch {}
+}
+
+
 }
 
 
@@ -172,83 +219,6 @@ function buildCalibrationV19Report(forecastRows = [], outcomes = [], datasetFing
 function initCalculator() {
   const output = qs("#annualCost"), detail = qs("#annualDetail");
   if (!output || !detail) return;
-  const renderFeedback = (plan, forecast) => {
-    if (!feedback.lead) return;
-    const runId = plan?.runId || null;
-    if (lastOutcomeRunId !== runId) {
-      lastOutcomeRunId = runId;
-      feedbackOutcomes = [];
-      lastOutcomeLedger = createOutcomeLedger({
-        runId,
-        datasetFingerprint: plan?.datasetFingerprint || null,
-        source: dataSource === "csv" ? "csv" : "simulation"
-      });
-    }
-
-    const currentIds = evaluated.map((lead) => String(lead.id));
-    const selectedId = currentIds.includes(String(feedback.lead.value))
-      ? String(feedback.lead.value)
-      : currentIds[0] || "";
-    feedback.lead.replaceChildren();
-    evaluated.forEach((lead) => {
-      const option = document.createElement("option");
-      option.value = String(lead.id);
-      option.textContent = (lead.account || "Unnamed account") + " · " + lead.id + " · " + lead.stage;
-      feedback.lead.appendChild(option);
-    });
-    if (selectedId) feedback.lead.value = selectedId;
-
-    const analysis = buildFeedbackAnalysis({
-      plan,
-      forecast,
-      outcomes: feedbackOutcomes
-    });
-    lastFeedbackAnalysis = analysis;
-
-    lastCalibrationReportV19 = buildCalibrationV19Report(
-      forecast?.rows || [],
-      feedbackOutcomes,
-      plan?.datasetFingerprint || null
-    );
-
-    if (feedback.total) feedback.total.textContent = String(analysis.summary.total);
-    if (feedback.positiveRate) feedback.positiveRate.textContent = Math.round(analysis.summary.positiveRate * 100) + "%";
-    if (feedback.winRate) feedback.winRate.textContent = Math.round(analysis.summary.winRate * 100) + "%";
-    if (feedback.variance) feedback.variance.textContent = formatMoneyLocal(analysis.summary.valueVariance);
-    if (feedback.calibration) {
-      feedback.calibration.textContent = analysis.calibration.calibrationError === null
-        ? "—"
-        : (analysis.calibration.calibrationError > 0 ? "+" : "") +
-          Math.round(analysis.calibration.calibrationError * 100) + "pp";
-    }
-    if (feedback.sla) {
-      feedback.sla.textContent = analysis.summary.slaAdherence === null
-        ? "—"
-        : Math.round(analysis.summary.slaAdherence * 100) + "%";
-    }
-    if (feedback.effectiveness) {
-      feedback.effectiveness.replaceChildren();
-      if (!analysis.effectiveness.length) {
-        const empty = document.createElement("div");
-        empty.className = "feedback-empty";
-        empty.textContent = "Registra un outcome para medir qué acciones están funcionando.";
-        feedback.effectiveness.appendChild(empty);
-      } else {
-        analysis.effectiveness.slice(0, 5).forEach((item) => {
-          const row = document.createElement("div");
-          row.className = "feedback-effectiveness-row";
-          const label = document.createElement("strong");
-          label.textContent = item.action;
-          const meta = document.createElement("small");
-          meta.textContent = Math.round(item.positiveRate * 100) + "% positive · " +
-            Math.round(item.winRate * 100) + "% win · Δ " + formatMoneyLocal(item.valueVariance);
-          row.append(label, meta);
-          feedback.effectiveness.appendChild(row);
-        });
-      }
-    }
-  };
-
   const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
     style: "currency", currency: "EUR", maximumFractionDigits: 0
   }).format(Number(value) || 0);
@@ -453,6 +423,7 @@ function initPlayground() {
     replay: qs("#replayLedger"),
     events: qs("#ledgerEvents")
   };
+
   const feedback = {
     lead: qs("#feedbackLead"),
     type: qs("#feedbackType"),
@@ -467,8 +438,169 @@ function initPlayground() {
     variance: qs("#feedbackVariance"),
     calibration: qs("#feedbackCalibration"),
     sla: qs("#feedbackSla"),
-    effectiveness: qs("#feedbackEffectiveness")
+    effectiveness: qs("#feedbackEffectiveness"),
+    v20Severity: qs("#calibrationV20Severity"),
+    v20Current: qs("#calibrationV20Current"),
+    v20Previous: qs("#calibrationV20Previous"),
+    v20CalibrationDelta: qs("#calibrationV20CalibrationDelta"),
+    v20BrierDelta: qs("#calibrationV20BrierDelta"),
+    v20Alerts: qs("#calibrationV20Alerts"),
+    v20Recommendations: qs("#calibrationV20Recommendations"),
+    v20WindowDays: qs("#calibrationV20WindowDays"),
+    v20MinSamples: qs("#calibrationV20MinSamples"),
+    v20MinGroupSamples: qs("#calibrationV20MinGroupSamples"),
+    v20Reset: qs("#resetCalibrationV20")
   };
+  const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
+    style: "currency", currency: "EUR", maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+
+  const renderFeedback = (plan, forecast) => {
+    if (!feedback.lead) return;
+    const runId = plan?.runId || null;
+    if (lastOutcomeRunId !== runId) {
+      lastOutcomeRunId = runId;
+      feedbackOutcomes = [];
+      lastOutcomeLedger = createOutcomeLedger({
+        runId,
+        datasetFingerprint: plan?.datasetFingerprint || null,
+        source: dataSource === "csv" ? "csv" : "simulation"
+      });
+    }
+
+    const currentIds = evaluated.map((lead) => String(lead.id));
+    const selectedId = currentIds.includes(String(feedback.lead.value))
+      ? String(feedback.lead.value)
+      : currentIds[0] || "";
+    feedback.lead.replaceChildren();
+    evaluated.forEach((lead) => {
+      const option = document.createElement("option");
+      option.value = String(lead.id);
+      option.textContent = (lead.account || "Unnamed account") + " · " + lead.id + " · " + lead.stage;
+      feedback.lead.appendChild(option);
+    });
+    if (selectedId) feedback.lead.value = selectedId;
+
+    const analysis = buildFeedbackAnalysis({
+      plan,
+      forecast,
+      outcomes: feedbackOutcomes
+    });
+    lastFeedbackAnalysis = analysis;
+
+    const latestOutcomeAt = feedbackOutcomes
+      .map((outcome) => outcome?.occurredAt)
+      .filter(Boolean)
+      .sort()
+      .at(-1);
+
+    const adaptiveConfigV20 = {
+      windowDays: Number(feedback.v20WindowDays?.value),
+      minSamples: Number(feedback.v20MinSamples?.value),
+      minGroupSamples: Number(feedback.v20MinGroupSamples?.value)
+    };
+
+    lastAdaptiveCalibrationReportV20 = buildAdaptiveCalibrationReport({
+      forecastRows: forecast?.rows || [],
+      outcomes: feedbackOutcomes,
+      history: readAdaptiveCalibrationHistoryV20(plan?.datasetFingerprint || null),
+      datasetFingerprint: plan?.datasetFingerprint || null,
+      runId: plan?.runId || null,
+      now: latestOutcomeAt || lastCalibrationCapturedAtV20 || new Date().toISOString(),
+      config: adaptiveConfigV20
+    });
+
+    writeAdaptiveCalibrationHistoryV20(
+      lastAdaptiveCalibrationReportV20.nextHistory,
+      plan?.datasetFingerprint || null
+    );
+
+    if (feedback.v20Severity) {
+      feedback.v20Severity.textContent = lastAdaptiveCalibrationReportV20.severity;
+      feedback.v20Severity.dataset.state = lastAdaptiveCalibrationReportV20.severity.toLowerCase();
+    }
+    if (feedback.v20Current) {
+      feedback.v20Current.textContent = String(lastAdaptiveCalibrationReportV20.currentWindow.records);
+    }
+    if (feedback.v20Previous) {
+      feedback.v20Previous.textContent = String(lastAdaptiveCalibrationReportV20.previousWindow.records);
+    }
+    if (feedback.v20CalibrationDelta) {
+      const delta = lastAdaptiveCalibrationReportV20.global.signals.calibrationError.delta;
+      feedback.v20CalibrationDelta.textContent = delta === null
+        ? "—"
+        : (delta > 0 ? "+" : "") + Math.round(delta * 100) + "pp";
+    }
+    if (feedback.v20BrierDelta) {
+      const delta = lastAdaptiveCalibrationReportV20.global.signals.brierScore.delta;
+      feedback.v20BrierDelta.textContent = delta === null
+        ? "—"
+        : (delta > 0 ? "+" : "") + delta.toFixed(3);
+    }
+    if (feedback.v20Alerts) {
+      const segmentAlerts = lastAdaptiveCalibrationReportV20.segments.filter((item) => item.drift).length;
+      const cohortAlerts = lastAdaptiveCalibrationReportV20.cohorts.filter((item) => item.drift).length;
+      feedback.v20Alerts.textContent = String(segmentAlerts + cohortAlerts);
+    }
+    if (feedback.v20Recommendations) {
+      feedback.v20Recommendations.replaceChildren();
+      lastAdaptiveCalibrationReportV20.recommendations.slice(0, 5).forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "feedback-effectiveness-row";
+        const title = document.createElement("strong");
+        title.textContent = item.code + " · " + item.action;
+        const detail = document.createElement("small");
+        detail.textContent = item.detail;
+        row.append(title, detail);
+        feedback.v20Recommendations.appendChild(row);
+      });
+    }
+
+    lastCalibrationReportV19 = buildCalibrationV19Report(
+      forecast?.rows || [],
+      feedbackOutcomes,
+      plan?.datasetFingerprint || null
+    );
+
+    if (feedback.total) feedback.total.textContent = String(analysis.summary.total);
+    if (feedback.positiveRate) feedback.positiveRate.textContent = Math.round(analysis.summary.positiveRate * 100) + "%";
+    if (feedback.winRate) feedback.winRate.textContent = Math.round(analysis.summary.winRate * 100) + "%";
+    if (feedback.variance) feedback.variance.textContent = formatMoneyLocal(analysis.summary.valueVariance);
+    if (feedback.calibration) {
+      feedback.calibration.textContent = analysis.calibration.calibrationError === null
+        ? "—"
+        : (analysis.calibration.calibrationError > 0 ? "+" : "") +
+          Math.round(analysis.calibration.calibrationError * 100) + "pp";
+    }
+    if (feedback.sla) {
+      feedback.sla.textContent = analysis.summary.slaAdherence === null
+        ? "—"
+        : Math.round(analysis.summary.slaAdherence * 100) + "%";
+    }
+    if (feedback.effectiveness) {
+      feedback.effectiveness.replaceChildren();
+      if (!analysis.effectiveness.length) {
+        const empty = document.createElement("div");
+        empty.className = "feedback-empty";
+        empty.textContent = "Registra un outcome para medir qué acciones están funcionando.";
+        feedback.effectiveness.appendChild(empty);
+      } else {
+        analysis.effectiveness.slice(0, 5).forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "feedback-effectiveness-row";
+          const label = document.createElement("strong");
+          label.textContent = item.action;
+          const meta = document.createElement("small");
+          meta.textContent = Math.round(item.positiveRate * 100) + "% positive · " +
+            Math.round(item.winRate * 100) + "% win · Δ " + formatMoneyLocal(item.valueVariance);
+          row.append(label, meta);
+          feedback.effectiveness.appendChild(row);
+        });
+      }
+    }
+  };
+
+
   const decisionTrace = {
     state: qs("#traceState"),
     runId: qs("#traceRunId"),
@@ -517,6 +649,8 @@ function initPlayground() {
   let guidedStep = 0;
   let feedbackOutcomes = [];
   let lastCalibrationReportV19 = null;
+  let lastAdaptiveCalibrationReportV20 = null;
+  let lastCalibrationCapturedAtV20 = null;
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -1416,6 +1550,7 @@ function initPlayground() {
       source: dataSource,
       scenario: activeScenario
     });
+    lastCalibrationCapturedAtV20 = now.toISOString();
     if (datasetLabel) datasetLabel.textContent =
       (dataSource === "demo" ? "Demo dataset" : "CSV local") + " · " + evaluated.length + " records";
     if (runId) runId.textContent = lastSnapshot.runId;
@@ -1436,6 +1571,11 @@ function initPlayground() {
     addAudit(auditEvent("RUN", { id: "MODEL" }, "manual execution"));
     persistAndRender();
   };
+
+  const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();
+  if (feedback.v20WindowDays) feedback.v20WindowDays.value = String(adaptiveConfigV20.windowDays ?? 30);
+  if (feedback.v20MinSamples) feedback.v20MinSamples.value = String(adaptiveConfigV20.minSamples ?? 8);
+  if (feedback.v20MinGroupSamples) feedback.v20MinGroupSamples.value = String(adaptiveConfigV20.minGroupSamples ?? 5);
 
   const loaded = readStored();
   const hashConfig = window.location.hash.startsWith("#config=")
@@ -1599,7 +1739,24 @@ function initPlayground() {
           }
         : null,
       outcomes: feedbackOutcomes.map((outcome) => ({ ...outcome })),
-      calibrationV19: lastCalibrationReportV19
+      calibrationV19: lastCalibrationReportV19,
+      calibrationV20: lastAdaptiveCalibrationReportV20
+        ? {
+            contractVersion: lastAdaptiveCalibrationReportV20.contractVersion,
+            reportId: lastAdaptiveCalibrationReportV20.reportId,
+            baselineEstablished: lastAdaptiveCalibrationReportV20.baselineEstablished,
+            currentWindow: lastAdaptiveCalibrationReportV20.currentWindow,
+            previousWindow: lastAdaptiveCalibrationReportV20.previousWindow,
+            global: lastAdaptiveCalibrationReportV20.global,
+            segments: lastAdaptiveCalibrationReportV20.segments,
+            cohorts: lastAdaptiveCalibrationReportV20.cohorts,
+            severity: lastAdaptiveCalibrationReportV20.severity,
+            drift: lastAdaptiveCalibrationReportV20.drift,
+            recommendations: lastAdaptiveCalibrationReportV20.recommendations,
+            auditTrail: lastAdaptiveCalibrationReportV20.auditTrail,
+            snapshotId: lastAdaptiveCalibrationReportV20.snapshotId
+          }
+        : null
     };
     const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -1746,6 +1903,37 @@ function initPlayground() {
 
   workflowControl.artifact?.addEventListener("click", () => {
     qs("#exportDemo")?.click();
+  });
+
+  [
+    feedback.v20WindowDays,
+    feedback.v20MinSamples,
+    feedback.v20MinGroupSamples
+  ].filter(Boolean).forEach((input) => {
+    input.addEventListener("change", () => {
+      const config = {
+        windowDays: Number(feedback.v20WindowDays?.value),
+        minSamples: Number(feedback.v20MinSamples?.value),
+        minGroupSamples: Number(feedback.v20MinGroupSamples?.value)
+      };
+      writeAdaptiveCalibrationConfigV20(config);
+      addAudit(auditEvent("CALIBRATION_V20_CONFIG", { id: "V20" }, JSON.stringify(config)));
+      render();
+    });
+  });
+
+  feedback.v20Reset?.addEventListener("click", () => {
+    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    try {
+      localStorage.removeItem(calibrationStorageKeyV20(fingerprint));
+    } catch {}
+    lastAdaptiveCalibrationReportV20 = null;
+    addAudit(auditEvent(
+      "CALIBRATION_V20_RESET",
+      { id: "V20" },
+      fingerprint ? "dataset history cleared" : "global calibration history cleared"
+    ));
+    render();
   });
 
   feedback.record?.addEventListener("click", () => {

@@ -810,6 +810,41 @@
           </div>
         </section>
 
+        <section class="feedback-panel" aria-labelledby="calibration-v20-title">
+          <div class="feedback-head">
+            <div>
+              <span class="kicker">Adaptive Calibration · V20</span>
+              <h3 id="calibration-v20-title">El forecast ahora aprende del comportamiento observado.</h3>
+            </div>
+            <span class="feedback-boundary">LOCAL · NO AUTO-RECALIBRATION</span>
+          </div>
+          <p>V20 compara ventanas temporales, exige una muestra mínima y separa drift global de señales por segmento y cohorte. Las recomendaciones son controladas y no cambian el modelo automáticamente.</p>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Severity</span><strong id="calibrationV20Severity">INSUFFICIENT</strong><small>estado global</small></div>
+            <div class="feedback-metric"><span>Current</span><strong id="calibrationV20Current">0</strong><small>observaciones ventana actual</small></div>
+            <div class="feedback-metric"><span>Previous</span><strong id="calibrationV20Previous">0</strong><small>observaciones ventana anterior</small></div>
+            <div class="feedback-metric"><span>Calibration Δ</span><strong id="calibrationV20CalibrationDelta">—</strong><small>error actual − anterior</small></div>
+            <div class="feedback-metric"><span>Brier Δ</span><strong id="calibrationV20BrierDelta">—</strong><small>score actual − anterior</small></div>
+            <div class="feedback-metric"><span>Alerts</span><strong id="calibrationV20Alerts">0</strong><small>segmentos + cohortes</small></div>
+          </div>
+          <div class="feedback-form">
+            <label>Window days
+              <input id="calibrationV20WindowDays" type="number" min="1" max="365" step="1" value="30">
+            </label>
+            <label>Min global samples
+              <input id="calibrationV20MinSamples" type="number" min="1" max="10000" step="1" value="8">
+            </label>
+            <label>Min group samples
+              <input id="calibrationV20MinGroupSamples" type="number" min="1" max="10000" step="1" value="5">
+            </label>
+            <button class="btn btn-secondary" id="resetCalibrationV20" type="button">Reset calibration history</button>
+          </div>
+          <div class="feedback-effectiveness">
+            <span class="kicker">Adaptive recommendations</span>
+            <div id="calibrationV20Recommendations" aria-live="polite"></div>
+          </div>
+        </section>
+
         <section class="history-panel" aria-labelledby="history-title">
           <div class="history-head">
             <div>
