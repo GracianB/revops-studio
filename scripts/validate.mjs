@@ -41,14 +41,18 @@ if (guidedSteps.length !== expectedGuidedSteps.length || guidedSteps.some((value
   fail("guided proof steps must expose 0,1,2,3 exactly once");
 }
 
-const requiredV14Ids = [
+const requiredV15Ids = [
   "decision-trace-title", "decisionTraceEmpty", "decisionTraceContent",
   "traceState", "traceRunId", "traceInputs", "traceDecision", "traceCommercial",
   "traceRisk", "traceProposal", "traceApproval", "traceExecution", "ownerMatrix",
-  "integration-boundary-title"
+  "integration-boundary-title",
+  "workflow-control-title", "workflowStatus", "workflowMeta", "workflowReady",
+  "workflowApproval", "workflowBlocked", "workflowAdapter", "workflowFingerprint",
+  "workflowPlan", "simulateWorkflow", "exportRunArtifact", "replayArtifact",
+  "verifyReplayArtifact", "replayStatus"
 ];
-const missingV14Ids = requiredV14Ids.filter((id) => !ids.includes(id));
-if (missingV14Ids.length) fail("V14 surface missing DOM ids: " + missingV14Ids.join(", "));
+const missingV15Ids = requiredV15Ids.filter((id) => !ids.includes(id));
+if (missingV15Ids.length) fail("V15 surface missing DOM ids: " + missingV15Ids.join(", "));
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail("duplicate ids: " + [...new Set(duplicates)].join(", "));
 
@@ -93,6 +97,9 @@ const importedEngineNames = engineImportBlock[1]
   .filter(Boolean);
 const missingEngineExports = importedEngineNames.filter((name) => !engineExports.has(name));
 if (missingEngineExports.length) fail("app.js references missing engine exports: " + missingEngineExports.join(", "));
+
+const adapterImport = appJs.includes('from "./execution-adapter.js"');
+if (!adapterImport) fail("app.js execution adapter import missing");
 
 const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
 const adapterExports = new Set(
