@@ -853,6 +853,115 @@ export function executiveIntelligence(leads, forecastAssumptions = {}, config = 
 }
 
 
+export function ownerIntelligence(leads, forecastAssumptions = {}, config = {}) {
+  const rows = Array.isArray(leads) ? leads.filter((lead) => lead.stage !== "blocked") : [];
+  const forecast = forecastPipeline(rows, forecastAssumptions);
+  const groups = {};
+
+  rows.forEach((lead) => {
+    const owner = String(lead?.owner || "Unassigned").trim() || "Unassigned";
+    if (!groups[owner]) {
+      groups[owner] = {
+        owner,
+        records: 0,
+        pipelineValue: 0,
+        qualifiedRecords: 0,
+        staleRecords: 0,
+        expectedValue: 0,
+        riskFindings: 0,
+        averageScore: 0
+      };
+    }
+    const group = groups[owner];
+    const value = numeric(lead.value) ?? 0;
+    group.records += 1;
+    group.pipelineValue += value;
+    if (lead.stage === "qualified") group.qualifiedRecords += 1;
+    if ((numeric(lead.lastTouchDays) ?? -1) > (normaliseIntelligenceConfig(config).staleDays)) group.staleRecords += 1;
+    if (typeof lead.score === "number") group.averageScore += lead.score;
+    group.riskFindings += applyBusinessRules([lead], config).filter((item) =>
+      item.severity === "critical" || item.severity === "high"
+    ).length;
+  });
+
+  const ownerForecast = forecast.rows.reduce((map, row) => {
+    const owner = row.owner;
+    map[owner] = (map[owner] || 0) + row.expectedValue;
+    return map;
+  }, {});
+
+  const totalPipeline = Object.values(groups).reduce((sum, item) => sum + item.pipelineValue, 0);
+  Object.values(groups).forEach((group) => {
+    group.expectedValue = ownerForecast[group.owner] || 0;
+    group.qualifiedRate = group.records ? group.qualifiedRecords / group.records : 0;
+    group.staleRate = group.records ? group.staleRecords / group.records : 0;
+    group.averageScore = group.records ? Math.round(group.averageScore / group.records) : 0;
+    group.pipelineShare = totalPipeline ? group.pipelineValue / totalPipeline : 0;
+  });
+
+  return Object.values(groups).sort((a, b) =>
+    b.expectedValue - a.expectedValue ||
+    b.pipelineValue - a.pipelineValue ||
+    a.owner.localeCompare(b.owner)
+  );
+}
+
+export function buildExecutiveBrief(leads, forecastAssumptions = {}, config = {}) {
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const pipeline = summarisePipeline(evaluated);
+  const commercial = commercialMetrics(evaluated);
+  const intelligence = executiveIntelligence(evaluated, forecastAssumptions, config);
+  const owners = ownerIntelligence(evaluated, forecastAssumptions, config);
+  const topOwner = owners[0] || null;
+  const topSegment = Object.values(intelligence.segments)[0] || null;
+
+  const headline = intelligence.signal === "critical"
+    ? "Revenue and operating risk require attention."
+    : intelligence.signal === "attention"
+      ? "Pipeline is usable, but several signals need attention."
+      : "Pipeline is controlled with no material high-severity signal.";
+
+  const keyFacts = [
+    pipeline.byStage.qualified + " qualified of " + pipeline.scored + " scored records",
+    formatBriefMoney(intelligence.forecast.expectedValue) + " expected base value",
+    formatBriefMoney(intelligence.leakage.atRiskValue) + " value carrying at least one risk signal",
+    Math.round(intelligence.forecast.topAccountShare * 100) + "% top-account concentration"
+  ];
+
+  const actions = [
+    ...intelligence.priorities.slice(0, 3).map((item) => item.title),
+    topOwner ? "Review " + topOwner.owner + " portfolio: " + formatBriefMoney(topOwner.expectedValue) + " expected value." : null,
+    topSegment ? "Protect " + topSegment.segment + ": " + formatBriefMoney(topSegment.expectedValue) + " expected value." : null
+  ].filter(Boolean).slice(0, 5);
+
+  return {
+    headline,
+    signal: intelligence.signal,
+    summary: {
+      records: pipeline.total,
+      qualified: pipeline.byStage.qualified,
+      blocked: pipeline.byStage.blocked,
+      pipelineValue: commercial.pipelineValue,
+      expectedValue: intelligence.forecast.expectedValue,
+      leakageValue: intelligence.leakage.atRiskValue,
+      healthAverage: intelligence.health.average
+    },
+    keyFacts,
+    actions,
+    topOwner,
+    topSegment,
+    intelligence
+  };
+}
+
+function formatBriefMoney(value) {
+  return new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0
+  }).format(numeric(value) ?? 0);
+}
+
 export function compareEvaluations(baseLeads, currentLeads) {
   const baseById = new Map(baseLeads.map((lead) => [String(lead.id), lead]));
   const changes = [];

@@ -103,3 +103,24 @@ Executive decision surface
 All intelligence functions are pure calculations over the current in-browser dataset. They return structured objects that the UI renders using DOM text nodes, avoiding HTML injection from imported CSV values.
 
 Forecast multipliers are normalized separately from stage probabilities, so values above 100% such as a 115% upside assumption remain representable and reproducible in run identity.
+
+
+## V13 interaction architecture
+
+V13 adds a presentation layer without changing the core trust boundary:
+
+```
+Current evaluated run
+      ↓
+Executive Intelligence
+      ↓
+Executive Brief
+      ↓
+Guided proof navigation
+      ↓
+Human review
+```
+
+The guided path deliberately operates on the same dataset and configuration used by the Control Room. This prevents a separate demo state from drifting away from the actual engine.
+
+The executive brief is generated from structured engine output and rendered with DOM text nodes. Clipboard export is user initiated.

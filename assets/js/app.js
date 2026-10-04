@@ -15,7 +15,8 @@ import {
   commercialMetrics,
   forecastPipeline,
   forecastScenarios,
-  executiveIntelligence
+  executiveIntelligence,
+  buildExecutiveBrief
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -249,6 +250,24 @@ function initPlayground() {
     segments: qs("#intelSegments"),
     cohorts: qs("#intelCohorts")
   };
+  const guided = {
+    progress: qs("#guidedProgress"),
+    title: qs("#guidedTitle"),
+    copy: qs("#guidedCopy"),
+    next: qs("#guidedNext"),
+    steps: qsa("[data-guided-step]")
+  };
+  const executiveReadout = {
+    signal: qs("#executiveSignal"),
+    headline: qs("#executiveHeadline"),
+    meta: qs("#executiveMeta"),
+    facts: qs("#executiveFacts"),
+    actions: qs("#executiveActions"),
+    owner: qs("#executiveOwner"),
+    segment: qs("#executiveSegment"),
+    copyButton: qs("#copyExecutiveBrief"),
+    text: qs("#executiveBriefText")
+  };
   const impact = qs("#impactList");
   const impactMeta = qs("#impactMeta");
   const impactMetrics = {
@@ -276,6 +295,7 @@ function initPlayground() {
   let sourceRecords = demoSeed;
   let lastSnapshot = null;
   let activeTableStage = "all";
+  let guidedStep = 0;
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -644,6 +664,7 @@ function initPlayground() {
     const forecastResult = forecastPipeline(evaluated, forecastAssumptions);
     const scenarioResult = forecastScenarios(evaluated, forecastAssumptions);
     const intelligenceResult = executiveIntelligence(evaluated, forecastAssumptions);
+    const executiveResult = buildExecutiveBrief(evaluated, forecastAssumptions);
     const scenarioMoney = (name) => formatMoney(scenarioResult[name]?.expectedValue || 0);
 
     if (forecast.downside) forecast.downside.textContent = scenarioMoney("downside");
@@ -734,6 +755,42 @@ function initPlayground() {
      renderIntelMap(intelligence.segments, Object.values(intelligenceResult.segments), (item) => item.segment);
      renderIntelMap(intelligence.cohorts, intelligenceResult.cohorts, (item) => item.cohort);
 
+     if (executiveReadout.signal) {
+       executiveReadout.signal.textContent = executiveResult.signal.toUpperCase();
+       executiveReadout.signal.dataset.state = executiveResult.signal;
+     }
+     if (executiveReadout.headline) executiveReadout.headline.textContent = executiveResult.headline;
+     if (executiveReadout.meta) executiveReadout.meta.textContent =
+       executiveResult.summary.qualified + " qualified · " +
+       executiveResult.summary.blocked + " blocked · " +
+       formatMoney(executiveResult.summary.pipelineValue) + " active pipeline";
+     if (executiveReadout.owner) executiveReadout.owner.textContent = executiveResult.topOwner
+       ? executiveResult.topOwner.owner + " · " + formatMoney(executiveResult.topOwner.expectedValue) + " expected"
+       : "No owner concentration";
+     if (executiveReadout.segment) executiveReadout.segment.textContent = executiveResult.topSegment
+       ? executiveResult.topSegment.segment + " · " + formatMoney(executiveResult.topSegment.expectedValue) + " expected"
+       : "No segment concentration";
+
+     const renderBriefList = (target, items) => {
+       if (!target) return;
+       target.replaceChildren();
+       items.forEach((item) => {
+         const li = document.createElement("li");
+         li.textContent = item;
+         target.appendChild(li);
+       });
+     };
+     renderBriefList(executiveReadout.facts, executiveResult.keyFacts);
+     renderBriefList(executiveReadout.actions, executiveResult.actions);
+     if (executiveReadout.text) {
+       executiveReadout.text.value =
+         executiveResult.headline + "\n\n" +
+         executiveResult.keyFacts.map((item) => "• " + item).join("\n") + "\n\n" +
+         "Recommended actions\n" +
+         executiveResult.actions.map((item) => "• " + item).join("\n");
+     }
+
+
      Object.entries(bars).forEach(([stage, bar]) => {
       if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
     });
@@ -815,6 +872,68 @@ function initPlayground() {
       });
       rows.appendChild(tr);
     });
+  };
+
+  const guidedSteps = [
+    {
+      title: "Start with the baseline",
+      copy: "Primero observa valor, stages y calidad. Todavía no cambias ninguna regla.",
+      target: "commercial-title",
+      action: () => {
+        activeScenario = "balanced";
+        Object.entries(scenarios.balanced).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(value); });
+        qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item.dataset.scenario === "balanced"));
+        persistAndRender(false);
+      }
+    },
+    {
+      title: "Change the decision model",
+      copy: "Growth cambia prioridades. El sistema vuelve a puntuar y expone el impacto, en lugar de ocultarlo.",
+      target: "scenario-title",
+      action: () => {
+        activeScenario = "growth";
+        Object.entries(scenarios.growth).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(value); });
+        qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item.dataset.scenario === "growth"));
+        addAudit(auditEvent("GUIDED_SCENARIO", { id: "growth" }, "guided proof applied"));
+        persistAndRender(false);
+      }
+    },
+    {
+      title: "Stress the forecast",
+      copy: "Forecast y qualification siguen separados. Aquí tensamos upside/downside para ver exposición.",
+      target: "forecast-title",
+      action: () => {
+        if (forecast.probabilities.downside) forecast.probabilities.downside.value = "60";
+        if (forecast.probabilities.upside) forecast.probabilities.upside.value = "125";
+        writeStored(currentConfig());
+        updateShareUrl();
+        render();
+        addAudit(auditEvent("GUIDED_FORECAST", { id: "forecast" }, "forecast stress applied"));
+      }
+    },
+    {
+      title: "Read the executive decision",
+      copy: "La última capa condensa health, riesgos, leakage, concentración y oportunidades para una revisión ejecutiva.",
+      target: "executive-readout-title",
+      action: () => render()
+    }
+  ];
+
+  const renderGuided = () => {
+    const step = guidedSteps[guidedStep];
+    if (!step) return;
+    if (guided.progress) guided.progress.textContent = String(guidedStep + 1).padStart(2, "0") + " / " + String(guidedSteps.length).padStart(2, "0");
+    if (guided.title) guided.title.textContent = step.title;
+    if (guided.copy) guided.copy.textContent = step.copy;
+    guided.steps.forEach((item) => item.classList.toggle("is-active", Number(item.dataset.guidedStep) === guidedStep));
+    if (guided.next) guided.next.textContent = guidedStep === guidedSteps.length - 1 ? "Replay proof ↻" : "Siguiente →";
+  };
+
+  const goGuided = (index) => {
+    guidedStep = Math.max(0, Math.min(guidedSteps.length - 1, index));
+    guidedSteps[guidedStep].action();
+    qs("#" + guidedSteps[guidedStep].target)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    renderGuided();
   };
 
   const persistAndRender = (recordHistory = true) => {
@@ -915,6 +1034,25 @@ function initPlayground() {
     if (shareConfig) shareConfig.value = "";
     renderWeights();
     runWithAudit();
+  });
+
+  guided.steps.forEach((step) => step.addEventListener("click", () => goGuided(Number(step.dataset.guidedStep) || 0)));
+  guided.next?.addEventListener("click", () => goGuided(guidedStep === guidedSteps.length - 1 ? 0 : guidedStep + 1));
+
+  executiveReadout.copyButton?.addEventListener("click", async () => {
+    const value = executiveReadout.text?.value || "";
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      status.dataset.state = "ok";
+      status.textContent = "Executive brief copiado al portapapeles.";
+      addAudit(auditEvent("EXECUTIVE_COPY", { id: "BRIEF" }, "executive readout copied"));
+    } catch {
+      executiveReadout.text?.focus();
+      executiveReadout.text?.select();
+      status.dataset.state = "ok";
+      status.textContent = "Executive brief seleccionado para copiar.";
+    }
   });
 
   qs("#csvInput")?.addEventListener("change", async (event) => {
@@ -1061,6 +1199,7 @@ function initPlayground() {
 
   renderWeights();
   renderHistory();
+  renderGuided();
   persistAndRender(true);
 }
 
