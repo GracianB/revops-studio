@@ -196,6 +196,8 @@ function initPlayground() {
   const queueSearch = qs("#queueSearch");
   const scenarioMatrix = qs("#scenarioMatrix");
   const scenarioMatrixMeta = qs("#scenarioMatrixMeta");
+  const runHistory = qs("#runHistory");
+  const clearHistory = qs("#clearHistory");
   const impact = qs("#impactList");
   const impactMeta = qs("#impactMeta");
   const impactMetrics = {
@@ -215,6 +217,7 @@ function initPlayground() {
   });
 
   const SETTINGS_KEY = "revops-studio:control-room:v7";
+  const HISTORY_KEY = "revops-studio:run-history:v8";
   let evaluated = [];
   let approved = false;
   let dataSource = "demo";
@@ -231,6 +234,80 @@ function initPlayground() {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(config));
     } catch {}
+  };
+
+  const readHistory = () => {
+    try {
+      const value = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      return Array.isArray(value) ? value.slice(0, 8) : [];
+    } catch { return []; }
+  };
+
+  const writeHistory = (entries) => {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 8))); } catch {}
+  };
+
+  let history = readHistory();
+
+  const saveHistoryEntry = (snapshot, summary) => {
+    const entry = {
+      runId: snapshot.runId,
+      createdAt: snapshot.createdAt,
+      source: snapshot.source,
+      scenario: snapshot.scenario,
+      weights: snapshot.weights,
+      thresholds: snapshot.thresholds,
+      total: summary.total,
+      averageScore: summary.averageScore,
+      qualificationRate: summary.qualificationRate,
+      blocked: summary.qualityIssues
+    };
+    history = [entry, ...history.filter((item) => item.runId !== entry.runId)].slice(0, 8);
+    writeHistory(history);
+  };
+
+  const renderHistory = () => {
+    if (!runHistory) return;
+    runHistory.replaceChildren();
+    if (!history.length) {
+      const empty = document.createElement("div");
+      empty.className = "history-empty";
+      empty.textContent = "Todavía no hay ejecuciones guardadas en este navegador.";
+      runHistory.appendChild(empty);
+      return;
+    }
+
+    history.forEach((entry) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "history-row";
+      button.dataset.runId = entry.runId;
+
+      const main = document.createElement("span");
+      main.className = "history-main";
+      const id = document.createElement("strong");
+      id.textContent = entry.runId;
+      const meta = document.createElement("small");
+      meta.textContent = new Date(entry.createdAt).toLocaleString("es-ES", {
+        day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+      }) + " · " + entry.scenario + " · " + entry.source;
+      main.append(id, meta);
+
+      const stats = document.createElement("span");
+      stats.className = "history-stats";
+      stats.textContent = entry.averageScore + " avg · " +
+        Math.round(entry.qualificationRate * 100) + "% Q · " + entry.blocked + " blocked";
+
+      button.append(main, stats);
+      button.addEventListener("click", () => {
+        applyConfig(entry);
+        addAudit(auditEvent("HISTORY_LOAD", { id: entry.runId }, "configuration restored"));
+        persistAndRender(false);
+        status.dataset.state = "ok";
+        status.textContent = "Configuración restaurada desde " + entry.runId + ". Los datos nunca se guardan en el historial.";
+      });
+      runHistory.appendChild(button);
+    });
   };
 
   const getWeights = () =>
@@ -508,7 +585,7 @@ function initPlayground() {
     });
   };
 
-  const persistAndRender = () => {
+  const persistAndRender = (recordHistory = true) => {
     const config = currentConfig();
     writeStored(config);
     updateShareUrl();
@@ -531,6 +608,11 @@ function initPlayground() {
     status.dataset.state = "ok";
     status.textContent = "Evaluado localmente · sin llamadas de red · configuración guardable.";
     evaluated.forEach((lead) => addAudit(auditEvent("EVALUATE", lead, lead.stage + " / " + (lead.score ?? "n/a"))));
+    const summary = summarisePipeline(evaluated);
+    if (recordHistory) {
+      saveHistoryEntry(lastSnapshot, summary);
+      renderHistory();
+    }
     render();
   };
 
@@ -613,6 +695,15 @@ function initPlayground() {
   });
 
   queueSearch?.addEventListener("input", renderQueue);
+
+  clearHistory?.addEventListener("click", () => {
+    history = [];
+    writeHistory(history);
+    renderHistory();
+    addAudit(auditEvent("HISTORY_CLEAR", { id: "HISTORY" }, "local run history cleared"));
+    status.dataset.state = "ok";
+    status.textContent = "Historial local borrado. No se han borrado datos del CSV porque nunca se guardaron.";
+  });
 
   qs("#exportDemo")?.addEventListener("click", () => {
     const payload = {
@@ -698,7 +789,8 @@ function initPlayground() {
   });
 
   renderWeights();
-  persistAndRender();
+  renderHistory();
+  persistAndRender(true);
 }
 
 initMenu();
