@@ -292,7 +292,9 @@ test("V20 segment drift is surfaced separately", () => {
     rows:previous
   }), 36);
 
+  const currentInput = asForecastOutcomes(current);
   const report = buildAdaptiveCalibrationReport({
+    ...currentInput,
     history,
     datasetFingerprint:"D1",
     runId:"CURRENT",
@@ -316,7 +318,9 @@ test("V20 cohort drift can be distinguished from segment drift", () => {
     rows:previous
   }), 36);
 
+  const currentInput = asForecastOutcomes(current);
   const report = buildAdaptiveCalibrationReport({
+    ...currentInput,
     history,
     datasetFingerprint:"D1",
     runId:"CURRENT",
