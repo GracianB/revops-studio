@@ -268,7 +268,10 @@ function initPlayground() {
       createdAt: snapshot.createdAt,
       source: snapshot.source,
       scenario: snapshot.scenario,
-      weights: snapshot.weights,
+      weights: Object.fromEntries(
+        Object.entries(snapshot.weights).map(([key, value]) => [key, Math.round(value * 100)])
+      ),
+      weightMode: "percent",
       thresholds: snapshot.thresholds,
       total: summary.total,
       averageScore: summary.averageScore,
@@ -376,6 +379,7 @@ function initPlayground() {
 
   const currentConfig = () => ({
     weights: getWeights(),
+    weightMode: "percent",
     thresholds: getThresholds(),
     scenario: activeScenario
   });
@@ -390,6 +394,8 @@ function initPlayground() {
 
   const applyConfig = (config = {}) => {
     const weightSet = config.weights || DEFAULT_WEIGHTS;
+    const values = Object.values(weightSet).map(Number).filter(Number.isFinite);
+    const legacyNormalised = !config.weightMode && values.length === 4 && values.reduce((sum, value) => sum + value, 0) <= 1.01;
     Object.keys(inputs).forEach((key) => {
       if (!inputs[key]) return;
       const value = Number(weightSet[key]);
@@ -397,7 +403,9 @@ function initPlayground() {
         inputs[key].value = String(Math.round(DEFAULT_WEIGHTS[key] * 100));
         return;
       }
-      inputs[key].value = String(Math.round(value <= 1 ? value * 100 : value));
+      inputs[key].value = String(Math.round(
+        config.weightMode === "normalized" || legacyNormalised ? value * 100 : value
+      ));
     });
     setThresholds({ ...(config.thresholds || {}), changed: "qualified" });
     if (config.scenario && scenarios[config.scenario]) activeScenario = config.scenario;
@@ -775,6 +783,21 @@ function initPlayground() {
     status.textContent = "Historial local borrado. No se han borrado datos del CSV porque nunca se guardaron.";
   });
 
+  qs("#downloadCsvTemplate")?.addEventListener("click", () => {
+    const header = "id,account,fit,intent,engagement,urgency,value,owner,segment,source,last_touch_days\n";
+    const sample = "L-EXAMPLE,Example Account,80,70,60,50,25000,Ana,Enterprise,Inbound,5\n";
+    const blob = new Blob([header + sample], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "revops-control-room-template.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    addAudit(auditEvent("TEMPLATE", { id: "CSV" }, "sample CSV generated locally"));
+    status.dataset.state = "ok";
+    status.textContent = "Plantilla CSV generada localmente.";
+  });
+
   qs("#exportDemo")?.addEventListener("click", () => {
     const payload = {
       exportedAt: new Date().toISOString(),
@@ -784,6 +807,7 @@ function initPlayground() {
       weights: getWeights(),
       thresholds: getThresholds(),
       pipeline: summarisePipeline(evaluated),
+      commercial: commercialMetrics(evaluated),
       queue: buildActionQueue(evaluated),
       records: evaluated
     };
