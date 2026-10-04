@@ -695,3 +695,22 @@ textarea.form-control{min-height:145px;resize:vertical}
   .commercial-grid,.commercial-breakdowns{grid-template-columns:1fr 1fr}
 }
 @media (max-width:520px){.commercial-grid,.commercial-breakdowns{grid-template-columns:1fr}}
+
+/* RevOps Control Room v9 · local filters */
+.table-tools{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0
+}
+.table-tools>label:first-child{
+  color:var(--dim);font:700 9px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em
+}
+.table-tools select{
+  min-height:38px;padding:0 30px 0 10px;border:1px solid var(--line-2);border-radius:10px;
+  background:var(--bg-2);color:var(--text);font:600 10px/1 var(--mono);outline:none
+}
+.table-tools select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,90,95,.08)}
+.check-filter{
+  display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 11px;
+  border:1px solid var(--line);border-radius:10px;background:var(--bg-2);
+  color:var(--muted);font:600 9px/1 var(--mono);cursor:pointer
+}
+.check-filter input{accent-color:var(--accent)}
