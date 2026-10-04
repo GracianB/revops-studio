@@ -245,7 +245,7 @@ function initPlayground() {
   });
 
   renderWeights();
-  render();
+  run();
 }
 
 initMenu();
