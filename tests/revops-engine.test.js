@@ -327,7 +327,7 @@ test("forecast assumptions are part of run identity", () => {
 
 test("account health is deterministic and recency aware", () => {
   const healthy = accountHealth({
-    id: "H-001", fit: 100, intent: 100, engagement: 100, urgency: 20, lastTouchDays: 2
+    id: "H-001", fit: 100, intent: 100, engagement: 100, urgency: 100, lastTouchDays: 2
   });
   assert.equal(healthy.score, 100);
   assert.equal(healthy.status, "healthy");
