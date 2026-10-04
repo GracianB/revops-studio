@@ -67,7 +67,7 @@ export function createExecutionEnvelope(trace, context = {}) {
 }
 
 export function simulateExecution(envelope) {
-  if (!envelope || envelope.contractVersion !== "15.0" || envelope.canExecute !== false) {
+  if (!envelope || envelope.contractVersion !== "16.0" || envelope.canExecute !== false) {
     return {
       ok: false,
       executed: false,
