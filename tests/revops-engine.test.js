@@ -823,7 +823,7 @@ test("blocked decision cannot produce a valid integration contract", async () =>
   });
   assert.equal(envelope.valid, false);
   assert.equal(contract.canExecute, false);
-  assert.equal(validation.valid, true);
+  assert.equal(validation.valid, false);
 });
 
 
