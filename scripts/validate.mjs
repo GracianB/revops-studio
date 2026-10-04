@@ -107,7 +107,7 @@ const declaredTests = (fs.readFileSync(path.join(root, "tests/revops-engine.test
 if (declaredTests < 55) fail("V15 regression suite must contain at least 55 tests");
 const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
 const adapterExports = new Set(
-  [...adapterJs.matchAll(/export\s+(?:function|const|let|var|class)\\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
+  [...adapterJs.matchAll(/export\s+(?:function|const|let|var|class)\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
 );
 for (const expected of ["createExecutionEnvelope", "simulateExecution", "EXECUTION_ADAPTER_STATUS"]) {
   if (!adapterExports.has(expected)) fail("missing execution adapter export: " + expected);
