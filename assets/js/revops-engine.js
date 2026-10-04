@@ -371,6 +371,15 @@ function percentile(values, p) {
   return clean[lower] + (clean[upper] - clean[lower]) * (index - lower);
 }
 
+export function normaliseIntelligenceConfig(config = {}) {
+  const result = {};
+  Object.entries(INTELLIGENCE_DEFAULTS).forEach(([key, fallback]) => {
+    const value = numeric(config?.[key]);
+    result[key] = value !== null && value >= 0 ? value : fallback;
+  });
+  return result;
+}
+
 function recencyScore(days) {
   const value = numeric(days);
   if (value === null || value < 0) return null;
@@ -390,7 +399,8 @@ function healthLabel(score) {
   return "critical";
 }
 
-export function accountHealth(lead) {
+export function accountHealth(lead, config = {}) {
+  const options = normaliseIntelligenceConfig(config);
   const signalValues = SIGNALS.map((key) => clamp(lead?.[key]));
   if (signalValues.some((value) => value === null)) {
     return {
@@ -401,12 +411,13 @@ export function accountHealth(lead) {
     };
   }
 
-  const signalWeights = { fit: 0.25, intent: 0.30, engagement: 0.25 };
+  const signalWeights = { fit: 0.20, intent: 0.25, engagement: 0.20, urgency: 0.15 };
   const recency = recencyScore(lead?.lastTouchDays);
   let score = signalValues[0] * signalWeights.fit +
     signalValues[1] * signalWeights.intent +
-    signalValues[2] * signalWeights.engagement;
-  let denominator = signalWeights.fit + signalWeights.intent + signalWeights.engagement;
+    signalValues[2] * signalWeights.engagement +
+    signalValues[3] * signalWeights.urgency;
+  let denominator = Object.values(signalWeights).reduce((sum, value) => sum + value, 0);
 
   if (recency !== null) {
     score += recency * 0.20;
@@ -415,10 +426,10 @@ export function accountHealth(lead) {
 
   score = Math.round(score / denominator);
   const reasons = [];
-  if (signalValues[1] >= INTELLIGENCE_DEFAULTS.highIntent && signalValues[2] <= INTELLIGENCE_DEFAULTS.lowEngagement) {
+  if (signalValues[1] >= options.highIntent && signalValues[2] <= options.lowEngagement) {
     reasons.push("Intent high / engagement low");
   }
-  if (signalValues[0] < 50 && signalValues[1] >= INTELLIGENCE_DEFAULTS.highIntent) {
+  if (signalValues[0] < 50 && signalValues[1] >= options.highIntent) {
     reasons.push("Fit / intent mismatch");
   }
   if (recency !== null && recency < 50) reasons.push("Contact recency is weak");
@@ -472,7 +483,7 @@ export function segmentIntelligence(leads, forecastAssumptions = {}) {
       group.weightedPipeline += value * lead.score / 100;
       group.averageScore += lead.score;
     }
-    if ((numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays) {
+    if ((numeric(lead.lastTouchDays) ?? -1) > options.staleDays) {
       group.staleRecords += 1;
     }
   });
@@ -535,7 +546,7 @@ export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions 
     group.pipelineValue += numeric(lead.value) ?? 0;
     if (lead.stage === "qualified") group.qualifiedRecords += 1;
     if (typeof lead.score === "number") group.averageScore += lead.score;
-    if ((numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays) group.staleRecords += 1;
+    if ((numeric(lead.lastTouchDays) ?? -1) > options.staleDays) group.staleRecords += 1;
   });
 
   Object.values(groups).forEach((group) => {
@@ -556,7 +567,7 @@ export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions 
 }
 
 export function applyBusinessRules(leads, config = {}) {
-  const options = { ...INTELLIGENCE_DEFAULTS, ...config };
+  const options = normaliseIntelligenceConfig(config);
   const findings = [];
 
   (Array.isArray(leads) ? leads : []).forEach((lead) => {
@@ -574,7 +585,7 @@ export function applyBusinessRules(leads, config = {}) {
     if (lead?.stage !== "blocked" && value >= options.ownerlessValue && !owner) {
       rules.push({ code: "OWNERLESS_REVENUE", severity: "high", message: "Material pipeline has no owner." });
     }
-    if (lead?.stage === "qualified" && stale && (numeric(lead?.lastTouchDays) ?? 0) > options.untouchedQualifiedDays) {
+    if (lead?.stage === "qualified" && (numeric(lead?.lastTouchDays) ?? 0) > options.untouchedQualifiedDays) {
       rules.push({ code: "QUALIFIED_UNTOUCHED", severity: "high", message: "Qualified account lacks recent touch." });
     }
     if ((numeric(lead?.intent) ?? 0) >= options.highIntent &&
@@ -607,7 +618,8 @@ export function applyBusinessRules(leads, config = {}) {
   );
 }
 
-export function detectAnomalies(leads) {
+export function detectAnomalies(leads, config = {}) {
+  const options = normaliseIntelligenceConfig(config);
   const rows = (Array.isArray(leads) ? leads : []).filter((lead) => lead.stage !== "blocked");
   const values = rows.map((lead) => numeric(lead.value)).filter((value) => value !== null && value > 0);
   const q1 = percentile(values, 0.25);
@@ -631,7 +643,7 @@ export function detectAnomalies(leads) {
   });
 
   const overallStaleRate = rows.length
-    ? rows.filter((lead) => (numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays).length / rows.length
+    ? rows.filter((lead) => (numeric(lead.lastTouchDays) ?? -1) > options.staleDays).length / rows.length
     : 0;
   const overallQualifiedRate = rows.length
     ? rows.filter((lead) => lead.stage === "qualified").length / rows.length
@@ -645,7 +657,7 @@ export function detectAnomalies(leads) {
 
   Object.entries(grouped).forEach(([segment, items]) => {
     if (items.length < 2) return;
-    const staleRate = items.filter((lead) => (numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays).length / items.length;
+    const staleRate = items.filter((lead) => (numeric(lead.lastTouchDays) ?? -1) > options.staleDays).length / items.length;
     const qualifiedRate = items.filter((lead) => lead.stage === "qualified").length / items.length;
     const pipeline = items.reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
     const totalPipeline = rows.reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
@@ -764,8 +776,9 @@ export function revenueLeakage(leads, config = {}) {
 
 export function executiveIntelligence(leads, forecastAssumptions = {}, config = {}) {
   const evaluated = Array.isArray(leads) ? leads : [];
+  const options = normaliseIntelligenceConfig(config);
   const forecast = forecastPipeline(evaluated, forecastAssumptions);
-  const healthRows = evaluated.map((lead) => ({ lead, health: accountHealth(lead) }));
+  const healthRows = evaluated.map((lead) => ({ lead, health: accountHealth(lead, options) }));
   const validHealth = healthRows.filter((item) => item.health.score !== null);
   const health = {
     average: validHealth.length
@@ -778,7 +791,7 @@ export function executiveIntelligence(leads, forecastAssumptions = {}, config = 
     unknown: healthRows.length - validHealth.length
   };
   const rules = applyBusinessRules(evaluated, config);
-  const anomalies = detectAnomalies(evaluated);
+  const anomalies = detectAnomalies(evaluated, options);
   const leakage = revenueLeakage(evaluated, config);
   const segments = segmentIntelligence(evaluated, forecastAssumptions);
   const cohorts = cohortAnalysis(evaluated, "cohort", forecastAssumptions);
@@ -817,6 +830,7 @@ export function executiveIntelligence(leads, forecastAssumptions = {}, config = 
   }
 
   return {
+    config: options,
     signal,
     forecast,
     health,
