@@ -301,10 +301,9 @@ function initPlayground() {
   const applyConfig = (config = {}) => {
     const weightSet = config.weights || DEFAULT_WEIGHTS;
     Object.keys(inputs).forEach((key) => {
-      if (inputs[key]) inputs[key].value = String(Math.round(Number(weightSet[key]) || DEFAULT_WEIGHTS[key] * 100));
-    });
-    Object.entries(DEFAULT_WEIGHTS).forEach(([key, value]) => {
-      if (inputs[key] && Number(inputs[key].value) <= 1) inputs[key].value = String(Math.round(value * 100));
+      if (!inputs[key]) return;
+      const value = Number(weightSet[key]);
+      inputs[key].value = String(Number.isFinite(value) ? Math.round(value) : Math.round(DEFAULT_WEIGHTS[key] * 100));
     });
     setThresholds({ ...(config.thresholds || {}), changed: "qualified" });
     if (config.scenario && scenarios[config.scenario]) activeScenario = config.scenario;
