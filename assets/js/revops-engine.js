@@ -1218,7 +1218,7 @@ function ledgerEventHash(event) {
   })).toUpperCase();
 }
 
-export function appendExecutionEvent(ledger, event = {}) {
+export function appendExecutionEvent(ledger, incomingEvent = {}) {
   if (!ledger || ledger.contractVersion !== "17.0" || ledger.ledgerType !== "REVOPS_EXECUTION_LEDGER") {
     return {
       accepted: false,
@@ -1228,7 +1228,7 @@ export function appendExecutionEvent(ledger, event = {}) {
     };
   }
 
-  const normalized = normaliseLedgerEvent(event);
+  const normalized = normaliseLedgerEvent(incomingEvent);
   if (!normalized.type) {
     return {
       accepted: false,
@@ -1267,7 +1267,7 @@ export function appendExecutionEvent(ledger, event = {}) {
     sequence,
     previousHash: ledger.headHash,
     ...normalized,
-    at: normaliseLedgerText(event.at, new Date().toISOString())
+    at: normaliseLedgerText(incomingEvent.at, new Date().toISOString())
   };
   const eventId = ledgerEventId(envelope);
   const event = Object.freeze({
