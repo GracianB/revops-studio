@@ -387,15 +387,22 @@ function compareGroups(currentRows, previousRows, key, config) {
   });
 }
 
-function highestSeverity(...severities) {
-  const material = severities
+function highestSeverity(globalSeverity, ...groupSeverities) {
+  if (globalSeverity === "INSUFFICIENT") return "INSUFFICIENT";
+
+  const materialGroups = groupSeverities
     .filter((severity) => severity !== "INSUFFICIENT")
     .sort((a, b) => SEVERITY_RANK[b] - SEVERITY_RANK[a]);
-  const highest = material[0] || null;
 
-  if (highest && SEVERITY_RANK[highest] >= SEVERITY_RANK.WARNING) return highest;
-  if (severities.includes("INSUFFICIENT")) return "INSUFFICIENT";
-  return highest || "STABLE";
+  const highestGroup = materialGroups[0] || null;
+  if (
+    highestGroup &&
+    SEVERITY_RANK[highestGroup] > SEVERITY_RANK[globalSeverity]
+  ) {
+    return highestGroup;
+  }
+
+  return globalSeverity || "STABLE";
 }
 
 function buildRecommendations(global, segments, cohorts, config) {
