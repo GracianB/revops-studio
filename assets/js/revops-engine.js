@@ -446,6 +446,7 @@ export function segmentIntelligence(leads, forecastAssumptions = {}) {
         blockedRecords: 0,
         pipelineValue: 0,
         qualifiedValue: 0,
+        qualifiedRecords: 0,
         weightedPipeline: 0,
         expectedValue: 0,
         qualifiedRate: 0,
@@ -463,7 +464,10 @@ export function segmentIntelligence(leads, forecastAssumptions = {}) {
     group.activeRecords += 1;
     const value = numeric(lead.value) ?? 0;
     group.pipelineValue += value;
-    if (lead.stage === "qualified") group.qualifiedValue += value;
+    if (lead.stage === "qualified") {
+      group.qualifiedValue += value;
+      group.qualifiedRecords += 1;
+    }
     if (typeof lead.score === "number") {
       group.weightedPipeline += value * lead.score / 100;
       group.averageScore += lead.score;
@@ -474,9 +478,8 @@ export function segmentIntelligence(leads, forecastAssumptions = {}) {
   });
 
   Object.values(groups).forEach((group) => {
-    group.qualifiedRate = group.activeRecords
-      ? (group.qualifiedValue ? group.qualifiedValue / group.pipelineValue : 0)
-      : 0;
+    group.qualifiedRate = group.activeRecords ? group.qualifiedRecords / group.activeRecords : 0;
+    group.qualifiedValueShare = group.pipelineValue ? group.qualifiedValue / group.pipelineValue : 0;
     group.staleRate = group.activeRecords ? group.staleRecords / group.activeRecords : 0;
     group.averageScore = group.activeRecords
       ? Math.round(group.averageScore / group.activeRecords)
@@ -746,10 +749,15 @@ export function revenueLeakage(leads, config = {}) {
     .filter((lead) => lead.stage !== "blocked")
     .reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
 
+  const atRiskValue = rows.reduce((sum, row) => sum + row.value, 0);
+  const totalValue = (Array.isArray(leads) ? leads : []).reduce((sum, lead) => sum + Math.max(0, numeric(lead.value) ?? 0), 0);
+
   return {
     ...categories,
-    atRiskValue: rows.reduce((sum, row) => sum + row.value, 0),
-    leakageRate: pipelineValue ? rows.filter((row) => row.stage !== "blocked").reduce((sum, row) => sum + row.value, 0) / pipelineValue : 0,
+    atRiskValue,
+    totalValue,
+    activePipelineValue: pipelineValue,
+    leakageRate: totalValue ? atRiskValue / totalValue : 0,
     rows: rows.sort((a, b) => b.value - a.value || String(a.leadId).localeCompare(String(b.leadId)))
   };
 }
