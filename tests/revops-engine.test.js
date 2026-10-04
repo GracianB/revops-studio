@@ -1,11 +1,25 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateBatch, scoreLead, transition } from "../assets/js/revops-engine.js";
+import {
+  DEFAULT_WEIGHTS,
+  normaliseWeights,
+  scoreLead,
+  evaluateBatch,
+  summarisePipeline,
+  transition
+} from "../assets/js/revops-engine.js";
 
-test("100/100 inputs produce a 100 qualified score", () => {
-  const lead = scoreLead({ id:"T-001", fit:100, intent:100, engagement:100, urgency:100 });
+test("weights are normalised to 1", () => {
+  const weights = normaliseWeights({ fit: 20, intent: 20, engagement: 10, urgency: 0 });
+  const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(sum - 1) < 1e-10);
+});
+
+test("default all-100 signals produce a 100 qualified score", () => {
+  const lead = scoreLead({ id:"T-001", fit:100, intent:100, engagement:100, urgency:100 }, DEFAULT_WEIGHTS);
   assert.equal(lead.score, 100);
   assert.equal(lead.stage, "qualified");
+  assert.equal(lead.quality.valid, true);
 });
 
 test("medium signals produce nurture", () => {
@@ -14,12 +28,35 @@ test("medium signals produce nurture", () => {
   assert.equal(lead.stage, "nurture");
 });
 
+test("invalid data fails closed into blocked", () => {
+  const lead = scoreLead({ id:"T-003", fit:100, intent:"bad", engagement:20, urgency:30 });
+  assert.equal(lead.stage, "blocked");
+  assert.equal(lead.score, null);
+});
+
+test("pipeline summary exposes qualification rate", () => {
+  const result = summarisePipeline(evaluateBatch([
+    { id:"A", fit:100, intent:100, engagement:100, urgency:100 },
+    { id:"B", fit:50, intent:50, engagement:50, urgency:50 }
+  ]));
+  assert.equal(result.total, 2);
+  assert.equal(result.scored, 2);
+  assert.equal(result.byStage.qualified, 1);
+  assert.equal(result.byStage.nurture, 1);
+  assert.equal(result.qualificationRate, 0.5);
+});
+
 test("sensitive transitions require approval", () => {
-  const lead = { id:"T-003", stage:"new" };
+  const lead = { id:"T-004", stage:"new" };
   assert.equal(transition(lead, "qualified").ok, false);
   assert.equal(transition(lead, "qualified", true).ok, true);
 });
 
+test("invalid transitions are blocked", () => {
+  const result = transition({ id:"T-005", stage:"qualified" }, "new", true);
+  assert.equal(result.ok, false);
+});
+
 test("unknown target stages fail closed", () => {
-  assert.throws(() => transition({ id:"T-004", stage:"new" }, "execute"), /Unknown stage/);
+  assert.throws(() => transition({ id:"T-006", stage:"new" }, "execute"), /Unknown stage/);
 });
