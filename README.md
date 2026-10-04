@@ -1,55 +1,142 @@
 # RevOps Studio
 
-Laboratorio público de Gracián Baena. Automatización, datos e IA para un proceso concreto, no para cambiar el stack entero.
+**Customer Success × Data × Operations × AI × Systems**
 
-Live: https://gracianb.github.io/revops-studio/
+RevOps Studio is the public-facing lab of **Gracián Baena González**: a small, real project used to demonstrate how customer understanding, operational design, data and technical execution can become one system.
 
-La página y este README dicen lo mismo.
+Live: **https://gracianb.github.io/revops-studio/**  
+Source: **https://github.com/GracianB/revops-studio**
 
-## Oferta
+## What this project is
 
-Diagnóstico de un proceso, 30–45 minutos.
+This repository is deliberately public and deliberately small.
 
-- Te llevas un mapa, tres fricciones, un quick win y un sí, un no o un más adelante.
-- Primeras 8 plazas a 0 €. Luego desde 150 €, descontables del build.
-- No es un presupuesto cerrado. El precio se confirma por escrito, en una página, en 48 horas si encaja.
+The website acts as:
 
-| Paquete | Desde | Plazo |
-| --- | --- | --- |
-| Quick win | 900 € | 1–2 semanas |
-| Sistema | 4.000 € | 3–6 semanas |
-| Operar | 600 €/mes | cuando ya hay sistema |
+- a service surface for a concrete operations problem;
+- a portfolio proof of product and frontend execution;
+- a transparent example of client-side state, analytics and controlled handoff;
+- a hub connecting the wider project ecosystem.
 
-El formulario pide nombre, email, herramientas, horas/semana y qué duele. Después abre el correo y la página de gracias. El calendario va ahí: https://calendar.app.google/n99psBFktwYyoAWi9
+The commercial language and the technical implementation are meant to describe the same idea:
 
-## Caso
+> understand the process → design the system → build the necessary piece → leave ownership and measurement behind.
 
-Bodytone, soporte de producto. El conocimiento estaba en personas y documentos. La pieza publicada es el Help Center. No hay una cifra de horas ahorradas en esta web porque no está medida aquí.
+## Current architecture
 
-## Ecosistema, con el nombre real
+\`\`\`text
+Browser
+  │
+  ├── Static HTML
+  ├── Local CSS
+  ├── Local JavaScript
+  │
+  ├── Calculator
+  ├── Service filters
+  ├── Accessibility / navigation
+  └── Brief flow
+        │
+        ├── sessionStorage (this tab only)
+        │
+        └── gracias.html
+              ├── mailto generated locally
+              ├── copy brief
+              └── calendar
+\`\`\`
 
-- Vortex: pieza WebGL. El cursor mueve los puntos. https://vortex-gilt-xi.vercel.app/
-- Ohana: platformer Canvas 2D, Isla Hoku, 10 salas, 10 personajes. https://gracianb.github.io/project-ohana/
-- AiGoritmo: laboratorio Python y FastAPI. No es un producto cerrado. https://github.com/GracianB/aigoritmo
-- Yoga: portal de práctica, ES/EN. https://gracianb.github.io/yoga-instructor/
+Analytics uses Plausible only for event-level interaction signals. The public page does **not** send the brief fields to a project backend.
 
-Navarmedia Outreach sigue siendo core privado. No está en este repo.
+That is intentional for this version: a static GitHub Pages project, with explicit user-controlled email delivery, is simpler and safer than pretending a fake CRM backend is impressive.
 
-## Medición
+## Technical decisions
 
-El hub no tenía analytics. Aquí el evento `Reservar` sale con Plausible, dominio `gracianb.github.io/revops-studio`. Hay que añadir ese dominio en Plausible para que cuente. Si no está dado de alta, la página sigue funcionando.
+### 1. No framework dependency
 
-## Aviso
+The project uses HTML, CSS and JavaScript directly. The goal is maintainability, fast loading and visible fundamentals.
 
-Gracián Baena González · Murcia, España · gracianbaenagonzalez@gmail.com
+### 2. Local-first brief flow
 
-El diagnóstico no es un presupuesto cerrado ni una promesa de ahorro.
+The form is stored in \`sessionStorage\` under a versioned key. Nothing is sent to an API from the page.
 
-## Repo
+The user reviews the generated email and chooses whether to send it.
 
-```text
+### 3. No invented ROI
+
+The calculator estimates annual process friction from:
+
+\`hours × people × hourly cost × 52\`
+
+It is a framing tool, not a savings guarantee.
+
+### 4. Progressive enhancement
+
+The important content exists as HTML. JavaScript adds navigation state, filters, calculator behavior, reveal motion and the brief flow.
+
+Reduced-motion preferences disable decorative motion.
+
+### 5. Small security surface
+
+There are no API keys, private tokens or server credentials in the repository.
+
+The current build adds a static secret-pattern check to GitHub Actions.
+
+## Offer
+
+| Package | From | Typical window |
+| --- | ---: | --- |
+| Quick win | €900 | 1–2 weeks |
+| System | €4,000 | 3–6 weeks |
+| Operate | €600/month | when the system exists |
+
+The diagnostic is **30–45 minutes, one process**. Pricing is confirmed in writing after the diagnostic.
+
+## Proof
+
+### Bodytone
+
+Product support and knowledge organization. The public proof is the Help Center. No hours-saved figure is claimed here because it has not been measured on this page.
+
+### Private system
+
+**Navarmedia Outreach** remains private. The website exposes the system surface and architectural concepts without publishing proprietary source code.
+
+### Public ecosystem
+
+- **OHANA** · Canvas 2D platformer, Isla Hoku, 10 rooms, 10 characters.
+- **Vortex** · WebGL interface experiment.
+- **AiGoritmo** · Python + FastAPI / LLM lab.
+- **Yoga Instructor** · bilingual ES/EN practice portal.
+- **Business Intelligence** · analytics and dashboard work.
+
+## Files
+
+\`\`\`text
 revops-studio/
 ├── index.html
 ├── gracias.html
-└── README.md
-```
+├── README.md
+├── README.en.md
+├── robots.txt
+├── sitemap.xml
+├── .well-known/
+│   └── security.txt
+├── .github/
+│   └── workflows/
+│       └── validate.yml
+├── assets/
+│   ├── favicon.svg
+│   ├── css/
+│   │   └── main.css
+│   └── js/
+│       ├── app.js
+│       └── thanks.js
+└── docs/
+    ├── ARCHITECTURE.md
+    └── SECURITY.md
+\`\`\`
+
+## Author
+
+Gracián Baena González · Murcia, España  
+LinkedIn: https://www.linkedin.com/in/gracianbaena/  
+GitHub: https://github.com/GracianB
