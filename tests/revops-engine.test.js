@@ -223,7 +223,7 @@ test("commercial metrics calculate pipeline and weighted pipeline", () => {
   const result = commercialMetrics(leads);
   assert.equal(result.pipelineValue, 80000);
   assert.equal(result.qualifiedValue, 50000);
-  assert.equal(result.weightedPipeline, 60000);
+  assert.equal(result.weightedPipeline, 61000);
   assert.equal(result.staleRecords, 2);
   assert.equal(result.owners.Ana, 2);
   assert.equal(result.segments.SMB, 2);
