@@ -666,7 +666,7 @@
         <section class="workflow-control-panel" aria-labelledby="workflow-control-title">
           <div class="workflow-control-head">
             <div>
-              <span class="kicker">Workflow Control · V15</span>
+              <span class="kicker">Workflow Control · V16</span>
               <h3 id="workflow-control-title">Convierte decisiones en trabajo trazable.</h3>
             </div>
             <div class="workflow-control-actions">
@@ -713,6 +713,27 @@
                 <span id="replayStatus" class="workflow-replay-status" aria-live="polite"></span>
               </div>
             </section>
+          </div>
+        </section>
+
+        <section class="workflow-impact-panel" aria-labelledby="workflow-impact-title">
+          <div class="workflow-impact-head">
+            <div>
+              <span class="kicker">Workflow Impact · V16</span>
+              <h3 id="workflow-impact-title">Antes de ejecutar, mira qué cambiaría.</h3>
+            </div>
+            <button class="btn btn-secondary" id="previewWorkflowImpact" type="button">Previsualizar impacto</button>
+          </div>
+          <p>El preview aplica solo propuestas no sensibles y deja las transiciones que requieren aprobación humana en estado pendiente. No modifica el dataset cargado ni realiza llamadas externas.</p>
+          <div class="workflow-impact-metrics" aria-live="polite">
+            <div class="workflow-impact-metric"><span>Proposed</span><strong id="impactProposed">0</strong><small>acciones con transición</small></div>
+            <div class="workflow-impact-metric"><span>Applied</span><strong id="impactApplied">0</strong><small>cambios proyectados sin aprobación</small></div>
+            <div class="workflow-impact-metric"><span>Pending</span><strong id="impactPending">0</strong><small>requieren human gate</small></div>
+            <div class="workflow-impact-metric"><span>Qualified Δ</span><strong id="impactQualificationDelta">0</strong><small>cambio proyectado</small></div>
+          </div>
+          <div class="workflow-impact-stage">
+            <span class="kicker">Projected stage delta</span>
+            <strong id="impactStageDelta">Q 0 · N 0 · New 0 · Blocked 0</strong>
           </div>
         </section>
 
