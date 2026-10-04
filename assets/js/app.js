@@ -183,7 +183,7 @@ function initPlayground() {
   };
   const status = qs("#demoStatus");
   const audit = qs("#auditLog");
-  const detail = qs("#leadDetail");
+  const detail = qs("#leadInspector");
   const gate = qs("#approveDemo");
   const queue = qs("#actionQueue");
   const queueMeta = qs("#queueMeta");
