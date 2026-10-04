@@ -626,7 +626,7 @@ test("operational plan turns queue work into explicit approval and execution sta
     runId:"RUN-V15-OP",
     now:"2026-10-04T20:00:00.000Z"
   });
-  assert.equal(plan.contractVersion, "15.0");
+  assert.equal(plan.contractVersion, "16.0");
   assert.equal(plan.runId, "RUN-V15-OP");
   assert.equal(plan.datasetFingerprint, fingerprintRecords(leads));
   assert.equal(plan.externalExecution.enabled, false);
