@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gracianb.github.io/revops-studio/sitemap.xml
