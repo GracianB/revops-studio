@@ -28,7 +28,11 @@ import {
   ownerIntelligence,
   buildExecutiveBrief,
   buildRunAnalysis,
-  buildDecisionTrace
+  buildDecisionTrace,
+  fingerprintRecords,
+  buildOperationalPlan,
+  buildRunArtifact,
+  verifyRunArtifact
 } from "../assets/js/revops-engine.js";
 
 test("weights are normalised to 1", () => {
@@ -591,4 +595,107 @@ test("cohort forecast aggregates exact expectation before rounding", () => {
   const result = cohortAnalysis(leads, "cohort", { nurture:0.35, qualified:0.8, new:0.1 });
   assert.equal(result[0].cohort, "micro");
   assert.equal(result[0].expectedValue, 1);
+});
+
+
+test("record fingerprint is deterministic and changes when records change", () => {
+  const records = [
+    { id: "V15-FP-1", fit: 80, intent: 70, engagement: 60, urgency: 50 },
+    { id: "V15-FP-2", fit: 50, intent: 50, engagement: 50, urgency: 50 }
+  ];
+  const first = fingerprintRecords(records);
+  const second = fingerprintRecords(JSON.parse(JSON.stringify(records)));
+  const changed = fingerprintRecords(records.map((row) =>
+    row.id === "V15-FP-2" ? { ...row, urgency: 51 } : row
+  ));
+  assert.equal(first, second);
+  assert.equal(first, fingerprintRecords([...records].reverse()));
+  assert.notEqual(first, changed);
+});
+
+test("operational plan turns queue work into explicit approval and execution states", () => {
+  const leads = evaluateBatch([
+    { id:"V15-OP-1", account:"Ready", fit:50, intent:50, engagement:50, urgency:50, value:20000 },
+    { id:"V15-OP-2", account:"Approval", fit:80, intent:80, engagement:80, urgency:80, value:50000 },
+    { id:"V15-OP-3", account:"Blocked", fit:90, intent:"bad", engagement:90, urgency:90, value:30000 }
+  ]);
+  const plan = buildOperationalPlan(leads, { qualified:0.8, nurture:0.35, new:0.1 }, {}, {
+    runId:"RUN-V15-OP",
+    now:"2026-10-04T20:00:00.000Z"
+  });
+  assert.equal(plan.contractVersion, "15.0");
+  assert.equal(plan.runId, "RUN-V15-OP");
+  assert.equal(plan.datasetFingerprint, fingerprintRecords(leads));
+  assert.equal(plan.externalExecution.enabled, false);
+  assert.equal(plan.externalExecution.calls, 0);
+  assert.ok(plan.summary.total >= 3);
+  assert.ok(plan.summary.approvalPending >= 1);
+  assert.ok(plan.summary.blocked >= 1);
+  assert.ok(plan.actions.some((item) => item.state === "BLOCKED"));
+  assert.equal(plan.actions.some((item) => item.stage === "blocked" && item.state !== "BLOCKED"), false);
+  assert.ok(plan.actions.every((item) => item.execution === "NOT_EXECUTED"));
+});
+
+test("run artifact excludes raw records while preserving integrity metadata", () => {
+  const records = [
+    { id:"V15-ART-1", account:"Anchor", fit:100, intent:100, engagement:100, urgency:100, value:60000, owner:"Ana" }
+  ];
+  const leads = evaluateBatch(records);
+  const artifact = buildRunArtifact(leads, {
+    qualified:0.8, nurture:0.35, new:0.1, downside:0.75, upside:1.15
+  }, {}, {
+    source:"demo",
+    scenario:"balanced",
+    weights: DEFAULT_WEIGHTS,
+    thresholds: { qualified:75, nurture:50 },
+    now:"2026-10-04T20:00:00.000Z"
+  });
+  assert.equal(artifact.artifactType, "REVOPS_RUN_ARTIFACT");
+  assert.equal(artifact.dataset.recordCount, 1);
+  assert.equal(artifact.dataset.fingerprint, fingerprintRecords(leads));
+  assert.equal(Object.prototype.hasOwnProperty.call(artifact, "records"), false);
+  assert.equal(artifact.workflow.externalExecution.calls, 0);
+});
+
+test("run artifact verifies against the currently loaded dataset", () => {
+  const records = [
+    { id:"V15-VERIFY-1", fit:80, intent:70, engagement:60, urgency:50, value:30000 }
+  ];
+  const leads = evaluateBatch(records);
+  const artifact = buildRunArtifact(leads, {}, {}, {
+    source:"demo",
+    scenario:"balanced",
+    weights: DEFAULT_WEIGHTS,
+    thresholds: { qualified:75, nurture:50 },
+    now:"2026-10-04T20:00:00.000Z"
+  });
+  const valid = verifyRunArtifact(artifact, leads);
+  const invalid = verifyRunArtifact(artifact, [...leads, { id:"EXTRA", fit:50, intent:50, engagement:50, urgency:50, score:50, stage:"nurture" }]);
+  assert.equal(valid.valid, true);
+  assert.equal(valid.checks.fingerprint, true);
+  assert.equal(valid.checks.recordCount, true);
+  assert.equal(invalid.valid, false);
+});
+
+test("execution adapter creates a simulation-only envelope for sensitive approval", async () => {
+  const { createExecutionEnvelope, simulateExecution } = await import("../assets/js/execution-adapter.js");
+  const trace = buildDecisionTrace(
+    scoreLead({ id:"V15-ADAPTER", fit:50, intent:50, engagement:50, urgency:50, value:20000 }),
+    { qualified:0.8, nurture:0.35, new:0.1 }
+  );
+  const pending = createExecutionEnvelope(trace);
+  const approved = createExecutionEnvelope(trace, { approvalStatus:"approved" });
+  const blockedTrace = buildDecisionTrace(
+    scoreLead({ id:"V15-ADAPTER-BLOCK", fit:90, intent:"bad", engagement:90, urgency:90 }),
+    {}
+  );
+  const blockedEnvelope = createExecutionEnvelope(blockedTrace);
+  assert.equal(pending.valid, false);
+  assert.equal(pending.canExecute, false);
+  assert.equal(approved.valid, true);
+  assert.equal(blockedEnvelope.valid, false);
+  const result = simulateExecution(approved);
+  assert.equal(result.executed, false);
+  assert.equal(result.state, "NOT_EXECUTED");
+  assert.equal(result.code, "ADAPTER_NOT_CONNECTED");
 });

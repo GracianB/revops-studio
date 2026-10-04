@@ -353,3 +353,67 @@ buildRunAnalysis() produces a reusable structured analysis object for the curren
 ### Integration boundary
 
 The public prototype stops before external execution. A production CRM or workflow connection would enter through a dedicated adapter after the human gate.
+
+## V15 · Workflow control and replay
+
+V15 moves the operating model one step beyond a dashboard:
+
+```text
+decision
+   ↓
+work plan
+   ↓
+approval state
+   ↓
+execution envelope
+   ↓
+external adapter boundary
+```
+
+### Operational plan
+
+The workflow plan translates the current run into ranked work items with:
+
+- rank and queue score;
+- owner lane;
+- action;
+- SLA and due time;
+- proposed transition;
+- approval state;
+- execution state.
+
+No item is executed by the public prototype.
+
+### Execution contract
+
+The execution adapter is an explicit boundary. It can validate the shape of a proposed handoff and simulate the response, but it cannot make an external call.
+
+The invariants are:
+
+`canExecute = false`
+
+`mode = SIMULATION_ONLY`
+
+`state = NOT_EXECUTED`
+
+### Run artifact
+
+A V15 artifact contains:
+
+- run ID;
+- dataset fingerprint;
+- record count;
+- configuration;
+- forecast and intelligence aggregates;
+- workflow plan;
+- decision outcomes.
+
+Raw CSV records are excluded.
+
+### Replay integrity
+
+The replay control compares the artifact fingerprint and record count with the dataset currently loaded in the browser. A mismatch is rejected rather than being presented as a valid replay.
+
+This makes the proof surface closer to an auditable operating loop:
+
+**decide → plan → review → verify → stop at the integration boundary.**

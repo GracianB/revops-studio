@@ -24,15 +24,5 @@ jobs:
         with:
           node-version: 22
 
-      - name: Run tests
-        run: npm test
-
-      - name: Run project validation
-        run: npm run validate
-
-      - name: Check JavaScript syntax
-        run: |
-          node --check assets/js/app.js
-          node --check assets/js/thanks.js
-          node --check assets/js/revops-engine.js
-          node --check assets/js/csv-utils.js
+      - name: Run full verification gate
+        run: npm run verify
