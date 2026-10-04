@@ -144,15 +144,26 @@ test("V20 flattening deduplicates identical observed rows", () => {
   assert.equal(result.length, 1);
 });
 
-function observedRows({ startDay, count, probability, success, segment = "SMB", cohort = "2026-Q3" }) {
-  return Array.from({ length: count }, (_, index) => ({
-    leadId: startDay + "-" + index,
-    segment,
-    cohort,
-    probability,
-    observedSuccess: success ? 1 : 0,
-    observedAt: "2026-10-" + String(startDay + index).padStart(2, "0") + "T12:00:00.000Z"
-  }));
+function observedRows({
+  startDate,
+  count,
+  probability,
+  success,
+  segment = "SMB",
+  cohort = "2026-Q3"
+}) {
+  const base = new Date(startDate + "T12:00:00.000Z");
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(base.getTime() + index * 24 * 60 * 60 * 1000);
+    return {
+      leadId: date.toISOString().slice(0, 10) + "-" + index,
+      segment,
+      cohort,
+      probability,
+      observedSuccess: success ? 1 : 0,
+      observedAt: date.toISOString()
+    };
+  });
 }
 
 test("V20 first report is insufficient rather than false drift", () => {
@@ -170,8 +181,8 @@ test("V20 first report is insufficient rather than false drift", () => {
 });
 
 test("V20 stable temporal windows remain stable", () => {
-  const previous = observedRows({ startDay:1, count:8, probability:0.5, success:false });
-  const current = observedRows({ startDay:2, count:8, probability:0.5, success:false });
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false });
+  const current = observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:false });
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"PREV",
     datasetFingerprint:"D1",
@@ -195,8 +206,8 @@ test("V20 stable temporal windows remain stable", () => {
 });
 
 test("V20 warning threshold detects temporal calibration movement", () => {
-  const previous = observedRows({ startDay:1, count:8, probability:0.2, success:false });
-  const current = observedRows({ startDay:2, count:8, probability:0.9, success:false });
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.2, success:false });
+  const current = observedRows({ startDate:"2026-09-20", count:8, probability:0.9, success:false });
 
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"PREV",
@@ -219,8 +230,8 @@ test("V20 warning threshold detects temporal calibration movement", () => {
 });
 
 test("V20 critical threshold creates controlled recalibration recommendation", () => {
-  const previous = observedRows({ startDay:1, count:8, probability:0.1, success:false });
-  const current = observedRows({ startDay:2, count:8, probability:0.95, success:false });
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.1, success:false });
+  const current = observedRows({ startDate:"2026-09-20", count:8, probability:0.95, success:false });
 
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"PREV",
@@ -243,12 +254,12 @@ test("V20 critical threshold creates controlled recalibration recommendation", (
 
 test("V20 segment drift is surfaced separately", () => {
   const previous = [
-    ...observedRows({ startDay:1, count:8, probability:0.5, success:false, segment:"SMB" }),
-    ...observedRows({ startDay:3, count:8, probability:0.5, success:false, segment:"Enterprise" })
+    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"SMB" }),
+    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"Enterprise" })
   ];
   const current = [
-    ...observedRows({ startDay:4, count:8, probability:0.5, success:true, segment:"SMB" }),
-    ...observedRows({ startDay:6, count:8, probability:0.5, success:false, segment:"Enterprise" })
+    ...observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:true, segment:"SMB" }),
+    ...observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:false, segment:"Enterprise" })
   ];
 
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
@@ -272,8 +283,8 @@ test("V20 segment drift is surfaced separately", () => {
 });
 
 test("V20 cohort drift can be distinguished from segment drift", () => {
-  const previous = observedRows({ startDay:1, count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" });
-  const current = observedRows({ startDay:2, count:8, probability:0.5, success:true, segment:"SMB", cohort:"B" });
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" });
+  const current = observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:true, segment:"SMB", cohort:"B" });
 
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"PREV",
@@ -295,8 +306,8 @@ test("V20 cohort drift can be distinguished from segment drift", () => {
 });
 
 test("V20 audit trail captures snapshot, baseline and drift state", () => {
-  const previous = observedRows({ startDay:1, count:8, probability:0.1, success:false });
-  const current = observedRows({ startDay:2, count:8, probability:0.95, success:false });
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.1, success:false });
+  const current = observedRows({ startDate:"2026-09-20", count:8, probability:0.95, success:false });
 
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"PREV",
@@ -319,7 +330,7 @@ test("V20 audit trail captures snapshot, baseline and drift state", () => {
 });
 
 test("V20 report remains deterministic for identical supplied time", () => {
-  const previous = observedRows({ startDay:1, count:8, probability:0.5, success:false });
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false });
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"PREV",
     datasetFingerprint:"D1",
@@ -344,7 +355,7 @@ test("V20 report remains deterministic for identical supplied time", () => {
 });
 
 test("V20 history does not grow on an identical snapshot", () => {
-  const previous = observedRows({ startDay:1, count:8, probability:0.5, success:false });
+  const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false });
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
     runId:"R1",
     datasetFingerprint:"D1",
