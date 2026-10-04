@@ -518,3 +518,41 @@ textarea.form-control{min-height:145px;resize:vertical}
 @media (max-width:1100px){.control-room{grid-template-columns:1fr}.control-metrics{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:800px){.model-and-chart{grid-template-columns:1fr}.control-bar{flex-direction:column}.control-actions{justify-content:flex-start}.contribution-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.control-metrics{grid-template-columns:1fr 1fr}.control-bottom{flex-direction:column;align-items:stretch}}
+
+/* RevOps Control Room v5 · operational queue */
+.queue-panel{
+  margin-top:12px;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--bg-2)
+}
+.queue-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+.queue-head h3{margin-top:8px;font-size:27px;letter-spacing:-.04em}
+.queue-head-meta{text-align:right}
+.queue-head-meta strong{display:block;color:var(--text);font:700 11px/1.2 var(--mono)}
+.queue-head-meta span{display:block;margin-top:6px;color:var(--dim);font:500 9px/1.4 var(--mono)}
+.queue-copy{max-width:760px;margin:12px 0 16px;color:var(--muted);font-size:11px}
+.queue-list{display:grid;gap:7px}
+.queue-item{
+  padding:13px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.018)
+}
+.queue-top{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:9px;align-items:center}
+.queue-rank{color:var(--accent);font:700 10px/1 var(--mono)}
+.queue-top strong{font:700 13px/1.2 var(--display)}
+.queue-priority{
+  padding:5px 7px;border:1px solid var(--line);border-radius:999px;
+  color:var(--muted);font:700 8px/1 var(--mono);letter-spacing:.07em
+}
+.queue-priority[data-priority="critical"]{color:var(--accent);border-color:rgba(255,90,95,.35)}
+.queue-priority[data-priority="high"]{color:var(--ok);border-color:rgba(129,230,163,.28)}
+.queue-priority[data-priority="medium"]{color:#ffd4ad}
+.queue-meta{margin-top:8px;color:var(--muted);font:600 9px/1.4 var(--mono)}
+.queue-reason{margin-top:5px;color:var(--dim);font-size:10px}
+.queue-empty{
+  padding:18px;border:1px dashed var(--line-2);border-radius:12px;color:var(--dim);
+  font:500 10px/1.4 var(--mono)
+}
+.queue-schema-note{margin-top:10px}
+@media (max-width:700px){
+  .queue-head{flex-direction:column}
+  .queue-head-meta{text-align:left}
+  .queue-top{grid-template-columns:28px minmax(0,1fr)}
+  .queue-priority{grid-column:2;justify-self:start}
+}
