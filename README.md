@@ -261,3 +261,20 @@ Customer Success · RevOps · Data · Automation · AI · Systems
 
 [LinkedIn](https://www.linkedin.com/in/gracianbaena) · [GitHub](https://github.com/GracianB) · [Professional Deck](https://gracianb.github.io/professional-deck/)
 
+
+### V16 · Workflow Replay & Impact Control
+
+V16 adds the missing pre-execution question: **what would change before we execute anything?**
+
+The Control Room now supports:
+
+- deterministic workflow impact preview without mutating the dataset;
+- stable action and decision digests for replay integrity;
+- run artifacts that can be verified against the current dataset and workflow contract;
+- an explicit integration contract with idempotency key, dry-run flag and fail-closed execution invariants.
+
+```text
+DECIDE → PLAN → PREVIEW → APPROVE → CONTRACT → ADAPTER
+```
+
+The public adapter remains disconnected. The prototype can demonstrate the handoff contract but cannot execute external CRM/API calls.
