@@ -11,7 +11,8 @@ import {
   evaluateScenarios,
   normaliseThresholds,
   createRunSnapshot,
-  nextAction
+  nextAction,
+  commercialMetrics
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -146,14 +147,14 @@ function initTracking() {
 }
 
 const demoSeed = [
-  { id:"L-001", account:"Northstar", fit:92, intent:88, engagement:80, urgency:74 },
-  { id:"L-002", account:"Atlas", fit:78, intent:61, engagement:56, urgency:52 },
-  { id:"L-003", account:"Kite", fit:41, intent:30, engagement:46, urgency:35 },
-  { id:"L-004", account:"Nova", fit:86, intent:90, engagement:72, urgency:91 },
-  { id:"L-005", account:"Orbit", fit:67, intent:54, engagement:62, urgency:44 },
-  { id:"L-006", account:"Pine", fit:74, intent:49, engagement:67, urgency:28 },
-  { id:"L-007", account:"Mica", fit:57, intent:79, engagement:61, urgency:72 },
-  { id:"L-008", account:"Echo", fit:28, intent:35, engagement:32, urgency:18 }
+  { id:"L-001", account:"Northstar", fit:92, intent:88, engagement:80, urgency:74, value:42000, owner:"Ana", segment:"Enterprise", source:"Inbound", lastTouchDays:3 },
+  { id:"L-002", account:"Atlas", fit:78, intent:61, engagement:56, urgency:52, value:18500, owner:"Luis", segment:"Mid-market", source:"Partner", lastTouchDays:8 },
+  { id:"L-003", account:"Kite", fit:41, intent:30, engagement:46, urgency:35, value:7200, owner:"Marta", segment:"SMB", source:"Outbound", lastTouchDays:21 },
+  { id:"L-004", account:"Nova", fit:86, intent:90, engagement:72, urgency:91, value:67000, owner:"Ana", segment:"Enterprise", source:"Inbound", lastTouchDays:1 },
+  { id:"L-005", account:"Orbit", fit:67, intent:54, engagement:62, urgency:44, value:24000, owner:"Luis", segment:"Mid-market", source:"Event", lastTouchDays:16 },
+  { id:"L-006", account:"Pine", fit:74, intent:49, engagement:67, urgency:28, value:31000, owner:"Marta", segment:"Enterprise", source:"Referral", lastTouchDays:11 },
+  { id:"L-007", account:"Mica", fit:57, intent:79, engagement:61, urgency:72, value:12800, owner:"Ana", segment:"SMB", source:"Inbound", lastTouchDays:19 },
+  { id:"L-008", account:"Echo", fit:28, intent:35, engagement:32, urgency:18, value:4900, owner:"Luis", segment:"SMB", source:"Outbound", lastTouchDays:31 }
 ];
 
 function initPlayground() {
@@ -198,6 +199,15 @@ function initPlayground() {
   const scenarioMatrixMeta = qs("#scenarioMatrixMeta");
   const runHistory = qs("#runHistory");
   const clearHistory = qs("#clearHistory");
+  const commercial = {
+    pipeline: qs("#commercialPipeline"),
+    weighted: qs("#commercialWeighted"),
+    qualified: qs("#commercialQualified"),
+    stale: qs("#commercialStale"),
+    coverage: qs("#commercialCoverage"),
+    segments: qs("#segmentBreakdown"),
+    owners: qs("#ownerBreakdown")
+  };
   const impact = qs("#impactList");
   const impactMeta = qs("#impactMeta");
   const impactMetrics = {
@@ -491,7 +501,9 @@ function initPlayground() {
       top.append(rank, title, priority);
       const meta = document.createElement("div");
       meta.className = "queue-meta";
-      meta.textContent = item.action + " · " + item.lane + " · SLA " + item.slaHours + "h";
+      meta.textContent = item.action + " · " + item.lane +
+        " · SLA " + item.slaHours + "h · " + item.owner +
+        (item.stale ? " · STALE" : "");
       const why = document.createElement("div");
       why.className = "queue-reason";
       why.textContent = item.reason;
@@ -502,12 +514,50 @@ function initPlayground() {
 
   const render = () => {
     const summary = summarisePipeline(evaluated);
+    const commerce = commercialMetrics(evaluated);
+    const formatMoney = (value) => new Intl.NumberFormat("es-ES", {
+      style: "currency", currency: "EUR", maximumFractionDigits: 0
+    }).format(value);
+
     metrics.total.textContent = String(summary.total);
     metrics.qualified.textContent = String(summary.byStage.qualified || 0);
     metrics.nurture.textContent = String(summary.byStage.nurture || 0);
     metrics.avg.textContent = String(summary.averageScore);
     metrics.quality.textContent = String(summary.qualityIssues);
     metrics.rate.textContent = Math.round(summary.qualificationRate * 100) + "%";
+
+    if (commercial.pipeline) commercial.pipeline.textContent = formatMoney(commerce.pipelineValue);
+    if (commercial.weighted) commercial.weighted.textContent = formatMoney(commerce.weightedPipeline);
+    if (commercial.qualified) commercial.qualified.textContent = formatMoney(commerce.qualifiedValue);
+    if (commercial.stale) commercial.stale.textContent =
+      commerce.staleRecords + " · " + Math.round(commerce.staleRate * 100) + "%";
+    if (commercial.coverage) {
+      const totalOptional = evaluated.length * 4;
+      const presentOptional = evaluated.reduce((sum, lead) =>
+        sum + ["value", "owner", "segment", "source"].filter((key) => String(lead[key] ?? "").trim() !== "").length, 0
+      );
+      commercial.coverage.textContent = totalOptional
+        ? Math.round(presentOptional / totalOptional * 100) + "%"
+        : "0%";
+    }
+
+    const renderMap = (target, map, suffix = "") => {
+      if (!target) return;
+      target.replaceChildren();
+      Object.entries(map).sort((a,b) => b[1] - a[1]).forEach(([key, value]) => {
+        const row = document.createElement("div");
+        row.className = "breakdown-row";
+        const label = document.createElement("span");
+        label.textContent = key;
+        const amount = document.createElement("b");
+        amount.textContent = String(value) + suffix;
+        row.append(label, amount);
+        target.appendChild(row);
+      });
+    };
+    renderMap(commercial.segments, commerce.segments);
+    renderMap(commercial.owners, commerce.owners);
+
     Object.entries(bars).forEach(([stage, bar]) => {
       if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
     });
