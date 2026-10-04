@@ -1,41 +1,127 @@
 /**
- * RevOps Engine · deterministic client-side demo
- * No network access. No real lead data.
+ * RevOps Engine
+ * Deterministic, explainable and network-free.
  */
 export const STAGES = Object.freeze(["new", "qualified", "nurture", "blocked"]);
 
-const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, Number(value) || 0));
+export const DEFAULT_WEIGHTS = Object.freeze({
+  fit: 0.35,
+  intent: 0.30,
+  engagement: 0.20,
+  urgency: 0.15
+});
 
-export function scoreLead(lead) {
-  const fit = clamp(lead.fit), intent = clamp(lead.intent);
-  const engagement = clamp(lead.engagement), urgency = clamp(lead.urgency);
-  const score = Math.round(fit * 0.35 + intent * 0.30 + engagement * 0.20 + urgency * 0.15);
-  const stage = score >= 75 ? "qualified" : score >= 50 ? "nurture" : "new";
-  return { ...lead, score, stage };
+const clamp = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return Math.max(0, Math.min(100, numeric));
+};
+
+export function normaliseWeights(weights = DEFAULT_WEIGHTS) {
+  const values = Object.fromEntries(
+    Object.keys(DEFAULT_WEIGHTS).map((key) => [key, Math.max(0, Number(weights[key]) || 0)])
+  );
+  const total = Object.values(values).reduce((sum, value) => sum + value, 0);
+  if (total === 0) return { ...DEFAULT_WEIGHTS };
+  return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value / total]));
+}
+
+export function validateLead(lead) {
+  const errors = [];
+  for (const key of Object.keys(DEFAULT_WEIGHTS)) {
+    if (clamp(lead?.[key]) === null) errors.push(key + ": invalid");
+  }
+  if (!lead?.id) errors.push("id: missing");
+  return { valid: errors.length === 0, errors };
 }
 
 export function nextAction(lead) {
   if (lead.stage === "qualified") return "Human review → propose next step";
   if (lead.stage === "nurture") return "Add context → monitor intent";
-  if (lead.stage === "blocked") return "Hold → manual decision required";
+  if (lead.stage === "blocked") return "Fix data quality → evaluate again";
   return "Enrich data → score again";
 }
 
-export function evaluateBatch(leads) {
-  return leads.map((lead) => {
-    const scored = scoreLead(lead);
-    return { ...scored, nextAction: nextAction(scored) };
-  });
+export function scoreBreakdown(lead, weights = DEFAULT_WEIGHTS) {
+  const normalized = normaliseWeights(weights);
+  return Object.fromEntries(
+    Object.keys(normalized).map((key) => [key, Math.round(clamp(lead[key]) * normalized[key])])
+  );
 }
+
+export function scoreLead(lead, weights = DEFAULT_WEIGHTS) {
+  const quality = validateLead(lead);
+  if (!quality.valid) {
+    const blocked = { ...lead, score: null, stage: "blocked", quality, breakdown: {} };
+    return { ...blocked, nextAction: nextAction(blocked) };
+  }
+
+  const normalized = normaliseWeights(weights);
+  const score = Math.round(
+    Object.keys(normalized).reduce((sum, key) => sum + clamp(lead[key]) * normalized[key], 0)
+  );
+  const stage = score >= 75 ? "qualified" : score >= 50 ? "nurture" : "new";
+
+  const result = {
+    ...lead,
+    score,
+    stage,
+    quality,
+    breakdown: scoreBreakdown(lead, normalized)
+  };
+
+  return { ...result, nextAction: nextAction(result) };
+}
+
+export function evaluateBatch(leads, weights = DEFAULT_WEIGHTS) {
+  return leads.map((lead) => scoreLead(lead, weights));
+}
+
+export function summarisePipeline(leads) {
+  const scores = leads.filter((lead) => typeof lead.score === "number");
+  const byStage = Object.fromEntries(STAGES.map((stage) => [stage, 0]));
+  scores.forEach((lead) => { byStage[lead.stage] += 1; });
+
+  return {
+    total: leads.length,
+    scored: scores.length,
+    qualityIssues: leads.length - scores.length,
+    averageScore: scores.length
+      ? Math.round(scores.reduce((sum, lead) => sum + lead.score, 0) / scores.length)
+      : 0,
+    byStage,
+    qualificationRate: scores.length ? byStage.qualified / scores.length : 0
+  };
+}
+
+const TRANSITIONS = Object.freeze({
+  new: ["nurture", "qualified", "blocked"],
+  nurture: ["new", "qualified", "blocked"],
+  qualified: ["blocked"],
+  blocked: ["new", "nurture"]
+});
 
 export function transition(lead, targetStage, approved = false) {
   if (!STAGES.includes(targetStage)) throw new Error("Unknown stage");
+
+  const current = lead?.stage || "new";
+  if (current === targetStage) return { ok: true, lead, reason: "No-op" };
+
+  if (!(TRANSITIONS[current] || []).includes(targetStage)) {
+    return { ok: false, lead, reason: "Transition not allowed" };
+  }
+
   if ((targetStage === "qualified" || targetStage === "blocked") && !approved) {
     return { ok: false, lead, reason: "Human approval required" };
   }
-  return { ok: true, lead: { ...lead, stage: targetStage }, reason: "Transition applied" };
+
+  return {
+    ok: true,
+    lead: { ...lead, stage: targetStage },
+    reason: "Transition applied"
+  };
 }
 
-export function auditEvent(action, lead, detail) {
-  return { at: new Date().toISOString(), action, leadId: lead.id, detail };
+export function auditEvent(action, lead, detail, at = new Date().toISOString()) {
+  return { at, action, leadId: lead.id, detail };
 }

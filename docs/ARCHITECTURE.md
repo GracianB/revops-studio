@@ -71,3 +71,8 @@ The GitHub Actions workflow performs static validation on pushes and pull reques
 Use the smallest architecture that gives the user a reliable outcome.
 
 That is the same principle the project sells.
+
+
+## Technical engine
+
+The public playground now uses a deterministic engine with weighted scoring, data-quality validation, explainability, a state machine, a human approval gate and audit events. The engine is covered by Node's built-in test runner.

@@ -460,3 +460,19 @@ textarea.form-control{min-height:145px;resize:vertical}
 .demo-btn{min-height:42px}
 @media (max-width:960px){.playground-grid{grid-template-columns:1fr}}
 @media (max-width:700px){.playground-top{flex-direction:column}.playground-metrics{grid-template-columns:1fr 1fr}}
+
+
+/* Model Lab v3 */
+.playground-metrics{grid-template-columns:repeat(6,1fr)}
+.weight-lab{margin:18px 0;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--bg-2)}
+.weight-head{display:flex;justify-content:space-between;align-items:center}
+.weight-total{color:var(--ok);font:700 10px/1 var(--mono)}
+.weight-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.weight-control{padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:11px}
+.weight-control input{display:block;width:100%;margin-top:12px;accent-color:var(--accent)}
+.weight-control b{display:block;margin-top:8px;color:var(--text);font:700 13px/1 var(--mono)}
+.weight-help{margin:10px 0 0;color:var(--dim);font-size:10px}
+.demo-table tbody tr{cursor:pointer}
+.demo-table tbody tr:focus{outline:2px solid var(--accent);outline-offset:-2px}
+@media (max-width:1100px){.playground-metrics{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:700px){.playground-metrics,.weight-grid{grid-template-columns:1fr 1fr}}
