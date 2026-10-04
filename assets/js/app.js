@@ -1521,7 +1521,7 @@ function initPlayground() {
   });
 
   qs("#exportDemo")?.addEventListener("click", () => {
-    const artifact = buildRunArtifact(
+    const artifactBase = buildRunArtifact(
       evaluated,
       getForecastConfig(),
       {},
@@ -1532,16 +1532,29 @@ function initPlayground() {
         thresholds: getThresholds()
       }
     );
+    const artifact = {
+      ...artifactBase,
+      contractVersion: "18.0",
+      feedback: lastFeedbackAnalysis
+        ? {
+            outcomeFingerprint: lastFeedbackAnalysis.outcomeFingerprint,
+            summary: lastFeedbackAnalysis.summary,
+            effectiveness: lastFeedbackAnalysis.effectiveness,
+            calibration: lastFeedbackAnalysis.calibration
+          }
+        : null,
+      outcomes: feedbackOutcomes.map((outcome) => ({ ...outcome }))
+    };
     const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "revops-v16-" + artifact.runId.toLowerCase() + ".json";
+    anchor.download = "revops-v18-" + artifact.runId.toLowerCase() + ".json";
     anchor.click();
     URL.revokeObjectURL(url);
-    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V16 run artifact generated without raw records"));
+    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V18 run artifact + feedback generated without raw CSV records"));
     status.dataset.state = "ok";
-    status.textContent = "Run artifact V16 generado: identidad, integridad y workflow, sin filas CSV.";
+    status.textContent = "Run artifact V18 generado: identidad, workflow y feedback, sin filas CSV.";
   });
 
 
@@ -1775,7 +1788,7 @@ function initPlayground() {
     status.dataset.state = "ok";
     status.textContent = impactResult.summary.applied +
       " acciones no sensibles proyectadas. Las acciones sensibles permanecen pendientes de aprobación.";
-    addAudit(auditEvent("WORKFLOW_IMPACT_PREVIEW", { id: lastWorkflowPlan.runId }, "V16 impact preview"));
+    addAudit(auditEvent("WORKFLOW_IMPACT_PREVIEW", { id: lastWorkflowPlan.runId }, "V18 impact preview"));
   });
 
   workflowControl.verifyReplay?.addEventListener("click", () => {
