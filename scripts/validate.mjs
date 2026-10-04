@@ -43,7 +43,7 @@ if (guidedSteps.length !== expectedGuidedSteps.length || guidedSteps.some((value
   fail("guided proof steps must expose 0,1,2,3 exactly once");
 }
 
-const requiredV17Ids = [
+const requiredV18Ids = [
   "decision-trace-title", "decisionTraceEmpty", "decisionTraceContent",
   "traceState", "traceRunId", "traceInputs", "traceDecision", "traceCommercial",
   "traceRisk", "traceProposal", "traceApproval", "traceExecution", "ownerMatrix",
@@ -62,8 +62,8 @@ const requiredV17Ids = [
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
   "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
 ];
-const missingV17Ids = requiredV17Ids.filter((id) => !ids.includes(id));
-if (missingV17Ids.length) fail("V17 surface missing DOM ids: " + missingV17Ids.join(", "));
+const missingV18Ids = requiredV18Ids.filter((id) => !ids.includes(id));
+if (missingV18Ids.length) fail("V18 surface missing DOM ids: " + missingV18Ids.join(", "));
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail("duplicate ids: " + [...new Set(duplicates)].join(", "));
 
@@ -111,6 +111,8 @@ if (missingEngineExports.length) fail("app.js references missing engine exports:
 
 const adapterImport = appJs.includes('from "./execution-adapter.js"');
 if (!adapterImport) fail("app.js execution adapter import missing");
+const outcomeImport = appJs.includes('from "./outcome-engine.js"');
+if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 if (packageJson.version !== "18.0.0") fail("package version must be 18.0.0");
@@ -127,7 +129,7 @@ const ledgerExports = [
   "buildExecutionLedger"
 ];
 for (const expected of ledgerExports) {
-  if (!engineExports.has(expected)) fail("missing V17 ledger export: " + expected);
+  if (!engineExports.has(expected)) fail("missing V18 ledger export: " + expected);
 }
 
 const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
