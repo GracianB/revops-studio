@@ -291,3 +291,18 @@ The integration adapter now produces a deterministic simulation outcome and an e
 
 V17 regression coverage: **72 tests**.
 
+
+
+### V18 · Outcome & Feedback Control
+
+V18 closes the loop after an action is simulated or executed:
+
+`DECIDE → PLAN → PREVIEW → APPROVE → CONTRACT → SIMULATE → OUTCOME → MEASURE → REPLAY`
+
+The new outcome engine records explicit results such as response, meeting, opportunity, won, lost and no-response. It calculates action effectiveness, expected-versus-actual value variance, SLA adherence and forecast calibration.
+
+Feedback remains local-first. The public prototype can record and analyze outcomes supplied by the operator, but it does not send customer or CRM data to an external service.
+
+The V18 run artifact can include feedback summaries and observed outcomes while continuing to exclude raw CSV records.
+
+V18 regression coverage: **87 tests**.
