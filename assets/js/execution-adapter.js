@@ -51,7 +51,7 @@ export function createExecutionEnvelope(trace, context = {}) {
   };
 
   return Object.freeze({
-    contractVersion: "15.0",
+    contractVersion: "16.0",
     envelopeId: "ENV-" + hashEnvelope(payload).toUpperCase(),
     adapter: "CRM_PLACEHOLDER",
     status: ADAPTER_STATUS.NOT_CONNECTED,
@@ -86,6 +86,69 @@ export function simulateExecution(envelope) {
     envelopeId: envelope.envelopeId,
     code: "ADAPTER_NOT_CONNECTED",
     message: "Public prototype stops before external execution."
+  };
+}
+
+export function createIntegrationContract(envelope, context = {}) {
+  const safe = envelope || {};
+  const payload = {
+    envelopeId: safe.envelopeId || null,
+    leadId: safe.payload?.leadId || null,
+    transition: safe.payload?.transition || { from: null, to: null },
+    action: safe.payload?.action || null,
+    runId: safe.payload?.runId || null,
+    mode: "SIMULATION_ONLY"
+  };
+  const idempotencyKey = "IDEMP-" + hashEnvelope(payload).toUpperCase();
+
+  return Object.freeze({
+    contractVersion: "16.0",
+    contractType: "REVOPS_EXECUTION_CONTRACT",
+    idempotencyKey,
+    envelopeId: safe.envelopeId || null,
+    operation: "PROPOSE_STAGE_TRANSITION",
+    dryRun: true,
+    canExecute: false,
+    adapter: "CRM_PLACEHOLDER",
+    endpoint: null,
+    authRequired: false,
+    timeoutMs: Number.isFinite(Number(context.timeoutMs)) ? Number(context.timeoutMs) : 5000,
+    payload,
+    invariants: Object.freeze({
+      externalCalls: 0,
+      state: "NOT_EXECUTED",
+      mode: "SIMULATION_ONLY"
+    })
+  });
+}
+
+export function validateIntegrationContract(contract) {
+  const required = [
+    contract?.contractVersion === "16.0",
+    contract?.contractType === "REVOPS_EXECUTION_CONTRACT",
+    contract?.dryRun === true,
+    contract?.canExecute === false,
+    contract?.adapter === "CRM_PLACEHOLDER",
+    contract?.endpoint === null,
+    contract?.invariants?.externalCalls === 0,
+    contract?.invariants?.state === "NOT_EXECUTED",
+    contract?.invariants?.mode === "SIMULATION_ONLY",
+    Boolean(String(contract?.idempotencyKey || "").trim())
+  ];
+  return {
+    valid: required.every(Boolean),
+    checks: {
+      version: required[0],
+      type: required[1],
+      dryRun: required[2],
+      canExecute: required[3],
+      adapter: required[4],
+      endpoint: required[5],
+      noExternalCalls: required[6],
+      state: required[7],
+      mode: required[8],
+      idempotencyKey: required[9]
+    }
   };
 }
 
