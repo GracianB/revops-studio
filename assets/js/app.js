@@ -603,9 +603,12 @@ function initPlayground() {
     if (commercial.stale) commercial.stale.textContent =
       commerce.staleRecords + " · " + Math.round(commerce.staleRate * 100) + "%";
     if (commercial.coverage) {
-      const totalOptional = evaluated.length * 4;
+      const totalOptional = evaluated.length * 6;
       const presentOptional = evaluated.reduce((sum, lead) =>
-        sum + ["value", "owner", "segment", "source"].filter((key) => String(lead[key] ?? "").trim() !== "").length, 0
+        sum + ["value", "owner", "segment", "source", "cohort", "lastTouchDays"].filter((key) => {
+          const value = lead[key];
+          return key === "lastTouchDays" ? Number.isFinite(Number(value)) : String(value ?? "").trim() !== "";
+        }).length, 0
       );
       commercial.coverage.textContent = totalOptional
         ? Math.round(presentOptional / totalOptional * 100) + "%"
@@ -638,6 +641,7 @@ function initPlayground() {
     };
     const forecastResult = forecastPipeline(evaluated, forecastAssumptions);
     const scenarioResult = forecastScenarios(evaluated, forecastAssumptions);
+    const intelligenceResult = executiveIntelligence(evaluated, forecastAssumptions);
     const scenarioMoney = (name) => formatMoney(scenarioResult[name]?.expectedValue || 0);
 
     if (forecast.downside) forecast.downside.textContent = scenarioMoney("downside");
@@ -978,6 +982,7 @@ function initPlayground() {
       forecast: getForecastConfig(),
       pipeline: summarisePipeline(evaluated),
       commercial: commercialMetrics(evaluated),
+      intelligence: executiveIntelligence(evaluated, getForecastConfig()),
       queue: buildActionQueue(evaluated),
       records: evaluated
     };
