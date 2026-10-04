@@ -306,3 +306,27 @@ Feedback remains local-first. The public prototype can record and analyze outcom
 The V18 run artifact can include feedback summaries and observed outcomes while continuing to exclude raw CSV records.
 
 V18 regression coverage: **87 tests**.
+
+### V20 · Adaptive Calibration & Learning
+
+V20 turns forecast calibration from a static comparison into a bounded learning loop:
+
+`FORECAST → OUTCOME → OBSERVATION → WINDOW → DRIFT → RECOMMENDATION → HUMAN REVIEW`
+
+The adaptive calibration layer:
+
+- stores local calibration snapshots without exporting raw CSV records;
+- compares current and previous observation windows;
+- enforces minimum global, segment and cohort sample sizes;
+- measures calibration error, Brier score and observed-rate movement;
+- classifies drift as **STABLE**, **WATCH**, **WARNING**, **CRITICAL** or **INSUFFICIENT**;
+- isolates calibration history by dataset fingerprint;
+- distinguishes segment drift from cohort drift;
+- records a deterministic audit trail for snapshots, baseline state and drift alerts;
+- produces controlled recalibration recommendations without changing model assumptions automatically;
+- exports an aggregate V20 calibration summary in the existing run artifact without exporting the adaptive history rows.
+
+The Control Room exposes the current adaptive state locally in the browser. The execution boundary remains simulation-only.
+
+V20 adds deterministic regression coverage for temporal windows, sample sufficiency, cohort/segment drift, baseline establishment, bounded history, recommendation logic and replay-safe identities.
+
