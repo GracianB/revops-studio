@@ -538,6 +538,7 @@ test("forecast aggregates exact expected value before final rounding", () => {
   const result = forecastPipeline(leads, { qualified:0.35, nurture:0.35, new:0.1 });
   assert.equal(result.expectedValueExact, 1.05);
   assert.equal(result.expectedValue, 1);
+  assert.equal(result.expectedCoverage, 0.35);
 });
 
 test("run analysis exposes one reusable decision contract", () => {
@@ -581,4 +582,15 @@ test("decision trace fails closed for blocked records and never proposes externa
   assert.equal(trace.execution.mode, "SIMULATION_ONLY");
   assert.equal(trace.proposal.to, null);
   assert.equal(trace.approval.required, false);
+});
+
+test("cohort forecast aggregates exact expectation before rounding", () => {
+  const leads = evaluateBatch([
+    { id:"V14-CO1", fit:50, intent:50, engagement:50, urgency:50, value:1, cohort:"micro" },
+    { id:"V14-CO2", fit:50, intent:50, engagement:50, urgency:50, value:1, cohort:"micro" },
+    { id:"V14-CO3", fit:50, intent:50, engagement:50, urgency:50, value:1, cohort:"micro" }
+  ]);
+  const result = cohortAnalysis(leads, "cohort", { nurture:0.35, qualified:0.8, new:0.1 });
+  assert.equal(result[0].cohort, "micro");
+  assert.equal(result[0].expectedValue, 1);
 });
