@@ -1111,6 +1111,34 @@ export function fingerprintRecords(records = []) {
   return hashString(stableStringify(canonical));
 }
 
+export function buildActionDigest(actions = []) {
+  const rows = Array.isArray(actions) ? actions : [];
+  const canonical = rows.map((action) => ({
+    leadId: action.leadId,
+    stage: action.stage,
+    priority: action.priority,
+    lane: action.lane,
+    action: action.action,
+    slaHours: action.slaHours,
+    queueScore: action.queueScore,
+    proposal: action.proposal,
+    state: action.state,
+    execution: action.execution
+  }));
+  return hashString(stableStringify(canonical));
+}
+
+export function buildDecisionDigest(decisions = []) {
+  const rows = Array.isArray(decisions) ? decisions : [];
+  return hashString(stableStringify(rows.map((decision) => ({
+    leadId: decision.leadId,
+    score: decision.score,
+    stage: decision.stage,
+    nextAction: decision.nextAction,
+    execution: decision.execution
+  }))));
+}
+
 export function buildOperationalPlan(
   leads,
   forecastAssumptions = {},
@@ -1167,8 +1195,17 @@ export function buildOperationalPlan(
         ? "BLOCKED"
         : envelope.approvalRequired
           ? "PENDING_APPROVAL"
-          : "READY_FOR_SIMULATION",
-      execution: "NOT_EXECUTED"
+          : envelope.to
+            ? "READY_FOR_SIMULATION"
+            : "NO_STAGE_CHANGE",
+      execution: "NOT_EXECUTED",
+      idempotencyKey: "ACT-" + hashString(stableStringify({
+        runId,
+        leadId: item.leadId,
+        from: envelope.from,
+        to: envelope.to,
+        action: envelope.action
+      })).toUpperCase()
     };
   }).map((item, index) => ({ ...item, rank: index + 1 }));
 
@@ -1176,15 +1213,17 @@ export function buildOperationalPlan(
     total: actions.length,
     ready: actions.filter((item) => item.state === "READY_FOR_SIMULATION").length,
     approvalPending: actions.filter((item) => item.state === "PENDING_APPROVAL").length,
-    blocked: evaluated.filter((lead) => lead.stage === "blocked").length,
+    blocked: actions.filter((item) => item.state === "BLOCKED").length,
+    noStageChange: actions.filter((item) => item.state === "NO_STAGE_CHANGE").length,
     urgent: actions.filter((item) => item.priority === "critical" || item.priority === "high").length
   };
 
   return {
-    contractVersion: "15.0",
+    contractVersion: "16.0",
     runId,
     createdAt: now,
     datasetFingerprint: fingerprintRecords(evaluated),
+    actionDigest: buildActionDigest(actions),
     summary,
     actions,
     externalExecution: {
@@ -1193,6 +1232,100 @@ export function buildOperationalPlan(
       adapter: "NOT_CONNECTED",
       calls: 0
     }
+  };
+}
+
+export function buildWorkflowImpact(leads, plan, approvals = {}) {
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const actions = Array.isArray(plan?.actions) ? plan.actions : [];
+  const approvedIds = approvals instanceof Set
+    ? approvals
+    : new Set(
+        Array.isArray(approvals)
+          ? approvals.map((id) => String(id))
+          : Object.entries(approvals || {})
+              .filter(([, value]) => value === true || value === "approved")
+              .map(([id]) => String(id))
+      );
+
+  const byId = new Map(evaluated.map((lead) => [String(lead.id), lead]));
+  const projected = [...evaluated];
+  const results = [];
+
+  actions.forEach((action) => {
+    const lead = byId.get(String(action.leadId));
+    if (!lead || !action.proposal?.to || action.stage === "blocked") {
+      results.push({
+        leadId: action.leadId,
+        from: lead?.stage || action.stage || "blocked",
+        to: null,
+        state: action.stage === "blocked" ? "BLOCKED" : "NO_ACTION"
+      });
+      return;
+    }
+
+    const requiresApproval = action.proposal.approvalRequired === true;
+    if (requiresApproval && !approvedIds.has(String(action.leadId))) {
+      results.push({
+        leadId: action.leadId,
+        from: lead.stage,
+        to: action.proposal.to,
+        state: "PENDING_APPROVAL"
+      });
+      return;
+    }
+
+    const transitionResult = transition(
+      lead,
+      action.proposal.to,
+      !requiresApproval || approvedIds.has(String(action.leadId))
+    );
+
+    if (!transitionResult.ok) {
+      results.push({
+        leadId: action.leadId,
+        from: lead.stage,
+        to: action.proposal.to,
+        state: "REJECTED",
+        reason: transitionResult.reason
+      });
+      return;
+    }
+
+    const index = projected.findIndex((item) => String(item.id) === String(action.leadId));
+    if (index >= 0) projected[index] = { ...projected[index], ...transitionResult.lead, nextAction: nextAction(transitionResult.lead) };
+
+    results.push({
+      leadId: action.leadId,
+      from: lead.stage,
+      to: action.proposal.to,
+      state: "APPLIED"
+    });
+  });
+
+  const changed = results.filter((item) => item.state === "APPLIED");
+  const currentPipeline = summarisePipeline(evaluated);
+  const projectedPipeline = summarisePipeline(projected);
+  const currentByStage = currentPipeline.byStage;
+  const projectedByStage = projectedPipeline.byStage;
+
+  return {
+    contractVersion: "16.0",
+    runId: plan?.runId || null,
+    approvedIds: [...approvedIds].sort(),
+    actionResults: results,
+    summary: {
+      proposed: actions.filter((item) => item.proposal?.to).length,
+      applied: changed.length,
+      pendingApproval: results.filter((item) => item.state === "PENDING_APPROVAL").length,
+      blocked: results.filter((item) => item.state === "BLOCKED").length,
+      rejected: results.filter((item) => item.state === "REJECTED").length
+    },
+    stageDelta: Object.fromEntries(
+      STAGES.map((stage) => [stage, projectedByStage[stage] - currentByStage[stage]])
+    ),
+    qualificationDelta: projectedByStage.qualified - currentByStage.qualified,
+    projectedPipeline: projectedPipeline
   };
 }
 
@@ -1218,12 +1351,24 @@ export function buildRunArtifact(
     config,
     {
       runId: snapshot.runId,
-      now: context.now || new Date().toISOString()
+      now: context.now || new Date().toISOString(),
+      weights: context.weights || DEFAULT_WEIGHTS,
+      thresholds: context.thresholds || DEFAULT_THRESHOLDS,
+      source: context.source || "demo",
+      scenario: context.scenario || "balanced"
     }
   );
+  const decisions = evaluated.map((lead) => ({
+    leadId: lead.id,
+    account: lead.account || "Unnamed account",
+    score: typeof lead.score === "number" ? lead.score : null,
+    stage: lead.stage || "blocked",
+    nextAction: lead.nextAction || nextAction(lead),
+    execution: "NOT_EXECUTED"
+  }));
 
   return {
-    contractVersion: "15.0",
+    contractVersion: "16.0",
     artifactType: "REVOPS_RUN_ARTIFACT",
     exportedAt: context.now || new Date().toISOString(),
     runId: snapshot.runId,
@@ -1251,15 +1396,11 @@ export function buildRunArtifact(
         anomalies: analysis.intelligence.anomalies.total
       }
     },
-    workflow,
-    decisions: evaluated.map((lead) => ({
-      leadId: lead.id,
-      account: lead.account || "Unnamed account",
-      score: typeof lead.score === "number" ? lead.score : null,
-      stage: lead.stage || "blocked",
-      nextAction: lead.nextAction || nextAction(lead),
-      execution: "NOT_EXECUTED"
-    }))
+    workflow: {
+      ...workflow,
+      decisionDigest: buildDecisionDigest(decisions)
+    },
+    decisions
   };
 }
 
@@ -1268,26 +1409,70 @@ export function verifyRunArtifact(artifact, leads) {
     return {
       valid: false,
       reason: "Invalid run artifact.",
-      checks: { artifactType: false, fingerprint: false, recordCount: false }
+      checks: { artifactType: false, fingerprint: false, recordCount: false, workflow: false, decisions: false }
     };
   }
+
   const evaluated = Array.isArray(leads) ? leads : [];
   const fingerprint = fingerprintRecords(evaluated);
   const expectedFingerprint = artifact.dataset?.fingerprint || null;
   const recordCount = Number(artifact.dataset?.recordCount);
+  const artifactForecast = artifact.configuration?.forecast || {};
+  const workflow = buildOperationalPlan(
+    evaluated,
+    artifactForecast,
+    {},
+    {
+      runId: artifact.runId || null,
+      now: artifact.exportedAt || new Date().toISOString(),
+      source: artifact.dataset?.source || "demo",
+      scenario: artifact.configuration?.scenario || "balanced",
+      weights: artifact.configuration?.weights || DEFAULT_WEIGHTS,
+      thresholds: artifact.configuration?.thresholds || DEFAULT_THRESHOLDS
+    }
+  );
+  const currentDecisions = evaluated.map((lead) => ({
+    leadId: lead.id,
+    score: typeof lead.score === "number" ? lead.score : null,
+    stage: lead.stage || "blocked",
+    nextAction: lead.nextAction || nextAction(lead),
+    execution: "NOT_EXECUTED"
+  }));
+
+  const artifactDecisionDigest = artifact.workflow?.decisionDigest || null;
   const checks = {
     artifactType: true,
     fingerprint: fingerprint === expectedFingerprint,
-    recordCount: evaluated.length === recordCount
+    recordCount: evaluated.length === recordCount,
+    workflow: workflow.actionDigest === (artifact.workflow?.actionDigest || null),
+    decisions: artifactDecisionDigest === buildDecisionDigest(currentDecisions)
   };
+
   return {
     valid: Object.values(checks).every(Boolean),
     reason: Object.values(checks).every(Boolean)
-      ? "Artifact matches the currently loaded dataset."
-      : "Artifact does not match the currently loaded dataset.",
+      ? "Artifact matches the currently loaded dataset and workflow contract."
+      : "Artifact does not match the currently loaded dataset or workflow contract.",
     checks,
     fingerprint,
-    expectedFingerprint
+    expectedFingerprint,
+    actionDigest: workflow.actionDigest,
+    expectedActionDigest: artifact.workflow?.actionDigest || null
+  };
+}
+
+export function buildReplayReport(artifact, leads) {
+  const verification = verifyRunArtifact(artifact, leads);
+  return {
+    contractVersion: "16.0",
+    runId: artifact?.runId || null,
+    valid: verification.valid,
+    checks: verification.checks,
+    reason: verification.reason,
+    currentFingerprint: verification.fingerprint || null,
+    artifactFingerprint: verification.expectedFingerprint || null,
+    currentActionDigest: verification.actionDigest || null,
+    artifactActionDigest: verification.expectedActionDigest || null
   };
 }
 
