@@ -202,3 +202,87 @@
   initBriefForm();
   initTracking();
 })();
+
+import { evaluateBatch, transition, auditEvent, nextAction } from "./revops-engine.js";
+
+const demoSeed = [
+  { id:"L-001", account:"Northstar", fit:92, intent:88, engagement:80, urgency:74 },
+  { id:"L-002", account:"Atlas", fit:78, intent:61, engagement:56, urgency:52 },
+  { id:"L-003", account:"Kite", fit:41, intent:30, engagement:46, urgency:35 },
+  { id:"L-004", account:"Nova", fit:86, intent:90, engagement:72, urgency:91 },
+  { id:"L-005", account:"Orbit", fit:67, intent:54, engagement:62, urgency:44 }
+];
+
+function initPlayground() {
+  const rows = document.getElementById("demoRows");
+  if (!rows) return;
+  const total = document.getElementById("demoTotal");
+  const qualified = document.getElementById("demoQualified");
+  const nurture = document.getElementById("demoNurture");
+  const avg = document.getElementById("demoAvgScore");
+  const status = document.getElementById("demoStatus");
+  const audit = document.getElementById("auditLog");
+  const approveButton = document.getElementById("approveDemo");
+  let state = [...demoSeed];
+  let evaluated = [];
+  let approved = false;
+
+  const render = () => {
+    const scored = evaluated.length ? evaluated : state.map((lead) => ({ ...lead, score: "—", stage: "new", nextAction: nextAction({ ...lead, stage: "new" }) }));
+    rows.replaceChildren();
+    scored.forEach((lead) => {
+      const tr = document.createElement("tr");
+      [lead.id, lead.account, lead.score, lead.stage, lead.nextAction].forEach((value, index) => {
+        const cell = document.createElement("td"); cell.textContent = String(value);
+        if (index === 3) cell.dataset.state = lead.stage;
+        tr.appendChild(cell);
+      });
+      rows.appendChild(tr);
+    });
+    total.textContent = String(scored.length);
+    const scoredOnly = scored.filter((lead) => typeof lead.score === "number");
+    qualified.textContent = String(scoredOnly.filter((lead) => lead.stage === "qualified").length);
+    nurture.textContent = String(scoredOnly.filter((lead) => lead.stage === "nurture").length);
+    avg.textContent = scoredOnly.length ? String(Math.round(scoredOnly.reduce((sum, lead) => sum + lead.score, 0) / scoredOnly.length)) : "0";
+  };
+
+  const addAudit = (entry) => {
+    const line = document.createElement("div");
+    line.className = "audit-line";
+    line.textContent = entry.at.slice(11, 19) + " · " + entry.action + " · " + entry.leadId + " · " + entry.detail;
+    audit.prepend(line);
+    while (audit.children.length > 6) audit.lastElementChild.remove();
+  };
+
+  document.getElementById("runDemo")?.addEventListener("click", () => {
+    evaluated = evaluateBatch(state);
+    evaluated.forEach((lead) => addAudit(auditEvent("EVALUATE", lead, lead.stage + " / score " + lead.score)));
+    status.dataset.state = "ok";
+    status.textContent = "Lote evaluado con datos sintéticos. Ningún sistema externo ha sido tocado.";
+    render();
+  });
+
+  approveButton?.addEventListener("click", () => {
+    approved = !approved;
+    approveButton.textContent = approved ? "Aprobación activa ✓" : "Simular aprobación humana";
+    status.dataset.state = approved ? "ok" : "error";
+    status.textContent = approved ? "La simulación permite transiciones sensibles." : "La ejecución sensible vuelve a quedar bloqueada.";
+    if (approved && evaluated.length) {
+      const candidate = evaluated.find((lead) => lead.stage === "qualified");
+      if (candidate) {
+        const result = transition(candidate, "qualified", approved);
+        if (result.ok) addAudit(auditEvent("APPROVED", result.lead, "human gate passed"));
+      }
+    }
+  });
+
+  document.getElementById("resetDemo")?.addEventListener("click", () => {
+    state = [...demoSeed]; evaluated = []; approved = false;
+    approveButton.textContent = "Simular aprobación humana";
+    status.dataset.state = ""; status.textContent = ""; audit.replaceChildren(); render();
+  });
+
+  render();
+}
+
+initPlayground();

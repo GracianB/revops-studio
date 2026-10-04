@@ -20,6 +20,8 @@ jobs:
         run: |
           node --check assets/js/app.js
           node --check assets/js/thanks.js
+          node --check assets/js/revops-engine.js
+          node --test tests/revops-engine.test.js
 
       - name: Check expected project files
         run: |
@@ -28,6 +30,8 @@ jobs:
           test -f assets/css/main.css
           test -f assets/js/app.js
           test -f assets/js/thanks.js
+          test -f assets/js/revops-engine.js
+          test -f tests/revops-engine.test.js
           test -f README.md
           test -f robots.txt
           test -f sitemap.xml
