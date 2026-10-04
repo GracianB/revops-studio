@@ -151,4 +151,4 @@ The new layer remains local and network-free. It does not execute CRM actions. I
 
 The CSV can optionally include `cohort` for cohort analysis.
 
-Quality target for V11: **38 deterministic tests, zero external runtime dependencies, structural validation PASS**.
+Quality target for V11: **40 deterministic tests, zero external runtime dependencies, structural validation PASS**.
