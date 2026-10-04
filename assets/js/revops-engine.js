@@ -51,7 +51,7 @@ export function scoreLead(lead, weights = DEFAULT_WEIGHTS) {
       stage: "blocked",
       quality,
       breakdown: {},
-      nextAction: "Fix data quality → evaluate again"
+      nextActionResult: "Fix data quality → evaluate again"
     };
   }
 
@@ -60,12 +60,7 @@ export function scoreLead(lead, weights = DEFAULT_WEIGHTS) {
     Object.keys(normalized).reduce((sum, key) => sum + clamp(lead[key]) * normalized[key], 0)
   );
   const stage = score >= 75 ? "qualified" : score >= 50 ? "nurture" : "new";
-  const nextAction =
-    stage === "qualified"
-      ? "Human review → propose next step"
-      : stage === "nurture"
-        ? "Add context → monitor intent"
-        : "Enrich data → score again";
+  const nextActionResult = nextAction({ stage });
 
   return {
     ...lead,
@@ -75,6 +70,13 @@ export function scoreLead(lead, weights = DEFAULT_WEIGHTS) {
     breakdown: scoreBreakdown(lead, normalized),
     nextAction
   };
+}
+
+export function nextAction(lead) {
+  if (lead.stage === "qualified") return "Human review → propose next step";
+  if (lead.stage === "nurture") return "Add context → monitor intent";
+  if (lead.stage === "blocked") return "Fix data quality → evaluate again";
+  return "Enrich data → score again";
 }
 
 export function evaluateBatch(leads, weights = DEFAULT_WEIGHTS) {
