@@ -514,7 +514,7 @@ test("CSV parser turns missing required numeric signals into blocked data", asyn
   const [row] = parseCsv("id,fit,intent,engagement,urgency
 V14-CSV,,80,70,60");
   const lead = scoreLead(row);
-  assert.equal(row.fit, null);
+  assert.equal(Number.isNaN(row.fit), true);
   assert.equal(lead.stage, "blocked");
   assert.equal(lead.score, null);
   assert.ok(lead.quality.errors.includes("fit: invalid"));
