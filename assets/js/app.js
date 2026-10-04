@@ -49,18 +49,27 @@ const ANALYTICS_EVENT = "Reservar";
 
 const CALIBRATION_V19_STORAGE_KEY = "revops-studio:calibration:v19";
 
-function readCalibrationBaselineV19() {
+function calibrationStorageKeyV19(datasetFingerprint = null) {
+  return CALIBRATION_V19_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
+}
+
+function readCalibrationBaselineV19(datasetFingerprint = null) {
   try {
-    const value = JSON.parse(localStorage.getItem(CALIBRATION_V19_STORAGE_KEY) || "[]");
+    const value = JSON.parse(
+      localStorage.getItem(calibrationStorageKeyV19(datasetFingerprint)) || "[]"
+    );
     return Array.isArray(value) ? value : [];
   } catch {
     return [];
   }
 }
 
-function writeCalibrationBaselineV19(rows = []) {
+function writeCalibrationBaselineV19(rows = [], datasetFingerprint = null) {
   try {
-    localStorage.setItem(CALIBRATION_V19_STORAGE_KEY, JSON.stringify(Array.isArray(rows) ? rows : []));
+    localStorage.setItem(
+      calibrationStorageKeyV19(datasetFingerprint),
+      JSON.stringify(Array.isArray(rows) ? rows : [])
+    );
   } catch {}
 }
 
@@ -145,10 +154,10 @@ function formatEuro(value) {
 }
 
 
-function buildCalibrationV19Report(forecastRows = [], outcomes = []) {
+function buildCalibrationV19Report(forecastRows = [], outcomes = [], datasetFingerprint = null) {
   const rows = Array.isArray(forecastRows) ? forecastRows : [];
   const events = Array.isArray(outcomes) ? outcomes : [];
-  const storedBaseline = readCalibrationBaselineV19();
+  const storedBaseline = readCalibrationBaselineV19(datasetFingerprint);
   const report = buildCalibrationReport({
     forecastRows: rows,
     outcomes: events,
@@ -156,7 +165,7 @@ function buildCalibrationV19Report(forecastRows = [], outcomes = []) {
     thresholds: {}
   });
   if (!storedBaseline.length && report.rows.length) {
-    writeCalibrationBaselineV19(report.rows);
+    writeCalibrationBaselineV19(report.rows, datasetFingerprint);
   }
   return report;
 }
@@ -198,7 +207,8 @@ function initCalculator() {
 
     lastCalibrationReportV19 = buildCalibrationV19Report(
       forecast?.rows || [],
-      feedbackOutcomes
+      feedbackOutcomes,
+      plan?.datasetFingerprint || null
     );
 
     if (feedback.total) feedback.total.textContent = String(analysis.summary.total);
