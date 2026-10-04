@@ -11,6 +11,11 @@ export const DEFAULT_WEIGHTS = Object.freeze({
   urgency: 0.15
 });
 
+export const DEFAULT_THRESHOLDS = Object.freeze({
+  qualified: 75,
+  nurture: 50
+});
+
 export const ACTION_POLICY = Object.freeze({
   qualified: Object.freeze({ priority: "high", lane: "Sales / CS", slaHours: 4, action: "Human review" }),
   nurture: Object.freeze({ priority: "medium", lane: "Lifecycle", slaHours: 24, action: "Add context" }),
@@ -19,28 +24,46 @@ export const ACTION_POLICY = Object.freeze({
 });
 
 const PRIORITY_RANK = Object.freeze({ critical: 4, high: 3, medium: 2, low: 1 });
+const STAGE_RANK = Object.freeze({ blocked: 0, new: 1, nurture: 2, qualified: 3 });
+const SIGNALS = Object.freeze(Object.keys(DEFAULT_WEIGHTS));
+
+const numeric = (value) => {
+  const result = Number(value);
+  return Number.isFinite(result) ? result : null;
+};
 
 const clamp = (value) => {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return null;
-  return Math.max(0, Math.min(100, numeric));
+  const result = numeric(value);
+  if (result === null) return null;
+  return Math.max(0, Math.min(100, result));
 };
 
 export function normaliseWeights(weights = DEFAULT_WEIGHTS) {
   const values = Object.fromEntries(
-    Object.keys(DEFAULT_WEIGHTS).map((key) => [key, Math.max(0, Number(weights[key]) || 0)])
+    SIGNALS.map((key) => [key, Math.max(0, numeric(weights?.[key]) ?? 0)])
   );
   const total = Object.values(values).reduce((sum, value) => sum + value, 0);
   if (total === 0) return { ...DEFAULT_WEIGHTS };
   return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value / total]));
 }
 
+export function normaliseThresholds(thresholds = DEFAULT_THRESHOLDS) {
+  const qualified = clamp(thresholds?.qualified) ?? DEFAULT_THRESHOLDS.qualified;
+  const nurture = clamp(thresholds?.nurture) ?? DEFAULT_THRESHOLDS.nurture;
+  if (qualified <= nurture) {
+    return { ...DEFAULT_THRESHOLDS };
+  }
+  return { qualified, nurture };
+}
+
 export function validateLead(lead) {
   const errors = [];
-  for (const key of Object.keys(DEFAULT_WEIGHTS)) {
-    if (clamp(lead?.[key]) === null) errors.push(key + ": invalid");
+  for (const key of SIGNALS) {
+    const value = numeric(lead?.[key]);
+    if (value === null) errors.push(key + ": invalid");
+    else if (value < 0 || value > 100) errors.push(key + ": out_of_range");
   }
-  if (!lead?.id) errors.push("id: missing");
+  if (!String(lead?.id ?? "").trim()) errors.push("id: missing");
   return { valid: errors.length === 0, errors };
 }
 
@@ -54,52 +77,73 @@ export function nextAction(lead) {
 export function scoreBreakdown(lead, weights = DEFAULT_WEIGHTS) {
   const normalized = normaliseWeights(weights);
   return Object.fromEntries(
-    Object.keys(normalized).map((key) => [key, Math.round(clamp(lead[key]) * normalized[key])])
+    SIGNALS.map((key) => [key, Math.round(clamp(lead[key]) * normalized[key])])
   );
 }
 
-export function scoreLead(lead, weights = DEFAULT_WEIGHTS) {
+export function scoreLead(lead, weights = DEFAULT_WEIGHTS, thresholds = DEFAULT_THRESHOLDS) {
   const quality = validateLead(lead);
   if (!quality.valid) {
-    const blocked = { ...lead, score: null, stage: "blocked", quality, breakdown: {} };
+    const blocked = {
+      ...lead,
+      score: null,
+      stage: "blocked",
+      quality,
+      breakdown: {},
+      thresholdProfile: normaliseThresholds(thresholds)
+    };
     return { ...blocked, nextAction: nextAction(blocked) };
   }
 
   const normalized = normaliseWeights(weights);
+  const thresholdProfile = normaliseThresholds(thresholds);
   const score = Math.round(
-    Object.keys(normalized).reduce((sum, key) => sum + clamp(lead[key]) * normalized[key], 0)
+    SIGNALS.reduce((sum, key) => sum + clamp(lead[key]) * normalized[key], 0)
   );
-  const stage = score >= 75 ? "qualified" : score >= 50 ? "nurture" : "new";
+  const stage = score >= thresholdProfile.qualified
+    ? "qualified"
+    : score >= thresholdProfile.nurture
+      ? "nurture"
+      : "new";
 
   const result = {
     ...lead,
     score,
     stage,
     quality,
-    breakdown: scoreBreakdown(lead, normalized)
+    breakdown: scoreBreakdown(lead, normalized),
+    thresholdProfile
   };
 
   return { ...result, nextAction: nextAction(result) };
 }
 
-export function evaluateBatch(leads, weights = DEFAULT_WEIGHTS) {
-  return leads.map((lead) => scoreLead(lead, weights));
+export function evaluateBatch(leads, weights = DEFAULT_WEIGHTS, thresholds = DEFAULT_THRESHOLDS) {
+  return (Array.isArray(leads) ? leads : []).map((lead) => scoreLead(lead, weights, thresholds));
 }
 
 export function summarisePipeline(leads) {
   const scored = leads.filter((lead) => typeof lead.score === "number");
   const byStage = Object.fromEntries(STAGES.map((stage) => [stage, 0]));
+
   leads.forEach((lead) => {
     if (STAGES.includes(lead?.stage)) byStage[lead.stage] += 1;
   });
+
+  const scores = scored.map((lead) => lead.score);
+  const minScore = scores.length ? Math.min(...scores) : 0;
+  const maxScore = scores.length ? Math.max(...scores) : 0;
 
   return {
     total: leads.length,
     scored: scored.length,
     qualityIssues: byStage.blocked || 0,
-    averageScore: scored.length
-      ? Math.round(scored.reduce((sum, lead) => sum + lead.score, 0) / scored.length)
+    averageScore: scores.length
+      ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
       : 0,
+    minScore,
+    maxScore,
+    scoreSpread: scores.length ? maxScore - minScore : 0,
     byStage,
     qualificationRate: scored.length ? byStage.qualified / scored.length : 0
   };
@@ -126,9 +170,8 @@ export function buildActionQueue(leads, now = new Date().toISOString()) {
         priorityRank * 1000 +
         score * 2 +
         urgency +
-        (lead.stage === "qualified" ? lead.intent || 0 : 0)
+        (lead.stage === "qualified" ? numeric(lead.intent) || 0 : 0)
       );
-
       const due = new Date(safeBase.getTime() + policy.slaHours * 60 * 60 * 1000);
       const reason = lead.stage === "blocked"
         ? (lead.quality?.errors?.length ? "Data issue: " + lead.quality.errors.join(", ") : "Data quality requires repair")
@@ -170,15 +213,25 @@ export function summariseQueue(queue) {
   };
 }
 
-const STAGE_RANK = Object.freeze({ blocked: 0, new: 1, nurture: 2, qualified: 3 });
-
 export function compareEvaluations(baseLeads, currentLeads) {
   const baseById = new Map(baseLeads.map((lead) => [String(lead.id), lead]));
   const changes = [];
+  const currentIds = new Set();
 
   currentLeads.forEach((current) => {
+    currentIds.add(String(current.id));
     const base = baseById.get(String(current.id));
-    if (!base) return;
+    if (!base) {
+      changes.push({
+        leadId: current.id,
+        account: current.account || "Unnamed account",
+        fromStage: "missing",
+        toStage: current.stage,
+        scoreDelta: typeof current.score === "number" ? current.score : null,
+        kind: "new"
+      });
+      return;
+    }
 
     const stageChanged = base.stage !== current.stage;
     const scoreDelta = typeof base.score === "number" && typeof current.score === "number"
@@ -203,23 +256,86 @@ export function compareEvaluations(baseLeads, currentLeads) {
     }
   });
 
-  const promoted = changes.filter((item) => item.kind === "promoted").length;
-  const demoted = changes.filter((item) => item.kind === "demoted").length;
-  const blocked = changes.filter((item) => item.kind === "blocked").length;
-  const recovered = changes.filter((item) => item.kind === "recovered").length;
-  const scoreDeltas = changes.map((item) => item.scoreDelta).filter((value) => typeof value === "number");
+  const removed = baseLeads.filter((lead) => !currentIds.has(String(lead.id))).map((lead) => ({
+    leadId: lead.id,
+    account: lead.account || "Unnamed account",
+    fromStage: lead.stage,
+    toStage: "missing",
+    scoreDelta: null,
+    kind: "removed"
+  }));
+
+  changes.push(...removed);
 
   return {
     totalCompared: currentLeads.length,
     changed: changes.length,
-    promoted,
-    demoted,
-    blocked,
-    recovered,
-    averageScoreDelta: scoreDeltas.length
-      ? Math.round(scoreDeltas.reduce((sum, value) => sum + value, 0) / scoreDeltas.length)
-      : 0,
+    promoted: changes.filter((item) => item.kind === "promoted").length,
+    demoted: changes.filter((item) => item.kind === "demoted").length,
+    blocked: changes.filter((item) => item.kind === "blocked").length,
+    recovered: changes.filter((item) => item.kind === "recovered").length,
+    newRecords: changes.filter((item) => item.kind === "new").length,
+    removedRecords: changes.filter((item) => item.kind === "removed").length,
+    averageScoreDelta: (() => {
+      const deltas = changes.map((item) => item.scoreDelta).filter((value) => typeof value === "number");
+      return deltas.length ? Math.round(deltas.reduce((sum, value) => sum + value, 0) / deltas.length) : 0;
+    })(),
     changes
+  };
+}
+
+export function evaluateScenarios(leads, scenarios = {}, thresholds = DEFAULT_THRESHOLDS) {
+  return Object.fromEntries(
+    Object.entries(scenarios).map(([name, weights]) => {
+      const evaluated = evaluateBatch(leads, weights, thresholds);
+      return [name, summarisePipeline(evaluated)];
+    })
+  );
+}
+
+function stableStringify(value) {
+  if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+  if (value && typeof value === "object") {
+    return "{" + Object.keys(value).sort().map((key) => JSON.stringify(key) + ":" + stableStringify(value[key])).join(",") + "}";
+  }
+  return JSON.stringify(value);
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+export function createRunSnapshot({
+  records = [],
+  weights = DEFAULT_WEIGHTS,
+  thresholds = DEFAULT_THRESHOLDS,
+  source = "demo",
+  scenario = "balanced"
+} = {}) {
+  const normalizedWeights = normaliseWeights(weights);
+  const normalizedThresholds = normaliseThresholds(thresholds);
+  const payload = {
+    records,
+    source,
+    scenario,
+    thresholds: normalizedThresholds,
+    weights: normalizedWeights
+  };
+  const runId = "RUN-" + hashString(stableStringify(payload)).toUpperCase();
+
+  return {
+    runId,
+    createdAt: new Date().toISOString(),
+    source,
+    scenario,
+    weights: normalizedWeights,
+    thresholds: normalizedThresholds,
+    pipeline: summarisePipeline(evaluateBatch(records, normalizedWeights, normalizedThresholds))
   };
 }
 
