@@ -205,5 +205,6 @@ The new layer adds:
 - an explicit integration boundary separating local decision support from any future external execution adapter;
 - a one-shot human gate for sensitive nurture → qualified simulation;
 - stronger structural validation for guided proof and V14 DOM contracts.
+- 50 deterministic tests covering engine, CSV contracts, exact aggregation, run analysis and decision trace.
 
 The execution boundary remains intentionally disconnected. The project demonstrates the decision contract without pretending to have a live CRM integration.
