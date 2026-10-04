@@ -64,6 +64,8 @@ const requiredV18Ids = [
   "calibration-v20-title", "calibrationV20Severity", "calibrationV20Current",
   "calibrationV20Previous", "calibrationV20CalibrationDelta", "calibrationV20BrierDelta",
   "calibrationV20Alerts", "calibrationV20Recommendations",
+  "calibrationV20WindowDays", "calibrationV20MinSamples",
+  "calibrationV20MinGroupSamples", "resetCalibrationV20",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
   "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
