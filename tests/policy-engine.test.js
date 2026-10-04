@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   POLICY_CONTRACT_VERSION,
+  POLICY_HARD_MAX_STEP,
   applyPolicyToAssumptions,
   buildRecalibrationProposal,
   decidePolicy,
@@ -27,9 +28,10 @@ function biasedRows(count = 10, probability = 0.8, successes = 4) {
   }));
 }
 
-test("V21 contract exposes bounded defaults", () => {
+test("V21 contract exposes a hard bounded recalibration step", () => {
   const config = normalisePolicyConfig({ maxStep: 9, multiplierMin: 2, multiplierMax: 0.2 });
-  assert.equal(config.maxStep, 0.5);
+  assert.equal(config.maxStep, POLICY_HARD_MAX_STEP);
+  assert.equal(config.maxStep, 0.15);
   assert.equal(config.multiplierMin, 0.5);
   assert.equal(config.multiplierMax, 1.5);
   assert.equal(POLICY_CONTRACT_VERSION, "21.0");
@@ -44,6 +46,20 @@ test("V21 blocks a stable report", () => {
   assert.equal(proposal.status, "BLOCKED");
   assert.equal(proposal.reason, "NO_MATERIAL_DRIFT");
   assert.equal(proposal.eligible, false);
+});
+
+test("V21 requires global drift before proposing global recalibration", () => {
+  const proposal = buildRecalibrationProposal({
+    report: {
+      severity: "CRITICAL",
+      global: { severity: "STABLE", sampleSufficient: true },
+      recommendations: [{ code: "SEGMENT_DRIFT" }]
+    },
+    rows: biasedRows(12, 0.9, 2),
+    now
+  });
+  assert.equal(proposal.status, "BLOCKED");
+  assert.equal(proposal.reason, "GLOBAL_DRIFT_REQUIRED");
 });
 
 test("V21 blocks insufficient samples even when drift is critical", () => {
@@ -114,6 +130,24 @@ test("V21 approval requires an eligible proposal and an actor", () => {
   assert.equal(approved.accepted, true);
   assert.equal(approved.active.proposalId, proposal.proposalId);
   assert.equal(approved.active.multiplier, proposal.multiplier);
+});
+
+test("V21 approval rejects a forged multiplier outside the hard step", () => {
+  const result = decidePolicy({
+    proposal: {
+      contractVersion: POLICY_CONTRACT_VERSION,
+      proposalId: "V21-forged",
+      eligible: true,
+      multiplier: 1.4,
+      datasetFingerprint: "ds-a"
+    },
+    decision: "APPROVE",
+    actor: "operator",
+    datasetFingerprint: "ds-a",
+    now
+  });
+  assert.equal(result.accepted, false);
+  assert.equal(result.reason, "PROPOSAL_STEP_EXCEEDED");
 });
 
 test("V21 cannot approve an ineligible proposal", () => {
