@@ -511,8 +511,7 @@ test("score breakdown reconciles exactly to the final score", () => {
 
 test("CSV parser turns missing required numeric signals into blocked data", async () => {
   const { parseCsv } = await import("../assets/js/csv-utils.js");
-  const [row] = parseCsv("id,fit,intent,engagement,urgency
-V14-CSV,,80,70,60");
+  const [row] = parseCsv("id,fit,intent,engagement,urgency\nV14-CSV,,80,70,60");
   const lead = scoreLead(row);
   assert.equal(Number.isNaN(row.fit), true);
   assert.equal(lead.stage, "blocked");
@@ -523,8 +522,7 @@ V14-CSV,,80,70,60");
 test("CSV parser rejects row width mismatches instead of dropping cells", async () => {
   const { parseCsv } = await import("../assets/js/csv-utils.js");
   assert.throws(
-    () => parseCsv("id,fit,intent,engagement,urgency
-V14-WIDTH,90,80,70,60,extra"),
+    () => parseCsv("id,fit,intent,engagement,urgency\nV14-WIDTH,90,80,70,60,extra"),
     /Fila CSV 2/
   );
 });
