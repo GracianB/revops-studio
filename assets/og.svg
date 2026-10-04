@@ -3,10 +3,10 @@
   <circle cx="1030" cy="90" r="240" fill="#ff5a5f" opacity=".12"/>
   <circle cx="160" cy="590" r="260" fill="#ff8a65" opacity=".07"/>
   <rect x="70" y="70" width="1060" height="490" rx="28" fill="#0b1017" stroke="#27313d"/>
-  <text x="110" y="150" fill="#ff5a5f" font-family="monospace" font-size="24" font-weight="700" letter-spacing="5">REVOPS / SYSTEMS LAB</text>
+  <text x="110" y="150" fill="#ff5a5f" font-family="monospace" font-size="24" font-weight="700" letter-spacing="5">REVOPS / CONTROL ROOM / V7</text>
   <text x="110" y="265" fill="#f3f6f9" font-family="Arial, sans-serif" font-size="74" font-weight="800">Customer × Data ×</text>
-  <text x="110" y="345" fill="#f3f6f9" font-family="Arial, sans-serif" font-size="74" font-weight="800">Operations × AI</text>
-  <text x="110" y="430" fill="#97a3b2" font-family="monospace" font-size="24">A public technical proof by Gracián Baena</text>
+  <text x="110" y="345" fill="#f3f6f9" font-family="Arial, sans-serif" font-size="74" font-weight="800">Operations × AI × Systems</text>
+  <text x="110" y="430" fill="#97a3b2" font-family="monospace" font-size="24">A public technical proof · scoring · queue · audit</text>
   <rect x="110" y="476" width="210" height="42" rx="21" fill="#ff5a5f"/>
-  <text x="150" y="504" fill="#05070b" font-family="monospace" font-size="16" font-weight="700">RUN THE MODEL →</text>
+  <text x="150" y="504" fill="#05070b" font-family="monospace" font-size="16" font-weight="700">OPEN CONTROL ROOM →</text>
 </svg>
