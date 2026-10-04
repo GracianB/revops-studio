@@ -198,3 +198,82 @@ The layer exposes:
 - expected value by segment.
 
 Forecast assumptions do not modify the core qualification score. The commercial and qualification layers remain separate.
+
+## Executive Intelligence Layer
+
+V11 adds a decision surface designed for an operator or executive review.
+
+### Segment intelligence
+
+Each segment exposes:
+
+- active and blocked record counts;
+- pipeline and qualified value;
+- weighted pipeline;
+- expected value from the current forecast assumptions;
+- qualification rate by records;
+- qualified value share;
+- stale rate;
+- average score;
+- pipeline concentration relative to record share.
+
+### Cohort intelligence
+
+Optional `cohort` context groups records into comparable operating cohorts and exposes:
+
+- active / blocked records;
+- pipeline value;
+- expected value;
+- qualified rate;
+- stale rate;
+- average score.
+
+The shipped demo uses synthetic quarterly cohorts.
+
+### Account health
+
+Health is intentionally separate from qualification. It combines fit, intent, engagement, urgency and contact recency into an explainable 0–100 operational health score.
+
+Health states:
+
+```
+75–100  healthy
+55–74   watch
+35–54   risk
+0–34    critical
+```
+
+Missing recency lowers confidence rather than silently inventing a fresh signal.
+
+### Business rules
+
+The rule layer surfaces deterministic conditions such as:
+
+- revenue attached to blocked data;
+- high-value stale accounts;
+- material ownerless pipeline;
+- qualified accounts without recent touch;
+- high intent / low engagement gaps;
+- fit / intent mismatches;
+- material value below qualified stage.
+
+Rules do not mutate records.
+
+### Anomaly detection
+
+The anomaly layer uses deterministic IQR outlier detection for deal value and compares segment stale rate, qualification rate and pipeline concentration against the current run baseline.
+
+### Revenue leakage
+
+Revenue leakage measures value carrying one or more operational risk signals while keeping category totals separate. The aggregate exposure counts each record once, preventing double-counting across overlapping risk reasons.
+
+### Executive decision surface
+
+The executive layer combines forecast, health, rules, anomalies, leakage, segments and cohorts into:
+
+- controlled / attention / critical signal;
+- prioritized risks;
+- highlighted opportunities;
+- segment and cohort expected value.
+
+This is a decision-support layer, not an autonomous execution layer.
