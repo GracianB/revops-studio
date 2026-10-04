@@ -40,9 +40,39 @@ import {
   buildFeedbackAnalysis,
   createOutcomeEvent
 } from "./outcome-engine.js";
+import {
+  buildCalibrationReport
+} from "./calibration-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
+
+const CALIBRATION_V19_STORAGE_KEY = "revops-studio:calibration:v19";
+
+function calibrationStorageKeyV19(datasetFingerprint = null) {
+  return CALIBRATION_V19_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
+}
+
+function readCalibrationBaselineV19(datasetFingerprint = null) {
+  try {
+    const value = JSON.parse(
+      localStorage.getItem(calibrationStorageKeyV19(datasetFingerprint)) || "[]"
+    );
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCalibrationBaselineV19(rows = [], datasetFingerprint = null) {
+  try {
+    localStorage.setItem(
+      calibrationStorageKeyV19(datasetFingerprint),
+      JSON.stringify(Array.isArray(rows) ? rows : [])
+    );
+  } catch {}
+}
+
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -123,6 +153,22 @@ function formatEuro(value) {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
 }
 
+
+function buildCalibrationV19Report(forecastRows = [], outcomes = [], datasetFingerprint = null) {
+  const rows = Array.isArray(forecastRows) ? forecastRows : [];
+  const events = Array.isArray(outcomes) ? outcomes : [];
+  const storedBaseline = readCalibrationBaselineV19(datasetFingerprint);
+  const report = buildCalibrationReport({
+    forecastRows: rows,
+    outcomes: events,
+    baselineRows: storedBaseline,
+    thresholds: {}
+  });
+  if (!storedBaseline.length && report.rows.length) {
+    writeCalibrationBaselineV19(report.rows, datasetFingerprint);
+  }
+  return report;
+}
 function initCalculator() {
   const output = qs("#annualCost"), detail = qs("#annualDetail");
   if (!output || !detail) return;
@@ -158,6 +204,12 @@ function initCalculator() {
       outcomes: feedbackOutcomes
     });
     lastFeedbackAnalysis = analysis;
+
+    lastCalibrationReportV19 = buildCalibrationV19Report(
+      forecast?.rows || [],
+      feedbackOutcomes,
+      plan?.datasetFingerprint || null
+    );
 
     if (feedback.total) feedback.total.textContent = String(analysis.summary.total);
     if (feedback.positiveRate) feedback.positiveRate.textContent = Math.round(analysis.summary.positiveRate * 100) + "%";
@@ -464,6 +516,7 @@ function initPlayground() {
   let activeTableStage = "all";
   let guidedStep = 0;
   let feedbackOutcomes = [];
+  let lastCalibrationReportV19 = null;
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -1545,7 +1598,8 @@ function initPlayground() {
             calibration: lastFeedbackAnalysis.calibration
           }
         : null,
-      outcomes: feedbackOutcomes.map((outcome) => ({ ...outcome }))
+      outcomes: feedbackOutcomes.map((outcome) => ({ ...outcome })),
+      calibrationV19: lastCalibrationReportV19
     };
     const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
