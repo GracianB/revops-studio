@@ -91,6 +91,22 @@ test("segment drift identifies degraded segment", () => {
   assert.equal(result[0].drift, true);
 });
 
+test("calibration report ignores forecasts without an observed outcome", () => {
+  const report = buildCalibrationReport({
+    forecastRows: [
+      { leadId:"OBSERVED", segment:"SMB", probability:0.8 },
+      { leadId:"PENDING", segment:"SMB", probability:0.2 }
+    ],
+    outcomes: [
+      { leadId:"OBSERVED", positive:true, terminal:true, type:"CLOSED_WON" }
+    ]
+  });
+  assert.equal(report.records, 1);
+  assert.equal(report.current.actualRate, 1);
+  assert.equal(report.rows.length, 1);
+  assert.equal(report.rows[0].leadId, "OBSERVED");
+});
+
 test("calibration report is deterministic and versioned", () => {
   const report = buildCalibrationReport({
     forecastRows: [
