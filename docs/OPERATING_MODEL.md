@@ -487,3 +487,40 @@ Replay verifies the event chain before projecting operational state. Timestamp t
 
 This makes the public prototype demonstrate an important production property: **the system can explain not only what it decided, but what happened to that decision afterwards.**
 
+
+
+## V18 · Closed-loop feedback
+
+The operating model now continues after the action boundary:
+
+1. Decide
+2. Plan
+3. Preview
+4. Approve
+5. Contract
+6. Simulate or execute
+7. Record outcome
+8. Measure effectiveness
+9. Calibrate assumptions
+
+### Outcome record
+
+An outcome is explicit and typed: response, meeting, opportunity, won, lost or no-response. Each record is linked to the run, lead and action and can carry expected probability/value, actual value/revenue and response time.
+
+### Measurement
+
+V18 exposes:
+
+- positive outcome rate;
+- terminal win rate;
+- expected versus actual value variance;
+- SLA adherence;
+- action effectiveness;
+- forecast calibration error;
+- Brier score.
+
+These are observed measurements, not invented business results.
+
+### Feedback boundary
+
+The feedback engine does not rewrite the deterministic scoring model automatically. A later optimization process may use accumulated evidence to propose new assumptions, but changes remain explicit and testable.
