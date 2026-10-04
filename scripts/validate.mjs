@@ -110,6 +110,17 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), 
 if (packageJson.version !== "17.0.0") fail("package version must be 17.0.0");
 const declaredTests = (fs.readFileSync(path.join(root, "tests/revops-engine.test.js"), "utf8").match(/test\(/g) || []).length;
 if (declaredTests < 72) fail("V17 regression suite must contain at least 72 tests");
+const ledgerExports = [
+  "createExecutionLedger",
+  "appendExecutionEvent",
+  "verifyExecutionLedger",
+  "replayExecutionLedger",
+  "buildExecutionLedger"
+];
+for (const expected of ledgerExports) {
+  if (!engineExports.has(expected)) fail("missing V17 ledger export: " + expected);
+}
+
 const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
 const adapterExports = new Set(
   [...adapterJs.matchAll(/export\s+(?:function|const|let|var|class)\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
