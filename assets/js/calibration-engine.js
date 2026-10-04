@@ -204,15 +204,20 @@ export function buildCalibrationReport({
     }).filter(Boolean)
   );
 
-  const baseline = calculateCalibrationMetrics(baselineRows);
+  const explicitBaselineRows = normaliseCalibrationRows(baselineRows);
+  const baselineEstablished = explicitBaselineRows.length > 0;
+  const comparisonBaselineRows = baselineEstablished ? explicitBaselineRows : currentRows;
+
+  const baseline = calculateCalibrationMetrics(comparisonBaselineRows);
   const current = calculateCalibrationMetrics(currentRows);
   const drift = compareCalibration(current, baseline, thresholds);
-  const segmentDrift = detectSegmentDrift(currentRows, baselineRows, thresholds);
+  const segmentDrift = detectSegmentDrift(currentRows, comparisonBaselineRows, thresholds);
 
   return Object.freeze({
     contractVersion: CALIBRATION_CONTRACT_VERSION,
     records: current.records,
     rows: currentRows,
+    baselineEstablished,
     current,
     baseline,
     bins: calibrationBins(currentRows),
