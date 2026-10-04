@@ -181,17 +181,27 @@ export function buildCalibrationReport({
   baselineRows = [],
   thresholds = {}
 } = {}) {
+  const byLead = new Map();
+  (Array.isArray(outcomes) ? outcomes : []).forEach((outcome) => {
+    const key = String(outcome?.leadId ?? "");
+    byLead.set(key, [...(byLead.get(key) || []), outcome]);
+  });
+
   const currentRows = normaliseCalibrationRows(
-    forecastRows.map((row) => ({
-      ...row,
-      observedSuccess: outcomes
-        .filter((outcome) => String(outcome.leadId) === String(row.leadId))
-        .some((outcome) => outcome.terminal
-          ? outcome.type === "CLOSED_WON"
-          : outcome.positive)
-        ? 1
-        : 0
-    }))
+    (Array.isArray(forecastRows) ? forecastRows : []).map((row) => {
+      const leadOutcomes = byLead.get(String(row?.leadId ?? "")) || [];
+      if (!leadOutcomes.length) return null;
+
+      const terminal = leadOutcomes.find((outcome) => outcome?.terminal);
+      const success = terminal
+        ? terminal.type === "CLOSED_WON"
+        : leadOutcomes.some((outcome) => outcome?.positive);
+
+      return {
+        ...row,
+        observedSuccess: success ? 1 : 0
+      };
+    }).filter(Boolean)
   );
 
   const baseline = calculateCalibrationMetrics(baselineRows);
@@ -202,6 +212,7 @@ export function buildCalibrationReport({
   return Object.freeze({
     contractVersion: CALIBRATION_CONTRACT_VERSION,
     records: current.records,
+    rows: currentRows,
     current,
     baseline,
     bins: calibrationBins(currentRows),
