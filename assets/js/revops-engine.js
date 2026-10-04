@@ -491,7 +491,7 @@ export function segmentIntelligence(leads, forecastAssumptions = {}) {
       group.weightedPipeline += value * lead.score / 100;
       group.averageScore += lead.score;
     }
-    if ((numeric(lead.lastTouchDays) ?? -1) > options.staleDays) {
+    if ((numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays) {
       group.staleRecords += 1;
     }
   });
