@@ -156,3 +156,31 @@ Simulation-only execution boundary
 Audit events
 
 The analysis contract reuses the same forecast and intelligence results across dependent layers. The execution boundary remains a UI-visible contract rather than a hidden fake integration.
+
+## V15 · Operational Workflow Control
+
+V15 adds an orchestration layer without changing the deterministic core:
+
+```text
+current run
+   ↓
+buildRunAnalysis
+   ↓
+Decision Trace
+   ↓
+buildOperationalPlan
+   ├─ ranked work
+   ├─ SLA
+   ├─ approval state
+   └─ execution state
+        ↓
+execution envelope
+        ↓
+adapter boundary (NOT_CONNECTED)
+```
+
+The workflow plan is still a pure local calculation. It does not perform network requests.
+
+`buildRunArtifact()` exports the run contract without raw records. It includes a dataset fingerprint, configuration, aggregate analysis, workflow plan and decision outcomes. `verifyRunArtifact()` checks the fingerprint and record count against the currently loaded dataset.
+
+`assets/js/execution-adapter.js` is deliberately small. It validates the handoff contract and returns `NOT_EXECUTED / SIMULATION_ONLY` rather than pretending that a CRM integration exists.
