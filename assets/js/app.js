@@ -468,13 +468,19 @@ function initPlayground() {
     });
     lastFeedbackAnalysis = analysis;
 
+    const latestOutcomeAt = feedbackOutcomes
+      .map((outcome) => outcome?.occurredAt)
+      .filter(Boolean)
+      .sort()
+      .at(-1);
+
     lastAdaptiveCalibrationReportV20 = buildAdaptiveCalibrationReport({
       forecastRows: forecast?.rows || [],
       outcomes: feedbackOutcomes,
       history: readAdaptiveCalibrationHistoryV20(plan?.datasetFingerprint || null),
       datasetFingerprint: plan?.datasetFingerprint || null,
       runId: plan?.runId || null,
-      now: lastCalibrationCapturedAtV20 || new Date().toISOString()
+      now: latestOutcomeAt || lastCalibrationCapturedAtV20 || new Date().toISOString()
     });
 
     writeAdaptiveCalibrationHistoryV20(
