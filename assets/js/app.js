@@ -431,6 +431,10 @@ function initPlayground() {
     v20Alerts: qs("#calibrationV20Alerts"),
     v20Recommendations: qs("#calibrationV20Recommendations")
   };
+  const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
+    style: "currency", currency: "EUR", maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+
   const renderFeedback = (plan, forecast) => {
     if (!feedback.lead) return;
     const runId = plan?.runId || null;
