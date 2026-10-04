@@ -1104,7 +1104,11 @@ export function buildDecisionTrace(lead, forecastAssumptions = {}, config = {}, 
 
 export function fingerprintRecords(records = []) {
   const rows = Array.isArray(records) ? records : [];
-  return hashString(stableStringify(rows));
+  const canonical = [...rows].sort((left, right) =>
+    String(left?.id ?? "").localeCompare(String(right?.id ?? "")) ||
+    stableStringify(left).localeCompare(stableStringify(right))
+  );
+  return hashString(stableStringify(canonical));
 }
 
 export function buildOperationalPlan(
@@ -1159,7 +1163,11 @@ export function buildOperationalPlan(
       dueAt: item.dueAt,
       queueScore: item.queueScore,
       proposal: envelope,
-      state: envelope.approvalRequired ? "PENDING_APPROVAL" : "READY_FOR_SIMULATION",
+      state: item.stage === "blocked"
+        ? "BLOCKED"
+        : envelope.approvalRequired
+          ? "PENDING_APPROVAL"
+          : "READY_FOR_SIMULATION",
       execution: "NOT_EXECUTED"
     };
   }).map((item, index) => ({ ...item, rank: index + 1 }));
