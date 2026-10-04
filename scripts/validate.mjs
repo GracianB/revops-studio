@@ -14,7 +14,10 @@ const required = [
   "tests/revops-engine.test.js",
   "tests/outcome-engine.test.js",
   "assets/js/execution-adapter.js",
-  "assets/js/outcome-engine.js"
+  "assets/js/outcome-engine.js",
+  "assets/js/calibration-engine.js",
+  "assets/js/adaptive-calibration-engine.js",
+  "tests/adaptive-calibration-engine.test.js"
 ];
 
 const fail = (message) => {
@@ -58,6 +61,9 @@ const requiredV18Ids = [
   "ledgerHead", "ledgerApprovals", "ledgerContracts", "ledgerSimulations",
   "replayLedger", "ledgerEvents",
   "feedback-title", "feedbackLead", "feedbackType", "feedbackActualValue",
+  "calibration-v20-title", "calibrationV20Severity", "calibrationV20Current",
+  "calibrationV20Previous", "calibrationV20CalibrationDelta", "calibrationV20BrierDelta",
+  "calibrationV20Alerts", "calibrationV20Recommendations",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
   "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
@@ -157,7 +163,9 @@ for (const expected of [
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
-  "assets/js/execution-adapter.js","assets/js/outcome-engine.js","README.md"
+  "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
+  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js",
+  "README.md"
 ];
 
 for (const file of sourceFiles) {
