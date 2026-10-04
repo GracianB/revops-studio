@@ -1,6 +1,5 @@
 import {
-  calculateCalibrationMetrics,
-  normaliseCalibrationRows
+  calculateCalibrationMetrics
 } from "./calibration-engine.js";
 
 export const ADAPTIVE_CALIBRATION_CONTRACT_VERSION = "20.0";
@@ -160,6 +159,35 @@ export function buildObservedCalibrationRows(forecastRows = [], outcomes = []) {
   );
 }
 
+function normaliseAdaptiveRows(rows = [], fallbackObservedAt = null) {
+  if (!Array.isArray(rows)) return [];
+
+  return rows.map((row) => {
+    const leadId = String(row?.leadId ?? "").trim();
+    const probability = clamp(
+      row?.probability ?? row?.expectedProbability,
+      0,
+      1
+    );
+    const observedSuccess = numeric(row?.observedSuccess);
+    const observedAt = isoTime(row?.observedAt) || isoTime(fallbackObservedAt);
+
+    if (!leadId || probability === null || ![0, 1].includes(observedSuccess) || observedAt === null) {
+      return null;
+    }
+
+    return {
+      leadId,
+      account: String(row?.account || "Unnamed account"),
+      segment: String(row?.segment || "unknown").trim() || "unknown",
+      cohort: String(row?.cohort || "unknown").trim() || "unknown",
+      probability,
+      observedSuccess,
+      observedAt
+    };
+  }).filter(Boolean);
+}
+
 export function normaliseCalibrationHistory(history = []) {
   if (!Array.isArray(history)) return [];
 
@@ -168,17 +196,7 @@ export function normaliseCalibrationHistory(history = []) {
     const runId = String(snapshot?.runId ?? "");
     const datasetFingerprint = String(snapshot?.datasetFingerprint ?? "");
     const capturedAt = isoTime(snapshot?.capturedAt);
-    const rows = normaliseCalibrationRows(snapshot?.rows || [])
-      .map((row) => ({
-        leadId: String(row.leadId ?? ""),
-        account: String(row.account || "Unnamed account"),
-        segment: String(row.segment || "unknown"),
-        cohort: String(row.cohort || "unknown"),
-        probability: row.probability,
-        observedSuccess: row.observedSuccess,
-        observedAt: isoTime(row.observedAt) || capturedAt
-      }))
-      .filter((row) => row.observedAt !== null);
+    const rows = normaliseAdaptiveRows(snapshot?.rows || [], capturedAt);
 
     if (!snapshotId || !capturedAt) return null;
 
@@ -199,17 +217,7 @@ export function createCalibrationSnapshot({
   rows = []
 } = {}) {
   const safeCapturedAt = isoTime(capturedAt);
-  const safeRows = sortRows(normaliseCalibrationRows(rows)
-    .map((row) => ({
-      leadId: String(row.leadId ?? ""),
-      account: String(row.account || "Unnamed account"),
-      segment: String(row.segment || "unknown"),
-      cohort: String(row.cohort || "unknown"),
-      probability: row.probability,
-      observedSuccess: row.observedSuccess,
-      observedAt: isoTime(row.observedAt) || safeCapturedAt
-    }))
-    .filter((row) => row.observedAt !== null));
+  const safeRows = sortRows(normaliseAdaptiveRows(rows, safeCapturedAt));
 
   if (!safeCapturedAt || !safeRows.length) return null;
 
@@ -377,9 +385,12 @@ function compareGroups(currentRows, previousRows, key, config) {
 }
 
 function highestSeverity(...severities) {
-  return severities
+  const material = severities
     .filter((severity) => severity !== "INSUFFICIENT")
-    .sort((a, b) => SEVERITY_RANK[b] - SEVERITY_RANK[a])[0] || "INSUFFICIENT";
+    .sort((a, b) => SEVERITY_RANK[b] - SEVERITY_RANK[a]);
+
+  return material[0] ||
+    (severities.includes("INSUFFICIENT") ? "INSUFFICIENT" : "STABLE");
 }
 
 function buildRecommendations(global, segments, cohorts, config) {
@@ -518,7 +529,12 @@ export function buildAdaptiveCalibrationReport({
   }
 
   const currentObserved = buildObservedCalibrationRows(forecastRows, outcomes);
-  const safeHistory = normaliseCalibrationHistory(history);
+  const safeHistory = normaliseCalibrationHistory(history)
+    .filter((snapshot) =>
+      !datasetFingerprint ||
+      !snapshot.datasetFingerprint ||
+      snapshot.datasetFingerprint === String(datasetFingerprint)
+    );
   const historicalRows = flattenCalibrationHistory(safeHistory);
 
   const mergedRows = sortRows([
