@@ -9,7 +9,7 @@ Source: https://github.com/GracianB/revops-studio
 
 ## Technical layer
 
-The site includes a local Pipeline Model Lab.
+The site includes a local Pipeline Model Lab and an executive intelligence layer.
 
 \`\`\`
 synthetic records
@@ -125,3 +125,30 @@ Pattern screening is not a guarantee of absolute absence.
 Gracián Baena González · Murcia, Spain  
 LinkedIn: https://www.linkedin.com/in/gracianbaena/  
 GitHub: https://github.com/GracianB
+
+
+## V11 · Executive Intelligence
+
+V11 adds a deterministic decision surface above the existing scoring and forecast layers:
+
+```
+score → stage → commercial context
+                     ↓
+              forecast scenarios
+                     ↓
+       segment / cohort intelligence
+                     ↓
+          account health scoring
+                     ↓
+       business rules + anomalies
+                     ↓
+           revenue leakage
+                     ↓
+        executive priorities
+```
+
+The new layer remains local and network-free. It does not execute CRM actions. It identifies material risk, operational exposure, concentration, stale context and high-value opportunities so a human can decide what happens next.
+
+The CSV can optionally include `cohort` for cohort analysis.
+
+Quality target for V11: **38 deterministic tests, zero external runtime dependencies, structural validation PASS**.
