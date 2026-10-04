@@ -101,6 +101,10 @@ if (missingEngineExports.length) fail("app.js references missing engine exports:
 const adapterImport = appJs.includes('from "./execution-adapter.js"');
 if (!adapterImport) fail("app.js execution adapter import missing");
 
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+if (packageJson.version !== "15.0.0") fail("package version must be 15.0.0");
+const declaredTests = (fs.readFileSync(path.join(root, "tests/revops-engine.test.js"), "utf8").match(/test\(/g) || []).length;
+if (declaredTests < 55) fail("V15 regression suite must contain at least 55 tests");
 const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
 const adapterExports = new Set(
   [...adapterJs.matchAll(/export\s+(?:function|const|let|var|class)\\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
