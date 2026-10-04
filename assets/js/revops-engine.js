@@ -170,6 +170,59 @@ export function summariseQueue(queue) {
   };
 }
 
+const STAGE_RANK = Object.freeze({ blocked: 0, new: 1, nurture: 2, qualified: 3 });
+
+export function compareEvaluations(baseLeads, currentLeads) {
+  const baseById = new Map(baseLeads.map((lead) => [String(lead.id), lead]));
+  const changes = [];
+
+  currentLeads.forEach((current) => {
+    const base = baseById.get(String(current.id));
+    if (!base) return;
+
+    const stageChanged = base.stage !== current.stage;
+    const scoreDelta = typeof base.score === "number" && typeof current.score === "number"
+      ? current.score - base.score
+      : null;
+
+    if (stageChanged || (scoreDelta !== null && scoreDelta !== 0)) {
+      changes.push({
+        leadId: current.id,
+        account: current.account || "Unnamed account",
+        fromStage: base.stage,
+        toStage: current.stage,
+        scoreDelta,
+        kind: current.stage === "blocked"
+          ? "blocked"
+          : base.stage === "blocked"
+            ? "recovered"
+            : (STAGE_RANK[current.stage] || 0) > (STAGE_RANK[base.stage] || 0)
+              ? "promoted"
+              : "demoted"
+      });
+    }
+  });
+
+  const promoted = changes.filter((item) => item.kind === "promoted").length;
+  const demoted = changes.filter((item) => item.kind === "demoted").length;
+  const blocked = changes.filter((item) => item.kind === "blocked").length;
+  const recovered = changes.filter((item) => item.kind === "recovered").length;
+  const scoreDeltas = changes.map((item) => item.scoreDelta).filter((value) => typeof value === "number");
+
+  return {
+    totalCompared: currentLeads.length,
+    changed: changes.length,
+    promoted,
+    demoted,
+    blocked,
+    recovered,
+    averageScoreDelta: scoreDeltas.length
+      ? Math.round(scoreDeltas.reduce((sum, value) => sum + value, 0) / scoreDeltas.length)
+      : 0,
+    changes
+  };
+}
+
 const TRANSITIONS = Object.freeze({
   new: ["nurture", "qualified", "blocked"],
   nurture: ["new", "qualified", "blocked"],

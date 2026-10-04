@@ -79,3 +79,22 @@ Policy used by the demo:
 Ordering combines stage priority with score and urgency. Each queue item also exposes the strongest scoring contribution or, for blocked data, the validation error.
 
 The queue accepts an explicit timestamp in the engine so its SLA output can be tested deterministically.
+
+
+## v6: model impact
+
+The Control Room now compares the active run with the baseline model:
+
+```
+baseline weights → current weights → stage deltas
+```
+
+The comparison surfaces:
+
+- changed records;
+- promotions;
+- demotions;
+- newly blocked records;
+- per-record score deltas.
+
+This makes the sliders operationally meaningful: a visitor can see the downstream effect of changing priorities instead of only seeing a new aggregate score.

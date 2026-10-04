@@ -6,7 +6,8 @@ import {
   auditEvent,
   summarisePipeline,
   buildActionQueue,
-  summariseQueue
+  summariseQueue,
+  compareEvaluations
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -171,6 +172,12 @@ function initPlayground() {
   const status = qs("#demoStatus"), audit = qs("#auditLog"), detail = qs("#leadDetail"), gate = qs("#approveDemo");
   const queue = qs("#actionQueue");
   const queueMeta = qs("#queueMeta");
+  const impactMeta = qs("#impactMeta");
+  const impact = qs("#impactList");
+  const impactMetrics = {
+    changed: qs("#impactChanged"), promoted: qs("#impactPromoted"),
+    demoted: qs("#impactDemoted"), blocked: qs("#impactBlocked")
+  };
   const queueSummary = qs("#queueSummary");
   const datasetLabel = qs("#datasetLabel");
   const shapeLabel = qs("#shapeLabel");
@@ -215,6 +222,35 @@ function initPlayground() {
           (summary.byStage.nurture || 0) + " nurture · " +
           (summary.byStage.blocked || 0) + " blocked"
         : "—";
+    }
+
+    const baseline = evaluateBatch(window.__REVOPS_DATA__ || demoSeed, DEFAULT_WEIGHTS);
+    const diff = compareEvaluations(baseline, evaluated);
+    if (impactMeta) impactMeta.textContent = diff.changed + " changes vs baseline";
+    Object.entries(impactMetrics).forEach(([key, output]) => {
+      if (output) output.textContent = String(diff[key] || 0);
+    });
+    if (impact) {
+      impact.replaceChildren();
+      if (!diff.changes.length) {
+        const empty = document.createElement("div");
+        empty.className = "impact-empty";
+        empty.textContent = "Sin cambios de clasificación respecto al modelo base.";
+        impact.appendChild(empty);
+      } else {
+        diff.changes.slice(0, 6).forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "impact-row";
+          const account = document.createElement("strong");
+          account.textContent = item.account;
+          const stage = document.createElement("span");
+          stage.textContent = item.fromStage + " → " + item.toStage;
+          const delta = document.createElement("b");
+          delta.textContent = item.scoreDelta === null ? "data" : (item.scoreDelta > 0 ? "+" : "") + item.scoreDelta;
+          row.append(account, stage, delta);
+          impact.appendChild(row);
+        });
+      }
     }
 
     const builtQueue = buildActionQueue(evaluated);
