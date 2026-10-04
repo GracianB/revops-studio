@@ -33,7 +33,13 @@ export function createExecutionEnvelope(trace, context = {}) {
     context.approvalStatus,
     normaliseText(safeTrace.approval?.status, "pending")
   );
-  const valid = Boolean(leadId) && Boolean(from) && (!approvalRequired || approvalStatus === "approved");
+  const blocked = safeTrace.decision?.stage === "blocked";
+  const actionable = Boolean(to);
+  const valid = Boolean(leadId) &&
+    Boolean(from) &&
+    actionable &&
+    !blocked &&
+    (!approvalRequired || approvalStatus === "approved");
 
   const payload = {
     leadId,
