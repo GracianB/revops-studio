@@ -156,7 +156,12 @@ function observedRows({
   return Array.from({ length: count }, (_, index) => {
     const date = new Date(base.getTime() + index * 24 * 60 * 60 * 1000);
     return {
-      leadId: date.toISOString().slice(0, 10) + "-" + index,
+      leadId: [
+        date.toISOString().slice(0, 10),
+        segment,
+        cohort,
+        index
+      ].join("-"),
       segment,
       cohort,
       probability,
