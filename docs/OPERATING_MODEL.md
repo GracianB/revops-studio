@@ -277,3 +277,34 @@ The executive layer combines forecast, health, rules, anomalies, leakage, segmen
 - segment and cohort expected value.
 
 This is a decision-support layer, not an autonomous execution layer.
+
+
+## V13 · Guided Proof and Executive Readout
+
+V13 adds an interaction layer around the stable decision engine.
+
+### Guided proof
+
+The Control Room can guide a reviewer through four existing system surfaces:
+
+1. baseline commercial state;
+2. decision-model impact;
+3. forecast stress;
+4. executive decision.
+
+The guide changes configuration locally where necessary and scrolls to the corresponding proof surface. It does not call external systems.
+
+### Executive readout
+
+The engine produces a deterministic readout from the current evaluated dataset:
+
+- headline signal;
+- pipeline and expected value;
+- leakage exposure;
+- top portfolio owner;
+- top segment;
+- key facts;
+- recommended actions.
+
+The readout is evidence-based and contains no generated claims about external business outcomes.
+
