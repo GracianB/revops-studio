@@ -26,7 +26,9 @@ import {
   revenueLeakage,
   executiveIntelligence,
   ownerIntelligence,
-  buildExecutiveBrief
+  buildExecutiveBrief,
+  buildRunAnalysis,
+  buildDecisionTrace
 } from "../assets/js/revops-engine.js";
 
 test("weights are normalised to 1", () => {
@@ -492,4 +494,91 @@ test("executive brief is deterministic and evidence based", () => {
   assert.equal(first.summary.expectedValue, 112000);
   assert.ok(first.keyFacts.some((item) => item.includes("€112,000")));
   assert.ok(first.actions.length > 0);
+});
+
+
+test("score breakdown reconciles exactly to the final score", () => {
+  const lead = scoreLead({
+    id:"V14-SCORE",
+    fit:91,
+    intent:83,
+    engagement:67,
+    urgency:52
+  });
+  const contributionTotal = Object.values(lead.breakdown).reduce((sum, value) => sum + value, 0);
+  assert.equal(contributionTotal, lead.score);
+});
+
+test("CSV parser turns missing required numeric signals into blocked data", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  const [row] = parseCsv("id,fit,intent,engagement,urgency
+V14-CSV,,80,70,60");
+  const lead = scoreLead(row);
+  assert.equal(row.fit, null);
+  assert.equal(lead.stage, "blocked");
+  assert.equal(lead.score, null);
+  assert.ok(lead.quality.errors.includes("fit: invalid"));
+});
+
+test("CSV parser rejects row width mismatches instead of dropping cells", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  assert.throws(
+    () => parseCsv("id,fit,intent,engagement,urgency
+V14-WIDTH,90,80,70,60,extra"),
+    /Fila CSV 2/
+  );
+});
+
+test("forecast aggregates exact expected value before final rounding", () => {
+  const leads = evaluateBatch([
+    { id:"V14-F1", fit:50, intent:50, engagement:50, urgency:50, value:1 },
+    { id:"V14-F2", fit:50, intent:50, engagement:50, urgency:50, value:1 },
+    { id:"V14-F3", fit:50, intent:50, engagement:50, urgency:50, value:1 }
+  ]);
+  const result = forecastPipeline(leads, { qualified:0.35, nurture:0.35, new:0.1 });
+  assert.equal(result.expectedValueExact, 1.05);
+  assert.equal(result.expectedValue, 1);
+});
+
+test("run analysis exposes one reusable decision contract", () => {
+  const leads = evaluateBatch([
+    { id:"V14-A1", account:"Anchor", fit:100, intent:100, engagement:100, urgency:100, value:50000, owner:"Ana", segment:"Enterprise", lastTouchDays:2 },
+    { id:"V14-A2", account:"Risk", fit:50, intent:50, engagement:50, urgency:50, value:20000, owner:"Luis", segment:"SMB", lastTouchDays:25 }
+  ]);
+  const analysis = buildRunAnalysis(leads, { qualified:0.8, nurture:0.35, new:0.1 });
+  assert.equal(analysis.pipeline.total, 2);
+  assert.equal(analysis.forecast.pipelineValue, 70000);
+  assert.equal(analysis.owners[0].owner, "Ana");
+  assert.deepEqual(analysis.executive, buildExecutiveBrief(leads, { qualified:0.8, nurture:0.35, new:0.1 }));
+});
+
+test("decision trace exposes evidence, proposal and execution boundary", () => {
+  const [lead] = evaluateBatch([
+    { id:"V14-TRACE", account:"Trace Co", fit:50, intent:50, engagement:50, urgency:50, value:20000, owner:"Luis", segment:"SMB", lastTouchDays:20 }
+  ]);
+  const trace = buildDecisionTrace(lead, { qualified:0.8, nurture:0.35, new:0.1 }, {}, { runId:"RUN-V14TEST" });
+  assert.equal(trace.runId, "RUN-V14TEST");
+  assert.equal(trace.decision.score, 50);
+  assert.equal(trace.commercial.expectedValue, 7000);
+  assert.equal(trace.proposal.from, "nurture");
+  assert.equal(trace.proposal.to, "qualified");
+  assert.equal(trace.approval.required, true);
+  assert.equal(trace.approval.status, "pending");
+  assert.equal(trace.execution.state, "NOT_EXECUTED");
+  assert.equal(trace.execution.mode, "SIMULATION_ONLY");
+  assert.ok(trace.risks.some((item) => item.code === "QUALIFIED_UNTOUCHED") === false);
+});
+
+test("decision trace fails closed for blocked records and never proposes external execution", () => {
+  const [lead] = evaluateBatch([
+    { id:"V14-BLOCK", account:"Broken Co", fit:90, intent:"bad", engagement:90, urgency:90, value:40000 }
+  ]);
+  const trace = buildDecisionTrace(lead);
+  assert.equal(trace.decision.stage, "blocked");
+  assert.equal(trace.decision.score, null);
+  assert.equal(trace.commercial.expectedValue, 0);
+  assert.equal(trace.execution.state, "NOT_EXECUTED");
+  assert.equal(trace.execution.mode, "SIMULATION_ONLY");
+  assert.equal(trace.proposal.to, null);
+  assert.equal(trace.approval.required, false);
 });
