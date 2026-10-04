@@ -76,6 +76,22 @@ function writeCalibrationBaselineV19(rows = [], datasetFingerprint = null) {
   } catch {}
 
 const CALIBRATION_V20_STORAGE_KEY = "revops-studio:calibration:v20";
+const CALIBRATION_V20_CONFIG_KEY = "revops-studio:calibration:v20:config";
+
+function readAdaptiveCalibrationConfigV20() {
+  try {
+    const value = JSON.parse(localStorage.getItem(CALIBRATION_V20_CONFIG_KEY) || "{}");
+    return value && typeof value === "object" ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeAdaptiveCalibrationConfigV20(config = {}) {
+  try {
+    localStorage.setItem(CALIBRATION_V20_CONFIG_KEY, JSON.stringify(config || {}));
+  } catch {}
+}
 
 function calibrationStorageKeyV20(datasetFingerprint = null) {
   return CALIBRATION_V20_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
@@ -429,7 +445,11 @@ function initPlayground() {
     v20CalibrationDelta: qs("#calibrationV20CalibrationDelta"),
     v20BrierDelta: qs("#calibrationV20BrierDelta"),
     v20Alerts: qs("#calibrationV20Alerts"),
-    v20Recommendations: qs("#calibrationV20Recommendations")
+    v20Recommendations: qs("#calibrationV20Recommendations"),
+    v20WindowDays: qs("#calibrationV20WindowDays"),
+    v20MinSamples: qs("#calibrationV20MinSamples"),
+    v20MinGroupSamples: qs("#calibrationV20MinGroupSamples"),
+    v20Reset: qs("#resetCalibrationV20")
   };
   const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
     style: "currency", currency: "EUR", maximumFractionDigits: 0
@@ -474,13 +494,20 @@ function initPlayground() {
       .sort()
       .at(-1);
 
+    const adaptiveConfigV20 = {
+      windowDays: Number(feedback.v20WindowDays?.value),
+      minSamples: Number(feedback.v20MinSamples?.value),
+      minGroupSamples: Number(feedback.v20MinGroupSamples?.value)
+    };
+
     lastAdaptiveCalibrationReportV20 = buildAdaptiveCalibrationReport({
       forecastRows: forecast?.rows || [],
       outcomes: feedbackOutcomes,
       history: readAdaptiveCalibrationHistoryV20(plan?.datasetFingerprint || null),
       datasetFingerprint: plan?.datasetFingerprint || null,
       runId: plan?.runId || null,
-      now: latestOutcomeAt || lastCalibrationCapturedAtV20 || new Date().toISOString()
+      now: latestOutcomeAt || lastCalibrationCapturedAtV20 || new Date().toISOString(),
+      config: adaptiveConfigV20
     });
 
     writeAdaptiveCalibrationHistoryV20(
@@ -1545,6 +1572,11 @@ function initPlayground() {
     persistAndRender();
   };
 
+  const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();
+  if (feedback.v20WindowDays) feedback.v20WindowDays.value = String(adaptiveConfigV20.windowDays ?? 30);
+  if (feedback.v20MinSamples) feedback.v20MinSamples.value = String(adaptiveConfigV20.minSamples ?? 8);
+  if (feedback.v20MinGroupSamples) feedback.v20MinGroupSamples.value = String(adaptiveConfigV20.minGroupSamples ?? 5);
+
   const loaded = readStored();
   const hashConfig = window.location.hash.startsWith("#config=")
     ? decodeConfig(window.location.hash.slice(8))
@@ -1871,6 +1903,37 @@ function initPlayground() {
 
   workflowControl.artifact?.addEventListener("click", () => {
     qs("#exportDemo")?.click();
+  });
+
+  [
+    feedback.v20WindowDays,
+    feedback.v20MinSamples,
+    feedback.v20MinGroupSamples
+  ].filter(Boolean).forEach((input) => {
+    input.addEventListener("change", () => {
+      const config = {
+        windowDays: Number(feedback.v20WindowDays?.value),
+        minSamples: Number(feedback.v20MinSamples?.value),
+        minGroupSamples: Number(feedback.v20MinGroupSamples?.value)
+      };
+      writeAdaptiveCalibrationConfigV20(config);
+      addAudit(auditEvent("CALIBRATION_V20_CONFIG", { id: "V20" }, JSON.stringify(config)));
+      render();
+    });
+  });
+
+  feedback.v20Reset?.addEventListener("click", () => {
+    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    try {
+      localStorage.removeItem(calibrationStorageKeyV20(fingerprint));
+    } catch {}
+    lastAdaptiveCalibrationReportV20 = null;
+    addAudit(auditEvent(
+      "CALIBRATION_V20_RESET",
+      { id: "V20" },
+      fingerprint ? "dataset history cleared" : "global calibration history cleared"
+    ));
+    render();
   });
 
   feedback.record?.addEventListener("click", () => {
