@@ -1166,6 +1166,7 @@ export function createExecutionLedger({
     datasetFingerprint,
     source,
     sequence: 0,
+    genesisHash,
     headHash: genesisHash,
     events: Object.freeze([])
   });
@@ -1300,11 +1301,7 @@ export function verifyExecutionLedger(ledger) {
   baseChecks.sequence = ledger.sequence === events.length &&
     events.every((event, index) => event.sequence === index + 1);
   baseChecks.chain = events.every((event, index) =>
-    event.previousHash === (index === 0
-      ? ledger.headHash === event.eventHash
-        ? event.previousHash
-        : event.previousHash
-      : events[index - 1].eventHash)
+    event.previousHash === (index === 0 ? ledger.genesisHash : events[index - 1].eventHash)
   );
   baseChecks.hashes = events.every((event) => {
     const expected = ledgerEventHash({
@@ -1355,7 +1352,8 @@ export function verifyExecutionLedger(ledger) {
       : "Execution ledger integrity check failed.",
     checks: baseChecks,
     eventCount: events.length,
-    headHash: ledger.headHash
+    headHash: ledger.headHash,
+    genesisHash: ledger.genesisHash
   };
 }
 
