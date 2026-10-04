@@ -270,7 +270,7 @@
       border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden
     }
     .meter span{
-      display:block;width:78%;height:100%;
+      display:block;width:0%;height:100%;
       background:linear-gradient(90deg,var(--red),#ff9d72);
       border-radius:999px
     }
@@ -1148,6 +1148,25 @@
       }
       .reveal{opacity:1;transform:none}
     }
+  
+    .offer-grid,.price-grid,.case-grid{display:grid;gap:14px}
+    .offer-grid{grid-template-columns:1.1fr .9fr}
+    .price-grid{grid-template-columns:repeat(3,1fr)}
+    .case-grid{grid-template-columns:.9fr 1.1fr}
+    .panel{padding:24px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.036),rgba(255,255,255,.012))}
+    .panel h3{font:800 24px/1.1 var(--display);letter-spacing:-.04em}
+    .panel p,.panel li{color:var(--muted);font-size:14px;line-height:1.7}
+    .panel ul{margin:14px 0 0 18px}
+    .price{font:800 28px/1 var(--display);letter-spacing:-.04em;margin-top:12px}
+    .price span{display:block;margin-top:6px;color:var(--dim);font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+    .form{display:grid;gap:10px;margin-top:18px}
+    .form label{display:grid;gap:6px;color:var(--dim);font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+    .form input,.form textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#070b11;color:var(--text)}
+    .form textarea{min-height:96px;resize:vertical}
+    .legal{margin-top:22px;color:var(--dim);font-size:12px;line-height:1.7}
+    .legal a{color:var(--muted)}
+    @media(max-width:900px){.offer-grid,.price-grid,.case-grid{grid-template-columns:1fr}}
+
   </style>
 
   <script type="application/ld+json">
@@ -1178,6 +1197,7 @@
 
       <ul class="nav-links">
         <li><a href="#sistema">Sistema</a></li>
+        <li><a href="#oferta">Oferta</a></li>
         <li><a href="#servicios">Servicios</a></li>
         <li><a href="#ecosistema">Ecosistema</a></li>
         <li><a href="#proceso">Proceso</a></li>
@@ -1192,6 +1212,7 @@
 
     <div class="mobile-nav" id="mobileNav">
       <a href="#sistema">Sistema</a>
+      <a href="#oferta">Oferta</a>
       <a href="#servicios">Servicios</a>
       <a href="#ecosistema">Ecosistema</a>
       <a href="#proceso">Proceso</a>
@@ -1202,7 +1223,7 @@
 
   <div class="promo-ribbon" role="note" aria-label="Oferta de diagnóstico">
     <span class="promo-pulse" aria-hidden="true"></span>
-    <span><strong>DIAGNÓSTICO INICIAL GRATUITO</strong> · 30 min · identifica qué automatizar antes de construir</span>
+    <span><strong>DIAGNÓSTICO · 30 MIN</strong> · 1 proceso · primeras 8 plazas a 0 € · luego desde 150 €</span>
     <a class="promo-link" href="#contacto">Reservar ↗</a>
   </div>
 
@@ -1226,7 +1247,7 @@
             </p>
 
             <div class="hero-actions">
-              <a class="btn btn-primary" href="#servicios">Explorar servicios ↓</a>
+              <a class="btn btn-primary" href="#oferta">Ver oferta ↓</a>
               <a class="btn btn-secondary" href="https://github.com/GracianB/revops-studio" target="_blank" rel="noopener">Abrir GitHub ↗</a>
             </div>
 
@@ -1244,35 +1265,30 @@
           <div class="terminal reveal d1" aria-label="Panel visual de arquitectura">
             <div class="terminal-top">
               <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span>REVOPS_CORE / SYSTEM_STATUS</span>
-              <span>READY</span>
+              <span>METHOD / FOUR STEPS</span>
+              <span>V1</span>
             </div>
 
             <div class="terminal-body">
-              <div class="term-row"><span class="term-red">›</span><span>boot</span><span class="term-ok">OK</span></div>
-              <div class="term-row"><span class="term-red">›</span><span class="term-key">mode</span><span>=</span><span class="term-white">CUSTOM_SYSTEM</span></div>
-              <div class="term-row"><span class="term-red">›</span><span class="term-key">data</span><span>=</span><span class="term-white">VISIBLE / STRUCTURED</span></div>
-              <div class="term-row"><span class="term-red">›</span><span class="term-key">automation</span><span>=</span><span class="term-ok">READY</span></div>
-
+              <div class="term-row"><span class="term-red">›</span><span class="term-key">01 map</span><span class="term-dim">=</span><span class="term-white">proceso real</span></div>
+              <div class="term-row"><span class="term-red">›</span><span class="term-key">02 architect</span><span class="term-dim">=</span><span class="term-white">reglas y límites</span></div>
+              <div class="term-row"><span class="term-red">›</span><span class="term-key">03 build</span><span class="term-dim">=</span><span class="term-white">pieza operable</span></div>
+              <div class="term-row"><span class="term-red">›</span><span class="term-key">04 operate</span><span class="term-dim">=</span><span class="term-white">dueño y medición</span></div>
               <div class="term-divider"></div>
-
-              <div class="term-row"><span class="term-key">PIPELINE</span><span class="term-dim">········</span><span class="term-white">78%</span></div>
-              <div class="meter" aria-hidden="true"><span></span></div>
-
-              <div class="term-row"><span class="term-key">signals</span><span class="term-dim">→</span><span class="term-white">CRM / BI / APIs / LLMs</span></div>
-              <div class="term-row"><span class="term-key">egress</span><span class="term-dim">→</span><span class="term-white">CONTROLLED</span></div>
-              <div class="term-row"><span class="term-key">lock-in</span><span class="term-dim">→</span><span class="term-ok">LOWER BY DESIGN</span></div>
-
+              <div class="term-row"><span class="term-key">diagnóstico</span><span class="term-dim">→</span><span class="term-white">30–45 min · 1 proceso</span></div>
+              <div class="term-row"><span class="term-key">salida</span><span class="term-dim">→</span><span class="term-white">mapa · 3 fricciones · 1 quick win</span></div>
+              <div class="term-row"><span class="term-key">después</span><span class="term-dim">→</span><span class="term-ok">sí / no / más adelante</span></div>
+              <div class="term-row"><span class="term-key">precio</span><span class="term-dim">→</span><span class="term-white">por escrito, no en la llamada</span></div>
               <div class="terminal-badges">
-                <div class="mini-badge"><b>Low</b><span>Lock-in</span></div>
-                <div class="mini-badge"><b>Multi</b><span>LLM</span></div>
-                <div class="mini-badge"><b>Data</b><span>Driven</span></div>
+                <div class="mini-badge"><b>Map</b><span>Flujo</span></div>
+                <div class="mini-badge"><b>Build</b><span>Pieza</span></div>
+                <div class="mini-badge"><b>Operate</b><span>Dueño</span></div>
               </div>
             </div>
 
             <div class="terminal-bottom">
-              <span>NO BLACK BOX REQUIRED</span>
-              <span class="term-ok">● SYSTEM READY</span>
+              <span>SIN MÉTRICAS INVENTADAS</span>
+              <span class="term-ok">● MÉTODO REAL</span>
             </div>
           </div>
         </div>
@@ -1895,23 +1911,23 @@
           <article class="product-card wide reveal">
             <div class="top"><span class="product-icon">🌪️</span><span class="badge live">Live</span></div>
             <h3>Vortex App</h3>
-            <p>Aplicación web interactiva desplegada en Vercel, centrada en interfaz, rendimiento y experiencia.</p>
-            <div class="product-tags"><span class="product-tag">Vercel</span><span class="product-tag">JavaScript</span><span class="product-tag">UI/UX</span></div>
+            <p>Pieza WebGL. El cursor mueve los puntos. Prueba de interfaz, no un sistema de operaciones.</p>
+            <div class="product-tags"><span class="product-tag">WebGL</span><span class="product-tag">Vercel</span><span class="product-tag">Interfaz</span></div>
             <a class="product-link" href="https://vortex-gilt-xi.vercel.app/" target="_blank" rel="noopener">Abrir sistema ↗</a>
           </article>
 
           <article class="product-card reveal d1">
             <div class="top"><span class="product-icon">🌊</span><span class="badge live">Live</span></div>
             <h3>Project Ohana</h3>
-            <p>Sistema de gestión y experimentación de flujos con arquitectura ligera.</p>
-            <div class="product-tags"><span class="product-tag">Vanilla JS</span><span class="product-tag">HTML/CSS</span></div>
+            <p>Platformer de Canvas 2D. Isla Hoku, 10 salas, 10 personajes, de bebé a GOD. Oficio de producto, no RevOps.</p>
+            <div class="product-tags"><span class="product-tag">Canvas 2D</span><span class="product-tag">Juego</span><span class="product-tag">GitHub Pages</span></div>
             <a class="product-link" href="https://gracianb.github.io/project-ohana/" target="_blank" rel="noopener">Explorar ↗</a>
           </article>
 
           <article class="product-card reveal">
             <div class="top"><span class="product-icon">🧠</span><span class="badge repo">Repo</span></div>
             <h3>AiGoritmo Lab</h3>
-            <p>Laboratorio de backend e IA aplicada para experimentar antes de convertir ideas en sistemas.</p>
+            <p>Laboratorio Python y FastAPI para probar backends e integración de LLMs. No es un producto cerrado.</p>
             <div class="product-tags"><span class="product-tag">Python</span><span class="product-tag">FastAPI</span><span class="product-tag">LLMs</span></div>
             <a class="product-link" href="https://github.com/GracianB/aigoritmo" target="_blank" rel="noopener">Ver repositorio ↗</a>
           </article>
@@ -1919,8 +1935,8 @@
           <article class="product-card reveal d1">
             <div class="top"><span class="product-icon">🧘</span><span class="badge live">Live</span></div>
             <h3>Yoga Instructor</h3>
-            <p>Portal especializado para wellness, contenido y experiencia responsive.</p>
-            <div class="product-tags"><span class="product-tag">i18n</span><span class="product-tag">Responsive</span></div>
+            <p>Portal de práctica e instructor, en español e inglés. No es una herramienta de operaciones.</p>
+            <div class="product-tags"><span class="product-tag">Práctica</span><span class="product-tag">ES/EN</span><span class="product-tag">Responsive</span></div>
             <a class="product-link" href="https://gracianb.github.io/yoga-instructor/" target="_blank" rel="noopener">Ver portal ↗</a>
           </article>
 
@@ -2063,6 +2079,94 @@
       </div>
     </section>
 
+
+    <section class="section" id="oferta">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Oferta de entrada</span>
+            <h2>Un proceso. Treinta minutos. Una página.</h2>
+          </div>
+          <p>No es una auditoría de toda la empresa ni un presupuesto cerrado. Es el paso anterior a construir.</p>
+        </div>
+        <div class="offer-grid">
+          <article class="panel reveal">
+            <h3>Diagnóstico</h3>
+            <p class="price">0 € <span>primeras 8 plazas · luego desde 150 €, descontables del build</span></p>
+            <ul>
+              <li>Alcance: un proceso, quien lo toca y dónde vive el dato.</li>
+              <li>Duración: 30–45 minutos.</li>
+              <li>Te llevas: mapa, tres fricciones, un quick win y un sí, un no o un más adelante.</li>
+              <li>Después: si encaja, propuesta de una página en 48 horas. Si no, se cierra.</li>
+            </ul>
+            <p style="margin-top:14px">El precio del trabajo se confirma por escrito. La llamada no lo fija.</p>
+            <a class="btn btn-primary" href="#contacto" style="margin-top:16px">Pedir el diagnóstico</a>
+          </article>
+          <article class="panel reveal">
+            <h3>Qué no incluye</h3>
+            <ul>
+              <li>Acceso a cuentas, datos de clientes o el repo privado.</li>
+              <li>Un agente que envíe correos solo.</li>
+              <li>Cambiar el stack entero.</li>
+              <li>Un deck de veinte páginas.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="section-head reveal" style="margin-top:64px">
+          <div>
+            <span class="eyebrow">Paquetes</span>
+            <h2>Tres suelos. El techo se escribe después.</h2>
+          </div>
+          <p>Precios de partida para filtrar. Se ajustan al proceso real, no a una tarifa de agencia.</p>
+        </div>
+        <div class="price-grid">
+          <article class="panel reveal">
+            <h3>Quick win</h3>
+            <p class="price">desde 900 € <span>1–2 semanas</span></p>
+            <p>Un flujo concreto: workflow o hoja operable, reglas, dueño y cómo se rompe. No es un CRM nuevo.</p>
+          </article>
+          <article class="panel reveal">
+            <h3>Sistema</h3>
+            <p class="price">desde 4.000 € <span>3–6 semanas</span></p>
+            <p>Arquitectura, una integración y un dashboard o app interna mínima, con handover. La IA solo si clasifica, resume o redacta con revisión humana.</p>
+          </article>
+          <article class="panel reveal">
+            <h3>Operar</h3>
+            <p class="price">desde 600 €/mes <span>cuando ya hay sistema</span></p>
+            <p>Revisión mensual, fixes y una mejora, con cupo de horas. No se abre en el primer contacto.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="section-tight" id="caso">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Caso</span>
+            <h2>Soporte que ya no vive en la memoria.</h2>
+          </div>
+          <p>Prueba pública, sin cifra inventada. El Help Center de Bodytone está en producción y enlazado desde el hub.</p>
+        </div>
+        <div class="case-grid">
+          <article class="panel reveal">
+            <h3>Bodytone · soporte de producto</h3>
+            <ul>
+              <li>Proceso: responder dudas de producto y uso.</li>
+              <li>Fricción: el conocimiento estaba en personas y documentos sueltos.</li>
+              <li>Pieza: Help Center publicado, no un informe.</li>
+              <li>Resultado: hay una puerta única para buscar. No publico horas ahorradas porque no las he medido aquí.</li>
+            </ul>
+          </article>
+          <article class="panel reveal">
+            <h3>Qué demuestra</h3>
+            <p>Que el trabajo de sistemas puede salir de una operación real y quedar usable. No demuestra el precio de un quick win ni un ahorro garantizado.</p>
+            <p style="margin-top:12px">Ohana, Vortex y el portal de yoga están en el ecosistema como oficio de producto. No son casos de RevOps.</p>
+            <a class="product-link" href="https://gracianb.github.io/GracianB/" target="_blank" rel="noopener">Ver el hub ↗</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- CONTACT -->
     <section class="section-tight" id="contacto">
       <div class="shell">
@@ -2075,6 +2179,27 @@
               reconciliar hojas o abrir seis herramientas para responder una sola pregunta,
               probablemente haya un sistema mejor detrás.
             </p>
+
+
+            <form class="form" id="briefForm">
+              <label>Nombre
+                <input name="nombre" required maxlength="80" autocomplete="name">
+              </label>
+              <label>Email
+                <input name="email" type="email" required maxlength="120" autocomplete="email">
+              </label>
+              <label>Herramientas de hoy
+                <input name="herramientas" required maxlength="180" placeholder="Sheets, Gmail, CRM, Slack…">
+              </label>
+              <label>Horas a la semana en ese proceso
+                <input name="horas" type="number" min="0" max="80" step="0.5" required placeholder="4">
+              </label>
+              <label>Qué duele
+                <textarea name="dolor" required maxlength="600" placeholder="Qué se copia, quién lo persigue, qué se rompe."></textarea>
+              </label>
+              <button class="btn btn-primary" type="submit">Enviar y pasar al calendario</button>
+              <p class="legal">Al enviar se abre un correo a Gracián con estas respuestas y la página de gracias. El calendario va después, no antes. El diagnóstico no es un presupuesto cerrado.</p>
+            </form>
 
             <div class="contact-actions">
               <a class="contact-action" href="mailto:gracianbaenagonzalez@gmail.com?subject=RevOps%20Studio%20%7C%20Proyecto">
@@ -2112,16 +2237,17 @@
 
 
   <div class="sticky-cta" id="stickyCta" aria-label="Acceso rápido a diagnóstico">
-    <span>DIAGNÓSTICO · 30 MIN · GRATUITO</span>
-    <a href="https://calendar.app.google/n99psBFktwYyoAWi9" target="_blank" rel="noopener">Reservar ↗</a>
+    <span>DIAGNÓSTICO · 30 MIN · DESDE 0 €</span>
+    <a class="js-reservar" href="#contacto">Reservar ↗</a>
   </div>
 
-  <footer
+  <footer>
     <div class="shell">
       <div class="footer-row">
         <div>
           <div class="footer-brand">◉ REVOPS STUDIO</div>
           <div class="footer-copy">© 2026 Gracián Baena González · Murcia, España</div>
+          <p class="legal">Identidad: Gracián Baena González, RevOps Studio, Murcia, España. Email: <a href="mailto:gracianbaenagonzalez@gmail.com">gracianbaenagonzalez@gmail.com</a>. El diagnóstico de 30 minutos no es un presupuesto cerrado ni una promesa de ahorro. El precio se confirma por escrito. <a href="./gracias.html">Página de gracias</a>.</p>
         </div>
 
         <div class="footer-links">
@@ -2254,5 +2380,28 @@
       }
     })();
   </script>
+
+  <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
+  <script>
+    window.plausible = window.plausible || function(){ (window.plausible.q = window.plausible.q || []).push(arguments) };
+    document.querySelectorAll("a.js-reservar, a[href*='calendar.app.google']").forEach(function(link){
+      link.addEventListener("click", function(){
+        window.plausible("Reservar", {props:{place: link.getAttribute("href") || "calendar"}});
+      });
+    });
+    var briefForm = document.getElementById("briefForm");
+    if (briefForm) {
+      briefForm.addEventListener("submit", function(event){
+        event.preventDefault();
+        var data = Object.fromEntries(new FormData(briefForm).entries());
+        try { sessionStorage.setItem("revops-brief", JSON.stringify(data)); } catch (e) {}
+        window.plausible("Reservar", {props:{place:"brief"}});
+        var body = ["Nombre: " + data.nombre, "Email: " + data.email, "Herramientas: " + data.herramientas, "Horas/semana: " + data.horas, "Qué duele: " + data.dolor, "", "Diagnóstico pedido desde revops-studio. No es un presupuesto cerrado."].join("\n");
+        window.location.href = "mailto:gracianbaenagonzalez@gmail.com?subject=" + encodeURIComponent("RevOps Studio | Diagnóstico") + "&body=" + encodeURIComponent(body);
+        window.setTimeout(function(){ window.location.href = "./gracias.html"; }, 500);
+      });
+    }
+  </script>
+
 </body>
 </html>

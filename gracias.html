@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Gracias · RevOps Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#04060a;--text:#f5f7fa;--muted:#8e9aaa;--line:rgba(255,255,255,.1);--red:#ff4d4d}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,sans-serif}
+    main{width:min(720px,calc(100% - 32px));margin:64px auto}
+    h1{font:800 42px/1.05 Manrope,system-ui,sans-serif;letter-spacing:-.04em}
+    p,li{color:var(--muted)}
+    a.btn{display:inline-flex;margin-top:18px;padding:12px 16px;border-radius:12px;background:#f3f5f7;color:#05070a;font-weight:800;text-decoration:none}
+    pre{white-space:pre-wrap;padding:16px;border:1px solid var(--line);border-radius:14px;background:#070b11;color:#d5dee6;font:13px/1.6 "DM Mono",ui-monospace,monospace}
+    .legal{font-size:13px}
+  </style>
+  <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
+</head>
+<body>
+  <main>
+    <p>RevOps Studio</p>
+    <h1>Queda apuntado. Ahora cierra la hora.</h1>
+    <p>El correo con tus respuestas debería haberse abierto. Si no, escríbelo a mano a gracianbaenagonzalez@gmail.com. El calendario va ahora, no antes.</p>
+    <p><a class="btn" id="reservar" href="https://calendar.app.google/n99psBFktwYyoAWi9" target="_blank" rel="noopener">Reservar 30 min ↗</a></p>
+    <h2>Email de seguimiento, cinco líneas</h2>
+    <p>Esto es lo que llega después de la llamada. No es un presupuesto.</p>
+    <pre id="mail">Asunto: RevOps Studio · siguiente paso
+
+Hola,
+Gracias por los 30 minutos. Miramos un proceso, no toda la operación.
+El diagnóstico no fija precio. Si encaja, en 48 horas va una página: fricción, pieza y qué queda fuera.
+Si no encaja, también lo digo.
+Gracián Baena · gracianbaenagonzalez@gmail.com</pre>
+    <p class="legal">Gracián Baena González · Murcia, España. El diagnóstico no es un presupuesto cerrado. <a href="./">Volver al studio</a>.</p>
+  </main>
+  <script>
+    window.plausible = window.plausible || function(){ (window.plausible.q = window.plausible.q || []).push(arguments) };
+    document.getElementById("reservar").addEventListener("click", function(){
+      window.plausible("Reservar", {props:{place:"gracias"}});
+    });
+    try {
+      var data = JSON.parse(sessionStorage.getItem("revops-brief") || "null");
+      if (data) {
+        document.getElementById("mail").textContent = [
+          "Asunto: RevOps Studio · siguiente paso",
+          "",
+          "Hola " + data.nombre + ",",
+          "Gracias por los 30 minutos. El proceso fue: " + data.dolor + ".",
+          "Hoy vive en " + data.herramientas + " y estimas " + data.horas + " h/semana. El diagnóstico no es un presupuesto.",
+          "Si encaja, en 48 horas va una página: fricción, pieza y qué queda fuera. Si no, también lo digo.",
+          "Gracián Baena · gracianbaenagonzalez@gmail.com"
+        ].join("\n");
+      }
+    } catch (e) {}
+  </script>
+</body>
+</html>
