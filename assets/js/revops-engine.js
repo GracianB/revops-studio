@@ -357,7 +357,7 @@ export function forecastPipeline(leads, assumptions = {}) {
     expectedValue,
     expectedValueExact,
     weightedByScore: Math.round(weightedByScore),
-    expectedCoverage: pipelineValue ? expectedValueExact / pipelineValue : 0,
+    expectedCoverage: pipelineValue ? roundDecimal(expectedValueExact / pipelineValue) : 0,
     activeRecords: rows.length,
     topAccounts,
     topAccountShare: pipelineValue && topAccounts.length ? topAccounts[0].value / pipelineValue : 0,
@@ -385,7 +385,9 @@ export function forecastScenarios(leads, assumptions = {}) {
       expectedValue: Math.round(
         (base.expectedValueExact ?? 0) * Math.max(0, multiplier)
       ),
-      coverage: base.pipelineValue ? (base.expectedValueExact / base.pipelineValue) * Math.max(0, multiplier) : 0,
+      coverage: base.pipelineValue
+        ? roundDecimal((base.expectedValueExact / base.pipelineValue) * Math.max(0, multiplier))
+        : 0,
       multiplier
     }
   ]));
