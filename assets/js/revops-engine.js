@@ -443,17 +443,23 @@ export function createRunSnapshot({
   records = [],
   weights = DEFAULT_WEIGHTS,
   thresholds = DEFAULT_THRESHOLDS,
+  forecast = {},
   source = "demo",
   scenario = "balanced"
 } = {}) {
   const normalizedWeights = normaliseWeights(weights);
   const normalizedThresholds = normaliseThresholds(thresholds);
+  const normalizedForecast = Object.fromEntries(
+    ["qualified", "nurture", "new", "downside", "upside"]
+      .map((key) => [key, Math.max(0, Math.min(1, numeric(forecast?.[key]) ?? 0))])
+  );
   const payload = {
     records,
     source,
     scenario,
     thresholds: normalizedThresholds,
-    weights: normalizedWeights
+    weights: normalizedWeights,
+    forecast: normalizedForecast
   };
   const runId = "RUN-" + hashString(stableStringify(payload)).toUpperCase();
 
@@ -464,6 +470,7 @@ export function createRunSnapshot({
     scenario,
     weights: normalizedWeights,
     thresholds: normalizedThresholds,
+    forecast: normalizedForecast,
     pipeline: summarisePipeline(evaluateBatch(records, normalizedWeights, normalizedThresholds))
   };
 }
