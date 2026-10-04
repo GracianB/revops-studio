@@ -13,10 +13,18 @@ import {
 
 const now = "2026-10-05T00:00:00.000Z";
 
-function report(severity = "CRITICAL") {
+function report(severity = "CRITICAL", sampleSufficient = true) {
   return {
     severity,
-    recommendations: [{ code: severity === "CRITICAL" ? "CONTROLLED_RECALIBRATION" : "CALIBRATION_STABLE" }]
+    global: {
+      severity,
+      sampleSufficient
+    },
+    recommendations: [{
+      code: severity === "CRITICAL"
+        ? "CONTROLLED_RECALIBRATION"
+        : "CALIBRATION_STABLE"
+    }]
   };
 }
 
@@ -64,7 +72,7 @@ test("V21 requires global drift before proposing global recalibration", () => {
 
 test("V21 blocks insufficient samples even when drift is critical", () => {
   const proposal = buildRecalibrationProposal({
-    report: report("CRITICAL"),
+    report: report("CRITICAL", true),
     rows: biasedRows(3),
     now
   });
