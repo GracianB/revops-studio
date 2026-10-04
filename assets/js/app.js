@@ -15,8 +15,12 @@ import {
   commercialMetrics,
   executiveIntelligence,
   buildRunAnalysis,
-  buildDecisionTrace
+  buildDecisionTrace,
+  buildOperationalPlan,
+  buildRunArtifact,
+  verifyRunArtifact
 } from "./revops-engine.js";
+import { createExecutionEnvelope, simulateExecution } from "./execution-adapter.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -268,6 +272,21 @@ function initPlayground() {
     text: qs("#executiveBriefText")
   };
   const ownerMatrix = qs("#ownerMatrix");
+  const workflowControl = {
+    status: qs("#workflowStatus"),
+    meta: qs("#workflowMeta"),
+    ready: qs("#workflowReady"),
+    approval: qs("#workflowApproval"),
+    blocked: qs("#workflowBlocked"),
+    adapter: qs("#workflowAdapter"),
+    fingerprint: qs("#workflowFingerprint"),
+    plan: qs("#workflowPlan"),
+    simulate: qs("#simulateWorkflow"),
+    artifact: qs("#exportRunArtifact"),
+    replayInput: qs("#replayArtifact"),
+    replayStatus: qs("#replayStatus"),
+    verifyReplay: qs("#verifyReplayArtifact")
+  };
   const decisionTrace = {
     state: qs("#traceState"),
     runId: qs("#traceRunId"),
@@ -307,6 +326,7 @@ function initPlayground() {
   let activeScenario = "balanced";
   let sourceRecords = demoSeed;
   let lastSnapshot = null;
+  let lastWorkflowPlan = null;
   let activeTableStage = "all";
   let guidedStep = 0;
 
@@ -836,6 +856,63 @@ function initPlayground() {
      }
 
 
+     if (workflowControl.plan) {
+       const workflowAssumptions = forecastAssumptions;
+       lastWorkflowPlan = buildOperationalPlan(
+         evaluated,
+         workflowAssumptions,
+         {},
+         {
+           runId: lastSnapshot?.runId || null,
+           now: new Date().toISOString(),
+           weights: getWeights(),
+           thresholds: getThresholds(),
+           source: dataSource,
+           scenario: activeScenario
+         }
+       );
+       const plan = lastWorkflowPlan;
+       const adapterReady = plan.externalExecution.enabled === false &&
+         plan.externalExecution.mode === "SIMULATION_ONLY";
+       if (workflowControl.status) {
+         workflowControl.status.textContent = adapterReady ? "CONTROLLED" : "REVIEW";
+         workflowControl.status.dataset.state = adapterReady ? "controlled" : "attention";
+       }
+       if (workflowControl.meta) workflowControl.meta.textContent =
+         plan.summary.total + " actions · " + plan.summary.urgent + " urgent";
+       if (workflowControl.ready) workflowControl.ready.textContent = String(plan.summary.ready);
+       if (workflowControl.approval) workflowControl.approval.textContent = String(plan.summary.approvalPending);
+       if (workflowControl.blocked) workflowControl.blocked.textContent = String(plan.summary.blocked);
+       if (workflowControl.adapter) workflowControl.adapter.textContent =
+         plan.externalExecution.adapter + " · " + plan.externalExecution.mode;
+       if (workflowControl.fingerprint) workflowControl.fingerprint.textContent = plan.datasetFingerprint.toUpperCase();
+       if (workflowControl.plan) {
+         workflowControl.plan.replaceChildren();
+         if (!plan.actions.length) {
+           const empty = document.createElement("div");
+           empty.className = "workflow-empty";
+           empty.textContent = "No hay trabajo operativo en este run.";
+           workflowControl.plan.appendChild(empty);
+         } else {
+           plan.actions.slice(0, 8).forEach((item) => {
+             const row = document.createElement("div");
+             row.className = "workflow-row";
+             const main = document.createElement("span");
+             main.className = "workflow-main";
+             const title = document.createElement("strong");
+             title.textContent = "#" + item.rank + " · " + item.account;
+             const meta = document.createElement("small");
+             meta.textContent = item.leadId + " · " + item.lane + " · SLA " + item.slaHours + "h";
+             main.append(title, meta);
+             const state = document.createElement("b");
+             state.textContent = item.state.replaceAll("_", " ");
+             row.append(main, state);
+             workflowControl.plan.appendChild(row);
+           });
+         }
+       }
+     }
+
      Object.entries(bars).forEach(([stage, bar]) => {
       if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
     });
@@ -1263,29 +1340,30 @@ function initPlayground() {
   });
 
   qs("#exportDemo")?.addEventListener("click", () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      runId: lastSnapshot?.runId || null,
-      source: dataSource,
-      scenario: activeScenario,
-      weights: getWeights(),
-      thresholds: getThresholds(),
-      forecast: getForecastConfig(),
-      pipeline: summarisePipeline(evaluated),
-      commercial: commercialMetrics(evaluated),
-      intelligence: executiveIntelligence(evaluated, getForecastConfig()),
-      queue: buildActionQueue(evaluated),
-      records: evaluated
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const artifact = buildRunArtifact(
+      evaluated,
+      getForecastConfig(),
+      {},
+      {
+        source: dataSource,
+        scenario: activeScenario,
+        weights: getWeights(),
+        thresholds: getThresholds()
+      }
+    );
+    const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "revops-run-" + (lastSnapshot?.runId || "export").toLowerCase() + ".json";
+    anchor.download = "revops-v15-" + artifact.runId.toLowerCase() + ".json";
     anchor.click();
     URL.revokeObjectURL(url);
-    addAudit(auditEvent("EXPORT", { id: lastSnapshot?.runId || "RUN" }, "JSON artifact generated"));
+    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V15 run artifact generated without raw records"));
+    status.dataset.state = "ok";
+    status.textContent = "Run artifact V15 generado: identidad, integridad y workflow, sin filas CSV.";
   });
+
+
 
   copyConfig?.addEventListener("click", async () => {
     const url = updateShareUrl();
@@ -1332,6 +1410,55 @@ function initPlayground() {
     addAudit(auditEvent("APPROVAL_CONSUMED", updated, "one-shot human gate"));
     render();
     renderDecisionTrace(updated);
+  });
+
+  workflowControl.simulate?.addEventListener("click", () => {
+    const plan = lastWorkflowPlan || buildOperationalPlan(
+      evaluated,
+      getForecastConfig(),
+      {},
+      { runId: lastSnapshot?.runId || null, now: new Date().toISOString() }
+    );
+    const candidate = evaluated.find((lead) => lead.stage === "nurture" || lead.stage === "new" || lead.stage === "qualified") || evaluated[0];
+    if (!candidate) {
+      status.dataset.state = "error";
+      status.textContent = "No hay registros para simular el workflow.";
+      return;
+    }
+    const trace = buildDecisionTrace(candidate, getForecastConfig(), {}, { runId: plan.runId });
+    const envelope = createExecutionEnvelope(trace, {
+      approvalStatus: trace.approval.required ? "pending" : "approved"
+    });
+    const result = simulateExecution(envelope);
+    addAudit(auditEvent("WORKFLOW_SIMULATE", { id: candidate.id }, result.code + " · " + result.state));
+    status.dataset.state = "ok";
+    status.textContent = candidate.id + " procesado por el contrato de workflow: " + result.code + ". No se ejecutó ninguna llamada externa.";
+  });
+
+  workflowControl.artifact?.addEventListener("click", () => {
+    qs("#exportDemo")?.click();
+  });
+
+  workflowControl.verifyReplay?.addEventListener("click", () => {
+    const raw = workflowControl.replayInput?.value?.trim();
+    if (!raw) {
+      workflowControl.replayStatus.textContent = "Pega aquí un run artifact JSON.";
+      workflowControl.replayStatus.dataset.state = "error";
+      return;
+    }
+    try {
+      const artifact = JSON.parse(raw);
+      const result = verifyRunArtifact(artifact, evaluated);
+      workflowControl.replayStatus.dataset.state = result.valid ? "ok" : "error";
+      workflowControl.replayStatus.textContent = result.valid
+        ? "MATCH · fingerprint y record count coinciden con el dataset actual."
+        : "MISMATCH · el artifact no corresponde al dataset actual.";
+      addAudit(auditEvent(result.valid ? "REPLAY_OK" : "REPLAY_REJECTED", { id: artifact.runId || "ARTIFACT" }, result.reason));
+    } catch (error) {
+      workflowControl.replayStatus.dataset.state = "error";
+      workflowControl.replayStatus.textContent = "Artifact inválido: " + error.message;
+      addAudit(auditEvent("REPLAY_REJECTED", { id: "ARTIFACT" }, "invalid JSON"));
+    }
   });
 
   document.addEventListener("keydown", (event) => {
