@@ -24,7 +24,9 @@ import {
   applyBusinessRules,
   detectAnomalies,
   revenueLeakage,
-  executiveIntelligence
+  executiveIntelligence,
+  ownerIntelligence,
+  buildExecutiveBrief
 } from "../assets/js/revops-engine.js";
 
 test("weights are normalised to 1", () => {
@@ -460,4 +462,34 @@ test("forecast assumptions clamp probabilities and multipliers independently", (
   assert.equal(config.new, 0.1);
   assert.equal(config.downside, 2);
   assert.equal(config.upside, 1.5);
+});
+
+
+test("owner intelligence ranks portfolios by expected value", () => {
+  const leads = evaluateBatch([
+    { id:"OI-001", fit:100, intent:100, engagement:100, urgency:100, value:60000, owner:"Ana", lastTouchDays:2 },
+    { id:"OI-002", fit:50, intent:50, engagement:50, urgency:50, value:20000, owner:"Luis", lastTouchDays:20 },
+    { id:"OI-003", fit:10, intent:10, engagement:10, urgency:10, value:10000, owner:"Luis", lastTouchDays:30 }
+  ]);
+  const result = ownerIntelligence(leads, { qualified:0.8, nurture:0.35, new:0.1 });
+  assert.equal(result[0].owner, "Ana");
+  assert.equal(result[0].expectedValue, 48000);
+  assert.equal(result[1].pipelineValue, 30000);
+  assert.equal(result[1].staleRate, 1);
+});
+
+test("executive brief is deterministic and evidence based", () => {
+  const leads = evaluateBatch([
+    { id:"EB-001", account:"Anchor", fit:100, intent:100, engagement:100, urgency:100, value:80000, owner:"Ana", segment:"Enterprise", lastTouchDays:2 },
+    { id:"EB-002", account:"Risk", fit:90, intent:90, engagement:20, urgency:90, value:60000, owner:"", segment:"Enterprise", lastTouchDays:30 },
+    { id:"EB-003", account:"Broken", fit:90, intent:"bad", engagement:90, urgency:90, value:40000, owner:"Luis", segment:"SMB" }
+  ]);
+  const first = buildExecutiveBrief(leads, { qualified:0.8, nurture:0.35, new:0.1 });
+  const second = buildExecutiveBrief(leads, { qualified:0.8, nurture:0.35, new:0.1 });
+  assert.deepEqual(first, second);
+  assert.equal(first.signal, "critical");
+  assert.equal(first.summary.pipelineValue, 140000);
+  assert.equal(first.summary.expectedValue, 88000);
+  assert.ok(first.keyFacts.some((item) => item.includes("€88,000")));
+  assert.ok(first.actions.length > 0);
 });
