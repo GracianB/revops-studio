@@ -252,7 +252,7 @@ function initPlayground() {
   };
   const guided = {
     progress: qs("#guidedProgress"),
-    title: qs("#guidedTitle"),
+    title: qs("#guided-title"),
     copy: qs("#guidedCopy"),
     next: qs("#guidedNext"),
     steps: qsa("[data-guided-step]")
