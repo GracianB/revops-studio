@@ -157,3 +157,25 @@ For the synthetic dataset, these values are illustrative.
 A record with `last_touch_days > 14` is treated as stale. Staleness raises operational queue priority but does not modify the qualification score.
 
 The pipeline table also supports local stage filtering and a stale-only view.
+## v10: forecast lab
+
+The Control Room now adds a deterministic revenue forecast layer over optional commercial value.
+
+Default demo assumptions:
+
+    qualified probability = 80%
+    nurture probability   = 35%
+    new probability        = 10%
+    downside multiplier    = 75%
+    upside multiplier      = 115%
+
+The Forecast Lab calculates expected value as deal value multiplied by the probability associated with the current stage. It then applies explicit downside/base/upside multipliers.
+
+The forecast view also surfaces:
+
+- expected coverage versus active pipeline;
+- forecast range;
+- top-account concentration;
+- expected value by segment.
+
+Forecast assumptions are stored with the local configuration, shareable configuration URL and run identity. They never include imported record contents.

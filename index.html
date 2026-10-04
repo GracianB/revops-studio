@@ -240,6 +240,54 @@
           </div>
         </section>
 
+        <section class="forecast-panel" aria-labelledby="forecast-title">
+          <div class="forecast-head">
+            <div>
+              <span class="kicker">Forecast Lab</span>
+              <h3 id="forecast-title">¿Qué parte del pipeline merece creer?</h3>
+            </div>
+            <span class="kicker">SIMULATED · NOT A PROMISE</span>
+          </div>
+          <p>Modelo de previsión local: aplica probabilidades por stage a los valores del pipeline y permite tensionar downside/base/upside sin alterar el score de cualificación.</p>
+
+          <div class="forecast-assumptions">
+            <label class="weight-control">Qualified probability
+              <input id="forecastQualifiedProb" type="range" min="0" max="100" value="80">
+              <b id="forecastQualifiedProbValue">80%</b>
+            </label>
+            <label class="weight-control">Nurture probability
+              <input id="forecastNurtureProb" type="range" min="0" max="100" value="35">
+              <b id="forecastNurtureProbValue">35%</b>
+            </label>
+            <label class="weight-control">New probability
+              <input id="forecastNewProb" type="range" min="0" max="100" value="10">
+              <b id="forecastNewProbValue">10%</b>
+            </label>
+            <label class="weight-control">Downside
+              <input id="forecastDownsideMult" type="range" min="0" max="150" value="75">
+              <b id="forecastDownsideMultValue">75%</b>
+            </label>
+            <label class="weight-control">Upside
+              <input id="forecastUpsideMult" type="range" min="50" max="200" value="115">
+              <b id="forecastUpsideMultValue">115%</b>
+            </label>
+          </div>
+
+          <div class="forecast-metrics">
+            <div class="forecast-metric downside"><span>Downside</span><strong id="forecastDownside">0 €</strong><small>expected value</small></div>
+            <div class="forecast-metric base"><span>Base</span><strong id="forecastBase">0 €</strong><small>expected value</small></div>
+            <div class="forecast-metric upside"><span>Upside</span><strong id="forecastUpside">0 €</strong><small>expected value</small></div>
+            <div class="forecast-metric"><span>Coverage</span><strong id="forecastCoverage">0%</strong><small>expected / active pipeline</small></div>
+            <div class="forecast-metric"><span>Range</span><strong id="forecastSpread">0 €</strong><small>upside − downside</small></div>
+            <div class="forecast-metric"><span>Concentration</span><strong id="forecastConcentration">0%</strong><small>top account share</small></div>
+          </div>
+
+          <div class="forecast-segments-wrap">
+            <span class="kicker">Expected value by segment</span>
+            <div id="forecastSegments" class="forecast-segments"></div>
+          </div>
+        </section>
+
         <div class="model-and-chart">
           <div class="weight-lab">
             <div class="weight-head"><span class="kicker">Decision model</span><span class="weight-total" id="weightTotal">100%</span></div>

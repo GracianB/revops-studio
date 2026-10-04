@@ -12,7 +12,9 @@ import {
   normaliseThresholds,
   createRunSnapshot,
   nextAction,
-  commercialMetrics
+  commercialMetrics,
+  forecastPipeline,
+  forecastScenarios
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -210,6 +212,29 @@ function initPlayground() {
     segments: qs("#segmentBreakdown"),
     owners: qs("#ownerBreakdown")
   };
+  const forecast = {
+    downside: qs("#forecastDownside"),
+    base: qs("#forecastBase"),
+    upside: qs("#forecastUpside"),
+    coverage: qs("#forecastCoverage"),
+    spread: qs("#forecastSpread"),
+    concentration: qs("#forecastConcentration"),
+    rows: qs("#forecastSegments"),
+    probabilities: {
+      qualified: qs("#forecastQualifiedProb"),
+      nurture: qs("#forecastNurtureProb"),
+      new: qs("#forecastNewProb"),
+      downside: qs("#forecastDownsideMult"),
+      upside: qs("#forecastUpsideMult")
+    },
+    values: {
+      qualified: qs("#forecastQualifiedProbValue"),
+      nurture: qs("#forecastNurtureProbValue"),
+      new: qs("#forecastNewProbValue"),
+      downside: qs("#forecastDownsideMultValue"),
+      upside: qs("#forecastUpsideMultValue")
+    }
+  };
   const impact = qs("#impactList");
   const impactMeta = qs("#impactMeta");
   const impactMetrics = {
@@ -273,6 +298,7 @@ function initPlayground() {
       ),
       weightMode: "percent",
       thresholds: snapshot.thresholds,
+      forecast: snapshot.forecast,
       total: summary.total,
       averageScore: summary.averageScore,
       qualificationRate: summary.qualificationRate,
@@ -377,10 +403,19 @@ function initPlayground() {
     } catch { return null; }
   };
 
+  const getForecastConfig = () => ({
+    qualified: Number(forecast.probabilities.qualified?.value) / 100,
+    nurture: Number(forecast.probabilities.nurture?.value) / 100,
+    new: Number(forecast.probabilities.new?.value) / 100,
+    downside: Number(forecast.probabilities.downside?.value) / 100,
+    upside: Number(forecast.probabilities.upside?.value) / 100
+  });
+
   const currentConfig = () => ({
     weights: getWeights(),
     weightMode: "percent",
     thresholds: getThresholds(),
+    forecast: getForecastConfig(),
     scenario: activeScenario
   });
 
@@ -408,6 +443,15 @@ function initPlayground() {
       ));
     });
     setThresholds({ ...(config.thresholds || {}), changed: "qualified" });
+    const forecastSet = config.forecast || {};
+    Object.keys(forecast.probabilities).forEach((key) => {
+      const input = forecast.probabilities[key];
+      if (!input) return;
+      const value = Number(forecastSet[key]);
+      if (Number.isFinite(value)) {
+        input.value = String(Math.round(value <= 1 ? value * 100 : value));
+      }
+    });
     if (config.scenario && scenarios[config.scenario]) activeScenario = config.scenario;
     qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item.dataset.scenario === activeScenario));
   };
@@ -573,6 +617,48 @@ function initPlayground() {
     renderMap(commercial.segments, commerce.segments);
     renderMap(commercial.owners, commerce.owners);
 
+    const forecastAssumptions = {
+      qualified: Number(forecast.probabilities.qualified?.value) / 100,
+      nurture: Number(forecast.probabilities.nurture?.value) / 100,
+      new: Number(forecast.probabilities.new?.value) / 100,
+      downside: Number(forecast.probabilities.downside?.value) / 100,
+      upside: Number(forecast.probabilities.upside?.value) / 100
+    };
+    const forecastResult = forecastPipeline(evaluated, forecastAssumptions);
+    const scenarioResult = forecastScenarios(evaluated, forecastAssumptions);
+    const scenarioMoney = (name) => formatMoney(scenarioResult[name]?.expectedValue || 0);
+
+    if (forecast.downside) forecast.downside.textContent = scenarioMoney("downside");
+    if (forecast.base) forecast.base.textContent = scenarioMoney("base");
+    if (forecast.upside) forecast.upside.textContent = scenarioMoney("upside");
+    if (forecast.coverage) forecast.coverage.textContent = Math.round(forecastResult.expectedCoverage * 100) + "%";
+    if (forecast.spread) forecast.spread.textContent =
+      formatMoney(Math.max(0, (scenarioResult.upside?.expectedValue || 0) - (scenarioResult.downside?.expectedValue || 0)));
+    if (forecast.concentration) forecast.concentration.textContent = Math.round(forecastResult.topAccountShare * 100) + "%";
+
+    Object.entries(forecast.values).forEach(([key, output]) => {
+      const input = forecast.probabilities[key];
+      if (output && input) output.textContent = String(Math.round(Number(input.value))) + (key.includes("Mult") ? "%" : "%");
+    });
+
+    if (forecast.rows) {
+      forecast.rows.replaceChildren();
+      Object.entries(forecastResult.bySegment)
+        .sort((a, b) => b[1].expectedValue - a[1].expectedValue)
+        .forEach(([segment, item]) => {
+          const row = document.createElement("div");
+          row.className = "forecast-segment-row";
+          const label = document.createElement("span");
+          label.textContent = segment;
+          const value = document.createElement("b");
+          value.textContent = formatMoney(item.expectedValue);
+          const meta = document.createElement("small");
+          meta.textContent = item.count + " records · " + formatMoney(item.value) + " pipeline";
+          row.append(label, value, meta);
+          forecast.rows.appendChild(row);
+        });
+    }
+
     Object.entries(bars).forEach(([stage, bar]) => {
       if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
     });
@@ -668,6 +754,7 @@ function initPlayground() {
       records: sourceRecords,
       weights: getWeights(),
       thresholds: getThresholds(),
+      forecast: getForecastConfig(),
       source: dataSource,
       scenario: activeScenario
     });
@@ -697,6 +784,15 @@ function initPlayground() {
     ? decodeConfig(window.location.hash.slice(8))
     : null;
   applyConfig(hashConfig || loaded || {});
+
+  const forecastInputs = Object.values(forecast.probabilities).filter(Boolean);
+  forecastInputs.forEach((input) => input.addEventListener("input", () => {
+    const max = input.id === "forecastUpsideMult" ? 200 : 150;
+    input.value = String(Math.max(0, Math.min(max, Number(input.value) || 0)));
+    writeStored(currentConfig());
+    updateShareUrl();
+    render();
+  }));
 
   Object.values(inputs).forEach((input) => input?.addEventListener("input", () => {
     renderWeights();
@@ -728,6 +824,10 @@ function initPlayground() {
   qs("#resetDemo")?.addEventListener("click", () => {
     Object.entries(DEFAULT_WEIGHTS).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(Math.round(value * 100)); });
     setThresholds({ ...DEFAULT_THRESHOLDS, changed: "qualified" });
+    const defaultForecast = { qualified:80, nurture:35, new:10, downside:75, upside:115 };
+    Object.entries(defaultForecast).forEach(([key, value]) => {
+      if (forecast.probabilities[key]) forecast.probabilities[key].value = String(value);
+    });
     sourceRecords = demoSeed;
     window.__REVOPS_DATA__ = null;
     dataSource = "demo";
@@ -806,6 +906,7 @@ function initPlayground() {
       scenario: activeScenario,
       weights: getWeights(),
       thresholds: getThresholds(),
+      forecast: getForecastConfig(),
       pipeline: summarisePipeline(evaluated),
       commercial: commercialMetrics(evaluated),
       queue: buildActionQueue(evaluated),

@@ -170,3 +170,31 @@ This separation is deliberate:
     commercial risk ≠ qualification score
 
 The system can therefore surface a high-value stale account without pretending that staleness is the same thing as product fit or buying intent.
+## Revenue forecast layer
+
+V10 adds a deterministic forecast view that uses optional commercial value plus stage probabilities.
+
+Default demo assumptions:
+
+    qualified = 80%
+    nurture   = 35%
+    new       = 10%
+    blocked   = 0%
+
+Expected value is calculated as:
+
+    expected value = deal value × stage probability
+
+The Forecast Lab also applies explicit downside/base/upside multipliers. These are scenario controls, not a claim about future revenue.
+
+The layer exposes:
+
+- active pipeline value;
+- expected value;
+- expected coverage;
+- downside/base/upside expected value;
+- forecast range;
+- top-account concentration;
+- expected value by segment.
+
+Forecast assumptions do not modify the core qualification score. The commercial and qualification layers remain separate.
