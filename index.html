@@ -306,6 +306,18 @@
           <div class="scenario-matrix" id="scenarioMatrix" aria-live="polite"></div>
         </section>
 
+        <div class="table-tools" role="group" aria-label="Filtros de pipeline">
+          <label for="tableStageFilter">Stage</label>
+          <select id="tableStageFilter">
+            <option value="all">Todos</option>
+            <option value="qualified">Qualified</option>
+            <option value="nurture">Nurture</option>
+            <option value="new">New</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          <label class="check-filter"><input id="staleOnly" type="checkbox"> Solo stale &gt; 14d</label>
+        </div>
+
         <div class="demo-table-wrap">
           <table class="demo-table">
             <caption>Datos sintéticos o CSV local. Haz clic en un registro para inspeccionarlo.</caption>
