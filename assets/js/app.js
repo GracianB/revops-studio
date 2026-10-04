@@ -195,6 +195,8 @@ function initPlayground() {
   const shareConfig = qs("#shareConfig");
   const copyConfig = qs("#copyConfig");
   const queueSearch = qs("#queueSearch");
+  const tableStageFilter = qs("#tableStageFilter");
+  const staleOnly = qs("#staleOnly");
   const scenarioMatrix = qs("#scenarioMatrix");
   const scenarioMatrixMeta = qs("#scenarioMatrixMeta");
   const runHistory = qs("#runHistory");
@@ -234,6 +236,7 @@ function initPlayground() {
   let activeScenario = "balanced";
   let sourceRecords = demoSeed;
   let lastSnapshot = null;
+  let activeTableStage = "all";
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -575,7 +578,13 @@ function initPlayground() {
     renderQueue();
 
     rows.replaceChildren();
-    evaluated.forEach((lead) => {
+    const visibleLeads = evaluated.filter((lead) => {
+      const stageMatch = activeTableStage === "all" || lead.stage === activeTableStage;
+      const staleMatch = !staleOnly?.checked || ((Number(lead.lastTouchDays) || 0) > 14);
+      return stageMatch && staleMatch;
+    });
+
+    visibleLeads.forEach((lead) => {
       const tr = document.createElement("tr");
       tr.tabIndex = 0;
       tr.dataset.id = lead.id;
@@ -745,6 +754,13 @@ function initPlayground() {
   });
 
   queueSearch?.addEventListener("input", renderQueue);
+
+  tableStageFilter?.addEventListener("change", () => {
+    activeTableStage = tableStageFilter.value || "all";
+    render();
+  });
+
+  staleOnly?.addEventListener("change", render);
 
   clearHistory?.addEventListener("click", () => {
     history = [];
