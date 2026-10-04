@@ -24,11 +24,5 @@ jobs:
         with:
           node-version: 22
 
-      - name: Run tests
-        run: npm test
-
-      - name: Run project validation
-        run: npm run validate
-
       - name: Run full verification gate
         run: npm run verify
