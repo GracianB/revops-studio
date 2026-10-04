@@ -59,14 +59,14 @@ test("invalid transitions are blocked", () => {
 
 test("CSV parser handles quoted fields", async () => {
   const { parseCsv } = await import("../assets/js/csv-utils.js");
-  const result = parseCsv('id,account,fit,intent,engagement,urgency\\nL1,"North, Inc.",90,80,70,60');
+  const result = parseCsv('id,account,fit,intent,engagement,urgency\nL1,"North, Inc.",90,80,70,60');
   assert.equal(result[0].account, "North, Inc.");
   assert.equal(result[0].fit, 90);
 });
 
 test("CSV parser rejects missing required columns", async () => {
   const { parseCsv } = await import("../assets/js/csv-utils.js");
-  assert.throws(() => parseCsv("id,fit,intent\\nL1,90,80"), /Faltan columnas/);
+  assert.throws(() => parseCsv("id,fit,intent\nL1,90,80"), /Faltan columnas/);
 });
 
 test("unknown target stages fail closed", () => {
