@@ -29,6 +29,25 @@ const appJs = fs.readFileSync(path.join(root, "assets/js/app.js"), "utf8");
 const domSelectors = [...appJs.matchAll(/qs\(\s*["']#([A-Za-z0-9_-]+)["']/g)].map((match) => match[1]);
 const missingDomIds = [...new Set(domSelectors)].filter((id) => !ids.includes(id));
 if (missingDomIds.length) fail("app.js references missing DOM ids: " + missingDomIds.join(", "));
+
+const guidedTargets = [...appJs.matchAll(/target:\s*"([A-Za-z0-9_-]+)"/g)].map((match) => match[1]);
+const missingGuidedTargets = [...new Set(guidedTargets)].filter((id) => !ids.includes(id));
+if (missingGuidedTargets.length) fail("guided proof references missing target ids: " + missingGuidedTargets.join(", "));
+
+const guidedSteps = [...html.matchAll(/data-guided-step="(\d+)"/g)].map((match) => Number(match[1]));
+const expectedGuidedSteps = [0, 1, 2, 3];
+if (guidedSteps.length !== expectedGuidedSteps.length || guidedSteps.some((value, index) => value !== expectedGuidedSteps[index])) {
+  fail("guided proof steps must expose 0,1,2,3 exactly once");
+}
+
+const requiredV14Ids = [
+  "decision-trace-title", "decisionTraceEmpty", "decisionTraceContent",
+  "traceState", "traceRunId", "traceInputs", "traceDecision", "traceCommercial",
+  "traceRisk", "traceProposal", "traceApproval", "traceExecution", "ownerMatrix",
+  "integration-boundary-title"
+];
+const missingV14Ids = requiredV14Ids.filter((id) => !ids.includes(id));
+if (missingV14Ids.length) fail("V14 surface missing DOM ids: " + missingV14Ids.join(", "));
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail("duplicate ids: " + [...new Set(duplicates)].join(", "));
 
