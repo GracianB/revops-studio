@@ -827,6 +827,18 @@
             <div class="feedback-metric"><span>Brier Δ</span><strong id="calibrationV20BrierDelta">—</strong><small>score actual − anterior</small></div>
             <div class="feedback-metric"><span>Alerts</span><strong id="calibrationV20Alerts">0</strong><small>segmentos + cohortes</small></div>
           </div>
+          <div class="feedback-form">
+            <label>Window days
+              <input id="calibrationV20WindowDays" type="number" min="1" max="365" step="1" value="30">
+            </label>
+            <label>Min global samples
+              <input id="calibrationV20MinSamples" type="number" min="1" max="10000" step="1" value="8">
+            </label>
+            <label>Min group samples
+              <input id="calibrationV20MinGroupSamples" type="number" min="1" max="10000" step="1" value="5">
+            </label>
+            <button class="btn btn-secondary" id="resetCalibrationV20" type="button">Reset calibration history</button>
+          </div>
           <div class="feedback-effectiveness">
             <span class="kicker">Adaptive recommendations</span>
             <div id="calibrationV20Recommendations" aria-live="polite"></div>
