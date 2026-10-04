@@ -212,6 +212,33 @@
           <div class="playground-metric"><b id="demoRate">0%</b><span>qualification</span></div>
         </div>
 
+        <section class="commercial-panel" aria-labelledby="commercial-title">
+          <div class="commercial-head">
+            <div>
+              <span class="kicker">Commercial pulse</span>
+              <h3 id="commercial-title">Del score a la oportunidad.</h3>
+            </div>
+            <span class="kicker">SIMULATED EUR</span>
+          </div>
+          <div class="commercial-grid">
+            <div class="commercial-metric"><span>Pipeline active</span><strong id="commercialPipeline">0 €</strong><small>qualified + nurture + new</small></div>
+            <div class="commercial-metric"><span>Weighted pipeline</span><strong id="commercialWeighted">0 €</strong><small>value × score</small></div>
+            <div class="commercial-metric"><span>Qualified value</span><strong id="commercialQualified">0 €</strong><small>current qualified stage</small></div>
+            <div class="commercial-metric"><span>Stale accounts</span><strong id="commercialStale">0 · 0%</strong><small>> 14 days since last touch</small></div>
+            <div class="commercial-metric"><span>Context coverage</span><strong id="commercialCoverage">0%</strong><small>optional commercial fields</small></div>
+          </div>
+          <div class="commercial-breakdowns">
+            <div>
+              <span class="kicker">Segments</span>
+              <div id="segmentBreakdown" class="breakdown-list"></div>
+            </div>
+            <div>
+              <span class="kicker">Owners</span>
+              <div id="ownerBreakdown" class="breakdown-list"></div>
+            </div>
+          </div>
+        </section>
+
         <div class="model-and-chart">
           <div class="weight-lab">
             <div class="weight-head"><span class="kicker">Decision model</span><span class="weight-total" id="weightTotal">100%</span></div>
@@ -349,6 +376,7 @@
           <span class="kicker">CSV schema</span>
           <p class="side-copy">Cabeceras mínimas:</p>
           <code class="schema-code">id, account, fit, intent, engagement, urgency</code>
+          <code class="schema-code schema-optional">+ value, owner, segment, source, last_touch_days</code>
           <p class="side-copy queue-schema-note">Valores 0–100. Filas con datos inválidos quedan bloqueadas.</p>
         </div>
 
