@@ -123,3 +123,50 @@ Not stored:
 - lead records.
 
 A history entry can restore its configuration against the dataset currently loaded in the browser. This makes the demo reproducible without turning local storage into a shadow CRM.
+
+
+## Commercial operating layer
+
+V9 adds an optional commercial context layer to the local simulator.
+
+Optional fields:
+
+    value
+    owner
+    segment
+    source
+    last_touch_days
+
+These fields do not replace the four core scoring signals. They add an operational view around them:
+
+    score → stage → pipeline value → weighted pipeline
+                     ↓
+                 stale risk
+                     ↓
+              owner / segment view
+                     ↓
+              prioritised queue
+
+### Commercial metrics
+
+The public dashboard calculates:
+
+- active pipeline value;
+- weighted pipeline value (value × score);
+- qualified value;
+- stale account count/rate;
+- context coverage;
+- records by segment;
+- records by owner.
+
+Values are demonstrative when using the shipped synthetic dataset.
+
+### Stale signal
+
+`last_touch_days > 14` is treated as stale in the demo. Stale context increases queue priority but never changes the score itself.
+
+This separation is deliberate:
+
+    commercial risk ≠ qualification score
+
+The system can therefore surface a high-value stale account without pretending that staleness is the same thing as product fit or buying intent.
