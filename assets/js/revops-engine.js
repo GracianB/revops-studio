@@ -326,7 +326,8 @@ export function forecastPipeline(leads, assumptions = {}) {
     activeRecords: rows.length,
     topAccounts,
     topAccountShare: pipelineValue && topAccounts.length ? topAccounts[0].value / pipelineValue : 0,
-    bySegment
+    bySegment,
+    rows
   };
 }
 
