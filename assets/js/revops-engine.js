@@ -155,6 +155,45 @@ function topSignal(lead) {
   return entries.sort((a, b) => b[1] - a[1])[0];
 }
 
+export function commercialMetrics(leads) {
+  const active = leads.filter((lead) => lead.stage !== "blocked");
+  const pipelineValue = active.reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
+  const weightedPipeline = active.reduce((sum, lead) => {
+    const score = typeof lead.score === "number" ? lead.score : 0;
+    return sum + (numeric(lead.value) ?? 0) * score / 100;
+  }, 0);
+  const qualifiedValue = active
+    .filter((lead) => lead.stage === "qualified")
+    .reduce((sum, lead) => sum + (numeric(lead.value) ?? 0), 0);
+  const staleThresholdDays = 14;
+  const staleRecords = active.filter((lead) => {
+    const days = numeric(lead.lastTouchDays);
+    return days !== null && days > staleThresholdDays;
+  });
+  const segments = {};
+  active.forEach((lead) => {
+    const segment = String(lead.segment || "General").trim() || "General";
+    segments[segment] = (segments[segment] || 0) + 1;
+  });
+  const owners = {};
+  active.forEach((lead) => {
+    const owner = String(lead.owner || "Unassigned").trim() || "Unassigned";
+    owners[owner] = (owners[owner] || 0) + 1;
+  });
+
+  return {
+    currency: "EUR",
+    pipelineValue,
+    weightedPipeline,
+    qualifiedValue,
+    staleThresholdDays,
+    staleRecords: staleRecords.length,
+    staleRate: active.length ? staleRecords.length / active.length : 0,
+    segments,
+    owners
+  };
+}
+
 export function buildActionQueue(leads, now = new Date().toISOString()) {
   const baseTime = new Date(now);
   const safeBase = Number.isNaN(baseTime.getTime()) ? new Date() : baseTime;
@@ -170,7 +209,9 @@ export function buildActionQueue(leads, now = new Date().toISOString()) {
         priorityRank * 1000 +
         score * 2 +
         urgency +
-        (lead.stage === "qualified" ? numeric(lead.intent) || 0 : 0)
+        (lead.stage === "qualified" ? numeric(lead.intent) || 0 : 0) +
+        ((numeric(lead.lastTouchDays) ?? 0) > 14 ? 80 : 0) +
+        Math.min(50, Math.round((numeric(lead.value) ?? 0) / 10000))
       );
       const due = new Date(safeBase.getTime() + policy.slaHours * 60 * 60 * 1000);
       const reason = lead.stage === "blocked"
@@ -191,6 +232,11 @@ export function buildActionQueue(leads, now = new Date().toISOString()) {
         dueAt: due.toISOString(),
         reason,
         score: lead.score,
+        value: numeric(lead.value) ?? 0,
+        owner: String(lead.owner || "Unassigned").trim() || "Unassigned",
+        segment: String(lead.segment || "General").trim() || "General",
+        lastTouchDays: numeric(lead.lastTouchDays),
+        stale: (numeric(lead.lastTouchDays) ?? -1) > 14,
         queueScore: priorityScore
       };
     })
