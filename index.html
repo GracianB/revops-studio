@@ -311,6 +311,18 @@
           <div id="actionQueue" class="queue-list" aria-live="polite"></div>
         </section>
 
+        <section class="history-panel" aria-labelledby="history-title">
+          <div class="history-head">
+            <div>
+              <span class="kicker">Run history</span>
+              <h3 id="history-title">Reproduce. Compare. Volver atrás.</h3>
+            </div>
+            <button class="btn btn-secondary" id="clearHistory" type="button">Borrar historial local</button>
+          </div>
+          <p>Solo se guardan configuración y métricas de ejecución en este navegador. Nunca se almacenan las filas del dataset importado.</p>
+          <div id="runHistory" class="run-history" aria-live="polite"></div>
+        </section>
+
         <div class="control-bottom">
           <button class="btn btn-secondary" id="exportDemo" type="button">Exportar run JSON ↗</button>
           <span class="kicker" id="lastRun">Model not run</span>

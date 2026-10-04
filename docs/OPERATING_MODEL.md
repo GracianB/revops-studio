@@ -102,3 +102,24 @@ decision
 execution
 
 That separation is the core design constraint. A useful operations system should make decisions visible, explainable and reviewable before it touches the outside world.
+
+### Reproducible run history
+
+The browser keeps up to eight recent run summaries locally.
+
+Stored:
+
+- run ID;
+- timestamp;
+- scenario;
+- weights;
+- thresholds;
+- aggregate metrics.
+
+Not stored:
+
+- imported CSV rows;
+- uploaded file contents;
+- lead records.
+
+A history entry can restore its configuration against the dataset currently loaded in the browser. This makes the demo reproducible without turning local storage into a shadow CRM.
