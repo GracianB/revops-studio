@@ -1544,7 +1544,7 @@ export function buildOperationalPlan(
   };
 
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     runId,
     createdAt: now,
     datasetFingerprint: fingerprintRecords(evaluated),
@@ -1635,7 +1635,7 @@ export function buildWorkflowImpact(leads, plan, approvals = {}) {
   const projectedByStage = projectedPipeline.byStage;
 
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     runId: plan?.runId || null,
     approvedIds: [...approvedIds].sort(),
     actionResults: results,
@@ -1693,7 +1693,7 @@ export function buildRunArtifact(
   }));
 
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     artifactType: "REVOPS_RUN_ARTIFACT",
     exportedAt: context.now || new Date().toISOString(),
     runId: snapshot.runId,
@@ -1789,7 +1789,7 @@ export function verifyRunArtifact(artifact, leads) {
 export function buildReplayReport(artifact, leads) {
   const verification = verifyRunArtifact(artifact, leads);
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     runId: artifact?.runId || null,
     valid: verification.valid,
     checks: verification.checks,
