@@ -273,6 +273,26 @@
           </div>
         </div>
 
+        <section class="guided-demo" aria-labelledby="guided-title">
+          <div class="guided-head">
+            <div>
+              <span class="kicker">60-SECOND PROOF</span>
+              <h3 id="guided-title">Start with the baseline</h3>
+              <p id="guidedCopy">Primero observa valor, stages y calidad. Todavía no cambias ninguna regla.</p>
+            </div>
+            <div class="guided-controls">
+              <span id="guidedProgress" class="guided-progress">01 / 04</span>
+              <button id="guidedNext" class="btn btn-primary" type="button">Siguiente →</button>
+            </div>
+          </div>
+          <div class="guided-steps" role="list" aria-label="Pasos de la demo">
+            <button class="guided-step is-active" type="button" data-guided-step="0" role="listitem"><b>01</b><span>Baseline</span></button>
+            <button class="guided-step" type="button" data-guided-step="1" role="listitem"><b>02</b><span>Model impact</span></button>
+            <button class="guided-step" type="button" data-guided-step="2" role="listitem"><b>03</b><span>Forecast stress</span></button>
+            <button class="guided-step" type="button" data-guided-step="3" role="listitem"><b>04</b><span>Executive decision</span></button>
+          </div>
+        </section>
+
         <div class="scenario-row" aria-label="Escenarios predefinidos">
           <button class="scenario-btn is-active" type="button" data-scenario="balanced">Balanced</button>
           <button class="scenario-btn" type="button" data-scenario="growth">Growth</button>
@@ -403,6 +423,47 @@
               <div id="intelCohorts" class="intel-mini-list" aria-live="polite"></div>
             </section>
           </div>
+        </section>
+
+        <section class="executive-readout" aria-labelledby="executive-readout-title">
+          <div class="executive-readout-head">
+            <div>
+              <span class="kicker">Executive Readout · V13</span>
+              <h3 id="executive-readout-title">La lectura que un hiring manager debería poder repetir.</h3>
+            </div>
+            <div class="readout-actions">
+              <span id="executiveSignal" class="readout-signal" data-state="controlled">CONTROLLED</span>
+              <button id="copyExecutiveBrief" class="btn btn-secondary" type="button">Copiar brief ↗</button>
+            </div>
+          </div>
+
+          <div class="readout-headline">
+            <strong id="executiveHeadline">Pipeline is controlled.</strong>
+            <span id="executiveMeta">0 qualified · 0 blocked · 0 € active pipeline</span>
+          </div>
+
+          <div class="readout-grid">
+            <div class="readout-block">
+              <span class="kicker">KEY FACTS</span>
+              <ul id="executiveFacts"></ul>
+            </div>
+            <div class="readout-block">
+              <span class="kicker">RECOMMENDED ACTIONS</span>
+              <ul id="executiveActions"></ul>
+            </div>
+            <div class="readout-block">
+              <span class="kicker">TOP OWNER</span>
+              <strong id="executiveOwner">No owner concentration</strong>
+              <small>expected value portfolio</small>
+            </div>
+            <div class="readout-block">
+              <span class="kicker">TOP SEGMENT</span>
+              <strong id="executiveSegment">No segment concentration</strong>
+              <small>expected value segment</small>
+            </div>
+          </div>
+
+          <textarea id="executiveBriefText" class="executive-brief-text" readonly aria-label="Executive brief generado"></textarea>
         </section>
 
         <div class="model-and-chart">
