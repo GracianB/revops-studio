@@ -40,9 +40,31 @@ import {
   buildFeedbackAnalysis,
   createOutcomeEvent
 } from "./outcome-engine.js";
+import {
+  CALIBRATION_CONTRACT_VERSION,
+  buildCalibrationReport
+} from "./calibration-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
+
+const CALIBRATION_V19_STORAGE_KEY = "revops-studio:calibration:v19";
+
+function readCalibrationBaselineV19() {
+  try {
+    const value = JSON.parse(localStorage.getItem(CALIBRATION_V19_STORAGE_KEY) || "[]");
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCalibrationBaselineV19(rows = []) {
+  try {
+    localStorage.setItem(CALIBRATION_V19_STORAGE_KEY, JSON.stringify(Array.isArray(rows) ? rows : []));
+  } catch {}
+}
+
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -123,6 +145,31 @@ function formatEuro(value) {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
 }
 
+
+function buildCalibrationV19Report(forecastRows = [], outcomes = []) {
+  const rows = Array.isArray(forecastRows) ? forecastRows : [];
+  const events = Array.isArray(outcomes) ? outcomes : [];
+  const currentRows = rows.map((row) => ({
+    ...row,
+    observedSuccess: events
+      .filter((outcome) => String(outcome.leadId) === String(row.leadId))
+      .some((outcome) => outcome.terminal
+        ? outcome.type === "CLOSED_WON"
+        : outcome.positive)
+      ? 1
+      : 0
+  }));
+  const storedBaseline = readCalibrationBaselineV19();
+  const baselineRows = storedBaseline.length ? storedBaseline : currentRows;
+  const report = buildCalibrationReport({
+    forecastRows: rows,
+    outcomes: events,
+    baselineRows,
+    thresholds: {}
+  });
+  if (!storedBaseline.length && currentRows.length) writeCalibrationBaselineV19(currentRows);
+  return report;
+}
 function initCalculator() {
   const output = qs("#annualCost"), detail = qs("#annualDetail");
   if (!output || !detail) return;
@@ -158,6 +205,11 @@ function initCalculator() {
       outcomes: feedbackOutcomes
     });
     lastFeedbackAnalysis = analysis;
+
+    lastCalibrationReportV19 = buildCalibrationV19Report(
+      forecast?.rows || [],
+      feedbackOutcomes
+    );
 
     if (feedback.total) feedback.total.textContent = String(analysis.summary.total);
     if (feedback.positiveRate) feedback.positiveRate.textContent = Math.round(analysis.summary.positiveRate * 100) + "%";
@@ -464,6 +516,7 @@ function initPlayground() {
   let activeTableStage = "all";
   let guidedStep = 0;
   let feedbackOutcomes = [];
+  let lastCalibrationReportV19 = null;
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -1545,7 +1598,8 @@ function initPlayground() {
             calibration: lastFeedbackAnalysis.calibration
           }
         : null,
-      outcomes: feedbackOutcomes.map((outcome) => ({ ...outcome }))
+      outcomes: feedbackOutcomes.map((outcome) => ({ ...outcome })),
+      calibrationV19: lastCalibrationReportV19
     };
     const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
