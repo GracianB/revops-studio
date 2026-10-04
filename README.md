@@ -22,6 +22,12 @@ The commercial language and the technical implementation are meant to describe t
 
 > understand the process → design the system → build the necessary piece → leave ownership and measurement behind.
 
+## Technical playground
+
+The public site now includes a deterministic RevOps engine demo using synthetic records. It makes scoring, state classification, human approval and auditability visible in the browser.
+
+See [`docs/REVOPS_ENGINE.md`](docs/REVOPS_ENGINE.md) for the domain rules.
+
 ## Current architecture
 
 \`\`\`text
