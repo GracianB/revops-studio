@@ -181,67 +181,99 @@
 <section class="section" id="playground" aria-labelledby="playground-title">
   <div class="shell">
     <div class="section-head">
-      <div>
-        <span class="eyebrow">Technical Playground</span>
-        <h2 id="playground-title">Prueba el modelo, cambia las prioridades, inspecciona la decisión.</h2>
-      </div>
-      <p>Un laboratorio local para enseñar cómo una capa RevOps puede convertir señales en decisiones explicables. Todo usa datos sintéticos.</p>
+      <div><span class="eyebrow">RevOps Control Room</span><h2 id="playground-title">Prueba el sistema. Cambia las reglas. Mira qué se rompe.</h2></div>
+      <p>Laboratorio local para inspeccionar datos, scoring, pipeline, calidad, acciones y trazabilidad. Puedes incluso cargar un CSV: se procesa en tu navegador y no se sube.</p>
     </div>
 
-    <div class="playground-grid">
-      <article class="playground-main reveal">
-        <div class="playground-top">
-          <div><span class="kicker">LOCAL / DETERMINISTIC</span><h3>Pipeline Model Lab</h3></div>
-          <div class="playground-actions">
-            <button class="btn btn-secondary demo-btn" id="resetDemo" type="button">Restablecer</button>
-            <button class="btn btn-primary demo-btn" id="runDemo" type="button">Evaluar modelo →</button>
+    <div class="control-room">
+      <div class="control-main">
+        <div class="control-bar">
+          <div><span class="kicker">PIPELINE / LOCAL</span><strong id="datasetLabel">Demo dataset · 8 records</strong></div>
+          <div class="control-actions">
+            <label class="file-btn"><input id="csvInput" type="file" accept=".csv,text/csv">Importar CSV</label>
+            <button class="btn btn-secondary demo-btn" id="resetDemo" type="button">Reset</button>
+            <button class="btn btn-primary demo-btn" id="runDemo" type="button">Ejecutar modelo →</button>
           </div>
         </div>
 
-        <div class="playground-metrics" aria-live="polite">
-          <div class="playground-metric"><b id="demoTotal">8</b><span>registros</span></div>
+        <div class="scenario-row" aria-label="Escenarios predefinidos">
+          <button class="scenario-btn is-active" type="button" data-scenario="balanced">Balanced</button>
+          <button class="scenario-btn" type="button" data-scenario="growth">Growth</button>
+          <button class="scenario-btn" type="button" data-scenario="retention">Retention</button>
+          <button class="scenario-btn" type="button" data-scenario="speed">Speed</button>
+        </div>
+
+        <div class="playground-metrics control-metrics" aria-live="polite">
+          <div class="playground-metric"><b id="demoTotal">8</b><span>records</span></div>
           <div class="playground-metric"><b id="demoQualified">0</b><span>qualified</span></div>
           <div class="playground-metric"><b id="demoNurture">0</b><span>nurture</span></div>
-          <div class="playground-metric"><b id="demoAvgScore">0</b><span>score medio</span></div>
+          <div class="playground-metric"><b id="demoAvgScore">0</b><span>avg score</span></div>
           <div class="playground-metric"><b id="demoQuality">0</b><span>data issues</span></div>
-          <div class="playground-metric"><b id="demoRate">0%</b><span>qualification rate</span></div>
+          <div class="playground-metric"><b id="demoRate">0%</b><span>qualification</span></div>
         </div>
 
-        <div class="weight-lab">
-          <div class="weight-head"><span class="kicker">Model weights</span><span class="weight-total" id="weightTotal">100%</span></div>
-          <div class="weight-grid">
-            <label class="weight-control">Fit <input id="weightFit" type="range" min="0" max="100" value="35"><b id="weightFitValue">35%</b></label>
-            <label class="weight-control">Intent <input id="weightIntent" type="range" min="0" max="100" value="30"><b id="weightIntentValue">30%</b></label>
-            <label class="weight-control">Engagement <input id="weightEngagement" type="range" min="0" max="100" value="20"><b id="weightEngagementValue">20%</b></label>
-            <label class="weight-control">Urgency <input id="weightUrgency" type="range" min="0" max="100" value="15"><b id="weightUrgencyValue">15%</b></label>
+        <div class="model-and-chart">
+          <div class="weight-lab">
+            <div class="weight-head"><span class="kicker">Decision model</span><span class="weight-total" id="weightTotal">100%</span></div>
+            <div class="weight-grid">
+              <label class="weight-control">Fit <input id="weightFit" type="range" min="0" max="100" value="35"><b id="weightFitValue">35%</b></label>
+              <label class="weight-control">Intent <input id="weightIntent" type="range" min="0" max="100" value="30"><b id="weightIntentValue">30%</b></label>
+              <label class="weight-control">Engagement <input id="weightEngagement" type="range" min="0" max="100" value="20"><b id="weightEngagementValue">20%</b></label>
+              <label class="weight-control">Urgency <input id="weightUrgency" type="range" min="0" max="100" value="15"><b id="weightUrgencyValue">15%</b></label>
+            </div>
+            <p class="weight-help">Los pesos se normalizan antes de puntuar. Los presets solo cambian prioridades, no la lógica de estados.</p>
           </div>
-          <p class="weight-help">Los pesos se normalizan antes de puntuar. Puedes cambiar la prioridad del modelo sin modificar el código.</p>
+          <div class="stage-chart" aria-label="Distribución del pipeline">
+            <div class="weight-head"><span class="kicker">Pipeline shape</span><span class="kicker" id="shapeLabel">—</span></div>
+            <div class="stack-bar" aria-hidden="true"><span id="barQualified"></span><span id="barNurture"></span><span id="barNew"></span><span id="barBlocked"></span></div>
+            <div class="legend">
+              <span><i class="lg qualified"></i>Qualified <b id="legendQualified">0</b></span>
+              <span><i class="lg nurture"></i>Nurture <b id="legendNurture">0</b></span>
+              <span><i class="lg new"></i>New <b id="legendNew">0</b></span>
+              <span><i class="lg blocked"></i>Blocked <b id="legendBlocked">0</b></span>
+            </div>
+          </div>
         </div>
 
         <div class="demo-table-wrap">
           <table class="demo-table">
-            <caption>Dataset sintético. Haz clic en una fila para inspeccionar la explicación.</caption>
-            <thead><tr><th scope="col">ID</th><th scope="col">Cuenta</th><th scope="col">Score</th><th scope="col">Estado</th><th scope="col">Siguiente acción</th></tr></thead>
+            <caption>Datos sintéticos o CSV local. Haz clic en un registro para inspeccionarlo.</caption>
+            <thead><tr><th scope="col">ID</th><th scope="col">Account</th><th scope="col">Score</th><th scope="col">Stage</th><th scope="col">Next action</th></tr></thead>
             <tbody id="demoRows"></tbody>
           </table>
         </div>
-        <p class="form-status" id="leadDetail" role="status" aria-live="polite">Selecciona un registro para inspeccionar la explicación.</p>
-      </article>
 
-      <aside class="playground-side reveal">
-        <div class="side-block">
-          <span class="kicker">Decision trace</span>
-          <div class="rule"><code>weighted signals → classification → next action</code></div>
-          <div class="rule"><code>≥ 75 → qualified</code></div>
-          <div class="rule"><code>50–74 → nurture</code></div>
-          <div class="rule"><code>&lt; 50 → new</code></div>
+        <div class="inspection-panel" id="leadInspector" aria-live="polite">
+          <div class="inspection-empty">Selecciona un registro. Verás las contribuciones de las señales, el estado y la acción propuesta.</div>
         </div>
+
+        <div class="control-bottom">
+          <button class="btn btn-secondary" id="exportDemo" type="button">Exportar run JSON ↗</button>
+          <span class="kicker" id="lastRun">Model not run</span>
+        </div>
+      </div>
+
+      <aside class="playground-side">
+        <div class="side-block">
+          <span class="kicker">Operating model</span>
+          <div class="rule"><code>data → quality → score → stage → action</code></div>
+          <div class="rule"><code>decision ≠ execution</code></div>
+          <div class="rule"><code>sensitive transitions → approval</code></div>
+        </div>
+
         <div class="side-block">
           <span class="kicker">Human gate</span>
-          <p class="side-copy">Clasificar no es ejecutar. Las transiciones sensibles requieren aprobación explícita.</p>
+          <p class="side-copy">Clasificar no concede permiso para ejecutar. El gate queda fuera del scoring a propósito.</p>
           <button class="btn btn-secondary gate-btn" id="approveDemo" type="button">Simular aprobación humana</button>
           <p class="form-status" id="demoStatus" role="status" aria-live="polite"></p>
         </div>
+
+        <div class="side-block">
+          <span class="kicker">CSV schema</span>
+          <p class="side-copy">Cabeceras mínimas:</p>
+          <code class="schema-code">id, account, fit, intent, engagement, urgency</code>
+        </div>
+
         <div class="side-block">
           <span class="kicker">Audit log</span>
           <div id="auditLog" class="audit-log" aria-live="polite"></div>
