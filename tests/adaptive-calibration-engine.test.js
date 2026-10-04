@@ -381,7 +381,7 @@ test("V20 low-volume groups do not override sufficient global calibration", () =
 test("V20 material group drift can elevate overall severity above stable global", () => {
   const previous = [
     ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"SMB", cohort:"A" }),
-    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false, segment:"Enterprise", cohort:"A" })
+    ...observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:true, segment:"Enterprise", cohort:"A" })
   ];
   const current = [
     ...observedRows({ startDate:"2026-09-20", count:8, probability:0.5, success:true, segment:"SMB", cohort:"A" }),
