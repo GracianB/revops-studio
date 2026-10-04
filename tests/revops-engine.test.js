@@ -293,3 +293,24 @@ test("forecast exposes top-account concentration and segment forecast", () => {
   assert.equal(result.bySegment.Enterprise.expectedValue, 64000);
   assert.equal(result.bySegment.SMB.expectedValue, 7000);
 });
+
+
+test("forecast assumptions are part of run identity", () => {
+  const base = {
+    records: [{ id:"F-007", fit:80, intent:70, engagement:60, urgency:50, value:30000 }],
+    weights: { fit:40, intent:30, engagement:20, urgency:10 },
+    thresholds: { qualified:75, nurture:50 },
+    source: "demo",
+    scenario: "balanced"
+  };
+  const first = createRunSnapshot({
+    ...base,
+    forecast: { qualified:0.8, nurture:0.35, new:0.1, downside:0.75, upside:1.15 }
+  });
+  const second = createRunSnapshot({
+    ...base,
+    forecast: { qualified:0.6, nurture:0.35, new:0.1, downside:0.75, upside:1.15 }
+  });
+  assert.notEqual(first.runId, second.runId);
+  assert.equal(first.forecast.qualified, 0.8);
+});
