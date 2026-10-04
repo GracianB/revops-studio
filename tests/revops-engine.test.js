@@ -12,6 +12,8 @@ import {
   evaluateScenarios,
   createRunSnapshot,
   commercialMetrics,
+  forecastPipeline,
+  forecastScenarios,
   normaliseThresholds,
   transition
 } from "../assets/js/revops-engine.js";
@@ -246,4 +248,48 @@ test("CSV parser preserves optional commercial context", async () => {
   assert.equal(row.owner, "Ana");
   assert.equal(row.segment, "Enterprise");
   assert.equal(row.lastTouchDays, 12);
+});
+
+
+test("forecast pipeline applies stage probabilities to active value", () => {
+  const leads = evaluateBatch([
+    { id:"F-001", fit:100, intent:100, engagement:100, urgency:100, value:50000 },
+    { id:"F-002", fit:50, intent:50, engagement:50, urgency:50, value:20000 },
+    { id:"F-003", fit:10, intent:10, engagement:10, urgency:10, value:10000 }
+  ]);
+  const result = forecastPipeline(leads, {
+    qualified: 0.8,
+    nurture: 0.35,
+    new: 0.1
+  });
+  assert.equal(result.pipelineValue, 80000);
+  assert.equal(result.expectedValue, 46000);
+  assert.equal(result.activeRecords, 3);
+  assert.equal(result.expectedCoverage, 0.575);
+});
+
+test("forecast scenarios preserve pipeline and change expected value by multiplier", () => {
+  const leads = evaluateBatch([
+    { id:"F-004", fit:100, intent:100, engagement:100, urgency:100, value:40000 }
+  ]);
+  const result = forecastScenarios(leads, {
+    qualified: 0.8,
+    downside: 0.5,
+    upside: 1.5
+  });
+  assert.equal(result.downside.pipelineValue, 40000);
+  assert.equal(result.downside.expectedValue, 16000);
+  assert.equal(result.base.expectedValue, 32000);
+  assert.equal(result.upside.expectedValue, 48000);
+});
+
+test("forecast exposes top-account concentration and segment forecast", () => {
+  const leads = evaluateBatch([
+    { id:"F-005", account:"Big", fit:100, intent:100, engagement:100, urgency:100, value:80000, segment:"Enterprise" },
+    { id:"F-006", account:"Small", fit:50, intent:50, engagement:50, urgency:50, value:20000, segment:"SMB" }
+  ]);
+  const result = forecastPipeline(leads);
+  assert.equal(result.topAccountShare, 0.8);
+  assert.equal(result.bySegment.Enterprise.expectedValue, 64000);
+  assert.equal(result.bySegment.SMB.expectedValue, 7000);
 });
