@@ -247,6 +247,21 @@
           <div class="inspection-empty">Selecciona un registro. Verás las contribuciones de las señales, el estado y la acción propuesta.</div>
         </div>
 
+        <section class="queue-panel" aria-labelledby="queue-title">
+          <div class="queue-head">
+            <div>
+              <span class="kicker">Execution queue</span>
+              <h3 id="queue-title">Qué debería pasar después.</h3>
+            </div>
+            <div class="queue-head-meta">
+              <strong id="queueMeta">0 actions · 0 urgent</strong>
+              <span id="queueSummary">Critical 0 · High 0 · Medium 0 · Low 0</span>
+            </div>
+          </div>
+          <p class="queue-copy">El scoring no ejecuta nada. Esta capa traduce el estado del pipeline en trabajo priorizado, equipo responsable y SLA de simulación.</p>
+          <div id="actionQueue" class="queue-list" aria-live="polite"></div>
+        </section>
+
         <div class="control-bottom">
           <button class="btn btn-secondary" id="exportDemo" type="button">Exportar run JSON ↗</button>
           <span class="kicker" id="lastRun">Model not run</span>
@@ -259,6 +274,7 @@
           <div class="rule"><code>data → quality → score → stage → action</code></div>
           <div class="rule"><code>decision ≠ execution</code></div>
           <div class="rule"><code>sensitive transitions → approval</code></div>
+          <div class="rule"><code>stage → lane + SLA → work queue</code></div>
         </div>
 
         <div class="side-block">
@@ -272,6 +288,7 @@
           <span class="kicker">CSV schema</span>
           <p class="side-copy">Cabeceras mínimas:</p>
           <code class="schema-code">id, account, fit, intent, engagement, urgency</code>
+          <p class="side-copy queue-schema-note">Valores 0–100. Filas con datos inválidos quedan bloqueadas.</p>
         </div>
 
         <div class="side-block">
