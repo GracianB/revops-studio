@@ -94,6 +94,29 @@ input
 
 This makes the model inspectable instead of magical.
 
+### V15 · Operational Workflow Control
+
+V15 extends the Decision Operating System from **traceable decisions** to a **traceable operating plan**.
+
+The workflow layer creates a deterministic plan from the current run:
+
+```text
+decision trace
+   ↓
+operational plan
+   ↓
+approval state
+   ↓
+execution envelope
+   ↓
+adapter boundary
+```
+
+Every planned action exposes rank, owner lane, SLA, proposal, approval state and execution state. The public adapter is intentionally disconnected, so the plan can be simulated without pretending to write to a CRM.
+
+V15 also adds a privacy-preserving run artifact. It contains run identity, dataset fingerprint, configuration, aggregate intelligence and decision outcomes, but does not export the raw records.
+
+A replay check can verify that an artifact belongs to the dataset currently loaded in the browser.
 ---
 
 ## Human-in-the-loop by design
