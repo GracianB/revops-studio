@@ -298,6 +298,7 @@ function initPlayground() {
       ),
       weightMode: "percent",
       thresholds: snapshot.thresholds,
+      forecast: snapshot.forecast,
       total: summary.total,
       averageScore: summary.averageScore,
       qualificationRate: summary.qualificationRate,
@@ -402,10 +403,19 @@ function initPlayground() {
     } catch { return null; }
   };
 
+  const getForecastConfig = () => ({
+    qualified: Number(forecast.probabilities.qualified?.value) / 100,
+    nurture: Number(forecast.probabilities.nurture?.value) / 100,
+    new: Number(forecast.probabilities.new?.value) / 100,
+    downside: Number(forecast.probabilities.downside?.value) / 100,
+    upside: Number(forecast.probabilities.upside?.value) / 100
+  });
+
   const currentConfig = () => ({
     weights: getWeights(),
     weightMode: "percent",
     thresholds: getThresholds(),
+    forecast: getForecastConfig(),
     scenario: activeScenario
   });
 
@@ -433,6 +443,15 @@ function initPlayground() {
       ));
     });
     setThresholds({ ...(config.thresholds || {}), changed: "qualified" });
+    const forecastSet = config.forecast || {};
+    Object.keys(forecast.probabilities).forEach((key) => {
+      const input = forecast.probabilities[key];
+      if (!input) return;
+      const value = Number(forecastSet[key]);
+      if (Number.isFinite(value)) {
+        input.value = String(Math.round(value <= 1 ? value * 100 : value));
+      }
+    });
     if (config.scenario && scenarios[config.scenario]) activeScenario = config.scenario;
     qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item.dataset.scenario === activeScenario));
   };
@@ -735,6 +754,7 @@ function initPlayground() {
       records: sourceRecords,
       weights: getWeights(),
       thresholds: getThresholds(),
+      forecast: getForecastConfig(),
       source: dataSource,
       scenario: activeScenario
     });
@@ -767,7 +787,10 @@ function initPlayground() {
 
   const forecastInputs = Object.values(forecast.probabilities).filter(Boolean);
   forecastInputs.forEach((input) => input.addEventListener("input", () => {
-    if (Number(input.value) < 0) input.value = "0";
+    const max = input.id === "forecastUpsideMult" ? 200 : 150;
+    input.value = String(Math.max(0, Math.min(max, Number(input.value) || 0)));
+    writeStored(currentConfig());
+    updateShareUrl();
     render();
   }));
 
@@ -801,6 +824,10 @@ function initPlayground() {
   qs("#resetDemo")?.addEventListener("click", () => {
     Object.entries(DEFAULT_WEIGHTS).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(Math.round(value * 100)); });
     setThresholds({ ...DEFAULT_THRESHOLDS, changed: "qualified" });
+    const defaultForecast = { qualified:80, nurture:35, new:10, downside:75, upside:115 };
+    Object.entries(defaultForecast).forEach(([key, value]) => {
+      if (forecast.probabilities[key]) forecast.probabilities[key].value = String(value);
+    });
     sourceRecords = demoSeed;
     window.__REVOPS_DATA__ = null;
     dataSource = "demo";
@@ -879,6 +906,7 @@ function initPlayground() {
       scenario: activeScenario,
       weights: getWeights(),
       thresholds: getThresholds(),
+      forecast: getForecastConfig(),
       pipeline: summarisePipeline(evaluated),
       commercial: commercialMetrics(evaluated),
       queue: buildActionQueue(evaluated),
