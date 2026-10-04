@@ -87,19 +87,21 @@ export function evaluateBatch(leads, weights = DEFAULT_WEIGHTS) {
 }
 
 export function summarisePipeline(leads) {
-  const scores = leads.filter((lead) => typeof lead.score === "number");
+  const scored = leads.filter((lead) => typeof lead.score === "number");
   const byStage = Object.fromEntries(STAGES.map((stage) => [stage, 0]));
-  scores.forEach((lead) => { byStage[lead.stage] += 1; });
+  leads.forEach((lead) => {
+    if (STAGES.includes(lead?.stage)) byStage[lead.stage] += 1;
+  });
 
   return {
     total: leads.length,
-    scored: scores.length,
-    qualityIssues: leads.length - scores.length,
-    averageScore: scores.length
-      ? Math.round(scores.reduce((sum, lead) => sum + lead.score, 0) / scores.length)
+    scored: scored.length,
+    qualityIssues: byStage.blocked || 0,
+    averageScore: scored.length
+      ? Math.round(scored.reduce((sum, lead) => sum + lead.score, 0) / scored.length)
       : 0,
     byStage,
-    qualificationRate: scores.length ? byStage.qualified / scores.length : 0
+    qualificationRate: scored.length ? byStage.qualified / scored.length : 0
   };
 }
 
