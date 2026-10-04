@@ -124,3 +124,35 @@ Human review
 The guided path deliberately operates on the same dataset and configuration used by the Control Room. This prevents a separate demo state from drifting away from the actual engine.
 
 The executive brief is generated from structured engine output and rendered with DOM text nodes. Clipboard export is user initiated.
+
+
+## V14 decision architecture
+
+V14 introduces a reusable run-analysis contract and an explicit execution boundary:
+
+Source records
+    ↓
+evaluateBatch
+    ↓
+buildRunAnalysis
+ ├─ pipeline
+ ├─ commercial
+ ├─ forecast / scenarios
+ ├─ health
+ ├─ segments / cohorts
+ ├─ rules / anomalies / leakage
+ ├─ owners
+ └─ executive brief
+    ↓
+UI surfaces
+ ├─ Executive Readout
+ ├─ Owner Operating Matrix
+ └─ Decision Trace
+    ↓
+Human Gate
+    ↓
+Simulation-only execution boundary
+    ↓
+Audit events
+
+The analysis contract reuses the same forecast and intelligence results across dependent layers. The execution boundary remains a UI-visible contract rather than a hidden fake integration.
