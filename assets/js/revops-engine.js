@@ -1192,8 +1192,30 @@ function normaliseLedgerText(value, fallback = "") {
   return text || fallback;
 }
 
+function canonicalLedgerEvent(event = {}) {
+  return {
+    sequence: event.sequence,
+    previousHash: event.previousHash,
+    type: event.type,
+    runId: event.runId ?? null,
+    leadId: event.leadId ?? null,
+    idempotencyKey: event.idempotencyKey ?? null,
+    actor: event.actor,
+    status: event.status,
+    at: event.at,
+    payload: event.payload
+  };
+}
+
+function ledgerEventId(event) {
+  return "EVT-" + hashString(stableStringify(canonicalLedgerEvent(event))).toUpperCase();
+}
+
 function ledgerEventHash(event) {
-  return "HASH-" + hashString(stableStringify(event)).toUpperCase();
+  return "HASH-" + hashString(stableStringify({
+    ...canonicalLedgerEvent(event),
+    eventId: event.eventId
+  })).toUpperCase();
 }
 
 export function appendExecutionEvent(ledger, event = {}) {
@@ -1244,17 +1266,17 @@ export function appendExecutionEvent(ledger, event = {}) {
   const envelope = {
     sequence,
     previousHash: ledger.headHash,
-    ...normalized
+    ...normalized,
+    at: normaliseLedgerText(event.at, new Date().toISOString())
   };
-  const eventId = "EVT-" + hashString(stableStringify(envelope)).toUpperCase();
+  const eventId = ledgerEventId(envelope);
   const event = Object.freeze({
     ...envelope,
     eventId,
     eventHash: ledgerEventHash({
       ...envelope,
       eventId
-    }),
-    at: normaliseLedgerText(event.at, new Date().toISOString())
+    })
   });
 
   const next = Object.freeze({
@@ -1304,40 +1326,12 @@ export function verifyExecutionLedger(ledger) {
     event.previousHash === (index === 0 ? ledger.genesisHash : events[index - 1].eventHash)
   );
   baseChecks.hashes = events.every((event) => {
-    const expected = ledgerEventHash({
-      sequence: event.sequence,
-      previousHash: event.previousHash,
-      type: event.type,
-      runId: event.runId ?? null,
-      leadId: event.leadId ?? null,
-      idempotencyKey: event.idempotencyKey ?? null,
-      actor: event.actor,
-      status: event.status,
-      payload: event.payload
+    const expectedId = ledgerEventId(event);
+    const expectedHash = ledgerEventHash({
+      ...event,
+      eventId: expectedId
     });
-    const expectedId = "EVT-" + hashString(stableStringify({
-      sequence: event.sequence,
-      previousHash: event.previousHash,
-      type: event.type,
-      runId: event.runId ?? null,
-      leadId: event.leadId ?? null,
-      idempotencyKey: event.idempotencyKey ?? null,
-      actor: event.actor,
-      status: event.status,
-      payload: event.payload
-    })).toUpperCase();
-    return event.eventId === expectedId &&
-      event.eventHash === ledgerEventHash({
-        sequence: event.sequence,
-        previousHash: event.previousHash,
-        type: event.type,
-        runId: event.runId ?? null,
-        leadId: event.leadId ?? null,
-        idempotencyKey: event.idempotencyKey ?? null,
-        actor: event.actor,
-        status: event.status,
-        payload: event.payload
-      });
+    return event.eventId === expectedId && event.eventHash === expectedHash;
   });
 
   const keys = events.map((event) => event.idempotencyKey).filter(Boolean);
