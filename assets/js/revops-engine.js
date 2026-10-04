@@ -185,7 +185,7 @@ export function compareEvaluations(baseLeads, currentLeads) {
       ? current.score - base.score
       : null;
 
-    if (stageChanged || scoreDelta !== 0) {
+    if (stageChanged || (scoreDelta !== null && scoreDelta !== 0)) {
       changes.push({
         leadId: current.id,
         account: current.account || "Unnamed account",
