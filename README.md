@@ -1,210 +1,240 @@
 # RevOps Studio
 
-**Customer Success × Data × Operations × AI × Systems**
+**A deterministic Revenue Operations decision system built around data quality, explainability and human approval.**
 
-RevOps Studio is the public lab of Gracián Baena González. It is both a commercial surface and a technical proof: a small RevOps system whose operating logic is inspectable instead of being hidden behind a glossy interface.
+[![Live](https://img.shields.io/badge/LIVE-DAA428?style=for-the-badge)](https://gracianb.github.io/revops-studio/)
+[![Tests](https://img.shields.io/badge/TESTS-50%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
+[![JavaScript](https://img.shields.io/badge/JavaScript-181717?style=for-the-badge&logo=javascript)](https://github.com/GracianB/revops-studio)
 
-Live: https://gracianb.github.io/revops-studio/  
-Source: https://github.com/GracianB/revops-studio
+RevOps Studio is the public technical proof behind a broader operating idea:
 
-## Technical layer
+> **Customer data should not only describe the pipeline. It should help an operator decide what happens next.**
 
-The site includes a local Pipeline Model Lab and an executive intelligence layer.
+It is intentionally inspectable. The public application runs locally in the browser, uses deterministic logic, does not require a CRM, database or external API, and keeps consequential execution behind a human boundary.
 
-\`\`\`
-synthetic records
-      ↓
-data-quality validation
-      ↓
-weighted scoring
-      ↓
-classification
-      ↓
-next action
-      ↓
-human approval gate
-      ↓
-audit event
-\`\`\`
+**Live:** https://gracianb.github.io/revops-studio/  
+**Source:** https://github.com/GracianB/revops-studio
 
-Visitors can change model weights, switch scenarios, inspect per-record explanations, import a compatible CSV locally, export a run as JSON, and inspect the resulting operational queue. The demo is deterministic and does not call a CRM, database or external API.
+---
 
-## Architecture
+## The decision loop
 
-\`\`\`
-Browser
-  │
-  ├── index.html
-  ├── CSS
-  ├── application controller
-  └── deterministic RevOps engine
-          │
-          ├── score
-          ├── classify
-          ├── recommend
-          ├── gate
-          └── audit
+```text
+Records
+   ↓
+Data-quality validation
+   ↓
+Weighted scoring
+   ↓
+Classification
+   ↓
+Commercial context
+   ↓
+Recommended action
+   ↓
+Human approval gate
+   ↓
+Decision Trace / audit
+```
 
-Brief:
-Form → sessionStorage → gracias.html → user-controlled email
-\`\`\`
+The important part is not the score.
 
-## Model impact
+The important part is the contract between **data → reasoning → recommendation → human decision**.
 
-The active model can be compared with the baseline weights to expose promotions, demotions, blocked records and score deltas. This turns the scoring controls into a visible sensitivity test.
+---
 
-## Operational queue
-
-The control room translates pipeline state into a deterministic work queue with priority, operational lane, SLA and a reason for the proposed action. V9 adds a commercial operating layer on top of the V8 cockpit: pipeline value, weighted pipeline, stale-risk signals, owner/segment views and local operator filters. It is deliberately simulation-only: no CRM, no database and no external execution.
-
-## Engineering decisions
-
-### Explainability
-
-The engine exposes the contribution of each signal to the final score.
+## What the system demonstrates
 
 ### Data quality
 
-Records are validated before scoring. Invalid records fail closed into a blocked state rather than receiving a misleading score.
+Records are validated before scoring.
 
-### Human-in-the-loop
+Invalid or incomplete records can fail closed into a blocked state instead of receiving a misleading score.
 
-Classification and execution are separate. Sensitive transitions require explicit approval.
+### Deterministic scoring
 
-### Decision surface
+Signals contribute explicitly to the final score.
 
-The public UI exposes the score, threshold profile, scenario impact, operational queue and run identity. Configuration can be shared through a URL without embedding CSV records.
+The active model exposes score contributions, thresholds and deltas so an operator can understand **why** a record moved.
 
-### Local-first lead flow
+### Classification
 
-The public brief is stored only in the current browser session. No project backend receives the form fields.
+The engine turns score and context into an operational state rather than leaving the user with another dashboard.
 
-### Small dependency surface
+### Forecasting
 
-The project uses browser-native HTML, CSS and JavaScript plus Node's built-in test runner.
+Forecast scenarios aggregate exact expected value before rounding, allowing baseline and stressed cases to be compared consistently.
 
-## Offer
+### Segmentation & account health
 
-| Package | From | Window |
-| --- | ---: | --- |
-| Quick win | €900 | 1–2 weeks |
-| System | €4,000 | 3–6 weeks |
-| Operate | €600/month | when the system exists |
+The intelligence layer exposes owner, segment, cohort and account-health signals to identify concentration, stale context, material risk and opportunities.
 
-Diagnostic: 30–45 minutes, one process.
+### Revenue leakage
 
-## Proof ecosystem
+The system surfaces operational exposure such as stale pipeline, risk concentration and other rule-based leakage signals.
 
-- OHANA · Canvas 2D platformer, Isla Hoku, 10 rooms, 10 characters.
-- Vortex · WebGL interface experiment.
-- AiGoritmo · Python + FastAPI / LLM lab.
-- Yoga Instructor · bilingual ES/EN portal.
-- Navarmedia Outreach · private B2B operations core.
+### Executive priorities
 
-## Architecture notes
+The control room turns model output into a ranked decision surface instead of a collection of disconnected charts.
 
-The Control Room also keeps a local history of run configuration and summary metrics for reproducibility. Dataset rows are never stored in that history. Optional commercial context can be imported without changing the core qualification model. See docs/OPERATING_MODEL.md for the complete decision loop and Control Room design.
+### Decision Trace
+
+Each run can expose the chain:
+
+```text
+input
+ → quality
+ → score
+ → commercial context
+ → risk
+ → proposal
+ → approval boundary
+ → execution boundary
+```
+
+This makes the model inspectable instead of magical.
+
+---
+
+## Human-in-the-loop by design
+
+RevOps Studio deliberately separates **recommendation** from **execution**.
+
+A sensitive simulated transition requires explicit approval.
+
+There is no hidden CRM write, no fake integration and no claim of autonomous execution.
+
+That boundary matters.
+
+AI and automation should reduce operational work without silently removing accountability.
+
+---
+
+## Local-first architecture
+
+```text
+Browser
+│
+├── index.html
+├── application controller
+├── CSS / UI
+├── CSV utilities
+└── deterministic RevOps engine
+      │
+      ├── validate
+      ├── score
+      ├── classify
+      ├── forecast
+      ├── segment
+      ├── recommend
+      ├── gate
+      └── audit
+```
+
+The public application can:
+
+- change model weights;
+- switch scenarios;
+- inspect record-level explanations;
+- import a compatible CSV locally;
+- export a run as JSON;
+- compare baseline vs active model;
+- inspect operational queues;
+- inspect decision traces;
+- generate an executive readout.
+
+No external runtime service is required.
+
+---
+
+## Engineering principles
+
+| Principle | Implementation |
+|---|---|
+| **Fail closed** | Invalid records are blocked rather than silently scored |
+| **Explainability** | Score contributions and model deltas are visible |
+| **Determinism** | Same inputs and configuration produce reproducible output |
+| **Human accountability** | Sensitive transitions require explicit approval |
+| **Local-first** | Demo data and CSV analysis remain in the browser |
+| **Small dependency surface** | Browser-native stack + Node test runner |
+| **Auditability** | Decision Trace records the reasoning boundary |
+| **Testability** | Engine, contracts and structural behaviour are covered by deterministic tests |
+
+---
 
 ## Quality gates
 
-\`\`\`bash
+```bash
 npm test
 npm run validate
-\`\`\`
+npm run verify
+```
 
-GitHub Actions runs both checks on every push and pull request.
+The repository includes automated validation for:
 
-## Security
+- engine behaviour;
+- CSV contracts;
+- score reconciliation;
+- exact forecast aggregation;
+- run analysis;
+- Decision Trace;
+- DOM contracts;
+- guided proof surfaces;
+- project structure;
+- JavaScript syntax.
 
-No secrets are intentionally stored in the repository. Validation includes lightweight credential-pattern screening and project-structure checks.
+GitHub Actions runs the core quality gates on pushes and pull requests.
 
-Pattern screening is not a guarantee of absolute absence.
+---
+
+## Hiring-manager mode
+
+The public experience is designed to answer three questions quickly:
+
+1. **What capability does this project demonstrate?**
+2. **What was actually built?**
+3. **Where can the reviewer verify it?**
+
+The proof is intentionally evidence-first.
+
+No invented enterprise integrations.  
+No fake business results.  
+No hidden backend pretending to be production.
+
+---
+
+## Proof ecosystem
+
+| Project | Demonstrates |
+|---|---|
+| [Bodytone Support OS](https://bodytonehelp.zendesk.com/hc/es) | Customer Operations, Zendesk, workflows, automation |
+| [Professional Deck](https://gracianb.github.io/professional-deck/) | Customer Success, Data, Operations, career evidence |
+| [Project OHANA](https://github.com/GracianB/project-ohana) | Software engineering, simulation, testing, CI |
+| [Vórtice](https://github.com/GracianB/vortex) | WebGL, rendering, interaction |
+| [AiGoritmo](https://github.com/GracianB/aigoritmo) | Python, FastAPI, local AI |
+| [Systems Lab](https://github.com/GracianB/systems-lab) | Public systems experiments |
+
+---
+
+## Commercial surface
+
+RevOps Studio also exposes a deliberately simple service model for organisations that want to turn one operational bottleneck into a measurable system.
+
+| Package | From | Typical window |
+|---|---:|---:|
+| Quick win | €900 | 1–2 weeks |
+| System | €4,000 | 3–6 weeks |
+| Operate | €600/month | after the system exists |
+
+These are positioning examples, not claims of delivered revenue impact.
+
+---
 
 ## Author
 
-Gracián Baena González · Murcia, Spain  
-LinkedIn: https://www.linkedin.com/in/gracianbaena/  
-GitHub: https://github.com/GracianB
+**Gracián Baena González** · Murcia, Spain
 
+Customer Success · RevOps · Data · Automation · AI · Systems
 
-## V11 · Executive Intelligence
+[LinkedIn](https://www.linkedin.com/in/gracianbaena) · [GitHub](https://github.com/GracianB) · [Professional Deck](https://gracianb.github.io/professional-deck/)
 
-V11 adds a deterministic decision surface above the existing scoring and forecast layers:
-
-```
-score → stage → commercial context
-                     ↓
-              forecast scenarios
-                     ↓
-       segment / cohort intelligence
-                     ↓
-          account health scoring
-                     ↓
-       business rules + anomalies
-                     ↓
-           revenue leakage
-                     ↓
-        executive priorities
-```
-
-The new layer remains local and network-free. It does not execute CRM actions. It identifies material risk, operational exposure, concentration, stale context and high-value opportunities so a human can decide what happens next.
-
-The CSV can optionally include `cohort` for cohort analysis.
-
-Quality target for V11: **40 deterministic tests, zero external runtime dependencies, structural validation PASS**.
-
-
-## V12 · Hiring Manager Mode
-
-V12 adds a recruiter-first proof surface to the public experience.
-
-The first screen now answers three questions before a visitor touches the playground:
-
-1. What role does this project demonstrate?
-2. What was actually built?
-3. Where can the reviewer verify the work?
-
-The proof surface links the positioning, RevOps Studio itself, the wider public project ecosystem and the Professional Deck / LinkedIn. It is deliberately evidence-first: no invented business results, no fake enterprise integrations and no claims that cannot be inspected.
-
-The Control Room remains the main technical proof. V12 changes the route into it, not the underlying decision engine.
-
-
-## V13 · 60-second proof
-
-V13 adds a guided proof path for fast technical review.
-
-The Control Room now includes a four-step narrative:
-
-```
-baseline
-   ↓
-model impact
-   ↓
-forecast stress
-   ↓
-executive decision
-```
-
-The operator can replay the path without loading another environment. Each step points at an existing system surface and uses the same local deterministic engine.
-
-V13 also adds an executive readout that turns the current run into a compact evidence-based brief with key facts, recommended actions, top owner and top segment. The brief can be copied without sending data to a backend.
-
-
-## V14 · Decision Operating System
-
-V14 turns the Control Room from an intelligence dashboard into a more explicit decision operating system.
-
-The new layer adds:
-
-- a reusable run-analysis contract that gives the UI one structured analysis object;
-- stricter CSV contracts for required numeric signals and row widths;
-- exact score-contribution reconciliation;
-- forecast aggregation that rounds only after the exact expectation is summed;
-- Decision Trace for input, quality, score, commercial context, risk, proposal, approval and execution boundary;
-- owner operating matrix ranked by expected value, with stale and high/critical risk signals;
-- an explicit integration boundary separating local decision support from any future external execution adapter;
-- a one-shot human gate for sensitive nurture → qualified simulation;
-- stronger structural validation for guided proof and V14 DOM contracts.
-- 50 deterministic tests covering engine, CSV contracts, exact aggregation, run analysis and decision trace.
-
-The execution boundary remains intentionally disconnected. The project demonstrates the decision contract without pretending to have a live CRM integration.
