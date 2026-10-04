@@ -32,6 +32,14 @@ import {
   simulateIntegrationContract,
   createExecutionEvent
 } from "./execution-adapter.js";
+import {
+  OUTCOME_TYPES,
+  createOutcomeRecord,
+  createOutcomeLedger,
+  appendOutcome,
+  buildFeedbackAnalysis,
+  createOutcomeEvent
+} from "./outcome-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -118,6 +126,81 @@ function formatEuro(value) {
 function initCalculator() {
   const output = qs("#annualCost"), detail = qs("#annualDetail");
   if (!output || !detail) return;
+  const renderFeedback = (plan, forecast) => {
+    if (!feedback.lead) return;
+    const runId = plan?.runId || null;
+    if (lastOutcomeRunId !== runId) {
+      lastOutcomeRunId = runId;
+      feedbackOutcomes = [];
+      lastOutcomeLedger = createOutcomeLedger({
+        runId,
+        datasetFingerprint: plan?.datasetFingerprint || null,
+        source: dataSource === "csv" ? "csv" : "simulation"
+      });
+    }
+
+    const currentIds = evaluated.map((lead) => String(lead.id));
+    const selectedId = currentIds.includes(String(feedback.lead.value))
+      ? String(feedback.lead.value)
+      : currentIds[0] || "";
+    feedback.lead.replaceChildren();
+    evaluated.forEach((lead) => {
+      const option = document.createElement("option");
+      option.value = String(lead.id);
+      option.textContent = (lead.account || "Unnamed account") + " · " + lead.id + " · " + lead.stage;
+      feedback.lead.appendChild(option);
+    });
+    if (selectedId) feedback.lead.value = selectedId;
+
+    const analysis = buildFeedbackAnalysis({
+      plan,
+      forecast,
+      outcomes: feedbackOutcomes
+    });
+    lastFeedbackAnalysis = analysis;
+
+    if (feedback.total) feedback.total.textContent = String(analysis.summary.total);
+    if (feedback.positiveRate) feedback.positiveRate.textContent = Math.round(analysis.summary.positiveRate * 100) + "%";
+    if (feedback.winRate) feedback.winRate.textContent = Math.round(analysis.summary.winRate * 100) + "%";
+    if (feedback.variance) feedback.variance.textContent = formatMoneyLocal(analysis.summary.valueVariance);
+    if (feedback.calibration) {
+      feedback.calibration.textContent = analysis.calibration.calibrationError === null
+        ? "—"
+        : (analysis.calibration.calibrationError > 0 ? "+" : "") +
+          Math.round(analysis.calibration.calibrationError * 100) + "pp";
+    }
+    if (feedback.sla) {
+      feedback.sla.textContent = analysis.summary.slaAdherence === null
+        ? "—"
+        : Math.round(analysis.summary.slaAdherence * 100) + "%";
+    }
+    if (feedback.effectiveness) {
+      feedback.effectiveness.replaceChildren();
+      if (!analysis.effectiveness.length) {
+        const empty = document.createElement("div");
+        empty.className = "feedback-empty";
+        empty.textContent = "Registra un outcome para medir qué acciones están funcionando.";
+        feedback.effectiveness.appendChild(empty);
+      } else {
+        analysis.effectiveness.slice(0, 5).forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "feedback-effectiveness-row";
+          const label = document.createElement("strong");
+          label.textContent = item.action;
+          const meta = document.createElement("small");
+          meta.textContent = Math.round(item.positiveRate * 100) + "% positive · " +
+            Math.round(item.winRate * 100) + "% win · Δ " + formatMoneyLocal(item.valueVariance);
+          row.append(label, meta);
+          feedback.effectiveness.appendChild(row);
+        });
+      }
+    }
+  };
+
+  const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
+    style: "currency", currency: "EUR", maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+
   const render = () => {
     const hours = numberValue("#hoursWeek", 6);
     const people = Math.max(1, numberValue("#people", 2));
@@ -317,6 +400,22 @@ function initPlayground() {
     replay: qs("#replayLedger"),
     events: qs("#ledgerEvents")
   };
+  const feedback = {
+    lead: qs("#feedbackLead"),
+    type: qs("#feedbackType"),
+    actualValue: qs("#feedbackActualValue"),
+    actualRevenue: qs("#feedbackActualRevenue"),
+    responseHours: qs("#feedbackResponseHours"),
+    record: qs("#recordFeedback"),
+    status: qs("#feedbackStatus"),
+    total: qs("#feedbackTotal"),
+    positiveRate: qs("#feedbackPositiveRate"),
+    winRate: qs("#feedbackWinRate"),
+    variance: qs("#feedbackVariance"),
+    calibration: qs("#feedbackCalibration"),
+    sla: qs("#feedbackSla"),
+    effectiveness: qs("#feedbackEffectiveness")
+  };
   const decisionTrace = {
     state: qs("#traceState"),
     runId: qs("#traceRunId"),
@@ -358,8 +457,12 @@ function initPlayground() {
   let lastSnapshot = null;
   let lastWorkflowPlan = null;
   let lastExecutionLedger = null;
+  let lastOutcomeLedger = null;
+  let lastOutcomeRunId = null;
+  let lastFeedbackAnalysis = null;
   let activeTableStage = "all";
   let guidedStep = 0;
+  let feedbackOutcomes = [];
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -974,6 +1077,8 @@ function initPlayground() {
          }
        }
 
+       renderFeedback(plan, forecastResult);
+
        if (workflowImpact.proposed) {
          const impactResult = buildWorkflowImpact(evaluated, plan);
          workflowImpact.proposed.textContent = String(impactResult.summary.proposed);
@@ -1571,6 +1676,65 @@ function initPlayground() {
 
   workflowControl.artifact?.addEventListener("click", () => {
     qs("#exportDemo")?.click();
+  });
+
+  feedback.record?.addEventListener("click", () => {
+    if (!lastWorkflowPlan || !lastOutcomeLedger) return;
+    const candidate = evaluated.find((lead) => String(lead.id) === String(feedback.lead?.value));
+    if (!candidate) {
+      feedback.status.textContent = "Selecciona un registro válido.";
+      feedback.status.dataset.state = "error";
+      return;
+    }
+
+    const type = feedback.type?.value;
+    const action = lastWorkflowPlan.actions.find((item) => String(item.leadId) === String(candidate.id));
+    const forecast = buildRunAnalysis(evaluated, getForecastConfig()).forecast;
+    const forecastRow = forecast.rows.find((row) => String(row.leadId) === String(candidate.id));
+
+    try {
+      const outcome = createOutcomeRecord({
+        runId: lastWorkflowPlan.runId,
+        leadId: candidate.id,
+        actionId: action?.idempotencyKey || null,
+        action: action?.action || candidate.nextAction,
+        type,
+        occurredAt: new Date().toISOString(),
+        actor: "operator",
+        source: dataSource === "csv" ? "csv" : "simulation",
+        expectedProbability: forecastRow?.probability ?? null,
+        expectedValue: forecastRow?.expectedValue ?? null,
+        actualValue: feedback.actualValue?.value || null,
+        actualRevenue: feedback.actualRevenue?.value || null,
+        responseHours: feedback.responseHours?.value || null,
+        slaHours: action?.slaHours ?? null
+      });
+      const result = appendOutcome(lastOutcomeLedger, outcome);
+      if (!result.accepted) {
+        feedback.status.textContent = result.reason;
+        feedback.status.dataset.state = "error";
+        return;
+      }
+
+      lastOutcomeLedger = result.ledger;
+      feedbackOutcomes = [...feedbackOutcomes, outcome];
+
+      if (lastExecutionLedger) {
+        const eventResult = appendExecutionEvent(lastExecutionLedger, createOutcomeEvent(outcome));
+        if (eventResult.accepted) lastExecutionLedger = eventResult.ledger;
+      }
+
+      feedback.status.textContent =
+        outcome.type + " registrado para " + (candidate.account || candidate.id) +
+        " · " + outcome.outcomeId + " · feedback local";
+      feedback.status.dataset.state = "ok";
+      addAudit(auditEvent("OUTCOME_RECORDED", candidate, outcome.type + " · " + outcome.outcomeId));
+      const currentForecast = buildRunAnalysis(evaluated, getForecastConfig()).forecast;
+      renderFeedback(lastWorkflowPlan, currentForecast);
+    } catch (error) {
+      feedback.status.textContent = error.message;
+      feedback.status.dataset.state = "error";
+    }
   });
 
   executionLedger.replay?.addEventListener("click", () => {
