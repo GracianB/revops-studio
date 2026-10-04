@@ -259,16 +259,23 @@ export function summariseQueue(queue) {
   };
 }
 
+export function normaliseForecastAssumptions(assumptions = {}) {
+  const defaults = { qualified: 0.80, nurture: 0.35, new: 0.10, downside: 0.75, upside: 1.15 };
+  const maxByKey = { qualified: 1, nurture: 1, new: 1, downside: 2, upside: 2 };
+  return Object.fromEntries(Object.keys(defaults).map((key) => {
+    const value = numeric(assumptions?.[key]);
+    return [key, Math.max(0, Math.min(maxByKey[key], value ?? defaults[key]))];
+  }));
+}
+
 export function forecastPipeline(leads, assumptions = {}) {
+  const normalizedForecast = normaliseForecastAssumptions(assumptions);
   const probabilities = {
-    qualified: Number.isFinite(Number(assumptions.qualified)) ? Number(assumptions.qualified) : 0.80,
-    nurture: Number.isFinite(Number(assumptions.nurture)) ? Number(assumptions.nurture) : 0.35,
-    new: Number.isFinite(Number(assumptions.new)) ? Number(assumptions.new) : 0.10,
+    qualified: normalizedForecast.qualified,
+    nurture: normalizedForecast.nurture,
+    new: normalizedForecast.new,
     blocked: 0
   };
-  Object.keys(probabilities).forEach((stage) => {
-    probabilities[stage] = Math.max(0, Math.min(1, probabilities[stage]));
-  });
 
   const active = leads.filter((lead) => lead.stage !== "blocked");
   const rows = active.map((lead) => {
@@ -325,10 +332,11 @@ export function forecastPipeline(leads, assumptions = {}) {
 
 export function forecastScenarios(leads, assumptions = {}) {
   const base = forecastPipeline(leads, assumptions);
+  const normalizedForecast = normaliseForecastAssumptions(assumptions);
   const multipliers = {
-    downside: Number.isFinite(Number(assumptions.downside)) ? Number(assumptions.downside) : 0.75,
+    downside: normalizedForecast.downside,
     base: 1,
-    upside: Number.isFinite(Number(assumptions.upside)) ? Number(assumptions.upside) : 1.15
+    upside: normalizedForecast.upside
   };
 
   return Object.fromEntries(Object.entries(multipliers).map(([name, multiplier]) => [
@@ -952,17 +960,7 @@ export function createRunSnapshot({
 } = {}) {
   const normalizedWeights = normaliseWeights(weights);
   const normalizedThresholds = normaliseThresholds(thresholds);
-  const normalizedForecast = Object.fromEntries(
-    ["qualified", "nurture", "new", "downside", "upside"].map((key) => {
-      const fallback = key === "qualified" ? 0.80 :
-        key === "nurture" ? 0.35 :
-          key === "new" ? 0.10 :
-            key === "downside" ? 0.75 : 1.15;
-      const max = ["downside", "upside"].includes(key) ? 2 : 1;
-      const value = numeric(forecast?.[key]) ?? fallback;
-      return [key, Math.max(0, Math.min(max, value))];
-    })
-  );
+  const normalizedForecast = normaliseForecastAssumptions(forecast);
   const payload = {
     records,
     source,
