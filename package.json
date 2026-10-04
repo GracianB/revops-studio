@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "validate": "node scripts/validate.mjs"
+    "validate": "node scripts/validate.mjs",
+    "verify": "npm test && npm run validate && node --check assets/js/app.js && node --check assets/js/thanks.js && node --check assets/js/revops-engine.js && node --check assets/js/csv-utils.js"
   }
 }
