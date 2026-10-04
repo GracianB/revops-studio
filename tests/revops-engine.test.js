@@ -15,6 +15,8 @@ import {
   forecastPipeline,
   forecastScenarios,
   normaliseThresholds,
+  normaliseIntelligenceConfig,
+  normaliseForecastAssumptions,
   transition,
   accountHealth,
   segmentIntelligence,
@@ -429,4 +431,33 @@ test("CSV parser preserves optional cohort context", async () => {
   const { parseCsv } = await import("../assets/js/csv-utils.js");
   const [row] = parseCsv("id,account,fit,intent,engagement,urgency,value,segment,cohort\nCO9,Acme,90,80,70,60,42000,Enterprise,2026-Q4");
   assert.equal(row.cohort, "2026-Q4");
+});
+
+
+test("intelligence configuration fails safe to deterministic defaults", () => {
+  const config = normaliseIntelligenceConfig({
+    staleDays: -10,
+    highValue: "bad",
+    ownerlessValue: 30000,
+    lowEngagement: 35
+  });
+  assert.equal(config.staleDays, 14);
+  assert.equal(config.highValue, 50000);
+  assert.equal(config.ownerlessValue, 30000);
+  assert.equal(config.lowEngagement, 35);
+});
+
+test("forecast assumptions clamp probabilities and multipliers independently", () => {
+  const config = normaliseForecastAssumptions({
+    qualified: 9,
+    nurture: -2,
+    new: "bad",
+    downside: 4,
+    upside: 1.5
+  });
+  assert.equal(config.qualified, 1);
+  assert.equal(config.nurture, 0);
+  assert.equal(config.new, 0.1);
+  assert.equal(config.downside, 2);
+  assert.equal(config.upside, 1.5);
 });
