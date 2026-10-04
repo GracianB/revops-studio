@@ -554,7 +554,7 @@ export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions 
     group.pipelineValue += numeric(lead.value) ?? 0;
     if (lead.stage === "qualified") group.qualifiedRecords += 1;
     if (typeof lead.score === "number") group.averageScore += lead.score;
-    if ((numeric(lead.lastTouchDays) ?? -1) > options.staleDays) group.staleRecords += 1;
+    if ((numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays) group.staleRecords += 1;
   });
 
   Object.values(groups).forEach((group) => {
