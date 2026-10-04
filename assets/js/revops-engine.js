@@ -584,6 +584,7 @@ export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions 
     if ((numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays) group.staleRecords += 1;
   });
 
+  const forecastByLeadId = new Map(forecast.rows.map((row) => [String(row.leadId), row]));
   Object.values(groups).forEach((group) => {
     group.qualifiedRate = group.activeRecords ? group.qualifiedRecords / group.activeRecords : 0;
     group.staleRate = group.activeRecords ? group.staleRecords / group.activeRecords : 0;
@@ -591,10 +592,7 @@ export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions 
     const cohortExact = rows
       .filter((lead) => String(lead?.[cohortKey] || "Unspecified").trim() === group.cohort)
       .filter((lead) => lead.stage !== "blocked")
-      .reduce((sum, lead) => {
-        const forecastRow = forecast.rows.find((row) => String(row.leadId) === String(lead.id));
-        return sum + (forecastRow?.expectedValueExact ?? 0);
-      }, 0);
+      .reduce((sum, lead) => sum + (forecastByLeadId.get(String(lead.id))?.expectedValueExact ?? 0), 0);
     group.expectedValue = Math.round(cohortExact);
   });
 
@@ -914,13 +912,13 @@ export function ownerIntelligence(leads, forecastAssumptions = {}, config = {}, 
 
   const ownerForecast = forecast.rows.reduce((map, row) => {
     const owner = row.owner;
-    map[owner] = (map[owner] || 0) + row.expectedValue;
+    map[owner] = (map[owner] || 0) + (row.expectedValueExact ?? row.expectedValue);
     return map;
   }, {});
 
   const totalPipeline = Object.values(groups).reduce((sum, item) => sum + item.pipelineValue, 0);
   Object.values(groups).forEach((group) => {
-    group.expectedValue = ownerForecast[group.owner] || 0;
+    group.expectedValue = Math.round(ownerForecast[group.owner] || 0);
     group.qualifiedRate = group.records ? group.qualifiedRecords / group.records : 0;
     group.staleRate = group.records ? group.staleRecords / group.records : 0;
     group.averageScore = group.records ? Math.round(group.averageScore / group.records) : 0;
