@@ -55,7 +55,7 @@ The active model can be compared with the baseline weights to expose promotions,
 
 ## Operational queue
 
-The control room translates pipeline state into a deterministic work queue with priority, operational lane, SLA and a reason for the proposed action. V7 adds configurable stage thresholds, a scenario matrix, baseline sensitivity analysis, local configuration sharing, deterministic run IDs and guarded CSV ingestion. It is deliberately simulation-only: no CRM, no database and no external execution.
+The control room translates pipeline state into a deterministic work queue with priority, operational lane, SLA and a reason for the proposed action. V8 adds reproducible local run history on top of V7: configuration and summary metrics can be revisited without storing imported records. It is deliberately simulation-only: no CRM, no database and no external execution.
 
 ## Engineering decisions
 
@@ -103,7 +103,7 @@ Diagnostic: 30–45 minutes, one process.
 
 ## Architecture notes
 
-See docs/OPERATING_MODEL.md for the complete decision loop and Control Room design.
+The Control Room also keeps a local history of run configuration and summary metrics for reproducibility. Dataset rows are never stored in that history. See docs/OPERATING_MODEL.md for the complete decision loop and Control Room design.
 
 ## Quality gates
 
