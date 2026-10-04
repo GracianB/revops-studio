@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="REVOPS STUDIO · Customer Success × Data × Operations × AI × Systems">
+  <meta property="og:title" content="REVOPS STUDIO · V14 Decision Operating System · CS × Data × AI × Systems">
   <meta property="og:description" content="Hiring Manager Mode · RevOps Studio público, Control Room, arquitectura determinista y proof técnico.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -54,7 +54,7 @@
   <link rel="stylesheet" href="./assets/css/main.css">
   <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
   <script type="module" src="./assets/js/app.js" defer></script>
-  <title>REVOPS STUDIO · Hiring Manager Mode · RevOps · Data · AI · Systems</title>
+  <title>REVOPS STUDIO · V14 Decision Operating System · RevOps · Data · AI · Systems</title>
 </head>
 
 <body>
@@ -98,7 +98,7 @@
 
 <div class="notice">
   <div class="notice-inner">
-    <span><strong>CONTROL ROOM · V13</strong> · diagnóstico 30 min · sistema público e inspeccionable</span>
+    <span><strong>CONTROL ROOM · V14</strong> · diagnóstico 30 min · sistema público e inspeccionable</span>
     <a class="text-link" href="#contacto">Ver el flujo ↘</a>
   </div>
 </div>
@@ -131,7 +131,7 @@
       <div class="terminal reveal" aria-label="Modelo de trabajo">
         <div class="terminal-top">
           <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span>METHOD / V13</span>
+          <span>METHOD / V14</span>
           <span>PUBLIC</span>
         </div>
         <div class="terminal-body">
@@ -186,7 +186,7 @@
           <span class="kicker">PRODUCT PROOF</span>
           <h3>RevOps Studio</h3>
           <p>Aplicación pública construida desde cero: scoring determinista, forecast, queue, health, segmentación, cohortes, reglas, anomalías, leakage y capa ejecutiva.</p>
-          <div class="proof-meta"><b>42 tests</b><span>local-first</span><span>no backend</span></div>
+          <div class="proof-meta"><b>49 tests</b><span>local-first</span><span>no backend</span></div>
         </article>
 
         <article class="proof-card reveal">
@@ -232,7 +232,7 @@
     <div class="shell">
       <div class="metrics reveal" aria-label="Prueba rápida">
         <div class="metric"><b>16+</b><span>años conectando negocio, cliente y tecnología</span></div>
-        <div class="metric"><b>42</b><span>tests deterministas en RevOps Studio</span></div>
+        <div class="metric"><b>49</b><span>tests deterministas en RevOps Studio</span></div>
         <div class="metric"><b>0</b><span>backend necesario para la demo</span></div>
         <div class="metric"><b>1</b><span>decisión visible de principio a fin</span></div>
       </div>
@@ -387,7 +387,7 @@
         <section class="intelligence-panel" aria-labelledby="intelligence-title">
           <div class="intelligence-head">
             <div>
-              <span class="kicker">Executive Intelligence · V11</span>
+              <span class="kicker">Executive Intelligence · ENGINE</span>
               <h3 id="intelligence-title">Del pipeline a una decisión ejecutiva.</h3>
             </div>
             <span class="kicker">DETERMINISTIC · LOCAL</span>
@@ -464,6 +464,43 @@
           </div>
 
           <textarea id="executiveBriefText" class="executive-brief-text" readonly aria-label="Executive brief generado"></textarea>
+        </section>
+
+        <section class="owner-matrix-panel" aria-labelledby="owner-matrix-title">
+          <div class="owner-matrix-head">
+            <div>
+              <span class="kicker">Owner operating matrix · V14</span>
+              <h3 id="owner-matrix-title">Quién carga qué parte del pipeline.</h3>
+            </div>
+            <span class="kicker">EXPECTED VALUE · RISK · SLA</span>
+          </div>
+          <p>Una vista operativa del portfolio por owner. La matriz ordena por expected value y conserva señales de carga, stale context y riesgo sin ejecutar acciones externas.</p>
+          <div class="owner-matrix-columns" aria-hidden="true">
+            <span>Owner</span><span>Pipeline</span><span>Expected</span><span>Operating signal</span>
+          </div>
+          <div id="ownerMatrix" class="owner-matrix" aria-live="polite"></div>
+        </section>
+
+        <section class="integration-boundary-panel" aria-labelledby="integration-boundary-title">
+          <div class="integration-boundary-head">
+            <div>
+              <span class="kicker">Integration boundary · V14</span>
+              <h3 id="integration-boundary-title">Dónde termina el sistema.</h3>
+            </div>
+            <span class="kicker">NO EXTERNAL EXECUTION</span>
+          </div>
+          <div class="integration-flow" aria-label="Límite de integración del sistema">
+            <div class="integration-node"><b>INPUT</b><span>Demo / CSV</span><small>LOCAL</small></div>
+            <span class="integration-arrow" aria-hidden="true">→</span>
+            <div class="integration-node"><b>DECISION</b><span>RevOps Engine</span><small>LOCAL</small></div>
+            <span class="integration-arrow" aria-hidden="true">→</span>
+            <div class="integration-node"><b>REVIEW</b><span>Human Gate</span><small>HUMAN</small></div>
+            <span class="integration-arrow" aria-hidden="true">→</span>
+            <div class="integration-node"><b>EXECUTION</b><span>Adapter boundary</span><small>NOT CONNECTED</small></div>
+            <span class="integration-arrow" aria-hidden="true">→</span>
+            <div class="integration-node"><b>AUDIT</b><span>Trace + events</span><small>LOCAL</small></div>
+          </div>
+          <p class="integration-note">El prototipo demuestra el contrato y el punto de corte. Un CRM, API o workflow externo se conectaría después mediante un adaptador de ejecución independiente.</p>
         </section>
 
         <div class="model-and-chart">
@@ -556,6 +593,55 @@
         <div class="inspection-panel" id="leadInspector" aria-live="polite">
           <div class="inspection-empty">Selecciona un registro. Verás las contribuciones de las señales, el estado y la acción propuesta.</div>
         </div>
+
+        <section class="decision-trace-panel" aria-labelledby="decision-trace-title">
+          <div class="decision-trace-head">
+            <div>
+              <span class="kicker">Decision Trace · V14</span>
+              <h3 id="decision-trace-title">Why did the system decide this?</h3>
+            </div>
+            <div class="trace-meta">
+              <span id="traceState" class="trace-state" data-state="none">NO RECORD</span>
+              <span id="traceRunId" class="kicker">CURRENT RUN</span>
+            </div>
+          </div>
+          <p>Una reconstrucción de la decisión desde inputs y calidad hasta propuesta, aprobación y frontera de ejecución. Nada se ejecuta desde esta vista.</p>
+          <div id="decisionTraceEmpty" class="trace-empty-state">Selecciona un registro de la tabla para abrir su trazabilidad.</div>
+          <div id="decisionTraceContent" hidden>
+            <div class="trace-grid">
+              <section class="trace-block" aria-labelledby="trace-inputs-title">
+                <span class="kicker" id="trace-inputs-title">INPUT</span>
+                <div id="traceInputs" class="trace-facts"></div>
+              </section>
+              <section class="trace-block" aria-labelledby="trace-decision-title">
+                <span class="kicker" id="trace-decision-title">DECISION</span>
+                <div id="traceDecision" class="trace-facts"></div>
+              </section>
+              <section class="trace-block" aria-labelledby="trace-commercial-title">
+                <span class="kicker" id="trace-commercial-title">COMMERCIAL CONTEXT</span>
+                <div id="traceCommercial" class="trace-facts"></div>
+              </section>
+              <section class="trace-block" aria-labelledby="trace-risk-title">
+                <span class="kicker" id="trace-risk-title">RISK / HEALTH</span>
+                <div id="traceRisk" class="trace-risk-list"></div>
+              </section>
+            </div>
+            <div class="trace-workflow">
+              <section class="trace-block">
+                <span class="kicker">PROPOSAL</span>
+                <div id="traceProposal" class="trace-facts"></div>
+              </section>
+              <section class="trace-block">
+                <span class="kicker">APPROVAL</span>
+                <div id="traceApproval" class="trace-facts"></div>
+              </section>
+              <section class="trace-block">
+                <span class="kicker">EXECUTION</span>
+                <div id="traceExecution" class="trace-facts"></div>
+              </section>
+            </div>
+          </div>
+        </section>
 
         <section class="queue-panel" aria-labelledby="queue-title">
           <div class="queue-head">
