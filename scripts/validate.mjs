@@ -10,6 +10,7 @@ const required = [
   "assets/js/app.js",
   "assets/js/thanks.js",
   "assets/js/revops-engine.js",
+  "assets/js/csv-utils.js",
   "tests/revops-engine.test.js"
 ];
 
@@ -52,7 +53,7 @@ const secretPatterns = [
 
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
-  "assets/js/thanks.js","assets/js/revops-engine.js","README.md"
+  "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js","README.md"
 ];
 
 for (const file of sourceFiles) {

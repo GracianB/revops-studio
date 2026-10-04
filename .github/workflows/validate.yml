@@ -35,3 +35,4 @@ jobs:
           node --check assets/js/app.js
           node --check assets/js/thanks.js
           node --check assets/js/revops-engine.js
+          node --check assets/js/csv-utils.js
