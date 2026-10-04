@@ -41,7 +41,6 @@ import {
   createOutcomeEvent
 } from "./outcome-engine.js";
 import {
-  CALIBRATION_CONTRACT_VERSION,
   buildCalibrationReport
 } from "./calibration-engine.js";
 
@@ -149,25 +148,16 @@ function formatEuro(value) {
 function buildCalibrationV19Report(forecastRows = [], outcomes = []) {
   const rows = Array.isArray(forecastRows) ? forecastRows : [];
   const events = Array.isArray(outcomes) ? outcomes : [];
-  const currentRows = rows.map((row) => ({
-    ...row,
-    observedSuccess: events
-      .filter((outcome) => String(outcome.leadId) === String(row.leadId))
-      .some((outcome) => outcome.terminal
-        ? outcome.type === "CLOSED_WON"
-        : outcome.positive)
-      ? 1
-      : 0
-  }));
   const storedBaseline = readCalibrationBaselineV19();
-  const baselineRows = storedBaseline.length ? storedBaseline : currentRows;
   const report = buildCalibrationReport({
     forecastRows: rows,
     outcomes: events,
-    baselineRows,
+    baselineRows: storedBaseline,
     thresholds: {}
   });
-  if (!storedBaseline.length && currentRows.length) writeCalibrationBaselineV19(currentRows);
+  if (!storedBaseline.length && report.rows.length) {
+    writeCalibrationBaselineV19(report.rows);
+  }
   return report;
 }
 function initCalculator() {
