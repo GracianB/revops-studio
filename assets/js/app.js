@@ -1,4 +1,4 @@
-import {
+import { parseCsv } from "./csv-utils.js";\nimport {
   DEFAULT_WEIGHTS,
   evaluateBatch,
   transition,
