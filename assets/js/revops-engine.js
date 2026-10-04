@@ -289,8 +289,9 @@ export function forecastPipeline(leads, assumptions = {}) {
 
   const pipelineValue = rows.reduce((sum, row) => sum + row.value, 0);
   const expectedValue = rows.reduce((sum, row) => sum + row.expectedValue, 0);
+  const leadById = new Map(leads.map((lead) => [String(lead.id), lead]));
   const weightedByScore = rows.reduce((sum, row) => {
-    const lead = leads.find((item) => String(item.id) === String(row.leadId));
+    const lead = leadById.get(String(row.leadId));
     const score = typeof lead?.score === "number" ? lead.score : 0;
     return sum + row.value * score / 100;
   }, 0);
@@ -317,6 +318,7 @@ export function forecastPipeline(leads, assumptions = {}) {
     expectedCoverage: pipelineValue ? expectedValue / pipelineValue : 0,
     activeRecords: rows.length,
     topAccounts,
+    topAccountShare: pipelineValue && topAccounts.length ? topAccounts[0].value / pipelineValue : 0,
     bySegment
   };
 }
