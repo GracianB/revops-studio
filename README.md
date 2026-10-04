@@ -27,7 +27,7 @@ human approval gate
 audit event
 \`\`\`
 
-Visitors can change model weights and inspect how the pipeline changes. The demo is deterministic and does not call a CRM, database or external API.
+Visitors can change model weights, switch scenarios, inspect per-record explanations, import a compatible CSV locally, export a run as JSON, and inspect the resulting operational queue. The demo is deterministic and does not call a CRM, database or external API.
 
 ## Architecture
 
@@ -48,6 +48,10 @@ Browser
 Brief:
 Form → sessionStorage → gracias.html → user-controlled email
 \`\`\`
+
+## Operational queue
+
+The control room translates pipeline state into a deterministic work queue with priority, operational lane, SLA and a reason for the proposed action. It is deliberately simulation-only: no CRM, no database and no external execution.
 
 ## Engineering decisions
 
