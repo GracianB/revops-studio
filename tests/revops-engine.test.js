@@ -187,3 +187,27 @@ test("run snapshot id is deterministic for identical inputs", () => {
   assert.equal(first.runId, second.runId);
   assert.match(first.runId, /^RUN-[0-9A-F]{8}$/);
 });
+
+
+test("CSV parser accepts European semicolon delimiters and multiline quoted fields", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  const result = parseCsv('id;account;fit;intent;engagement;urgency\nL1;"North; Inc.\nEU";90;80;70;60');
+  assert.equal(result[0].account, "North; Inc.\nEU");
+  assert.equal(result[0].fit, 90);
+});
+
+test("CSV parser rejects duplicate headers", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  assert.throws(
+    () => parseCsv("id,fit,fit,intent,engagement,urgency\nL1,90,80,70,60,50"),
+    /Columnas duplicadas/
+  );
+});
+
+test("CSV parser rejects oversized input", async () => {
+  const { parseCsv } = await import("../assets/js/csv-utils.js");
+  assert.throws(
+    () => parseCsv("id,fit,intent,engagement,urgency\n" + "x".repeat(2_000_001)),
+    /CSV demasiado grande/
+  );
+});
