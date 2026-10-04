@@ -1102,6 +1102,187 @@ export function buildDecisionTrace(lead, forecastAssumptions = {}, config = {}, 
   };
 }
 
+export function fingerprintRecords(records = []) {
+  const rows = Array.isArray(records) ? records : [];
+  return hashString(stableStringify(rows));
+}
+
+export function buildOperationalPlan(
+  leads,
+  forecastAssumptions = {},
+  config = {},
+  context = {}
+) {
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const runId = context.runId || createRunSnapshot({
+    records: evaluated,
+    weights: context.weights || DEFAULT_WEIGHTS,
+    thresholds: context.thresholds || DEFAULT_THRESHOLDS,
+    forecast: forecastAssumptions,
+    source: context.source || "demo",
+    scenario: context.scenario || "balanced"
+  }).runId;
+  const now = context.now || new Date().toISOString();
+  const queue = buildActionQueue(evaluated, now);
+  const traces = new Map(
+    evaluated.map((lead) => [
+      String(lead.id),
+      buildDecisionTrace(lead, forecastAssumptions, config, { runId })
+    ])
+  );
+
+  const actions = queue.map((item) => {
+    const trace = traces.get(String(item.leadId));
+    const envelope = trace
+      ? {
+          from: trace.proposal.from,
+          to: trace.proposal.to,
+          action: trace.proposal.action,
+          approvalRequired: trace.approval.required
+        }
+      : {
+          from: item.stage,
+          to: null,
+          action: item.action,
+          approvalRequired: item.stage === "qualified" || item.stage === "blocked"
+        };
+
+    return {
+      rank: actionsRankPlaceholder,
+      leadId: item.leadId,
+      account: item.account,
+      stage: item.stage,
+      priority: item.priority,
+      lane: item.lane,
+      action: item.action,
+      slaHours: item.slaHours,
+      dueAt: item.dueAt,
+      queueScore: item.queueScore,
+      proposal: envelope,
+      state: envelope.approvalRequired ? "PENDING_APPROVAL" : "READY_FOR_SIMULATION",
+      execution: "NOT_EXECUTED"
+    };
+  }).map((item, index) => ({ ...item, rank: index + 1 }));
+
+  const summary = {
+    total: actions.length,
+    ready: actions.filter((item) => item.state === "READY_FOR_SIMULATION").length,
+    approvalPending: actions.filter((item) => item.state === "PENDING_APPROVAL").length,
+    blocked: evaluated.filter((lead) => lead.stage === "blocked").length,
+    urgent: actions.filter((item) => item.priority === "critical" || item.priority === "high").length
+  };
+
+  return {
+    contractVersion: "15.0",
+    runId,
+    createdAt: now,
+    datasetFingerprint: fingerprintRecords(evaluated),
+    summary,
+    actions,
+    externalExecution: {
+      enabled: false,
+      mode: "SIMULATION_ONLY",
+      adapter: "NOT_CONNECTED",
+      calls: 0
+    }
+  };
+}
+
+export function buildRunArtifact(
+  leads,
+  forecastAssumptions = {},
+  config = {},
+  context = {}
+) {
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const analysis = buildRunAnalysis(evaluated, forecastAssumptions, config);
+  const snapshot = createRunSnapshot({
+    records: evaluated,
+    weights: context.weights || DEFAULT_WEIGHTS,
+    thresholds: context.thresholds || DEFAULT_THRESHOLDS,
+    forecast: forecastAssumptions,
+    source: context.source || "demo",
+    scenario: context.scenario || "balanced"
+  });
+  const workflow = buildOperationalPlan(
+    evaluated,
+    forecastAssumptions,
+    config,
+    {
+      runId: snapshot.runId,
+      now: context.now || new Date().toISOString()
+    }
+  );
+
+  return {
+    contractVersion: "15.0",
+    artifactType: "REVOPS_RUN_ARTIFACT",
+    exportedAt: context.now || new Date().toISOString(),
+    runId: snapshot.runId,
+    dataset: {
+      source: context.source || "demo",
+      recordCount: evaluated.length,
+      fingerprint: fingerprintRecords(evaluated)
+    },
+    configuration: {
+      weights: normaliseWeights(context.weights || DEFAULT_WEIGHTS),
+      thresholds: normaliseThresholds(context.thresholds || DEFAULT_THRESHOLDS),
+      forecast: normaliseForecastAssumptions(forecastAssumptions),
+      scenario: context.scenario || "balanced"
+    },
+    summary: {
+      pipeline: analysis.pipeline,
+      commercial: analysis.commercial,
+      forecast: analysis.forecast,
+      scenarios: analysis.scenarios,
+      intelligence: {
+        signal: analysis.intelligence.signal,
+        health: analysis.intelligence.health,
+        leakage: analysis.intelligence.leakage,
+        rules: analysis.intelligence.rules.total,
+        anomalies: analysis.intelligence.anomalies.total
+      }
+    },
+    workflow,
+    decisions: evaluated.map((lead) => ({
+      leadId: lead.id,
+      account: lead.account || "Unnamed account",
+      score: typeof lead.score === "number" ? lead.score : null,
+      stage: lead.stage || "blocked",
+      nextAction: lead.nextAction || nextAction(lead),
+      execution: "NOT_EXECUTED"
+    }))
+  };
+}
+
+export function verifyRunArtifact(artifact, leads) {
+  if (!artifact || artifact.artifactType !== "REVOPS_RUN_ARTIFACT") {
+    return {
+      valid: false,
+      reason: "Invalid run artifact.",
+      checks: { artifactType: false, fingerprint: false, recordCount: false }
+    };
+  }
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const fingerprint = fingerprintRecords(evaluated);
+  const expectedFingerprint = artifact.dataset?.fingerprint || null;
+  const recordCount = Number(artifact.dataset?.recordCount);
+  const checks = {
+    artifactType: true,
+    fingerprint: fingerprint === expectedFingerprint,
+    recordCount: evaluated.length === recordCount
+  };
+  return {
+    valid: Object.values(checks).every(Boolean),
+    reason: Object.values(checks).every(Boolean)
+      ? "Artifact matches the currently loaded dataset."
+      : "Artifact does not match the currently loaded dataset.",
+    checks,
+    fingerprint,
+    expectedFingerprint
+  };
+}
+
 function formatBriefMoney(value) {
   return new Intl.NumberFormat("en-IE", {
     style: "currency",
