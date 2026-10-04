@@ -417,3 +417,55 @@ The replay control compares the artifact fingerprint and record count with the d
 This makes the proof surface closer to an auditable operating loop:
 
 **decide → plan → review → verify → stop at the integration boundary.**
+
+## V16 · Replay before execution
+
+V16 adds a pre-execution control loop:
+
+```text
+DECIDE
+  ↓
+PLAN
+  ↓
+PREVIEW IMPACT
+  ↓
+APPROVE
+  ↓
+BUILD CONTRACT
+  ↓
+EXECUTE THROUGH ADAPTER
+```
+
+### Impact preview
+
+The impact preview answers a practical operator question before any write occurs: **what would change if the current plan were applied?**
+
+It reports proposed actions, changes that are safe to simulate immediately, approval-pending work, and projected stage deltas. The source dataset remains untouched.
+
+### Replay integrity
+
+A V16 run artifact contains both dataset and workflow identities. Replay verification checks:
+
+- artifact type;
+- dataset fingerprint;
+- record count;
+- workflow action digest;
+- decision digest.
+
+A matching dataset with a modified workflow artifact is rejected.
+
+### Integration contract
+
+The execution adapter now exposes a structured dry-run contract with an idempotency key and explicit invariants:
+
+`dryRun = true`
+
+`canExecute = false`
+
+`externalCalls = 0`
+
+`state = NOT_EXECUTED`
+
+`mode = SIMULATION_ONLY`
+
+The prototype therefore demonstrates the shape of a production handoff without pretending that a CRM write already exists.

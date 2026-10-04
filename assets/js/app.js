@@ -17,6 +17,7 @@ import {
   buildRunAnalysis,
   buildDecisionTrace,
   buildOperationalPlan,
+  buildWorkflowImpact,
   buildRunArtifact,
   verifyRunArtifact
 } from "./revops-engine.js";
@@ -286,6 +287,14 @@ function initPlayground() {
     replayInput: qs("#replayArtifact"),
     replayStatus: qs("#replayStatus"),
     verifyReplay: qs("#verifyReplayArtifact")
+  };
+  const workflowImpact = {
+    proposed: qs("#impactProposed"),
+    applied: qs("#impactApplied"),
+    pending: qs("#impactPending"),
+    qualificationDelta: qs("#impactQualificationDelta"),
+    stageDelta: qs("#impactStageDelta"),
+    preview: qs("#previewWorkflowImpact")
   };
   const decisionTrace = {
     state: qs("#traceState"),
@@ -911,6 +920,20 @@ function initPlayground() {
            });
          }
        }
+
+       if (workflowImpact.proposed) {
+         const impactResult = buildWorkflowImpact(evaluated, plan);
+         workflowImpact.proposed.textContent = String(impactResult.summary.proposed);
+         workflowImpact.applied.textContent = String(impactResult.summary.applied);
+         workflowImpact.pending.textContent = String(impactResult.summary.pendingApproval);
+         workflowImpact.qualificationDelta.textContent =
+           (impactResult.qualificationDelta > 0 ? "+" : "") + impactResult.qualificationDelta;
+         workflowImpact.stageDelta.textContent =
+           "Q " + (impactResult.stageDelta.qualified > 0 ? "+" : "") + impactResult.stageDelta.qualified +
+           " · N " + (impactResult.stageDelta.nurture > 0 ? "+" : "") + impactResult.stageDelta.nurture +
+           " · New " + (impactResult.stageDelta.new > 0 ? "+" : "") + impactResult.stageDelta.new +
+           " · Blocked " + (impactResult.stageDelta.blocked > 0 ? "+" : "") + impactResult.stageDelta.blocked;
+       }
      }
 
      Object.entries(bars).forEach(([stage, bar]) => {
@@ -1355,12 +1378,12 @@ function initPlayground() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "revops-v15-" + artifact.runId.toLowerCase() + ".json";
+    anchor.download = "revops-v16-" + artifact.runId.toLowerCase() + ".json";
     anchor.click();
     URL.revokeObjectURL(url);
-    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V15 run artifact generated without raw records"));
+    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V16 run artifact generated without raw records"));
     status.dataset.state = "ok";
-    status.textContent = "Run artifact V15 generado: identidad, integridad y workflow, sin filas CSV.";
+    status.textContent = "Run artifact V16 generado: identidad, integridad y workflow, sin filas CSV.";
   });
 
 
@@ -1437,6 +1460,25 @@ function initPlayground() {
 
   workflowControl.artifact?.addEventListener("click", () => {
     qs("#exportDemo")?.click();
+  });
+
+  workflowImpact.preview?.addEventListener("click", () => {
+    if (!lastWorkflowPlan) return;
+    const impactResult = buildWorkflowImpact(evaluated, lastWorkflowPlan);
+    workflowImpact.proposed.textContent = String(impactResult.summary.proposed);
+    workflowImpact.applied.textContent = String(impactResult.summary.applied);
+    workflowImpact.pending.textContent = String(impactResult.summary.pendingApproval);
+    workflowImpact.qualificationDelta.textContent =
+      (impactResult.qualificationDelta > 0 ? "+" : "") + impactResult.qualificationDelta;
+    workflowImpact.stageDelta.textContent =
+      "Q " + (impactResult.stageDelta.qualified > 0 ? "+" : "") + impactResult.stageDelta.qualified +
+      " · N " + (impactResult.stageDelta.nurture > 0 ? "+" : "") + impactResult.stageDelta.nurture +
+      " · New " + (impactResult.stageDelta.new > 0 ? "+" : "") + impactResult.stageDelta.new +
+      " · Blocked " + (impactResult.stageDelta.blocked > 0 ? "+" : "") + impactResult.stageDelta.blocked;
+    status.dataset.state = "ok";
+    status.textContent = impactResult.summary.applied +
+      " acciones no sensibles proyectadas. Las acciones sensibles permanecen pendientes de aprobación.";
+    addAudit(auditEvent("WORKFLOW_IMPACT_PREVIEW", { id: lastWorkflowPlan.runId }, "V16 impact preview"));
   });
 
   workflowControl.verifyReplay?.addEventListener("click", () => {

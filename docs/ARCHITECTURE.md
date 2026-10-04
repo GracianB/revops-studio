@@ -184,3 +184,27 @@ The workflow plan is still a pure local calculation. It does not perform network
 `buildRunArtifact()` exports the run contract without raw records. It includes a dataset fingerprint, configuration, aggregate analysis, workflow plan and decision outcomes. `verifyRunArtifact()` checks the fingerprint and record count against the currently loaded dataset.
 
 `assets/js/execution-adapter.js` is deliberately small. It validates the handoff contract and returns `NOT_EXECUTED / SIMULATION_ONLY` rather than pretending that a CRM integration exists.
+
+## V16 · Workflow replay and impact
+
+V16 adds a pure preview layer between the operational plan and an eventual external adapter:
+
+```text
+Decision Trace
+    ↓
+Operational Plan
+    ↓
+Impact Preview
+    ↓
+Human Approval
+    ↓
+Integration Contract
+    ↓
+External Adapter boundary
+```
+
+`buildWorkflowImpact()` projects stage changes without mutating the loaded dataset. Non-sensitive proposals can be projected; sensitive transitions remain pending unless an explicit approval set is supplied.
+
+`buildActionDigest()` and `buildDecisionDigest()` provide stable workflow and decision identities that survive rerendering while excluding volatile timestamps from the workflow digest.
+
+`buildReplayReport()` combines dataset fingerprint, workflow digest and decision integrity into one replay result.

@@ -31,8 +31,11 @@ import {
   buildDecisionTrace,
   fingerprintRecords,
   buildOperationalPlan,
+  buildWorkflowImpact,
   buildRunArtifact,
-  verifyRunArtifact
+  verifyRunArtifact,
+  buildActionDigest,
+  buildDecisionDigest
 } from "../assets/js/revops-engine.js";
 
 test("weights are normalised to 1", () => {
@@ -623,7 +626,7 @@ test("operational plan turns queue work into explicit approval and execution sta
     runId:"RUN-V15-OP",
     now:"2026-10-04T20:00:00.000Z"
   });
-  assert.equal(plan.contractVersion, "15.0");
+  assert.equal(plan.contractVersion, "16.0");
   assert.equal(plan.runId, "RUN-V15-OP");
   assert.equal(plan.datasetFingerprint, fingerprintRecords(leads));
   assert.equal(plan.externalExecution.enabled, false);
@@ -698,4 +701,122 @@ test("execution adapter creates a simulation-only envelope for sensitive approva
   assert.equal(result.executed, false);
   assert.equal(result.state, "NOT_EXECUTED");
   assert.equal(result.code, "ADAPTER_NOT_CONNECTED");
+});
+
+
+test("workflow action digest ignores due dates and remains deterministic across rerenders", () => {
+  const leads = evaluateBatch([
+    { id:"V16-DIGEST-1", fit:80, intent:80, engagement:80, urgency:80, value:20000 }
+  ]);
+  const first = buildOperationalPlan(leads, {}, {}, {
+    runId:"RUN-V16-DIGEST",
+    now:"2026-10-04T20:00:00.000Z"
+  });
+  const second = buildOperationalPlan(leads, {}, {}, {
+    runId:"RUN-V16-DIGEST",
+    now:"2026-10-05T20:00:00.000Z"
+  });
+  assert.notEqual(first.actions[0].dueAt, second.actions[0].dueAt);
+  assert.equal(first.actionDigest, second.actionDigest);
+  assert.equal(first.actionDigest, buildActionDigest(first.actions));
+});
+
+test("workflow impact applies non-sensitive proposals but leaves sensitive work pending", () => {
+  const leads = evaluateBatch([
+    { id:"V16-IMPACT-1", fit:10, intent:10, engagement:10, urgency:10, value:10000 },
+    { id:"V16-IMPACT-2", fit:50, intent:50, engagement:50, urgency:50, value:20000 }
+  ]);
+  const plan = buildOperationalPlan(leads, {}, {}, { runId:"RUN-V16-IMPACT" });
+  const impact = buildWorkflowImpact(leads, plan);
+  assert.equal(impact.summary.applied, 1);
+  assert.equal(impact.summary.pendingApproval, 1);
+  assert.equal(impact.stageDelta.nurture, 1);
+  assert.equal(impact.qualificationDelta, 0);
+});
+
+test("workflow impact applies sensitive proposal only with explicit approval", () => {
+  const [lead] = evaluateBatch([
+    { id:"V16-APPROVAL", fit:50, intent:50, engagement:50, urgency:50, value:20000 }
+  ]);
+  const plan = buildOperationalPlan([lead]);
+  const pending = buildWorkflowImpact([lead], plan);
+  const approved = buildWorkflowImpact([lead], plan, { "V16-APPROVAL": true });
+  assert.equal(pending.summary.pendingApproval, 1);
+  assert.equal(pending.qualificationDelta, 0);
+  assert.equal(approved.summary.applied, 1);
+  assert.equal(approved.qualificationDelta, 1);
+  assert.equal(approved.projectedPipeline.byStage.qualified, 1);
+});
+
+test("run artifact replay detects workflow drift even when dataset fingerprint matches", () => {
+  const leads = evaluateBatch([
+    { id:"V16-REPLAY", fit:50, intent:50, engagement:50, urgency:50, value:20000 }
+  ]);
+  const artifact = buildRunArtifact(leads, { nurture:0.35 }, {}, {
+    runId:"RUN-V16-REPLAY",
+    now:"2026-10-04T20:00:00.000Z",
+    source:"demo",
+    scenario:"balanced"
+  });
+  const tampered = {
+    ...artifact,
+    workflow: {
+      ...artifact.workflow,
+      actionDigest: "tampered"
+    }
+  };
+  const report = verifyRunArtifact(tampered, leads);
+  assert.equal(report.checks.fingerprint, true);
+  assert.equal(report.checks.recordCount, true);
+  assert.equal(report.checks.workflow, false);
+  assert.equal(report.valid, false);
+});
+
+test("decision digest changes when a decision outcome changes", () => {
+  const first = buildDecisionDigest([
+    { leadId:"D1", score:50, stage:"nurture", nextAction:"Add context", execution:"NOT_EXECUTED" }
+  ]);
+  const second = buildDecisionDigest([
+    { leadId:"D1", score:75, stage:"qualified", nextAction:"Human review", execution:"NOT_EXECUTED" }
+  ]);
+  assert.notEqual(first, second);
+});
+
+test("integration contract stays dry-run and validates its invariants", async () => {
+  const {
+    createExecutionEnvelope,
+    createIntegrationContract,
+    validateIntegrationContract
+  } = await import("../assets/js/execution-adapter.js");
+  const trace = buildDecisionTrace(
+    scoreLead({ id:"V16-CONTRACT", fit:50, intent:50, engagement:50, urgency:50, value:20000 }),
+    {}
+  );
+  const envelope = createExecutionEnvelope(trace, { approvalStatus:"approved" });
+  const contract = createIntegrationContract(envelope, { timeoutMs:3000 });
+  const validation = validateIntegrationContract(contract);
+  assert.equal(contract.contractVersion, "16.0");
+  assert.equal(contract.dryRun, true);
+  assert.equal(contract.canExecute, false);
+  assert.equal(contract.invariants.externalCalls, 0);
+  assert.equal(contract.invariants.state, "NOT_EXECUTED");
+  assert.equal(validation.valid, true);
+});
+
+test("blocked decision cannot produce a valid integration contract", async () => {
+  const { createExecutionEnvelope, createIntegrationContract, validateIntegrationContract } =
+    await import("../assets/js/execution-adapter.js");
+  const trace = buildDecisionTrace(
+    scoreLead({ id:"V16-BLOCKED", fit:50, intent:"bad", engagement:50, urgency:50 }),
+    {}
+  );
+  const envelope = createExecutionEnvelope(trace, { approvalStatus:"approved" });
+  const contract = createIntegrationContract(envelope);
+  const validation = validateIntegrationContract({
+    ...contract,
+    canExecute: envelope.valid
+  });
+  assert.equal(envelope.valid, false);
+  assert.equal(contract.canExecute, false);
+  assert.equal(validation.valid, true);
 });
