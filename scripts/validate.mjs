@@ -55,7 +55,7 @@ const secretPatterns = [
   /Bearer [A-Za-z0-9._-]{20,}/i
 ];
 
-const localImports = [...appJs.matchAll(/import\s+.*?from\s*["'](\.\/[^"']+)["']/g)].map((match) => match[1]);
+const localImports = [...appJs.matchAll(/from\s*["'](\.\/[^"']+)["']/g)].map((match) => match[1]);
 for (const ref of localImports) {
   const target = path.normalize(path.join(root, "assets/js", ref));
   if (!fs.existsSync(target)) fail("broken JS import: " + ref);
