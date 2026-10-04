@@ -36,15 +36,18 @@ test("invalid data fails closed into blocked", () => {
   assert.equal(lead.score, null);
 });
 
-test("pipeline summary exposes qualification rate", () => {
+test("pipeline summary exposes qualification rate and blocked records", () => {
   const result = summarisePipeline(evaluateBatch([
     { id:"A", fit:100, intent:100, engagement:100, urgency:100 },
-    { id:"B", fit:50, intent:50, engagement:50, urgency:50 }
+    { id:"B", fit:50, intent:50, engagement:50, urgency:50 },
+    { id:"C", fit:50, intent:"bad", engagement:50, urgency:50 }
   ]));
-  assert.equal(result.total, 2);
+  assert.equal(result.total, 3);
   assert.equal(result.scored, 2);
+  assert.equal(result.qualityIssues, 1);
   assert.equal(result.byStage.qualified, 1);
   assert.equal(result.byStage.nurture, 1);
+  assert.equal(result.byStage.blocked, 1);
   assert.equal(result.qualificationRate, 0.5);
 });
 
