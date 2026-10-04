@@ -1378,12 +1378,12 @@ function initPlayground() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "revops-v15-" + artifact.runId.toLowerCase() + ".json";
+    anchor.download = "revops-v16-" + artifact.runId.toLowerCase() + ".json";
     anchor.click();
     URL.revokeObjectURL(url);
-    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V15 run artifact generated without raw records"));
+    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V16 run artifact generated without raw records"));
     status.dataset.state = "ok";
-    status.textContent = "Run artifact V15 generado: identidad, integridad y workflow, sin filas CSV.";
+    status.textContent = "Run artifact V16 generado: identidad, integridad y workflow, sin filas CSV.";
   });
 
 
