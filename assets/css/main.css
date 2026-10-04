@@ -1133,7 +1133,7 @@ textarea.form-control{min-height:145px;resize:vertical}
   margin:10px 0 12px;color:var(--muted);font:500 10px/1.45 var(--mono)
 }
 .execution-ledger-metrics{
-  display:grid;grid-template-columns:repeat(5,1fr);gap:7px
+  display:grid;grid-template-columns:repeat(6,1fr);gap:7px
 }
 .execution-ledger-metric{
   min-height:70px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg-2)
@@ -1170,7 +1170,7 @@ textarea.form-control{min-height:145px;resize:vertical}
 @media (max-width:760px){
   .execution-ledger-head{flex-direction:column}
   .execution-ledger-head .btn{width:100%;justify-content:center}
-  .execution-ledger-metrics{grid-template-columns:1fr 1fr}
+  .execution-ledger-metrics{grid-template-columns:repeat(3,1fr)
   .ledger-events{grid-template-columns:1fr 1fr}
 }
 @media (max-width:480px){
