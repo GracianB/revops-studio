@@ -1148,7 +1148,7 @@ export function buildOperationalPlan(
         };
 
     return {
-      rank: actionsRankPlaceholder,
+      rank: 0,
       leadId: item.leadId,
       account: item.account,
       stage: item.stage,
