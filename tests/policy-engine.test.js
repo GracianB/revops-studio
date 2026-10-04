@@ -52,7 +52,7 @@ test("V21 blocks a stable report", () => {
     now
   });
   assert.equal(proposal.status, "BLOCKED");
-  assert.equal(proposal.reason, "NO_MATERIAL_DRIFT");
+  assert.equal(proposal.reason, "GLOBAL_DRIFT_REQUIRED");
   assert.equal(proposal.eligible, false);
 });
 
