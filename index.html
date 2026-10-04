@@ -51,7 +51,7 @@
 
   <link rel="stylesheet" href="./assets/css/main.css">
   <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
-  <script defer src="./assets/js/app.js"></script>
+  <script type="module" src="./assets/js/app.js" defer></script>
   <title>REVOPS STUDIO · Sistemas que trabajan contigo</title>
 </head>
 
@@ -83,6 +83,7 @@
 
   <div class="mobile-nav" id="mobileNav">
     <a href="#sistema">Sistema</a>
+    <a href="#playground">Playground</a>
     <a href="#oferta">Oferta</a>
     <a href="#servicios">Servicios</a>
     <a href="#ecosistema">Ecosistema</a>
@@ -174,6 +175,60 @@
     </div>
   </section>
 
+<section class="section" id="playground" aria-labelledby="playground-title">
+  <div class="shell">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Technical Playground</span>
+        <h2 id="playground-title">Un pequeño motor. Datos sintéticos. Reglas visibles.</h2>
+      </div>
+      <p>Demo ejecutable de una capa RevOps: datos estructurados → scoring → estado → siguiente acción → trazabilidad. No toca ningún CRM real.</p>
+    </div>
+    <div class="playground-grid">
+      <article class="playground-main reveal">
+        <div class="playground-top">
+          <div><span class="kicker">LOCAL / SYNTHETIC</span><h3>Pipeline evaluator</h3></div>
+          <div class="playground-actions">
+            <button class="btn btn-secondary demo-btn" id="resetDemo" type="button">Reiniciar</button>
+            <button class="btn btn-primary demo-btn" id="runDemo" type="button">Evaluar lote →</button>
+          </div>
+        </div>
+        <div class="playground-metrics" aria-live="polite">
+          <div class="playground-metric"><b id="demoTotal">0</b><span>registros</span></div>
+          <div class="playground-metric"><b id="demoQualified">0</b><span>qualified</span></div>
+          <div class="playground-metric"><b id="demoNurture">0</b><span>nurture</span></div>
+          <div class="playground-metric"><b id="demoAvgScore">0</b><span>score medio</span></div>
+        </div>
+        <div class="demo-table-wrap">
+          <table class="demo-table">
+            <caption>Dataset sintético de ejemplo</caption>
+            <thead><tr><th scope="col">ID</th><th scope="col">Cuenta</th><th scope="col">Score</th><th scope="col">Estado</th><th scope="col">Siguiente acción</th></tr></thead>
+            <tbody id="demoRows"></tbody>
+          </table>
+        </div>
+      </article>
+      <aside class="playground-side reveal">
+        <div class="side-block">
+          <span class="kicker">Rule trace</span>
+          <div class="rule"><code>score = fit×.35 + intent×.30 + engagement×.20 + urgency×.15</code></div>
+          <div class="rule"><code>score ≥ 75 → qualified</code></div>
+          <div class="rule"><code>50–74 → nurture</code></div>
+          <div class="rule"><code>&lt; 50 → new</code></div>
+        </div>
+        <div class="side-block">
+          <span class="kicker">Execution gate</span>
+          <p class="side-copy">El motor puede clasificar. No puede ejecutar una transición sensible sin aprobación humana.</p>
+          <button class="btn btn-secondary gate-btn" id="approveDemo" type="button">Simular aprobación humana</button>
+          <p class="form-status" id="demoStatus" role="status" aria-live="polite"></p>
+        </div>
+        <div class="side-block">
+          <span class="kicker">Audit log</span>
+          <div id="auditLog" class="audit-log" aria-live="polite"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
   <section class="section" aria-labelledby="calc-title">
     <div class="shell">
       <div class="calculator reveal">
