@@ -1,6 +1,6 @@
 /**
  * RevOps Studio execution adapter boundary.
- * V15: creates validated execution envelopes but never performs network calls.
+ * V17: creates validated execution envelopes but never performs network calls.
  */
 
 const ADAPTER_STATUS = Object.freeze({
@@ -51,7 +51,7 @@ export function createExecutionEnvelope(trace, context = {}) {
   };
 
   return Object.freeze({
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     envelopeId: "ENV-" + hashEnvelope(payload).toUpperCase(),
     adapter: "CRM_PLACEHOLDER",
     status: ADAPTER_STATUS.NOT_CONNECTED,
@@ -67,7 +67,7 @@ export function createExecutionEnvelope(trace, context = {}) {
 }
 
 export function simulateExecution(envelope) {
-  if (!envelope || envelope.contractVersion !== "16.0" || envelope.canExecute !== false) {
+  if (!envelope || envelope.contractVersion !== "17.0" || envelope.canExecute !== false) {
     return {
       ok: false,
       executed: false,
@@ -102,7 +102,7 @@ export function createIntegrationContract(envelope, context = {}) {
   const idempotencyKey = "IDEMP-" + hashEnvelope(payload).toUpperCase();
 
   return Object.freeze({
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     contractType: "REVOPS_EXECUTION_CONTRACT",
     idempotencyKey,
     envelopeId: safe.envelopeId || null,
@@ -114,6 +114,11 @@ export function createIntegrationContract(envelope, context = {}) {
     authRequired: false,
     timeoutMs: Number.isFinite(Number(context.timeoutMs)) ? Number(context.timeoutMs) : 5000,
     payload,
+    envelopeValid: safe.valid === true,
+    approval: Object.freeze({
+      required: safe.approval?.required === true,
+      status: normaliseText(safe.approval?.status, "pending")
+    }),
     invariants: Object.freeze({
       externalCalls: 0,
       state: "NOT_EXECUTED",
@@ -124,16 +129,19 @@ export function createIntegrationContract(envelope, context = {}) {
 
 export function validateIntegrationContract(contract) {
   const required = [
-    contract?.contractVersion === "16.0",
+    contract?.contractVersion === "17.0",
     contract?.contractType === "REVOPS_EXECUTION_CONTRACT",
     contract?.dryRun === true,
     contract?.canExecute === false,
+    contract?.envelopeValid === true,
     contract?.adapter === "CRM_PLACEHOLDER",
     contract?.endpoint === null,
     contract?.invariants?.externalCalls === 0,
     contract?.invariants?.state === "NOT_EXECUTED",
     contract?.invariants?.mode === "SIMULATION_ONLY",
-    Boolean(String(contract?.idempotencyKey || "").trim())
+    Boolean(String(contract?.idempotencyKey || "").trim()),
+    contract?.approval?.required !== true ||
+      contract?.approval?.status === "approved"
   ];
   return {
     valid: required.every(Boolean),
@@ -142,14 +150,74 @@ export function validateIntegrationContract(contract) {
       type: required[1],
       dryRun: required[2],
       canExecute: required[3],
-      adapter: required[4],
-      endpoint: required[5],
-      noExternalCalls: required[6],
-      state: required[7],
-      mode: required[8],
-      idempotencyKey: required[9]
+      envelopeValid: required[4],
+      adapter: required[5],
+      endpoint: required[6],
+      noExternalCalls: required[7],
+      state: required[8],
+      mode: required[9],
+      idempotencyKey: required[10]
     }
   };
+}
+
+export function simulateIntegrationContract(contract, context = {}) {
+  const validation = validateIntegrationContract(contract);
+  if (!validation.valid) {
+    return Object.freeze({
+      ok: false,
+      executed: false,
+      state: "REJECTED",
+      status: "REJECTED",
+      mode: ADAPTER_STATUS.SIMULATION_ONLY,
+      externalCalls: 0,
+      code: "INVALID_INTEGRATION_CONTRACT",
+      validation
+    });
+  }
+
+  const outcomePayload = {
+    idempotencyKey: contract.idempotencyKey,
+    envelopeId: contract.envelopeId,
+    operation: contract.operation,
+    payload: contract.payload
+  };
+  const outcomeId = "SIM-" + hashEnvelope(outcomePayload).toUpperCase();
+  return Object.freeze({
+    ok: true,
+    executed: false,
+    state: "SIMULATED",
+    status: "SIMULATED",
+    mode: ADAPTER_STATUS.SIMULATION_ONLY,
+    adapter: contract.adapter,
+    outcomeId,
+    envelopeId: contract.envelopeId,
+    idempotencyKey: contract.idempotencyKey,
+    externalCalls: 0,
+    simulatedAt: String(context.at || "").trim() || new Date().toISOString(),
+    message: "Simulation completed locally. No external side effects were performed."
+  });
+}
+
+export function createExecutionEvent(simulation, contract, context = {}) {
+  const result = simulation || {};
+  const safeContract = contract || {};
+  return Object.freeze({
+    type: result.ok ? "EXECUTION_SIMULATED" : "EXECUTION_BLOCKED",
+    runId: safeContract.payload?.runId || null,
+    leadId: safeContract.payload?.leadId || null,
+    idempotencyKey: safeContract.idempotencyKey || null,
+    actor: String(context.actor || "system").trim() || "system",
+    status: result.status || result.state || "REJECTED",
+    at: String(context.at || result.simulatedAt || "").trim() || new Date().toISOString(),
+    payload: {
+      outcomeId: result.outcomeId || null,
+      envelopeId: safeContract.envelopeId || null,
+      adapter: safeContract.adapter || "CRM_PLACEHOLDER",
+      externalCalls: result.externalCalls ?? 0,
+      mode: result.mode || ADAPTER_STATUS.SIMULATION_ONLY
+    }
+  });
 }
 
 export const EXECUTION_ADAPTER_STATUS = ADAPTER_STATUS;

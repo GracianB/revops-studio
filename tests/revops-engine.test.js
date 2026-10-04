@@ -35,7 +35,12 @@ import {
   buildRunArtifact,
   verifyRunArtifact,
   buildActionDigest,
-  buildDecisionDigest
+  buildDecisionDigest,
+  createExecutionLedger,
+  appendExecutionEvent,
+  verifyExecutionLedger,
+  replayExecutionLedger,
+  buildExecutionLedger
 } from "../assets/js/revops-engine.js";
 
 test("weights are normalised to 1", () => {
@@ -626,7 +631,7 @@ test("operational plan turns queue work into explicit approval and execution sta
     runId:"RUN-V15-OP",
     now:"2026-10-04T20:00:00.000Z"
   });
-  assert.equal(plan.contractVersion, "16.0");
+  assert.equal(plan.contractVersion, "17.0");
   assert.equal(plan.runId, "RUN-V15-OP");
   assert.equal(plan.datasetFingerprint, fingerprintRecords(leads));
   assert.equal(plan.externalExecution.enabled, false);
@@ -795,7 +800,7 @@ test("integration contract stays dry-run and validates its invariants", async ()
   const envelope = createExecutionEnvelope(trace, { approvalStatus:"approved" });
   const contract = createIntegrationContract(envelope, { timeoutMs:3000 });
   const validation = validateIntegrationContract(contract);
-  assert.equal(contract.contractVersion, "16.0");
+  assert.equal(contract.contractVersion, "17.0");
   assert.equal(contract.dryRun, true);
   assert.equal(contract.canExecute, false);
   assert.equal(contract.invariants.externalCalls, 0);
@@ -818,5 +823,247 @@ test("blocked decision cannot produce a valid integration contract", async () =>
   });
   assert.equal(envelope.valid, false);
   assert.equal(contract.canExecute, false);
-  assert.equal(validation.valid, true);
+  assert.equal(validation.valid, false);
+});
+
+
+test("execution ledger has deterministic identity and immutable genesis", () => {
+  const first = createExecutionLedger({
+    runId:"RUN-LEDGER-1",
+    datasetFingerprint:"FP-001",
+    source:"demo",
+    actor:"system"
+  });
+  const second = createExecutionLedger({
+    runId:"RUN-LEDGER-1",
+    datasetFingerprint:"FP-001",
+    source:"demo",
+    actor:"system"
+  });
+  assert.equal(first.ledgerId, second.ledgerId);
+  assert.equal(first.sequence, 0);
+  assert.equal(first.headHash, first.genesisHash);
+  assert.deepEqual(first.events, []);
+});
+
+test("execution ledger appends chained events and rejects duplicate idempotency keys", () => {
+  let ledger = createExecutionLedger({ runId:"RUN-LEDGER-2", datasetFingerprint:"FP-002" });
+  const one = appendExecutionEvent(ledger, {
+    type:"PLAN_CREATED",
+    runId:"RUN-LEDGER-2",
+    idempotencyKey:"PLAN-1",
+    payload:{ actionDigest:"AD-1" },
+    at:"2026-10-04T21:00:00.000Z"
+  });
+  assert.equal(one.accepted, true);
+  ledger = one.ledger;
+  const two = appendExecutionEvent(ledger, {
+    type:"ACTION_PLANNED",
+    runId:"RUN-LEDGER-2",
+    leadId:"L-1",
+    idempotencyKey:"ACTION-1",
+    payload:{ to:"nurture" },
+    at:"2026-10-04T21:01:00.000Z"
+  });
+  assert.equal(two.accepted, true);
+  assert.equal(two.ledger.events[1].previousHash, two.ledger.events[0].eventHash);
+  const duplicate = appendExecutionEvent(two.ledger, {
+    type:"ACTION_PLANNED",
+    runId:"RUN-LEDGER-2",
+    leadId:"L-1",
+    idempotencyKey:"ACTION-1",
+    payload:{ to:"qualified" },
+    at:"2026-10-04T21:02:00.000Z"
+  });
+  assert.equal(duplicate.accepted, false);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(duplicate.ledger.sequence, 2);
+});
+
+test("execution ledger verification catches event tampering", () => {
+  let ledger = createExecutionLedger({ runId:"RUN-LEDGER-3", datasetFingerprint:"FP-003" });
+  ledger = appendExecutionEvent(ledger, {
+    type:"PLAN_CREATED",
+    runId:"RUN-LEDGER-3",
+    idempotencyKey:"PLAN-3",
+    payload:{ count:1 },
+    at:"2026-10-04T21:00:00.000Z"
+  }).ledger;
+  const tampered = {
+    ...ledger,
+    events: ledger.events.map((event) => ({
+      ...event,
+      payload: { count:99 }
+    }))
+  };
+  const verification = verifyExecutionLedger(tampered);
+  assert.equal(verification.valid, false);
+  assert.equal(verification.checks.hashes, false);
+});
+
+test("execution ledger replay reconstructs approvals, contracts and simulations", () => {
+  let ledger = createExecutionLedger({ runId:"RUN-LEDGER-4", datasetFingerprint:"FP-004" });
+  const events = [
+    {
+      type:"PLAN_CREATED",
+      runId:"RUN-LEDGER-4",
+      payload:{ totalActions:1 },
+      at:"2026-10-04T21:00:00.000Z"
+    },
+    {
+      type:"APPROVAL_GRANTED",
+      runId:"RUN-LEDGER-4",
+      leadId:"L-4",
+      idempotencyKey:"APPROVAL-L4",
+      actor:"human",
+      payload:{ reason:"approved" },
+      at:"2026-10-04T21:01:00.000Z"
+    },
+    {
+      type:"EXECUTION_CONTRACT_CREATED",
+      runId:"RUN-LEDGER-4",
+      leadId:"L-4",
+      idempotencyKey:"CONTRACT-L4",
+      payload:{ adapter:"CRM_PLACEHOLDER" },
+      at:"2026-10-04T21:02:00.000Z"
+    },
+    {
+      type:"EXECUTION_SIMULATED",
+      runId:"RUN-LEDGER-4",
+      leadId:"L-4",
+      idempotencyKey:"SIM-L4",
+      status:"SIMULATED",
+      payload:{ outcomeId:"SIM-1", externalCalls:0 },
+      at:"2026-10-04T21:03:00.000Z"
+    }
+  ];
+  for (const event of events) ledger = appendExecutionEvent(ledger, event).ledger;
+  const replay = replayExecutionLedger(ledger);
+  assert.equal(replay.valid, true);
+  assert.equal(replay.state.counters.approvals, 1);
+  assert.equal(replay.state.counters.contracts, 1);
+  assert.equal(replay.state.counters.simulations, 1);
+  assert.equal(replay.state.leads["L-4"].state, "SIMULATED");
+});
+
+test("buildExecutionLedger seeds a plan into an auditable chain", () => {
+  const leads = evaluateBatch([
+    { id:"V17-PLAN-1", fit:80, intent:80, engagement:80, urgency:80 }
+  ]);
+  const plan = buildOperationalPlan(leads, {}, {}, { runId:"RUN-V17-PLAN" });
+  const result = buildExecutionLedger(plan, {
+    source:"demo",
+    actor:"system",
+    at:"2026-10-04T21:10:00.000Z"
+  });
+  assert.equal(result.accepted, true);
+  assert.equal(result.ledger.sequence, 2);
+  assert.equal(result.ledger.events[0].type, "PLAN_CREATED");
+  assert.equal(result.ledger.events[1].type, "ACTION_PLANNED");
+  assert.equal(verifyExecutionLedger(result.ledger).valid, true);
+});
+
+test("full execution path stays simulation-only from trace to ledger", async () => {
+  const { createExecutionEnvelope, createIntegrationContract, simulateIntegrationContract, createExecutionEvent } =
+    await import("../assets/js/execution-adapter.js");
+  const lead = scoreLead({
+    id:"V17-FULL",
+    fit:60,
+    intent:60,
+    engagement:60,
+    urgency:60,
+    value:25000
+  });
+  const plan = buildOperationalPlan([lead], {}, {}, { runId:"RUN-V17-FULL" });
+  const [action] = plan.actions;
+  const trace = buildDecisionTrace(lead, {}, {}, { runId:plan.runId });
+  const envelope = createExecutionEnvelope(trace, { approvalStatus:"pending" });
+  const contract = createIntegrationContract(envelope, {});
+  const blockedSimulation = simulateIntegrationContract(contract, {
+    at:"2026-10-04T21:20:00.000Z"
+  });
+  const approvedEnvelope = createExecutionEnvelope(trace, { approvalStatus:"approved" });
+  const approvedContract = createIntegrationContract(approvedEnvelope, {});
+  const simulation = simulateIntegrationContract(approvedContract, {
+    at:"2026-10-04T21:20:00.000Z"
+  });
+  const event = createExecutionEvent(simulation, approvedContract, {
+    actor:"system",
+    at:"2026-10-04T21:20:00.000Z"
+  });
+  let ledger = buildExecutionLedger(plan, { at:"2026-10-04T21:19:00.000Z" }).ledger;
+  ledger = appendExecutionEvent(ledger, {
+    ...event,
+    idempotencyKey: event.idempotencyKey + "-FULL"
+  }).ledger;
+  const replay = replayExecutionLedger(ledger);
+  assert.equal(action.execution, "NOT_EXECUTED");
+  assert.equal(contract.canExecute, false);
+  assert.equal(blockedSimulation.ok, false);
+  assert.equal(simulation.executed, false);
+  assert.equal(simulation.externalCalls, 0);
+  assert.equal(event.type, "EXECUTION_SIMULATED");
+  assert.equal(replay.valid, true);
+  assert.equal(replay.state.counters.simulations, 1);
+});
+
+
+test("ledger rejects an event from another run", () => {
+  const ledger = createExecutionLedger({ runId:"RUN-A", datasetFingerprint:"FP-A" });
+  const result = appendExecutionEvent(ledger, {
+    type:"PLAN_CREATED",
+    runId:"RUN-B",
+    payload:{}
+  });
+  assert.equal(result.accepted, false);
+  assert.match(result.reason, /runId/);
+});
+
+test("ledger tampering of timestamp breaks the hash chain", () => {
+  let ledger = createExecutionLedger({ runId:"RUN-TIME", datasetFingerprint:"FP-TIME" });
+  ledger = appendExecutionEvent(ledger, {
+    type:"PLAN_CREATED",
+    runId:"RUN-TIME",
+    idempotencyKey:"TIME-1",
+    payload:{},
+    at:"2026-10-04T22:00:00.000Z"
+  }).ledger;
+  const tampered = {
+    ...ledger,
+    events: ledger.events.map((event) => ({
+      ...event,
+      at:"2026-10-04T22:01:00.000Z"
+    }))
+  };
+  assert.equal(verifyExecutionLedger(tampered).valid, false);
+});
+
+test("simulation outcome and event share the same idempotency identity", async () => {
+  const { createExecutionEnvelope, createIntegrationContract, simulateIntegrationContract, createExecutionEvent } =
+    await import("../assets/js/execution-adapter.js");
+  const lead = scoreLead({ id:"V17-IDEMP", fit:10, intent:10, engagement:10, urgency:10 });
+  const trace = buildDecisionTrace(lead);
+  const envelope = createExecutionEnvelope(trace);
+  const contract = createIntegrationContract(envelope);
+  const result = simulateIntegrationContract(contract, { at:"2026-10-04T22:10:00.000Z" });
+  assert.equal(result.ok, true);
+  const event = createExecutionEvent(result, contract, { at:"2026-10-04T22:10:00.000Z" });
+  assert.equal(event.idempotencyKey, contract.idempotencyKey);
+  assert.equal(event.payload.outcomeId, result.outcomeId);
+});
+
+test("full ledger replay is stable after a valid append sequence", () => {
+  const plan = buildOperationalPlan(
+    evaluateBatch([{ id:"V17-STABLE", fit:10, intent:10, engagement:10, urgency:10 }]),
+    {},
+    {},
+    { runId:"RUN-V17-STABLE" }
+  );
+  const created = buildExecutionLedger(plan, {
+    at:"2026-10-04T22:20:00.000Z"
+  });
+  const replayOne = replayExecutionLedger(created.ledger);
+  const replayTwo = replayExecutionLedger(created.ledger);
+  assert.deepEqual(replayOne.state, replayTwo.state);
+  assert.equal(replayOne.headHash, replayTwo.headHash);
 });

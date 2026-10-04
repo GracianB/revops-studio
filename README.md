@@ -278,3 +278,16 @@ DECIDE → PLAN → PREVIEW → APPROVE → CONTRACT → ADAPTER
 ```
 
 The public adapter remains disconnected. The prototype can demonstrate the handoff contract but cannot execute external CRM/API calls.
+
+### V17 · Execution Ledger & Integration Simulation
+
+V17 closes the control loop before any external write:
+
+`DECIDE → PLAN → PREVIEW → APPROVE → CONTRACT → SIMULATE → AUDIT → REPLAY`
+
+The new execution ledger is an append-only, hash-chained local evidence stream. Each event has a sequence, previous hash, deterministic event identity, idempotency key when applicable, actor, timestamp and payload.
+
+The integration adapter now produces a deterministic simulation outcome and an execution event. The public prototype still performs **zero external calls** and remains fail-closed.
+
+V17 regression coverage: **72 tests**.
+

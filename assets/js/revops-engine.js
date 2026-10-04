@@ -1139,6 +1139,331 @@ export function buildDecisionDigest(decisions = []) {
   }))));
 }
 
+export function createExecutionLedger({
+  runId = null,
+  datasetFingerprint = null,
+  source = "demo",
+  actor = "system"
+} = {}) {
+  const identity = {
+    runId,
+    datasetFingerprint,
+    source,
+    actor,
+    contractVersion: "17.0"
+  };
+  const genesisHash = "GENESIS-" + hashString(stableStringify(identity)).toUpperCase();
+  const ledgerId = "LEDGER-" + hashString(stableStringify({
+    ...identity,
+    genesisHash
+  })).toUpperCase();
+
+  return Object.freeze({
+    contractVersion: "17.0",
+    ledgerType: "REVOPS_EXECUTION_LEDGER",
+    ledgerId,
+    runId,
+    datasetFingerprint,
+    source,
+    sequence: 0,
+    genesisHash,
+    headHash: genesisHash,
+    events: Object.freeze([])
+  });
+}
+
+function normaliseLedgerEvent(event = {}) {
+  const payload = event.payload && typeof event.payload === "object"
+    ? event.payload
+    : {};
+  return {
+    type: normaliseLedgerText(event.type),
+    runId: event.runId ?? null,
+    leadId: event.leadId ?? null,
+    idempotencyKey: normaliseLedgerText(event.idempotencyKey) || null,
+    actor: normaliseLedgerText(event.actor, "system"),
+    status: normaliseLedgerText(event.status, "RECORDED"),
+    payload
+  };
+}
+
+function normaliseLedgerText(value, fallback = "") {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
+function canonicalLedgerEvent(event = {}) {
+  return {
+    sequence: event.sequence,
+    previousHash: event.previousHash,
+    type: event.type,
+    runId: event.runId ?? null,
+    leadId: event.leadId ?? null,
+    idempotencyKey: event.idempotencyKey ?? null,
+    actor: event.actor,
+    status: event.status,
+    at: event.at,
+    payload: event.payload
+  };
+}
+
+function ledgerEventId(event) {
+  return "EVT-" + hashString(stableStringify(canonicalLedgerEvent(event))).toUpperCase();
+}
+
+function ledgerEventHash(event) {
+  return "HASH-" + hashString(stableStringify({
+    ...canonicalLedgerEvent(event),
+    eventId: event.eventId
+  })).toUpperCase();
+}
+
+export function appendExecutionEvent(ledger, incomingEvent = {}) {
+  if (!ledger || ledger.contractVersion !== "17.0" || ledger.ledgerType !== "REVOPS_EXECUTION_LEDGER") {
+    return {
+      accepted: false,
+      reason: "Invalid execution ledger.",
+      ledger,
+      event: null
+    };
+  }
+
+  const normalized = normaliseLedgerEvent(incomingEvent);
+  if (!normalized.type) {
+    return {
+      accepted: false,
+      reason: "Event type is required.",
+      ledger,
+      event: null
+    };
+  }
+
+  if (normalized.runId !== null && ledger.runId !== null && String(normalized.runId) !== String(ledger.runId)) {
+    return {
+      accepted: false,
+      reason: "Event runId does not match ledger.",
+      ledger,
+      event: null
+    };
+  }
+
+  if (normalized.idempotencyKey && ledger.events.some(
+    (item) => item.idempotencyKey === normalized.idempotencyKey
+  )) {
+    const existing = ledger.events.find(
+      (item) => item.idempotencyKey === normalized.idempotencyKey
+    );
+    return {
+      accepted: false,
+      duplicate: true,
+      reason: "Duplicate idempotency key.",
+      ledger,
+      event: existing
+    };
+  }
+
+  const sequence = ledger.sequence + 1;
+  const envelope = {
+    sequence,
+    previousHash: ledger.headHash,
+    ...normalized,
+    at: normaliseLedgerText(incomingEvent.at, new Date().toISOString())
+  };
+  const eventId = ledgerEventId(envelope);
+  const event = Object.freeze({
+    ...envelope,
+    eventId,
+    eventHash: ledgerEventHash({
+      ...envelope,
+      eventId
+    })
+  });
+
+  const next = Object.freeze({
+    ...ledger,
+    sequence,
+    headHash: event.eventHash,
+    events: Object.freeze([...ledger.events, event])
+  });
+
+  return {
+    accepted: true,
+    duplicate: false,
+    reason: "Event appended.",
+    ledger: next,
+    event
+  };
+}
+
+export function verifyExecutionLedger(ledger) {
+  const baseChecks = {
+    shape: Boolean(
+      ledger &&
+      ledger.contractVersion === "17.0" &&
+      ledger.ledgerType === "REVOPS_EXECUTION_LEDGER" &&
+      Array.isArray(ledger.events)
+    ),
+    sequence: false,
+    chain: false,
+    hashes: false,
+    idempotency: false,
+    head: false
+  };
+
+  if (!baseChecks.shape) {
+    return {
+      valid: false,
+      reason: "Invalid execution ledger.",
+      checks: baseChecks,
+      eventCount: 0
+    };
+  }
+
+  const events = ledger.events;
+  baseChecks.sequence = ledger.sequence === events.length &&
+    events.every((event, index) => event.sequence === index + 1);
+  baseChecks.chain = events.every((event, index) =>
+    event.previousHash === (index === 0 ? ledger.genesisHash : events[index - 1].eventHash)
+  );
+  baseChecks.hashes = events.every((event) => {
+    const expectedId = ledgerEventId(event);
+    const expectedHash = ledgerEventHash({
+      ...event,
+      eventId: expectedId
+    });
+    return event.eventId === expectedId && event.eventHash === expectedHash;
+  });
+
+  const keys = events.map((event) => event.idempotencyKey).filter(Boolean);
+  baseChecks.idempotency = new Set(keys).size === keys.length;
+  const expectedHead = events.length ? events[events.length - 1].eventHash : ledger.headHash;
+  baseChecks.head = ledger.headHash === expectedHead;
+
+  return {
+    valid: Object.values(baseChecks).every(Boolean),
+    reason: Object.values(baseChecks).every(Boolean)
+      ? "Execution ledger chain is valid."
+      : "Execution ledger integrity check failed.",
+    checks: baseChecks,
+    eventCount: events.length,
+    headHash: ledger.headHash,
+    genesisHash: ledger.genesisHash
+  };
+}
+
+export function replayExecutionLedger(ledger) {
+  const verification = verifyExecutionLedger(ledger);
+  if (!verification.valid) {
+    return {
+      ...verification,
+      state: null
+    };
+  }
+
+  const leads = {};
+  const approvals = {};
+  let simulations = 0;
+  let contracts = 0;
+  let blocked = 0;
+
+  ledger.events.forEach((event) => {
+    const id = event.leadId === null ? null : String(event.leadId);
+    if (id) {
+      if (!leads[id]) {
+        leads[id] = {
+          leadId: event.leadId,
+          state: "UNKNOWN",
+          lastEvent: null,
+          simulationCount: 0
+        };
+      }
+      leads[id].lastEvent = event.type;
+    }
+
+    if (event.type === "APPROVAL_GRANTED" && id) {
+      approvals[id] = true;
+      leads[id].state = "APPROVED";
+    }
+    if (event.type === "EXECUTION_CONTRACT_CREATED" && id) {
+      contracts += 1;
+      leads[id].state = "CONTRACT_READY";
+    }
+    if (event.type === "EXECUTION_SIMULATED" && id) {
+      simulations += 1;
+      leads[id].simulationCount += 1;
+      leads[id].state = event.status === "SIMULATED" ? "SIMULATED" : event.status;
+    }
+    if (event.type === "EXECUTION_BLOCKED" && id) {
+      blocked += 1;
+      leads[id].state = "BLOCKED";
+    }
+  });
+
+  return {
+    ...verification,
+    state: {
+      leads,
+      approvals,
+      counters: {
+        approvals: Object.keys(approvals).length,
+        contracts,
+        simulations,
+        blocked
+      }
+    }
+  };
+}
+
+export function buildExecutionLedger(plan, context = {}) {
+  const safePlan = plan || {};
+  let ledger = createExecutionLedger({
+    runId: safePlan.runId || null,
+    datasetFingerprint: safePlan.datasetFingerprint || null,
+    source: context.source || "demo",
+    actor: context.actor || "system"
+  });
+
+  const events = [
+    {
+      type: "PLAN_CREATED",
+      runId: safePlan.runId || null,
+      actor: context.actor || "system",
+      payload: {
+        actionDigest: safePlan.actionDigest || null,
+        totalActions: safePlan.summary?.total || 0
+      }
+    },
+    ...(Array.isArray(safePlan.actions) ? safePlan.actions.map((action) => ({
+      type: action.state === "BLOCKED" ? "ACTION_BLOCKED" : "ACTION_PLANNED",
+      runId: safePlan.runId || null,
+      leadId: action.leadId ?? null,
+      idempotencyKey: action.idempotencyKey || null,
+      actor: context.actor || "system",
+      payload: {
+        stage: action.stage,
+        to: action.proposal?.to || null,
+        priority: action.priority,
+        lane: action.lane
+      }
+    })) : [])
+  ];
+
+  for (const event of events) {
+    const result = appendExecutionEvent(ledger, {
+      ...event,
+      at: context.at
+    });
+    if (!result.accepted) return result;
+    ledger = result.ledger;
+  }
+
+  return {
+    accepted: true,
+    reason: "Execution ledger created.",
+    ledger
+  };
+}
+
 export function buildOperationalPlan(
   leads,
   forecastAssumptions = {},
@@ -1219,7 +1544,7 @@ export function buildOperationalPlan(
   };
 
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     runId,
     createdAt: now,
     datasetFingerprint: fingerprintRecords(evaluated),
@@ -1310,7 +1635,7 @@ export function buildWorkflowImpact(leads, plan, approvals = {}) {
   const projectedByStage = projectedPipeline.byStage;
 
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     runId: plan?.runId || null,
     approvedIds: [...approvedIds].sort(),
     actionResults: results,
@@ -1368,7 +1693,7 @@ export function buildRunArtifact(
   }));
 
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     artifactType: "REVOPS_RUN_ARTIFACT",
     exportedAt: context.now || new Date().toISOString(),
     runId: snapshot.runId,
@@ -1464,7 +1789,7 @@ export function verifyRunArtifact(artifact, leads) {
 export function buildReplayReport(artifact, leads) {
   const verification = verifyRunArtifact(artifact, leads);
   return {
-    contractVersion: "16.0",
+    contractVersion: "17.0",
     runId: artifact?.runId || null,
     valid: verification.valid,
     checks: verification.checks,

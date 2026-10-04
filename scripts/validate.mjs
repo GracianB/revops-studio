@@ -41,7 +41,7 @@ if (guidedSteps.length !== expectedGuidedSteps.length || guidedSteps.some((value
   fail("guided proof steps must expose 0,1,2,3 exactly once");
 }
 
-const requiredV16Ids = [
+const requiredV17Ids = [
   "decision-trace-title", "decisionTraceEmpty", "decisionTraceContent",
   "traceState", "traceRunId", "traceInputs", "traceDecision", "traceCommercial",
   "traceRisk", "traceProposal", "traceApproval", "traceExecution", "ownerMatrix",
@@ -51,10 +51,13 @@ const requiredV16Ids = [
   "workflowPlan", "simulateWorkflow", "exportRunArtifact", "replayArtifact",
   "verifyReplayArtifact", "replayStatus",
   "workflow-impact-title", "impactProposed", "impactApplied", "impactPending",
-  "impactQualificationDelta", "impactStageDelta", "previewWorkflowImpact"
+  "impactQualificationDelta", "impactStageDelta", "previewWorkflowImpact",
+  "execution-ledger-title", "ledgerStatus", "ledgerMeta", "ledgerSequence",
+  "ledgerHead", "ledgerApprovals", "ledgerContracts", "ledgerSimulations",
+  "replayLedger", "ledgerEvents"
 ];
-const missingV16Ids = requiredV16Ids.filter((id) => !ids.includes(id));
-if (missingV16Ids.length) fail("V16 surface missing DOM ids: " + missingV16Ids.join(", "));
+const missingV17Ids = requiredV17Ids.filter((id) => !ids.includes(id));
+if (missingV17Ids.length) fail("V17 surface missing DOM ids: " + missingV17Ids.join(", "));
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail("duplicate ids: " + [...new Set(duplicates)].join(", "));
 
@@ -104,14 +107,25 @@ const adapterImport = appJs.includes('from "./execution-adapter.js"');
 if (!adapterImport) fail("app.js execution adapter import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "16.0.0") fail("package version must be 16.0.0");
+if (packageJson.version !== "17.0.0") fail("package version must be 17.0.0");
 const declaredTests = (fs.readFileSync(path.join(root, "tests/revops-engine.test.js"), "utf8").match(/test\(/g) || []).length;
-if (declaredTests < 62) fail("V16 regression suite must contain at least 62 tests");
+if (declaredTests < 72) fail("V17 regression suite must contain at least 72 tests");
+const ledgerExports = [
+  "createExecutionLedger",
+  "appendExecutionEvent",
+  "verifyExecutionLedger",
+  "replayExecutionLedger",
+  "buildExecutionLedger"
+];
+for (const expected of ledgerExports) {
+  if (!engineExports.has(expected)) fail("missing V17 ledger export: " + expected);
+}
+
 const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
 const adapterExports = new Set(
   [...adapterJs.matchAll(/export\s+(?:function|const|let|var|class)\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
 );
-for (const expected of ["createExecutionEnvelope", "createIntegrationContract", "validateIntegrationContract", "simulateExecution", "EXECUTION_ADAPTER_STATUS"]) {
+for (const expected of ["createExecutionEnvelope", "createIntegrationContract", "validateIntegrationContract", "simulateExecution", "simulateIntegrationContract", "createExecutionEvent", "EXECUTION_ADAPTER_STATUS"]) {
   if (!adapterExports.has(expected)) fail("missing execution adapter export: " + expected);
 }
 

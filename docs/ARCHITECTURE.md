@@ -208,3 +208,31 @@ External Adapter boundary
 `buildActionDigest()` and `buildDecisionDigest()` provide stable workflow and decision identities that survive rerendering while excluding volatile timestamps from the workflow digest.
 
 `buildReplayReport()` combines dataset fingerprint, workflow digest and decision integrity into one replay result.
+
+
+## V17 · Execution ledger and integration simulation
+
+V17 introduces an event-sourced evidence boundary without changing the deterministic scoring core.
+
+```text
+Decision Trace
+    ↓
+Operational Plan
+    ↓
+Impact Preview
+    ↓
+Human Approval
+    ↓
+Integration Contract
+    ↓
+Simulation Outcome
+    ↓
+Execution Ledger
+    ↓
+Replay / Integrity Check
+```
+
+The ledger is append-only from the application's point of view. Events are chained with a genesis hash, sequence number, previous hash, deterministic event ID and event hash. Duplicate idempotency keys are rejected.
+
+The adapter remains a hard integration boundary. A simulation can produce an outcome and an auditable event, but it cannot enable network execution.
+

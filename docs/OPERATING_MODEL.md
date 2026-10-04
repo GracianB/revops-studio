@@ -469,3 +469,21 @@ The execution adapter now exposes a structured dry-run contract with an idempote
 `mode = SIMULATION_ONLY`
 
 The prototype therefore demonstrates the shape of a production handoff without pretending that a CRM write already exists.
+
+
+## V17 · Evidence ledger before execution
+
+The operating model now records the complete control path instead of only the final decision.
+
+A typical sequence is:
+
+1. `PLAN_CREATED`
+2. `ACTION_PLANNED`
+3. `APPROVAL_GRANTED` when required
+4. `EXECUTION_CONTRACT_CREATED`
+5. `EXECUTION_SIMULATED` or `EXECUTION_BLOCKED`
+
+Replay verifies the event chain before projecting operational state. Timestamp tampering, payload changes, sequence gaps, cross-run events and duplicate idempotency keys are rejected.
+
+This makes the public prototype demonstrate an important production property: **the system can explain not only what it decided, but what happened to that decision afterwards.**
+

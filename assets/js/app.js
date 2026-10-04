@@ -19,9 +19,19 @@ import {
   buildOperationalPlan,
   buildWorkflowImpact,
   buildRunArtifact,
-  verifyRunArtifact
+  verifyRunArtifact,
+  createExecutionLedger,
+  buildExecutionLedger,
+  appendExecutionEvent,
+  replayExecutionLedger
 } from "./revops-engine.js";
-import { createExecutionEnvelope, simulateExecution } from "./execution-adapter.js";
+import {
+  createExecutionEnvelope,
+  createIntegrationContract,
+  simulateExecution,
+  simulateIntegrationContract,
+  createExecutionEvent
+} from "./execution-adapter.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -296,6 +306,17 @@ function initPlayground() {
     stageDelta: qs("#impactStageDelta"),
     preview: qs("#previewWorkflowImpact")
   };
+  const executionLedger = {
+    status: qs("#ledgerStatus"),
+    meta: qs("#ledgerMeta"),
+    sequence: qs("#ledgerSequence"),
+    head: qs("#ledgerHead"),
+    approvals: qs("#ledgerApprovals"),
+    contracts: qs("#ledgerContracts"),
+    simulations: qs("#ledgerSimulations"),
+    replay: qs("#replayLedger"),
+    events: qs("#ledgerEvents")
+  };
   const decisionTrace = {
     state: qs("#traceState"),
     runId: qs("#traceRunId"),
@@ -336,6 +357,7 @@ function initPlayground() {
   let sourceRecords = demoSeed;
   let lastSnapshot = null;
   let lastWorkflowPlan = null;
+  let lastExecutionLedger = null;
   let activeTableStage = "all";
   let guidedStep = 0;
 
@@ -881,6 +903,37 @@ function initPlayground() {
          }
        );
        const plan = lastWorkflowPlan;
+       if (!lastExecutionLedger || lastExecutionLedger.runId !== plan.runId) {
+         const ledgerResult = buildExecutionLedger(plan, {
+           source: dataSource,
+           actor: "operator"
+         });
+         lastExecutionLedger = ledgerResult.accepted ? ledgerResult.ledger : null;
+       }
+       if (executionLedger.status && lastExecutionLedger) {
+         const replay = replayExecutionLedger(lastExecutionLedger);
+         executionLedger.status.textContent = replay.valid ? "LEDGER VALID" : "LEDGER REJECTED";
+         executionLedger.status.dataset.state = replay.valid ? "controlled" : "error";
+         executionLedger.meta.textContent =
+           lastExecutionLedger.ledgerId + " · " + replay.eventCount + " events";
+         executionLedger.sequence.textContent = String(lastExecutionLedger.sequence);
+         executionLedger.head.textContent = lastExecutionLedger.headHash;
+         executionLedger.approvals.textContent = String(replay.state?.counters?.approvals || 0);
+         executionLedger.contracts.textContent = String(replay.state?.counters?.contracts || 0);
+         executionLedger.simulations.textContent = String(replay.state?.counters?.simulations || 0);
+         executionLedger.events?.replaceChildren(
+           ...lastExecutionLedger.events.slice(-6).reverse().map((event) => {
+             const row = document.createElement("div");
+             row.className = "ledger-event";
+             const type = document.createElement("strong");
+             type.textContent = event.type;
+             const meta = document.createElement("small");
+             meta.textContent = "#" + event.sequence + " · " + (event.leadId || "RUN") + " · " + event.status;
+             row.append(type, meta);
+             return row;
+           })
+         );
+       }
        const adapterReady = plan.externalExecution.enabled === false &&
          plan.externalExecution.mode === "SIMULATION_ONLY";
        if (workflowControl.status) {
@@ -1432,6 +1485,18 @@ function initPlayground() {
     addAudit(auditEvent("APPROVED", candidate, candidate.stage + " → " + target));
     addAudit(auditEvent("APPROVAL_CONSUMED", updated, "one-shot human gate"));
     render();
+    if (lastExecutionLedger) {
+      const approvalEvent = appendExecutionEvent(lastExecutionLedger, {
+        type: "APPROVAL_GRANTED",
+        runId: lastExecutionLedger.runId,
+        leadId: updated.id,
+        idempotencyKey: "APPROVAL-" + String(updated.id),
+        actor: "operator",
+        status: "APPROVED",
+        payload: { from: candidate.stage, to: target }
+      });
+      if (approvalEvent.accepted) lastExecutionLedger = approvalEvent.ledger;
+    }
     renderDecisionTrace(updated);
   });
 
@@ -1442,24 +1507,92 @@ function initPlayground() {
       {},
       { runId: lastSnapshot?.runId || null, now: new Date().toISOString() }
     );
-    const candidate = evaluated.find((lead) => lead.stage === "nurture" || lead.stage === "new" || lead.stage === "qualified") || evaluated[0];
+    const candidate = evaluated.find((lead) => lead.stage === "new" || lead.stage === "nurture") || evaluated.find((lead) => lead.stage !== "blocked") || evaluated[0];
     if (!candidate) {
       status.dataset.state = "error";
       status.textContent = "No hay registros para simular el workflow.";
       return;
     }
+
     const trace = buildDecisionTrace(candidate, getForecastConfig(), {}, { runId: plan.runId });
     const envelope = createExecutionEnvelope(trace, {
       approvalStatus: trace.approval.required ? "pending" : "approved"
     });
-    const result = simulateExecution(envelope);
-    addAudit(auditEvent("WORKFLOW_SIMULATE", { id: candidate.id }, result.code + " · " + result.state));
+    const contract = createIntegrationContract(envelope, {
+      timeoutMs: 5000
+    });
+    const simulation = simulateIntegrationContract(contract, {});
+    const event = createExecutionEvent(simulation, contract, { actor: "operator" });
+
+    if (lastExecutionLedger) {
+      const contractEvent = appendExecutionEvent(lastExecutionLedger, {
+        type: "EXECUTION_CONTRACT_CREATED",
+        runId: plan.runId,
+        leadId: candidate.id,
+        idempotencyKey: contract.idempotencyKey,
+        actor: "operator",
+        status: contract.canExecute ? "READY" : "SIMULATION_ONLY",
+        payload: {
+          envelopeId: contract.envelopeId,
+          adapter: contract.adapter,
+          dryRun: contract.dryRun
+        }
+      });
+      if (contractEvent.accepted) lastExecutionLedger = contractEvent.ledger;
+
+      const simulationEvent = appendExecutionEvent(lastExecutionLedger, event);
+      if (simulationEvent.accepted) lastExecutionLedger = simulationEvent.ledger;
+      const replay = replayExecutionLedger(lastExecutionLedger);
+      executionLedger.status.textContent = replay.valid ? "LEDGER VALID" : "LEDGER REJECTED";
+      executionLedger.status.dataset.state = replay.valid ? "controlled" : "error";
+      executionLedger.meta.textContent = lastExecutionLedger.ledgerId + " · " + replay.eventCount + " events";
+      executionLedger.sequence.textContent = String(lastExecutionLedger.sequence);
+      executionLedger.head.textContent = lastExecutionLedger.headHash;
+      executionLedger.approvals.textContent = String(replay.state?.counters?.approvals || 0);
+      executionLedger.contracts.textContent = String(replay.state?.counters?.contracts || 0);
+      executionLedger.simulations.textContent = String(replay.state?.counters?.simulations || 0);
+      executionLedger.events?.replaceChildren(...lastExecutionLedger.events.slice(-6).reverse().map((item) => {
+        const row = document.createElement("div");
+        row.className = "ledger-event";
+        const type = document.createElement("strong");
+        type.textContent = item.type;
+        const meta = document.createElement("small");
+        meta.textContent = "#" + item.sequence + " · " + (item.leadId || "RUN") + " · " + item.status;
+        row.append(type, meta);
+        return row;
+      }));
+    }
+
+    const legacy = simulateExecution(envelope);
+    addAudit(auditEvent("WORKFLOW_SIMULATE", { id: candidate.id }, simulation.status + " · " + simulation.outcomeId + " · " + legacy.code));
     status.dataset.state = "ok";
-    status.textContent = candidate.id + " procesado por el contrato de workflow: " + result.code + ". No se ejecutó ninguna llamada externa.";
+    status.textContent = candidate.id + " pasó por trace → envelope → contract → simulation. External calls: 0.";
   });
 
   workflowControl.artifact?.addEventListener("click", () => {
     qs("#exportDemo")?.click();
+  });
+
+  executionLedger.replay?.addEventListener("click", () => {
+    if (!lastExecutionLedger) {
+      status.dataset.state = "error";
+      status.textContent = "No hay execution ledger disponible para verificar.";
+      return;
+    }
+    const replay = replayExecutionLedger(lastExecutionLedger);
+    executionLedger.status.textContent = replay.valid ? "LEDGER VALID" : "LEDGER REJECTED";
+    executionLedger.status.dataset.state = replay.valid ? "controlled" : "error";
+    executionLedger.meta.textContent =
+      lastExecutionLedger.ledgerId + " · " + replay.eventCount + " events · " + replay.reason;
+    status.dataset.state = replay.valid ? "ok" : "error";
+    status.textContent = replay.valid
+      ? "Ledger reproducido correctamente. La cadena de eventos coincide con su HEAD."
+      : "Ledger rechazado: la cadena de evidencia no coincide.";
+    addAudit(auditEvent(
+      replay.valid ? "LEDGER_REPLAY_OK" : "LEDGER_REPLAY_REJECTED",
+      { id: lastExecutionLedger.runId || "LEDGER" },
+      replay.reason
+    ));
   });
 
   workflowImpact.preview?.addEventListener("click", () => {
