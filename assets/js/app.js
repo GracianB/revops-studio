@@ -4,7 +4,9 @@ import {
   evaluateBatch,
   transition,
   auditEvent,
-  summarisePipeline
+  summarisePipeline,
+  buildActionQueue,
+  summariseQueue
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -167,8 +169,26 @@ function initPlayground() {
     avg: qs("#demoAvgScore"), quality: qs("#demoQuality"), rate: qs("#demoRate")
   };
   const status = qs("#demoStatus"), audit = qs("#auditLog"), detail = qs("#leadDetail"), gate = qs("#approveDemo");
+  const queue = qs("#actionQueue");
+  const queueMeta = qs("#queueMeta");
+  const queueSummary = qs("#queueSummary");
+  const datasetLabel = qs("#datasetLabel");
+  const shapeLabel = qs("#shapeLabel");
+  const bars = {
+    qualified: qs("#barQualified"), nurture: qs("#barNurture"),
+    new: qs("#barNew"), blocked: qs("#barBlocked")
+  };
   let evaluated = [];
   let approved = false;
+  let dataSource = "demo";
+  let lastRunAt = null;
+
+  const scenarios = {
+    balanced: { fit: 35, intent: 30, engagement: 20, urgency: 15 },
+    growth: { fit: 25, intent: 40, engagement: 15, urgency: 20 },
+    retention: { fit: 30, intent: 15, engagement: 40, urgency: 15 },
+    speed: { fit: 20, intent: 25, engagement: 10, urgency: 45 }
+  };
 
   const getWeights = () => Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, Number(input.value)]));
   const renderWeights = () => {
@@ -185,6 +205,62 @@ function initPlayground() {
     metrics.avg.textContent = String(summary.averageScore);
     metrics.quality.textContent = String(summary.qualityIssues);
     metrics.rate.textContent = Math.round(summary.qualificationRate * 100) + "%";
+
+    Object.entries(bars).forEach(([stage, bar]) => {
+      if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
+    });
+    if (shapeLabel) {
+      shapeLabel.textContent = summary.total
+        ? (summary.byStage.qualified || 0) + " qualified · " +
+          (summary.byStage.nurture || 0) + " nurture · " +
+          (summary.byStage.blocked || 0) + " blocked"
+        : "—";
+    }
+
+    const builtQueue = buildActionQueue(evaluated);
+    const qSummary = summariseQueue(builtQueue);
+    if (queueMeta) queueMeta.textContent = qSummary.total + " actions · " + qSummary.urgent + " urgent";
+    if (queueSummary) queueSummary.textContent =
+      "Critical " + (qSummary.byPriority.critical || 0) +
+      " · High " + (qSummary.byPriority.high || 0) +
+      " · Medium " + (qSummary.byPriority.medium || 0) +
+      " · Low " + (qSummary.byPriority.low || 0);
+    if (queue) {
+      queue.replaceChildren();
+      if (!builtQueue.length) {
+        const empty = document.createElement("div");
+        empty.className = "queue-empty";
+        empty.textContent = "Ejecuta el modelo para construir una cola operativa.";
+        queue.appendChild(empty);
+      } else {
+        builtQueue.slice(0, 8).forEach((item, index) => {
+          const article = document.createElement("article");
+          article.className = "queue-item";
+          const top = document.createElement("div");
+          top.className = "queue-top";
+          const rank = document.createElement("span");
+          rank.className = "queue-rank";
+          rank.textContent = String(index + 1).padStart(2, "0");
+          const title = document.createElement("strong");
+          title.textContent = item.account;
+          const priority = document.createElement("span");
+          priority.className = "queue-priority";
+          priority.dataset.priority = item.priority;
+          priority.textContent = item.priority.toUpperCase();
+          top.append(rank, title, priority);
+
+          const meta = document.createElement("div");
+          meta.className = "queue-meta";
+          meta.textContent = item.action + " · " + item.lane + " · SLA " + item.slaHours + "h";
+          const why = document.createElement("div");
+          why.className = "queue-reason";
+          why.textContent = item.reason;
+          article.append(top, meta, why);
+          queue.appendChild(article);
+        });
+      }
+    }
+
     rows.replaceChildren();
     evaluated.forEach((lead) => {
       const tr = document.createElement("tr");
@@ -216,10 +292,18 @@ function initPlayground() {
   };
   const run = () => {
     renderWeights();
-    evaluated = evaluateBatch(demoSeed, getWeights());
+    evaluated = evaluateBatch(window.__REVOPS_DATA__ || demoSeed, getWeights());
+    lastRunAt = new Date();
+    const nowLabel = lastRunAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    if (datasetLabel) datasetLabel.textContent =
+      (dataSource === "demo" ? "Demo dataset" : "CSV local") + " · " + evaluated.length + " records";
     evaluated.forEach((lead) => addAudit(auditEvent("EVALUATE", lead, lead.stage + " / score " + (lead.score ?? "n/a"))));
     status.dataset.state = "ok";
-    status.textContent = "Modelo evaluado localmente. Datos sintéticos. Sin llamadas de red.";
+    status.textContent = "Modelo evaluado localmente. " +
+      (dataSource === "demo" ? "Datos sintéticos." : "CSV leído en este navegador.") +
+      " Sin llamadas de red.";
+    const lastRun = qs("#lastRun");
+    if (lastRun) lastRun.textContent = "Última ejecución " + nowLabel;
     render();
   };
 
@@ -227,12 +311,69 @@ function initPlayground() {
   qs("#runDemo")?.addEventListener("click", run);
   qs("#resetDemo")?.addEventListener("click", () => {
     Object.entries(DEFAULT_WEIGHTS).forEach(([key, value]) => { inputs[key].value = String(Math.round(value * 100)); });
+    window.__REVOPS_DATA__ = null;
+    dataSource = "demo";
     evaluated = []; approved = false; audit?.replaceChildren();
     gate.textContent = "Simular aprobación humana";
     status.dataset.state = ""; status.textContent = "";
     detail.textContent = "Selecciona un registro para inspeccionar la explicación.";
-    renderWeights(); render();
+    renderWeights(); run();
   });
+
+  qsa("[data-scenario]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const values = scenarios[button.dataset.scenario];
+      if (!values) return;
+      Object.entries(values).forEach(([key, value]) => { if (inputs[key]) inputs[key].value = String(value); });
+      qsa("[data-scenario]").forEach((item) => item.classList.toggle("is-active", item === button));
+      run();
+      addAudit(auditEvent("SCENARIO", { id: button.dataset.scenario }, "weights updated"));
+    });
+  });
+
+  qs("#csvInput")?.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      window.__REVOPS_DATA__ = parseCsv(await file.text());
+      dataSource = "csv";
+      approved = false;
+      gate.textContent = "Simular aprobación humana";
+      run();
+      status.dataset.state = "ok";
+      status.textContent = "CSV importado localmente: " + window.__REVOPS_DATA__.length + " registros. Nada se ha subido.";
+      addAudit(auditEvent("IMPORT", { id: "CSV" }, file.name + " · " + window.__REVOPS_DATA__.length + " rows"));
+    } catch (error) {
+      status.dataset.state = "error";
+      status.textContent = "CSV rechazado: " + error.message;
+      addAudit(auditEvent("IMPORT_REJECTED", { id: "CSV" }, error.message));
+      event.target.value = "";
+    }
+  });
+
+  qs("#exportDemo")?.addEventListener("click", () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      source: dataSource,
+      weights: normaliseForExport(getWeights()),
+      pipeline: summarisePipeline(evaluated),
+      queue: buildActionQueue(evaluated),
+      records: evaluated
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "revops-run.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    addAudit(auditEvent("EXPORT", { id: "RUN" }, "JSON artifact generated"));
+  });
+
+  const normaliseForExport = (weights) => {
+    const total = Object.values(weights).reduce((sum, value) => sum + value, 0) || 1;
+    return Object.fromEntries(Object.entries(weights).map(([key, value]) => [key, Number((value / total).toFixed(4))]));
+  };
   gate?.addEventListener("click", () => {
     approved = !approved;
     gate.textContent = approved ? "Aprobación activa ✓" : "Simular aprobación humana";
