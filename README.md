@@ -55,7 +55,7 @@ The active model can be compared with the baseline weights to expose promotions,
 
 ## Operational queue
 
-The control room translates pipeline state into a deterministic work queue with priority, operational lane, SLA and a reason for the proposed action. It is deliberately simulation-only: no CRM, no database and no external execution.
+The control room translates pipeline state into a deterministic work queue with priority, operational lane, SLA and a reason for the proposed action. V7 adds configurable stage thresholds, a scenario matrix, baseline sensitivity analysis, local configuration sharing, deterministic run IDs and guarded CSV ingestion. It is deliberately simulation-only: no CRM, no database and no external execution.
 
 ## Engineering decisions
 
@@ -70,6 +70,10 @@ Records are validated before scoring. Invalid records fail closed into a blocked
 ### Human-in-the-loop
 
 Classification and execution are separate. Sensitive transitions require explicit approval.
+
+### Decision surface
+
+The public UI exposes the score, threshold profile, scenario impact, operational queue and run identity. Configuration can be shared through a URL without embedding CSV records.
 
 ### Local-first lead flow
 
@@ -96,6 +100,10 @@ Diagnostic: 30–45 minutes, one process.
 - AiGoritmo · Python + FastAPI / LLM lab.
 - Yoga Instructor · bilingual ES/EN portal.
 - Navarmedia Outreach · private B2B operations core.
+
+## Architecture notes
+
+See docs/OPERATING_MODEL.md for the complete decision loop and Control Room design.
 
 ## Quality gates
 
