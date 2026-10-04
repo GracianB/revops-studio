@@ -839,3 +839,5 @@ textarea.form-control{min-height:145px;resize:vertical}
   .proof-actions .btn{width:100%;justify-content:center}
   .proof-actions .text-link{margin-left:3px}
 }
+
+.hero-position{margin:0 0 11px;color:var(--text);font:700 10px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase}
