@@ -107,6 +107,23 @@ test("calibration report ignores forecasts without an observed outcome", () => {
   assert.equal(report.rows[0].leadId, "OBSERVED");
 });
 
+test("first calibration report does not drift without an established baseline", () => {
+  const report = buildCalibrationReport({
+    forecastRows: [
+      { leadId:"L1", segment:"SMB", probability:0.8 }
+    ],
+    outcomes: [
+      { leadId:"L1", positive:true, terminal:true, type:"CLOSED_WON" }
+    ]
+  });
+  assert.equal(report.baselineEstablished, false);
+  assert.equal(report.records, 1);
+  assert.equal(report.current.calibrationError, 0.2);
+  assert.equal(report.baseline.calibrationError, 0.2);
+  assert.equal(report.drift.drift, false);
+  assert.equal(report.drift.severity, "STABLE");
+});
+
 test("calibration report is deterministic and versioned", () => {
   const report = buildCalibrationReport({
     forecastRows: [
