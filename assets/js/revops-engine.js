@@ -35,6 +35,13 @@ export function validateLead(lead) {
   return { valid: errors.length === 0, errors };
 }
 
+export function nextAction(lead) {
+  if (lead.stage === "qualified") return "Human review → propose next step";
+  if (lead.stage === "nurture") return "Add context → monitor intent";
+  if (lead.stage === "blocked") return "Fix data quality → evaluate again";
+  return "Enrich data → score again";
+}
+
 export function scoreBreakdown(lead, weights = DEFAULT_WEIGHTS) {
   const normalized = normaliseWeights(weights);
   return Object.fromEntries(
@@ -45,14 +52,8 @@ export function scoreBreakdown(lead, weights = DEFAULT_WEIGHTS) {
 export function scoreLead(lead, weights = DEFAULT_WEIGHTS) {
   const quality = validateLead(lead);
   if (!quality.valid) {
-    return {
-      ...lead,
-      score: null,
-      stage: "blocked",
-      quality,
-      breakdown: {},
-      nextActionResult: "Fix data quality → evaluate again"
-    };
+    const blocked = { ...lead, score: null, stage: "blocked", quality, breakdown: {} };
+    return { ...blocked, nextAction: nextAction(blocked) };
   }
 
   const normalized = normaliseWeights(weights);
@@ -60,23 +61,16 @@ export function scoreLead(lead, weights = DEFAULT_WEIGHTS) {
     Object.keys(normalized).reduce((sum, key) => sum + clamp(lead[key]) * normalized[key], 0)
   );
   const stage = score >= 75 ? "qualified" : score >= 50 ? "nurture" : "new";
-  const nextActionResult = nextAction({ stage });
 
-  return {
+  const result = {
     ...lead,
     score,
     stage,
     quality,
-    breakdown: scoreBreakdown(lead, normalized),
-    nextAction
+    breakdown: scoreBreakdown(lead, normalized)
   };
-}
 
-export function nextAction(lead) {
-  if (lead.stage === "qualified") return "Human review → propose next step";
-  if (lead.stage === "nurture") return "Add context → monitor intent";
-  if (lead.stage === "blocked") return "Fix data quality → evaluate again";
-  return "Enrich data → score again";
+  return { ...result, nextAction: nextAction(result) };
 }
 
 export function evaluateBatch(leads, weights = DEFAULT_WEIGHTS) {
@@ -87,11 +81,14 @@ export function summarisePipeline(leads) {
   const scores = leads.filter((lead) => typeof lead.score === "number");
   const byStage = Object.fromEntries(STAGES.map((stage) => [stage, 0]));
   scores.forEach((lead) => { byStage[lead.stage] += 1; });
+
   return {
     total: leads.length,
     scored: scores.length,
     qualityIssues: leads.length - scores.length,
-    averageScore: scores.length ? Math.round(scores.reduce((sum, lead) => sum + lead.score, 0) / scores.length) : 0,
+    averageScore: scores.length
+      ? Math.round(scores.reduce((sum, lead) => sum + lead.score, 0) / scores.length)
+      : 0,
     byStage,
     qualificationRate: scores.length ? byStage.qualified / scores.length : 0
   };
@@ -106,13 +103,23 @@ const TRANSITIONS = Object.freeze({
 
 export function transition(lead, targetStage, approved = false) {
   if (!STAGES.includes(targetStage)) throw new Error("Unknown stage");
+
   const current = lead?.stage || "new";
   if (current === targetStage) return { ok: true, lead, reason: "No-op" };
-  if (!(TRANSITIONS[current] || []).includes(targetStage)) return { ok: false, lead, reason: "Transition not allowed" };
+
+  if (!(TRANSITIONS[current] || []).includes(targetStage)) {
+    return { ok: false, lead, reason: "Transition not allowed" };
+  }
+
   if ((targetStage === "qualified" || targetStage === "blocked") && !approved) {
     return { ok: false, lead, reason: "Human approval required" };
   }
-  return { ok: true, lead: { ...lead, stage: targetStage }, reason: "Transition applied" };
+
+  return {
+    ok: true,
+    lead: { ...lead, stage: targetStage },
+    reason: "Transition applied"
+  };
 }
 
 export function auditEvent(action, lead, detail, at = new Date().toISOString()) {
