@@ -393,7 +393,11 @@ function initPlayground() {
     Object.keys(inputs).forEach((key) => {
       if (!inputs[key]) return;
       const value = Number(weightSet[key]);
-      inputs[key].value = String(Number.isFinite(value) ? Math.round(value) : Math.round(DEFAULT_WEIGHTS[key] * 100));
+      if (!Number.isFinite(value)) {
+        inputs[key].value = String(Math.round(DEFAULT_WEIGHTS[key] * 100));
+        return;
+      }
+      inputs[key].value = String(Math.round(value <= 1 ? value * 100 : value));
     });
     setThresholds({ ...(config.thresholds || {}), changed: "qualified" });
     if (config.scenario && scenarios[config.scenario]) activeScenario = config.scenario;
