@@ -188,3 +188,22 @@ executive decision
 The operator can replay the path without loading another environment. Each step points at an existing system surface and uses the same local deterministic engine.
 
 V13 also adds an executive readout that turns the current run into a compact evidence-based brief with key facts, recommended actions, top owner and top segment. The brief can be copied without sending data to a backend.
+
+
+## V14 · Decision Operating System
+
+V14 turns the Control Room from an intelligence dashboard into a more explicit decision operating system.
+
+The new layer adds:
+
+- a reusable run-analysis contract that gives the UI one structured analysis object;
+- stricter CSV contracts for required numeric signals and row widths;
+- exact score-contribution reconciliation;
+- forecast aggregation that rounds only after the exact expectation is summed;
+- Decision Trace for input, quality, score, commercial context, risk, proposal, approval and execution boundary;
+- owner operating matrix ranked by expected value, with stale and high/critical risk signals;
+- an explicit integration boundary separating local decision support from any future external execution adapter;
+- a one-shot human gate for sensitive nurture → qualified simulation;
+- stronger structural validation for guided proof and V14 DOM contracts.
+
+The execution boundary remains intentionally disconnected. The project demonstrates the decision contract without pretending to have a live CRM integration.
