@@ -11,7 +11,8 @@ const required = [
   "assets/js/thanks.js",
   "assets/js/revops-engine.js",
   "assets/js/csv-utils.js",
-  "tests/revops-engine.test.js"
+  "tests/revops-engine.test.js",
+  "assets/js/execution-adapter.js"
 ];
 
 const fail = (message) => {
@@ -93,9 +94,18 @@ const importedEngineNames = engineImportBlock[1]
 const missingEngineExports = importedEngineNames.filter((name) => !engineExports.has(name));
 if (missingEngineExports.length) fail("app.js references missing engine exports: " + missingEngineExports.join(", "));
 
+const adapterJs = fs.readFileSync(path.join(root, "assets/js/execution-adapter.js"), "utf8");
+const adapterExports = new Set(
+  [...adapterJs.matchAll(/export\\s+(?:function|const|let|var|class)\\s+([A-Za-z0-9_]+)/g)].map((match) => match[1])
+);
+for (const expected of ["createExecutionEnvelope", "simulateExecution", "EXECUTION_ADAPTER_STATUS"]) {
+  if (!adapterExports.has(expected)) fail("missing execution adapter export: " + expected);
+}
+
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
-  "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js","README.md"
+  "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
+  "assets/js/execution-adapter.js","README.md"
 ];
 
 for (const file of sourceFiles) {
