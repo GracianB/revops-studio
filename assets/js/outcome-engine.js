@@ -134,6 +134,12 @@ export function appendOutcome(ledger, outcome) {
   if (!ledger || ledger.contractVersion !== "18.0" || ledger.ledgerType !== "REVOPS_OUTCOME_LEDGER") {
     return { accepted: false, duplicate: false, reason: "Invalid outcome ledger.", ledger, outcome: null };
   }
+  if (outcome.contractVersion !== "18.0") {
+    return { accepted: false, duplicate: false, reason: "Outcome contract version is invalid.", ledger, outcome: null };
+  }
+  if (ledger.runId !== null && String(outcome.runId) !== String(ledger.runId)) {
+    return { accepted: false, duplicate: false, reason: "Outcome runId does not match ledger.", ledger, outcome: null };
+  }
   const quality = validateOutcome(outcome);
   if (!quality.valid) {
     return { accepted: false, duplicate: false, reason: quality.errors.join(", "), ledger, outcome: null };
