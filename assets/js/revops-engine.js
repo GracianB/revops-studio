@@ -32,6 +32,16 @@ const numeric = (value) => {
   return Number.isFinite(result) ? result : null;
 };
 
+// Keep deterministic decimal arithmetic stable across JavaScript's binary floating point.
+// Twelve decimal places are more than sufficient for forecast probabilities and currency
+// inputs used by this local decision engine.
+const roundDecimal = (value, places = 12) => {
+  const result = numeric(value);
+  if (result === null) return null;
+  const factor = 10 ** places;
+  return Math.round((result + Number.EPSILON) * factor) / factor;
+};
+
 const clamp = (value) => {
   const result = numeric(value);
   if (result === null) return null;
@@ -76,9 +86,29 @@ export function nextAction(lead) {
 
 export function scoreBreakdown(lead, weights = DEFAULT_WEIGHTS) {
   const normalized = normaliseWeights(weights);
-  return Object.fromEntries(
-    SIGNALS.map((key) => [key, Math.round(clamp(lead[key]) * normalized[key])])
-  );
+  const raw = SIGNALS.map((key, index) => ({
+    key,
+    index,
+    exact: clamp(lead?.[key]) * normalized[key]
+  }));
+  const target = Math.round(raw.reduce((sum, item) => sum + item.exact, 0));
+  const result = Object.fromEntries(raw.map((item) => [item.key, Math.floor(item.exact)]));
+  let remainder = target - Object.values(result).reduce((sum, value) => sum + value, 0);
+
+  raw
+    .map((item) => ({
+      ...item,
+      fraction: item.exact - Math.floor(item.exact)
+    }))
+    .sort((a, b) => b.fraction - a.fraction || a.index - b.index)
+    .forEach((item) => {
+      if (remainder > 0) {
+        result[item.key] += 1;
+        remainder -= 1;
+      }
+    });
+
+  return result;
 }
 
 export function scoreLead(lead, weights = DEFAULT_WEIGHTS, thresholds = DEFAULT_THRESHOLDS) {
@@ -281,7 +311,7 @@ export function forecastPipeline(leads, assumptions = {}) {
   const rows = active.map((lead) => {
     const value = numeric(lead.value) ?? 0;
     const probability = probabilities[lead.stage] ?? 0;
-    const expected = value * probability;
+    const expected = roundDecimal(value * probability) ?? 0;
     return {
       leadId: lead.id,
       account: lead.account || "Unnamed account",
@@ -289,13 +319,17 @@ export function forecastPipeline(leads, assumptions = {}) {
       value,
       probability,
       expectedValue: Math.round(expected),
+      expectedValueExact: expected,
       owner: String(lead.owner || "Unassigned").trim() || "Unassigned",
       segment: String(lead.segment || "General").trim() || "General"
     };
   });
 
   const pipelineValue = rows.reduce((sum, row) => sum + row.value, 0);
-  const expectedValue = rows.reduce((sum, row) => sum + row.expectedValue, 0);
+  const expectedValueExact = roundDecimal(
+    rows.reduce((sum, row) => sum + row.expectedValueExact, 0)
+  ) ?? 0;
+  const expectedValue = Math.round(expectedValueExact);
   const leadById = new Map(leads.map((lead) => [String(lead.id), lead]));
   const weightedByScore = rows.reduce((sum, row) => {
     const lead = leadById.get(String(row.leadId));
@@ -306,10 +340,10 @@ export function forecastPipeline(leads, assumptions = {}) {
   const bySegment = {};
   rows.forEach((row) => {
     if (!bySegment[row.segment]) {
-      bySegment[row.segment] = { value: 0, expectedValue: 0, count: 0 };
+      bySegment[row.segment] = { value: 0, expectedValue: 0, expectedValueExact: 0, count: 0 };
     }
     bySegment[row.segment].value += row.value;
-    bySegment[row.segment].expectedValue += row.expectedValue;
+    bySegment[row.segment].expectedValueExact += row.expectedValueExact;
     bySegment[row.segment].count += 1;
   });
 
@@ -321,12 +355,16 @@ export function forecastPipeline(leads, assumptions = {}) {
     probabilities,
     pipelineValue,
     expectedValue,
+    expectedValueExact,
     weightedByScore: Math.round(weightedByScore),
-    expectedCoverage: pipelineValue ? expectedValue / pipelineValue : 0,
+    expectedCoverage: pipelineValue ? roundDecimal(expectedValueExact / pipelineValue) : 0,
     activeRecords: rows.length,
     topAccounts,
     topAccountShare: pipelineValue && topAccounts.length ? topAccounts[0].value / pipelineValue : 0,
-    bySegment,
+    bySegment: Object.fromEntries(Object.entries(bySegment).map(([segment, item]) => [
+      segment,
+      { ...item, expectedValue: Math.round(item.expectedValueExact) }
+    ])),
     rows
   };
 }
@@ -344,8 +382,12 @@ export function forecastScenarios(leads, assumptions = {}) {
     name,
     {
       pipelineValue: base.pipelineValue,
-      expectedValue: Math.round(base.expectedValue * Math.max(0, multiplier)),
-      coverage: base.pipelineValue ? (base.expectedValue / base.pipelineValue) * Math.max(0, multiplier) : 0,
+      expectedValue: Math.round(
+        (base.expectedValueExact ?? 0) * Math.max(0, multiplier)
+      ),
+      coverage: base.pipelineValue
+        ? roundDecimal((base.expectedValueExact / base.pipelineValue) * Math.max(0, multiplier))
+        : 0,
       multiplier
     }
   ]));
@@ -452,9 +494,9 @@ export function accountHealth(lead, config = {}) {
   };
 }
 
-export function segmentIntelligence(leads, forecastAssumptions = {}) {
+export function segmentIntelligence(leads, forecastAssumptions = {}, forecastOverride = null) {
   const rows = Array.isArray(leads) ? leads : [];
-  const forecast = forecastPipeline(rows, forecastAssumptions);
+  const forecast = forecastOverride || forecastPipeline(rows, forecastAssumptions);
   const groups = {};
   rows.forEach((lead) => {
     const segment = String(lead?.segment || "General").trim() || "General";
@@ -525,9 +567,9 @@ export function segmentIntelligence(leads, forecastAssumptions = {}) {
   );
 }
 
-export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions = {}) {
+export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions = {}, forecastOverride = null) {
   const rows = Array.isArray(leads) ? leads : [];
-  const forecast = forecastPipeline(rows, forecastAssumptions);
+  const forecast = forecastOverride || forecastPipeline(rows, forecastAssumptions);
   const groups = {};
 
   rows.forEach((lead) => {
@@ -558,17 +600,16 @@ export function cohortAnalysis(leads, cohortKey = "cohort", forecastAssumptions 
     if ((numeric(lead.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays) group.staleRecords += 1;
   });
 
+  const forecastByLeadId = new Map(forecast.rows.map((row) => [String(row.leadId), row]));
   Object.values(groups).forEach((group) => {
     group.qualifiedRate = group.activeRecords ? group.qualifiedRecords / group.activeRecords : 0;
     group.staleRate = group.activeRecords ? group.staleRecords / group.activeRecords : 0;
     group.averageScore = group.activeRecords ? Math.round(group.averageScore / group.activeRecords) : 0;
-    group.expectedValue = rows
+    const cohortExact = rows
       .filter((lead) => String(lead?.[cohortKey] || "Unspecified").trim() === group.cohort)
       .filter((lead) => lead.stage !== "blocked")
-      .reduce((sum, lead) => {
-        const probability = forecast.probabilities[lead.stage] ?? 0;
-        return sum + Math.round((numeric(lead.value) ?? 0) * probability);
-      }, 0);
+      .reduce((sum, lead) => sum + (forecastByLeadId.get(String(lead.id))?.expectedValueExact ?? 0), 0);
+    group.expectedValue = Math.round(cohortExact);
   });
 
   return Object.values(groups)
@@ -783,10 +824,10 @@ export function revenueLeakage(leads, config = {}) {
   };
 }
 
-export function executiveIntelligence(leads, forecastAssumptions = {}, config = {}) {
+export function executiveIntelligence(leads, forecastAssumptions = {}, config = {}, precomputed = {}) {
   const evaluated = Array.isArray(leads) ? leads : [];
   const options = normaliseIntelligenceConfig(config);
-  const forecast = forecastPipeline(evaluated, forecastAssumptions);
+  const forecast = precomputed.forecast || forecastPipeline(evaluated, forecastAssumptions);
   const healthRows = evaluated.map((lead) => ({ lead, health: accountHealth(lead, options) }));
   const validHealth = healthRows.filter((item) => item.health.score !== null);
   const health = {
@@ -802,8 +843,8 @@ export function executiveIntelligence(leads, forecastAssumptions = {}, config = 
   const rules = applyBusinessRules(evaluated, config);
   const anomalies = detectAnomalies(evaluated, options);
   const leakage = revenueLeakage(evaluated, config);
-  const segments = segmentIntelligence(evaluated, forecastAssumptions);
-  const cohorts = cohortAnalysis(evaluated, "cohort", forecastAssumptions);
+  const segments = precomputed.segments || segmentIntelligence(evaluated, forecastAssumptions, forecast);
+  const cohorts = precomputed.cohorts || cohortAnalysis(evaluated, "cohort", forecastAssumptions, forecast);
 
   const criticalCount = rules.filter((item) => item.severity === "critical").length;
   const highCount = rules.filter((item) => item.severity === "high").length + anomalies.high;
@@ -854,9 +895,9 @@ export function executiveIntelligence(leads, forecastAssumptions = {}, config = 
 }
 
 
-export function ownerIntelligence(leads, forecastAssumptions = {}, config = {}) {
+export function ownerIntelligence(leads, forecastAssumptions = {}, config = {}, forecastOverride = null) {
   const rows = Array.isArray(leads) ? leads.filter((lead) => lead.stage !== "blocked") : [];
-  const forecast = forecastPipeline(rows, forecastAssumptions);
+  const forecast = forecastOverride || forecastPipeline(rows, forecastAssumptions);
   const groups = {};
 
   rows.forEach((lead) => {
@@ -887,13 +928,13 @@ export function ownerIntelligence(leads, forecastAssumptions = {}, config = {}) 
 
   const ownerForecast = forecast.rows.reduce((map, row) => {
     const owner = row.owner;
-    map[owner] = (map[owner] || 0) + row.expectedValue;
+    map[owner] = (map[owner] || 0) + (row.expectedValueExact ?? row.expectedValue);
     return map;
   }, {});
 
   const totalPipeline = Object.values(groups).reduce((sum, item) => sum + item.pipelineValue, 0);
   Object.values(groups).forEach((group) => {
-    group.expectedValue = ownerForecast[group.owner] || 0;
+    group.expectedValue = Math.round(ownerForecast[group.owner] || 0);
     group.qualifiedRate = group.records ? group.qualifiedRecords / group.records : 0;
     group.staleRate = group.records ? group.staleRecords / group.records : 0;
     group.averageScore = group.records ? Math.round(group.averageScore / group.records) : 0;
@@ -907,15 +948,9 @@ export function ownerIntelligence(leads, forecastAssumptions = {}, config = {}) 
   );
 }
 
-export function buildExecutiveBrief(leads, forecastAssumptions = {}, config = {}) {
-  const evaluated = Array.isArray(leads) ? leads : [];
-  const pipeline = summarisePipeline(evaluated);
-  const commercial = commercialMetrics(evaluated);
-  const intelligence = executiveIntelligence(evaluated, forecastAssumptions, config);
-  const owners = ownerIntelligence(evaluated, forecastAssumptions, config);
+function composeExecutiveBrief(pipeline, commercial, intelligence, owners) {
   const topOwner = owners[0] || null;
   const topSegment = Object.values(intelligence.segments)[0] || null;
-
   const headline = intelligence.signal === "critical"
     ? "Revenue and operating risk require attention."
     : intelligence.signal === "attention"
@@ -952,6 +987,118 @@ export function buildExecutiveBrief(leads, forecastAssumptions = {}, config = {}
     topOwner,
     topSegment,
     intelligence
+  };
+}
+
+export function buildExecutiveBrief(leads, forecastAssumptions = {}, config = {}) {
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const pipeline = summarisePipeline(evaluated);
+  const commercial = commercialMetrics(evaluated);
+  const forecast = forecastPipeline(evaluated, forecastAssumptions);
+  const segments = segmentIntelligence(evaluated, forecastAssumptions, forecast);
+  const cohorts = cohortAnalysis(evaluated, "cohort", forecastAssumptions, forecast);
+  const intelligence = executiveIntelligence(
+    evaluated,
+    forecastAssumptions,
+    config,
+    { forecast, segments, cohorts }
+  );
+  const owners = ownerIntelligence(evaluated, forecastAssumptions, config, forecast);
+  return composeExecutiveBrief(pipeline, commercial, intelligence, owners);
+}
+
+export function buildRunAnalysis(leads, forecastAssumptions = {}, config = {}) {
+  const evaluated = Array.isArray(leads) ? leads : [];
+  const options = normaliseIntelligenceConfig(config);
+  const pipeline = summarisePipeline(evaluated);
+  const commercial = commercialMetrics(evaluated);
+  const forecast = forecastPipeline(evaluated, forecastAssumptions);
+  const scenarios = forecastScenarios(evaluated, forecastAssumptions);
+  const segments = segmentIntelligence(evaluated, forecastAssumptions, forecast);
+  const cohorts = cohortAnalysis(evaluated, "cohort", forecastAssumptions, forecast);
+  const intelligence = executiveIntelligence(
+    evaluated,
+    forecastAssumptions,
+    options,
+    { forecast, segments, cohorts }
+  );
+  const owners = ownerIntelligence(evaluated, forecastAssumptions, options, forecast);
+  const executive = composeExecutiveBrief(pipeline, commercial, intelligence, owners);
+
+  return Object.freeze({
+    evaluated,
+    pipeline,
+    commercial,
+    forecast,
+    scenarios,
+    segments,
+    cohorts,
+    intelligence,
+    owners,
+    executive
+  });
+}
+
+export function buildDecisionTrace(lead, forecastAssumptions = {}, config = {}, context = {}) {
+  const candidate = lead || {};
+  const risks = applyBusinessRules([candidate], config);
+  const health = accountHealth(candidate, config);
+  const policy = ACTION_POLICY[candidate.stage] || ACTION_POLICY.blocked;
+  const forecast = forecastPipeline([candidate], forecastAssumptions);
+  const forecastRow = forecast.rows[0] || null;
+  const proposedTarget = candidate.stage === "new"
+    ? "nurture"
+    : candidate.stage === "nurture"
+      ? "qualified"
+      : null;
+
+  return {
+    runId: context.runId || null,
+    input: {
+      id: candidate.id || null,
+      account: candidate.account || "Unnamed account",
+      signals: Object.fromEntries(SIGNALS.map((key) => [key, candidate[key] ?? null])),
+      quality: candidate.quality || validateLead(candidate)
+    },
+    decision: {
+      score: typeof candidate.score === "number" ? candidate.score : null,
+      breakdown: candidate.breakdown || {},
+      stage: candidate.stage || "blocked",
+      nextAction: candidate.nextAction || nextAction(candidate)
+    },
+    commercial: {
+      value: numeric(candidate.value),
+      owner: String(candidate.owner || "Unassigned").trim() || "Unassigned",
+      segment: String(candidate.segment || "General").trim() || "General",
+      source: String(candidate.source || "").trim(),
+      cohort: String(candidate.cohort || "").trim(),
+      lastTouchDays: numeric(candidate.lastTouchDays),
+      stale: (numeric(candidate.lastTouchDays) ?? -1) > INTELLIGENCE_DEFAULTS.staleDays,
+      expectedValue: forecastRow?.expectedValue || 0,
+      probability: forecastRow?.probability || 0
+    },
+    health,
+    risks,
+    proposal: {
+      from: candidate.stage || "blocked",
+      to: proposedTarget,
+      action: policy.action,
+      lane: policy.lane,
+      priority: policy.priority,
+      slaHours: policy.slaHours,
+      approvalRequired: proposedTarget === "qualified" || proposedTarget === "blocked"
+    },
+    approval: {
+      status: "pending",
+      required: proposedTarget === "qualified" || proposedTarget === "blocked",
+      reason: proposedTarget === "qualified" || proposedTarget === "blocked"
+        ? "Sensitive transition requires explicit human approval."
+        : "No sensitive transition proposed."
+    },
+    execution: {
+      state: "NOT_EXECUTED",
+      mode: "SIMULATION_ONLY"
+    }
   };
 }
 

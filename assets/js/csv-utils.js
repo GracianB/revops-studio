@@ -7,8 +7,10 @@ const SUPPORTED_DELIMITERS = [",", ";"];
 const normaliseHeader = (value) =>
   String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
 
-const parseNumber = (value) => {
-  const numeric = Number(String(value ?? "").trim().replace(",", "."));
+const parseNumber = (value, { required = false } = {}) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return required ? NaN : null;
+  const numeric = Number(raw.replace(",", "."));
   return Number.isFinite(numeric) ? numeric : NaN;
 };
 
@@ -83,22 +85,28 @@ export function parseCsv(text) {
   if (missing.length) throw new Error("Faltan columnas: " + missing.join(", "));
 
   return rows.slice(1).map((cells, rowIndex) => {
+    const csvRow = rowIndex + 2;
+    if (cells.length !== headers.length) {
+      throw new Error(
+        "Fila CSV " + csvRow + " tiene " + cells.length +
+        " columnas; se esperaban " + headers.length + "."
+      );
+    }
+
     const raw = Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]));
     return {
-      id: String(raw.id).trim() || "ROW-" + (rowIndex + 2),
+      id: String(raw.id).trim() || "ROW-" + csvRow,
       account: String(raw.account || raw.company || raw.account_name || "Imported").trim(),
-      fit: parseNumber(raw.fit),
-      intent: parseNumber(raw.intent),
-      engagement: parseNumber(raw.engagement),
-      urgency: parseNumber(raw.urgency),
-      value: raw.value === undefined || String(raw.value).trim() === "" ? null : parseNumber(raw.value),
+      fit: parseNumber(raw.fit, { required: true }),
+      intent: parseNumber(raw.intent, { required: true }),
+      engagement: parseNumber(raw.engagement, { required: true }),
+      urgency: parseNumber(raw.urgency, { required: true }),
+      value: raw.value === undefined ? null : parseNumber(raw.value),
       owner: String(raw.owner ?? "").trim(),
       segment: String(raw.segment ?? "").trim(),
       source: String(raw.source ?? "").trim(),
       cohort: String(raw.cohort ?? "").trim(),
-      lastTouchDays: raw.last_touch_days === undefined || String(raw.last_touch_days).trim() === ""
-        ? null
-        : parseNumber(raw.last_touch_days)
+      lastTouchDays: raw.last_touch_days === undefined ? null : parseNumber(raw.last_touch_days)
     };
   });
 }

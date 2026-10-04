@@ -13,10 +13,9 @@ import {
   createRunSnapshot,
   nextAction,
   commercialMetrics,
-  forecastPipeline,
-  forecastScenarios,
   executiveIntelligence,
-  buildExecutiveBrief
+  buildRunAnalysis,
+  buildDecisionTrace
 } from "./revops-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -267,6 +266,20 @@ function initPlayground() {
     segment: qs("#executiveSegment"),
     copyButton: qs("#copyExecutiveBrief"),
     text: qs("#executiveBriefText")
+  };
+  const ownerMatrix = qs("#ownerMatrix");
+  const decisionTrace = {
+    state: qs("#traceState"),
+    runId: qs("#traceRunId"),
+    empty: qs("#decisionTraceEmpty"),
+    content: qs("#decisionTraceContent"),
+    inputs: qs("#traceInputs"),
+    decision: qs("#traceDecision"),
+    commercial: qs("#traceCommercial"),
+    risk: qs("#traceRisk"),
+    proposal: qs("#traceProposal"),
+    approval: qs("#traceApproval"),
+    execution: qs("#traceExecution")
   };
   const impact = qs("#impactList");
   const impactMeta = qs("#impactMeta");
@@ -629,7 +642,10 @@ function initPlayground() {
       const presentOptional = evaluated.reduce((sum, lead) =>
         sum + ["value", "owner", "segment", "source", "cohort", "lastTouchDays"].filter((key) => {
           const value = lead[key];
-          return key === "lastTouchDays" ? Number.isFinite(Number(value)) : String(value ?? "").trim() !== "";
+          const numericField = key === "value" || key === "lastTouchDays";
+          return numericField
+            ? Number.isFinite(Number(value))
+            : String(value ?? "").trim() !== "";
         }).length, 0
       );
       commercial.coverage.textContent = totalOptional
@@ -661,10 +677,11 @@ function initPlayground() {
       downside: Number(forecast.probabilities.downside?.value) / 100,
       upside: Number(forecast.probabilities.upside?.value) / 100
     };
-    const forecastResult = forecastPipeline(evaluated, forecastAssumptions);
-    const scenarioResult = forecastScenarios(evaluated, forecastAssumptions);
-    const intelligenceResult = executiveIntelligence(evaluated, forecastAssumptions);
-    const executiveResult = buildExecutiveBrief(evaluated, forecastAssumptions);
+    const analysis = buildRunAnalysis(evaluated, forecastAssumptions);
+    const forecastResult = analysis.forecast;
+    const scenarioResult = analysis.scenarios;
+    const intelligenceResult = analysis.intelligence;
+    const executiveResult = analysis.executive;
     const scenarioMoney = (name) => formatMoney(scenarioResult[name]?.expectedValue || 0);
 
     if (forecast.downside) forecast.downside.textContent = scenarioMoney("downside");
@@ -790,6 +807,34 @@ function initPlayground() {
          executiveResult.actions.map((item) => "• " + item).join("\n");
      }
 
+     if (ownerMatrix) {
+       ownerMatrix.replaceChildren();
+       if (!analysis.owners.length) {
+         const empty = document.createElement("div");
+         empty.className = "owner-matrix-empty";
+         empty.textContent = "No hay portfolios activos en este run.";
+         ownerMatrix.appendChild(empty);
+       } else {
+         analysis.owners.slice(0, 10).forEach((owner) => {
+           const row = document.createElement("div");
+           row.className = "owner-matrix-row";
+           const name = document.createElement("strong");
+           name.textContent = owner.owner;
+           const pipeline = document.createElement("span");
+           pipeline.textContent = formatMoney(owner.pipelineValue) + " pipeline";
+           const expected = document.createElement("b");
+           expected.textContent = formatMoney(owner.expectedValue) + " expected";
+           const rates = document.createElement("small");
+           rates.textContent =
+             Math.round(owner.qualifiedRate * 100) + "% Q · " +
+             Math.round(owner.staleRate * 100) + "% stale · " +
+             owner.riskFindings + " high/critical";
+           row.append(name, pipeline, expected, rates);
+           ownerMatrix.appendChild(row);
+         });
+       }
+     }
+
 
      Object.entries(bars).forEach(([stage, bar]) => {
       if (bar) bar.style.width = (summary.total ? (summary.byStage[stage] || 0) / summary.total * 100 : 0) + "%";
@@ -834,6 +879,7 @@ function initPlayground() {
           const text = document.createElement("p");
           text.textContent = "Errores: " + lead.quality.errors.join(", ");
           detail.append(title, text);
+          renderDecisionTrace(lead);
           return;
         }
         detail.innerHTML = "";
@@ -864,6 +910,7 @@ function initPlayground() {
         });
         body.append(p, grid);
         detail.append(head, body);
+        renderDecisionTrace(lead);
         qsa(".demo-table tbody tr").forEach((item) => item.classList.toggle("is-selected", item === tr));
       };
       tr.addEventListener("click", inspect);
@@ -872,6 +919,110 @@ function initPlayground() {
       });
       rows.appendChild(tr);
     });
+  };
+
+  const renderTraceFacts = (target, facts) => {
+    if (!target) return;
+    target.replaceChildren();
+    facts.forEach(([label, value]) => {
+      const row = document.createElement("div");
+      row.className = "trace-fact";
+      const key = document.createElement("span");
+      key.textContent = label;
+      const val = document.createElement("b");
+      val.textContent = String(value);
+      row.append(key, val);
+      target.appendChild(row);
+    });
+  };
+
+  const renderDecisionTrace = (lead) => {
+    if (!decisionTrace.content || !decisionTrace.empty) return;
+    const trace = buildDecisionTrace(
+      lead,
+      getForecastConfig(),
+      {},
+      { runId: lastSnapshot?.runId || null }
+    );
+
+    decisionTrace.empty.hidden = true;
+    decisionTrace.content.hidden = false;
+    if (decisionTrace.state) {
+      decisionTrace.state.textContent = trace.decision.stage.toUpperCase();
+      decisionTrace.state.dataset.state = trace.decision.stage;
+    }
+    if (decisionTrace.runId) decisionTrace.runId.textContent = trace.runId || "CURRENT RUN";
+
+    renderTraceFacts(decisionTrace.inputs, [
+      ["ID", trace.input.id || "—"],
+      ["Account", trace.input.account],
+      ["Fit", trace.input.signals.fit ?? "—"],
+      ["Intent", trace.input.signals.intent ?? "—"],
+      ["Engagement", trace.input.signals.engagement ?? "—"],
+      ["Urgency", trace.input.signals.urgency ?? "—"],
+      ["Data quality", trace.input.quality?.valid ? "VALID" : "BLOCKED"]
+    ]);
+
+    const contributions = Object.entries(trace.decision.breakdown || {})
+      .map(([key, value]) => [key, "+" + value]);
+    renderTraceFacts(decisionTrace.decision, [
+      ["Score", trace.decision.score ?? "—"],
+      ["Stage", trace.decision.stage],
+      ...contributions,
+      ["Next action", trace.decision.nextAction]
+    ]);
+
+    renderTraceFacts(decisionTrace.commercial, [
+      ["Value", trace.commercial.value === null ? "—" : formatEuro(trace.commercial.value)],
+      ["Owner", trace.commercial.owner],
+      ["Segment", trace.commercial.segment],
+      ["Source", trace.commercial.source || "—"],
+      ["Last touch", trace.commercial.lastTouchDays === null ? "—" : trace.commercial.lastTouchDays + "d"],
+      ["Forecast", formatEuro(trace.commercial.expectedValue) + " · " + Math.round(trace.commercial.probability * 100) + "%"]
+    ]);
+
+    if (decisionTrace.risk) {
+      decisionTrace.risk.replaceChildren();
+      const health = document.createElement("div");
+      health.className = "trace-status";
+      health.textContent = "Health " + (trace.health.score ?? "—") + " · " + String(trace.health.status).toUpperCase() + " · confidence " + trace.health.confidence;
+      decisionTrace.risk.appendChild(health);
+      if (!trace.risks.length) {
+        const empty = document.createElement("div");
+        empty.className = "trace-empty";
+        empty.textContent = "No high-severity business rule found.";
+        decisionTrace.risk.appendChild(empty);
+      } else {
+        trace.risks.slice(0, 5).forEach((risk) => {
+          const item = document.createElement("div");
+          item.className = "trace-risk";
+          const title = document.createElement("strong");
+          title.textContent = risk.code + " · " + risk.severity.toUpperCase();
+          const detail = document.createElement("small");
+          detail.textContent = risk.message;
+          item.append(title, detail);
+          decisionTrace.risk.appendChild(item);
+        });
+      }
+    }
+
+    renderTraceFacts(decisionTrace.proposal, [
+      ["Action", trace.proposal.action],
+      ["Lane", trace.proposal.lane],
+      ["Priority", trace.proposal.priority],
+      ["SLA", trace.proposal.slaHours + "h"],
+      ["Transition", trace.proposal.to ? trace.proposal.from + " → " + trace.proposal.to : "No stage transition"]
+    ]);
+    renderTraceFacts(decisionTrace.approval, [
+      ["Required", trace.approval.required ? "YES" : "NO"],
+      ["Status", trace.approval.status.toUpperCase()],
+      ["Reason", trace.approval.reason]
+    ]);
+    renderTraceFacts(decisionTrace.execution, [
+      ["State", trace.execution.state],
+      ["Mode", trace.execution.mode],
+      ["Boundary", "Outside system: NOT CALLED"]
+    ]);
   };
 
   const guidedSteps = [
@@ -958,7 +1109,7 @@ function initPlayground() {
     const lastRun = qs("#lastRun");
     if (lastRun) lastRun.textContent = "Última ejecución " + time + " · " + lastSnapshot.runId;
     status.dataset.state = "ok";
-    status.textContent = "Evaluado localmente · sin llamadas de red · configuración guardable.";
+    status.textContent = "Evaluado en el navegador · sin llamadas de CRM/API · configuración guardable.";
     evaluated.forEach((lead) => addAudit(auditEvent("EVALUATE", lead, lead.stage + " / " + (lead.score ?? "n/a"))));
     const summary = summarisePipeline(evaluated);
     if (recordHistory) {
@@ -1154,24 +1305,15 @@ function initPlayground() {
   });
 
   gate?.addEventListener("click", () => {
-    if (approved) {
-      approved = false;
-      gate.textContent = "Aprobar siguiente acción";
-      status.dataset.state = "error";
-      status.textContent = "Gate cerrado. No hay ejecución sensible autorizada.";
-      addAudit(auditEvent("GATE_CLOSED", { id: "MODEL" }, "manual approval revoked"));
-      return;
-    }
-
-    const candidate = evaluated.find((lead) => lead.stage === "nurture") || evaluated.find((lead) => lead.stage === "new");
+    const candidate = evaluated.find((lead) => lead.stage === "nurture");
     if (!candidate) {
       status.dataset.state = "error";
-      status.textContent = "No hay candidato seguro para simular una transición.";
-      addAudit(auditEvent("GATE_REJECTED", { id: "MODEL" }, "no transition candidate"));
+      status.textContent = "No hay un registro nurture para simular una aprobación sensible.";
+      addAudit(auditEvent("GATE_REJECTED", { id: "MODEL" }, "no nurture transition candidate"));
       return;
     }
 
-    const target = candidate.stage === "nurture" ? "qualified" : "nurture";
+    const target = "qualified";
     const result = transition(candidate, target, true);
     if (!result.ok) {
       status.dataset.state = "error";
@@ -1182,12 +1324,14 @@ function initPlayground() {
 
     const updated = result.lead;
     evaluated = evaluated.map((lead) => lead.id === updated.id ? { ...lead, ...updated, nextAction: nextAction(updated) } : lead);
-    approved = true;
-    gate.textContent = "Aprobación activa ✓";
+    approved = false;
+    gate.textContent = "Simular aprobación humana";
     status.dataset.state = "ok";
-    status.textContent = candidate.id + " aprobado: " + candidate.stage + " → " + target + " (simulación).";
+    status.textContent = candidate.id + " aprobado: " + candidate.stage + " → " + target + " (simulación, aprobación consumida).";
     addAudit(auditEvent("APPROVED", candidate, candidate.stage + " → " + target));
+    addAudit(auditEvent("APPROVAL_CONSUMED", updated, "one-shot human gate"));
     render();
+    renderDecisionTrace(updated);
   });
 
   document.addEventListener("keydown", (event) => {
