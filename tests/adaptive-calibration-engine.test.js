@@ -381,6 +381,51 @@ test("V20 report remains deterministic for identical supplied time", () => {
   assert.deepEqual(a.recommendations, b.recommendations);
 });
 
+test("V20 current window includes outcomes observed exactly at the evaluation boundary", () => {
+  const current = observedRows({
+    startDate:"2026-09-20",
+    count:8,
+    probability:0.5,
+    success:false
+  });
+  const input = asForecastOutcomes(current);
+  const report = buildAdaptiveCalibrationReport({
+    ...input,
+    datasetFingerprint:"D1",
+    runId:"CURRENT",
+    now:"2026-09-28T12:00:00.000Z",
+    config:{ minSamples:8 }
+  });
+  assert.equal(report.currentWindow.records, 8);
+  assert.equal(report.global.current.records, 8);
+});
+
+test("V20 ignores calibration history from another dataset", () => {
+  const foreign = observedRows({
+    startDate:"2026-08-20",
+    count:8,
+    probability:0.1,
+    success:false
+  });
+  const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
+    runId:"FOREIGN",
+    datasetFingerprint:"FOREIGN-DATASET",
+    capturedAt:"2026-09-01T00:00:00.000Z",
+    rows:foreign
+  }), 36);
+
+  const report = buildAdaptiveCalibrationReport({
+    datasetFingerprint:"LOCAL-DATASET",
+    runId:"CURRENT",
+    now:"2026-10-05T00:00:00.000Z",
+    history,
+    config:{ minSamples:8 }
+  });
+
+  assert.equal(report.previousWindow.records, 0);
+  assert.equal(report.severity, "INSUFFICIENT");
+});
+
 test("V20 history does not grow on an identical snapshot", () => {
   const previous = observedRows({ startDate:"2026-08-20", count:8, probability:0.5, success:false });
   const history = appendCalibrationSnapshot([], createCalibrationSnapshot({
