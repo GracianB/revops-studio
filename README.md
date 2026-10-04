@@ -167,3 +167,24 @@ The first screen now answers three questions before a visitor touches the playgr
 The proof surface links the positioning, RevOps Studio itself, the wider public project ecosystem and the Professional Deck / LinkedIn. It is deliberately evidence-first: no invented business results, no fake enterprise integrations and no claims that cannot be inspected.
 
 The Control Room remains the main technical proof. V12 changes the route into it, not the underlying decision engine.
+
+
+## V13 · 60-second proof
+
+V13 adds a guided proof path for fast technical review.
+
+The Control Room now includes a four-step narrative:
+
+```
+baseline
+   ↓
+model impact
+   ↓
+forecast stress
+   ↓
+executive decision
+```
+
+The operator can replay the path without loading another environment. Each step points at an existing system surface and uses the same local deterministic engine.
+
+V13 also adds an executive readout that turns the current run into a compact evidence-based brief with key facts, recommended actions, top owner and top segment. The brief can be copied without sending data to a backend.
