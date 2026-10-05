@@ -243,6 +243,22 @@ Trust verification evaluates the signer state **at the evidence signing time** a
 
 The registry can be exported and re-imported only after its event fingerprints and head have been verified. The registry itself is still a local trust anchor, so moving it between machines is not equivalent to enterprise identity management. For a stronger deployment boundary, the exported registry head or approved signer fingerprints should be distributed and pinned through an external trusted channel.
 
+## V29 · Signed trust root
+
+V29 adds the missing distribution boundary above the V28 local trust registry:
+
+ROOT KEY → SIGNED REGISTRY SNAPSHOT → TRUST REGISTRY → SIGNED EVIDENCE
+
+The root layer signs the complete V28 registry, including its event fingerprints and head fingerprint, with an ECDSA P-256 key. The exported package contains the public root JWK, its deterministic RK29-* fingerprint, the registry snapshot, the exact signed-payload fingerprint and the signature.
+
+The browser keeps the root private key only in memory. The signed snapshot can be exported and verified independently, then used to verify V27 evidence through the full chain:
+
+ROOT → REGISTRY → SIGNER → EVIDENCE
+
+V29 supports an explicit external root pin. Verification without a pin proves only that the snapshot is internally consistent and cryptographically signed by the public key it carries. Verification with a pin proves that the snapshot matches a specific root identity distributed through another channel.
+
+This is still not enterprise authentication. The public application is intentionally local-first. A production deployment would distribute or pin the approved root fingerprint through an independent trust channel rather than trusting browser storage.
+
 ## Human-in-the-loop by design
 
 RevOps Studio deliberately separates **recommendation** from **execution**.
