@@ -221,7 +221,7 @@ test("V22 rollback restores the previous approved policy", () => {
     datasetFingerprint: "ds-rollback",
     now: "2026-10-06T00:00:00.000Z"
   });
-  const approvedFirst = decidePolicy({ proposal: first, decision: "APPROVE", actor: "operator", now });
+  const approvedFirst = decidePolicy({ proposal: first, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-rollback", now });
   const approvedSecond = decidePolicy({
     ledger: approvedFirst.ledger,
     proposal: second,
@@ -291,10 +291,11 @@ test("V22 summary exports the decision state without ledger rows", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
+    datasetFingerprint: "ds-summary",
     now
   });
   const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-summary", now });
-  const summary = summarisePolicy({ proposal, ledger: approved.ledger });
+  const summary = summarisePolicy({ proposal, ledger: approved.ledger, datasetFingerprint: "ds-summary" });
   assert.equal(summary.contractVersion, "22.0");
   assert.equal(summary.decisions, 1);
   assert.equal(summary.activeMultiplier, proposal.multiplier);

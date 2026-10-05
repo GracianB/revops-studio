@@ -317,7 +317,7 @@ export function decidePolicy({
   if (safeDecision === "ROLLBACK") {
     const active = activePolicy(current, fingerprint);
     if (!active) return reject("NO_ACTIVE_POLICY");
-    const decisionId = "V21D-" + stableHash(JSON.stringify({
+    const decisionId = "V22D-" + stableHash(JSON.stringify({
       decision: "ROLLBACK",
       proposalId: active.proposalId,
       decidedAt,
@@ -368,7 +368,7 @@ export function decidePolicy({
   );
   if (already) return reject("ALREADY_DECIDED");
 
-  const decisionId = "V21D-" + stableHash(JSON.stringify({
+  const decisionId = "V22D-" + stableHash(JSON.stringify({
     decision: safeDecision,
     proposalId: proposal.proposalId,
     decidedAt,
