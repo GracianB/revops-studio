@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="REVOPS STUDIO · V24 Policy Integrity Decision Operating System · CS × Data × AI × Systems">
+  <meta property="og:title" content="REVOPS STUDIO · V25 Policy Integrity Decision Operating System · CS × Data × AI × Systems">
   <meta property="og:description" content="Hiring Manager Mode · RevOps Studio público, Control Room, arquitectura determinista y proof técnico.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -845,44 +845,51 @@
           </div>
         </section>
 
-        <section class="feedback-panel" aria-labelledby="calibration-v24-title">
+        <section class="feedback-panel" aria-labelledby="calibration-v25-title">
           <div class="feedback-head">
             <div>
-              <span class="kicker">Controlled Policy · V24</span>
-              <h3 id="calibration-v24-title">El recálculo se aplica solo si el replay mejora, se reconstruye contra los outcomes observados y un operador lo aprueba.</h3>
+              <span class="kicker">Controlled Policy · V25</span>
+              <h3 id="calibration-v25-title">El recálculo se aplica solo si el replay mejora, se reconstruye contra los outcomes observados y un operador lo aprueba.</h3>
             </div>
             <span class="feedback-boundary">LOCAL · APPROVAL REQUIRED</span>
           </div>
-          <p>V24 añade integridad de policy sobre V21: el replay queda ligado a la propuesta, la política efectiva permanece dentro de ±0.15 respecto a la base y cada aprobación obtiene una identidad reproducible.</p>
+          <p>V25 añade integridad de policy sobre V21: el replay queda ligado a la propuesta, la política efectiva permanece dentro de ±0.15 respecto a la base y cada aprobación obtiene una identidad reproducible.</p>
           <div class="feedback-metrics" aria-live="polite">
-            <div class="feedback-metric"><span>Status</span><strong id="calibrationV24Status">ABSENT</strong><small>elegibilidad del replay</small></div>
-            <div class="feedback-metric"><span>Multiplier</span><strong id="calibrationV24Multiplier">1.00</strong><small>ajuste máximo ±0.15</small></div>
-            <div class="feedback-metric"><span>Improvement</span><strong id="calibrationV24Improvement">—</strong><small>Brier actual − candidato</small></div>
-            <div class="feedback-metric"><span>Active</span><strong id="calibrationV24Active">none</strong><small>política aprobada</small></div>
-             <div class="feedback-metric"><span>Replay</span><strong id="calibrationV24Replay">—</strong><small>binding del replay</small></div>
-             <div class="feedback-metric"><span>Evidence</span><strong id="calibrationV24Rows">—</strong><small>huella de outcomes observados</small></div>
-             <div class="feedback-metric"><span>Integrity</span><strong id="calibrationV24Integrity">ABSENT</strong><small>replay reconstruido</small></div>
-             <div class="feedback-metric"><span>Policy ID</span><strong id="calibrationV24PolicyId">none</strong><small>instancia activa</small></div>
-             <div class="feedback-metric"><span>Base Δ</span><strong id="calibrationV24Deviation">0.0pp</strong><small>desviación desde 1.00×</small></div>
+            <div class="feedback-metric"><span>Status</span><strong id="calibrationV25Status">ABSENT</strong><small>elegibilidad del replay</small></div>
+            <div class="feedback-metric"><span>Multiplier</span><strong id="calibrationV25Multiplier">1.00</strong><small>ajuste máximo ±0.15</small></div>
+            <div class="feedback-metric"><span>Improvement</span><strong id="calibrationV25Improvement">—</strong><small>Brier actual − candidato</small></div>
+            <div class="feedback-metric"><span>Active</span><strong id="calibrationV25Active">none</strong><small>política aprobada</small></div>
+             <div class="feedback-metric"><span>Replay</span><strong id="calibrationV25Replay">—</strong><small>binding del replay</small></div>
+             <div class="feedback-metric"><span>Evidence</span><strong id="calibrationV25Rows">—</strong><small>huella de outcomes observados</small></div>
+             <div class="feedback-metric"><span>Integrity</span><strong id="calibrationV25Integrity">ABSENT</strong><small>replay reconstruido</small></div>
+             <div class="feedback-metric"><span>Policy ID</span><strong id="calibrationV25PolicyId">none</strong><small>instancia activa</small></div>
+             <div class="feedback-metric"><span>Base Δ</span><strong id="calibrationV25Deviation">0.0pp</strong><small>desviación desde 1.00×</small></div>
           </div>
           <div class="feedback-form">
             <label>Operator identity
-              <input id="policyV24Actor" type="text" maxlength="80" autocomplete="name" placeholder="Nombre o identificador operativo" required>
+              <input id="policyV25Actor" type="text" maxlength="80" autocomplete="name" placeholder="Nombre o identificador operativo" required>
             </label>
             <label>Decision rationale
-              <textarea id="policyV24Rationale" maxlength="500" rows="3" placeholder="Justifica por qué apruebas, rechazas o reviertes esta propuesta." required></textarea>
+              <textarea id="policyV25Rationale" maxlength="500" rows="3" placeholder="Justifica por qué apruebas, rechazas o reviertes esta propuesta." required></textarea>
             </label>
           </div>
           <div class="feedback-metrics" aria-live="polite">
-            <div class="feedback-metric"><span>Actor</span><strong id="calibrationV24Actor">—</strong><small>identidad declarada</small></div>
-            <div class="feedback-metric"><span>Source run</span><strong id="calibrationV24SourceRun">—</strong><small>origen de la propuesta</small></div>
-            <div class="feedback-metric"><span>Lineage</span><strong id="calibrationV24Lineage">—</strong><small>huella de decisión</small></div>
+            <div class="feedback-metric"><span>Actor</span><strong id="calibrationV25Actor">—</strong><small>identidad declarada</small></div>
+            <div class="feedback-metric"><span>Source run</span><strong id="calibrationV25SourceRun">—</strong><small>origen de la propuesta</small></div>
+            <div class="feedback-metric"><span>Lineage</span><strong id="calibrationV25Lineage">—</strong><small>huella de decisión</small></div>
           </div>
-          <p id="calibrationV24Reason">Sin propuesta. V24 no cambia el forecast hasta que el replay esté verificado y haya una aprobación explícita.</p>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Ledger</span><strong id="calibrationV25Ledger">—</strong><small>replay histórico</small></div>
+            <div class="feedback-metric"><span>Active replay</span><strong id="calibrationV25ActiveIntegrity">—</strong><small>evidencia de política activa</small></div>
+          </div>
+          <p id="calibrationV25Reason">Sin propuesta. V25 no cambia el forecast hasta que el replay esté verificado y haya una aprobación explícita.</p>
           <div class="feedback-actions">
-            <button class="btn btn-primary" id="approvePolicyV24" type="button">Approve policy</button>
-            <button class="btn btn-secondary" id="rejectPolicyV24" type="button">Reject policy</button>
-            <button class="btn btn-secondary" id="rollbackPolicyV24" type="button">Rollback policy</button>
+            <button class="btn btn-secondary" id="verifyPolicyV25" type="button">Verify policy lineage</button>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-primary" id="approvePolicyV25" type="button">Approve policy</button>
+            <button class="btn btn-secondary" id="rejectPolicyV25" type="button">Reject policy</button>
+            <button class="btn btn-secondary" id="rollbackPolicyV25" type="button">Rollback policy</button>
           </div>
         </section>
 
