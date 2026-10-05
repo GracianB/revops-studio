@@ -35,6 +35,11 @@ const sha256 = async (value, prefix) => {
 
 const safeClone = (value) => JSON.parse(JSON.stringify(value));
 
+const normaliseTimestamp = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
+
 const canonicalPublicJwk = (jwk = null) => {
   if (
     !jwk ||
@@ -144,6 +149,10 @@ export async function buildTransparencyEntry({
   if (!reference?.checkpointFingerprint) {
     return { valid: false, reason: "TRANSPARENCY_CHECKPOINT_REQUIRED" };
   }
+  const normalisedObservedAt = normaliseTimestamp(observedAt);
+  if (!normalisedObservedAt) {
+    return { valid: false, reason: "TRANSPARENCY_TIMESTAMP_INVALID" };
+  }
 
   const base = {
     schema: TRANSPARENCY_SCHEMA,
@@ -151,7 +160,7 @@ export async function buildTransparencyEntry({
     sequence,
     previousEntryFingerprint: previousEntryFingerprint || null,
     checkpoint: reference,
-    observedAt: new Date(observedAt).toISOString(),
+    observedAt: normalisedObservedAt,
     eventFingerprint: null
   };
   const eventFingerprint = await deriveFingerprint(base, "TL31-");
@@ -251,12 +260,16 @@ export async function buildTransparencyWitnessPayload({
   if (!Number.isInteger(sequence) || sequence < 1) {
     return { valid: false, reason: "TRANSPARENCY_SEQUENCE_INVALID" };
   }
+  const normalisedObservedAt = normaliseTimestamp(observedAt);
+  if (!normalisedObservedAt) {
+    return { valid: false, reason: "TRANSPARENCY_TIMESTAMP_INVALID" };
+  }
   const payload = JSON.stringify(canonicalWitnessPayload({
     witnessFingerprint,
     entryFingerprint,
     sequence,
     checkpointFingerprint,
-    observedAt
+    observedAt: normalisedObservedAt
   }));
   return Object.freeze({
     valid: true,
@@ -286,12 +299,16 @@ export async function signTransparencyWitnessAttestation(
     return { valid: false, reason: "TRANSPARENCY_WITNESS_ID_MISMATCH" };
   }
 
+  const normalisedObservedAt = normaliseTimestamp(observedAt);
+  if (!normalisedObservedAt) {
+    return { valid: false, reason: "TRANSPARENCY_TIMESTAMP_INVALID" };
+  }
   const payloadResult = await buildTransparencyWitnessPayload({
     witnessFingerprint,
     entryFingerprint: entry.eventFingerprint,
     sequence: entry.sequence,
     checkpointFingerprint: entry.checkpoint?.checkpointFingerprint,
-    observedAt
+    observedAt: normalisedObservedAt
   });
   if (!payloadResult.valid) return payloadResult;
 
@@ -309,7 +326,7 @@ export async function signTransparencyWitnessAttestation(
     entryFingerprint: entry.eventFingerprint,
     sequence: entry.sequence,
     checkpointFingerprint: entry.checkpoint?.checkpointFingerprint || null,
-    observedAt: new Date(observedAt).toISOString(),
+    observedAt: normaliseTimestamp(observedAt),
     payloadFingerprint: payloadResult.payloadFingerprint,
     signature: bytesToBase64Url(new Uint8Array(signature)),
     attestationFingerprint: null
@@ -494,7 +511,7 @@ export async function verifyTransparencyLog(
       sequence: entry.sequence,
       previousEntryFingerprint: entry.previousEntryFingerprint || null,
       checkpoint: canonicalCheckpointReference(reference),
-      observedAt: new Date(entry.observedAt).toISOString(),
+      observedAt: normaliseTimestamp(entry.observedAt),
       eventFingerprint: null
     }, "TL31-");
 
@@ -502,10 +519,11 @@ export async function verifyTransparencyLog(
       return { valid: false, reason: "TRANSPARENCY_ENTRY_FINGERPRINT_MISMATCH", sequence: entry.sequence };
     }
 
-    const observedAt = new Date(entry.observedAt);
-    if (Number.isNaN(observedAt.getTime())) {
+    const normalisedEntryObservedAt = normaliseTimestamp(entry.observedAt);
+    if (!normalisedEntryObservedAt) {
       return { valid: false, reason: "TRANSPARENCY_TIMESTAMP_INVALID", sequence: entry.sequence };
     }
+    const observedAt = new Date(normalisedEntryObservedAt);
     if (previousObservedAt && observedAt.getTime() < previousObservedAt.getTime()) {
       return { valid: false, reason: "TRANSPARENCY_TIME_REGRESSION", sequence: entry.sequence };
     }
@@ -708,12 +726,16 @@ export async function buildTransparencyReceipt(
   if (witnessVerification && !witnessVerification.valid) {
     return { valid: false, reason: "TRANSPARENCY_WITNESSES_NOT_VERIFIED" };
   }
+  const normalisedIssuedAt = normaliseTimestamp(issuedAt);
+  if (!normalisedIssuedAt) {
+    return { valid: false, reason: "TRANSPARENCY_RECEIPT_TIMESTAMP_INVALID" };
+  }
 
   const receipt = {
     schema: TRANSPARENCY_SCHEMA,
     transparencyVersion: TRANSPARENCY_VERSION,
     algorithm: TRANSPARENCY_ALGORITHM,
-    issuedAt: new Date(issuedAt).toISOString(),
+    issuedAt: normalisedIssuedAt,
     headSequence: logVerification.headSequence,
     headEntryFingerprint: logVerification.headEntryFingerprint,
     latestCheckpointFingerprint: logVerification.latestCheckpointFingerprint,
