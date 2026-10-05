@@ -249,7 +249,22 @@ test("V30 rejects a forged registry payload", async () => {
 
 test("V30 detects a trust-fabric fork", async () => {
   const { registry } = await registryFixture();
-  const fixture = await fabricFixture(registry);
+  const rootKeys = await generateTrustFabricKeySet(4);
+  const fabricResult = await createTrustFabric({
+    rootPublicKeys: rootKeys.map((key) => key.publicKeyJwk),
+    threshold: 2
+  });
+  assert.equal(fabricResult.valid, true, fabricResult.reason);
+
+  const signerA = await signTrustFabricCheckpoint(registry, {
+    fabric: fabricResult,
+    rootSigners: rootKeys.slice(0, 2),
+    actor: "security-owner",
+    rationale: "checkpoint A",
+    signedAt: now
+  });
+  assert.equal(signerA.valid, true, signerA.reason);
+
   const signer2 = await generatePolicyEvidenceKeyPair();
   const second = await registerTrustedSigner(registry, {
     publicKeyJwk: signer2.publicKeyJwk,
@@ -259,16 +274,18 @@ test("V30 detects a trust-fabric fork", async () => {
     createdAt: "2026-10-06T00:00:00.000Z"
   });
   assert.equal(second.accepted, true, second.reason);
-  const fork = await signTrustFabricCheckpoint(second.registry, {
-    fabric: fixture.fabric,
-    rootSigners: fixture.rootKeys,
+
+  const signerB = await signTrustFabricCheckpoint(second.registry, {
+    fabric: fabricResult,
+    rootSigners: rootKeys.slice(2, 4),
     actor: "security-owner",
-    rationale: "forked checkpoint",
+    rationale: "checkpoint B",
     signedAt: "2026-10-06T00:00:00.000Z"
   });
-  assert.equal(fork.valid, true, fork.reason);
-  const result = await verifyTrustFabricCheckpointSet([fixture.signed, fork.snapshot], {
-    expectedRootFingerprints: fixture.fabric.roots.map((root) => root.rootFingerprint),
+  assert.equal(signerB.valid, true, signerB.reason);
+
+  const result = await verifyTrustFabricCheckpointSet([signerA.snapshot, signerB.snapshot], {
+    expectedRootFingerprints: fabricResult.roots.map((root) => root.rootFingerprint),
     expectedThreshold: 2
   });
   assert.equal(result.valid, false);
