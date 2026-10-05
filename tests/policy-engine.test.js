@@ -666,14 +666,26 @@ test("V25 ledger replay rejects rollback without an active policy", () => {
     rows,
     now
   });
-  const invalidRollback = [{
-    ...result.ledger[0],
+  const source = result.ledger[0];
+  const invalidRollback = {
+    ...source,
     decision: "ROLLBACK",
-    policyId: "P25-invalid-rollback"
-  }];
+    multiplier: null,
+    policyId: "V25P-rollback-test",
+    lineageFingerprint: buildPolicyLineageFingerprint({
+      proposalId: source.proposalId,
+      runId: source.runId,
+      datasetFingerprint: source.datasetFingerprint,
+      rowsFingerprint: source.rowsFingerprint,
+      replayFingerprint: source.replayFingerprint,
+      policyId: "V25P-rollback-test",
+      decidedAt: source.decidedAt,
+      actor: source.actor
+    })
+  };
   assert.equal(
-    verifyPolicyLedger(invalidRollback, { datasetFingerprint: "ds-rollback-invalid" }).reason,
-    "ROLLBACK_LINEAGE_MISMATCH"
+    verifyPolicyLedger([invalidRollback], { datasetFingerprint: "ds-rollback-invalid" }).reason,
+    "ROLLBACK_WITHOUT_ACTIVE_POLICY"
   );
 });
 
