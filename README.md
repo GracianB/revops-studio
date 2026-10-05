@@ -3,7 +3,7 @@
 **A deterministic Revenue Operations decision system built around data quality, explainability, human approval and replay-verifiable policy lineage.**
 
 [![Live](https://img.shields.io/badge/LIVE-DAA428?style=for-the-badge)](https://gracianb.github.io/revops-studio/)
-[![Tests](https://img.shields.io/badge/TESTS-150%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
+[![Tests](https://img.shields.io/badge/TESTS-170%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
 [![JavaScript](https://img.shields.io/badge/JavaScript-181717?style=for-the-badge&logo=javascript)](https://github.com/GracianB/revops-studio)
 
 RevOps Studio is the public technical proof behind a broader operating idea:
@@ -186,6 +186,23 @@ The system can now verify the complete policy history for a dataset scope, detec
 The Control Room exposes separate states for proposal integrity, historical ledger replay and active-policy replay. This makes a previously approved policy inspectable after the fact instead of treating the local ledger as inherently trustworthy.
 
 V25 remains a deterministic local-first control layer. The operator identity is still an assertion stored locally, not authentication, and the ledger fingerprints are tamper-evident rather than cryptographic proof.
+
+## V26 · Portable policy evidence
+
+V26 separates **policy state** from **policy evidence** by introducing a portable JSON evidence bundle:
+
+`POLICY → LEDGER → MANIFEST → VERIFY`
+
+The bundle contains the governed proposal, policy decision ledger and deterministic fingerprints, but it does **not** contain the raw CSV rows.
+
+A reviewer can verify the exported package in another browser or environment without mutating the active policy. Verification has two levels:
+
+- **FINGERPRINT_ONLY** verifies schema, dataset scope, proposal lineage, ledger replay and policy identity from the exported evidence.
+- **OBSERVED_ROWS** additionally replays the active policy against the original observed outcome rows when those rows are supplied separately.
+
+The export therefore remains privacy-preserving while making the policy lineage portable and independently inspectable.
+
+V26 is still local-first. The operator identity remains an assertion, not authentication, and the fingerprints remain integrity evidence rather than cryptographic signatures.
 
 ## Human-in-the-loop by design
 
