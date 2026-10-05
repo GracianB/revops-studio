@@ -132,6 +132,8 @@ export function buildPolicyEvidenceBundle({
   const verification = verifyPolicyEvidenceBundle(bundle, { rows });
   return Object.freeze({
     ...bundle,
+    valid: verification.valid,
+    reason: verification.reason,
     verification: Object.freeze({
       ...verification,
       exportedObservationMode: observationMode
