@@ -127,9 +127,12 @@ async function appendTrustEvent(
   if (!String(actor || "").trim()) return { accepted: false, reason: "TRUST_ACTOR_REQUIRED" };
   if (!String(rationale || "").trim()) return { accepted: false, reason: "TRUST_RATIONALE_REQUIRED" };
 
-  const existing = current.events.find((event) => event.keyFingerprint === keyFingerprint && event.state !== TRUST_STATES.REVOKED);
-  if (action === TRUST_ACTIONS.REGISTER && existing) {
+  const everSeen = current.events.find((event) => event.keyFingerprint === keyFingerprint);
+  if (action === TRUST_ACTIONS.REGISTER && everSeen) {
     return { accepted: false, reason: "SIGNER_ALREADY_REGISTERED" };
+  }
+  if (action === TRUST_ACTIONS.ROTATE && everSeen) {
+    return { accepted: false, reason: "ROTATION_TARGET_ALREADY_REGISTERED" };
   }
 
   const event = {
@@ -221,7 +224,23 @@ export async function rotateTrustedSigner(
   if (newFingerprint === previousKeyFingerprint) {
     return { accepted: false, reason: "ROTATION_TARGET_SAME_KEY" };
   }
-  const staged = await appendTrustEvent(registry, {
+  if (registry?.events?.some((event) => event.keyFingerprint === newFingerprint)) {
+    return { accepted: false, reason: "ROTATION_TARGET_ALREADY_REGISTERED" };
+  }
+
+  const retired = await appendTrustEvent(registry, {
+    action: TRUST_ACTIONS.RETIRE,
+    publicKeyJwk: predecessor.publicKeyJwk,
+    previousKeyFingerprint,
+    state: TRUST_STATES.RETIRED,
+    effectiveAt: at,
+    actor,
+    rationale,
+    createdAt
+  });
+  if (!retired.accepted) return retired;
+
+  return appendTrustEvent(retired.registry, {
     action: TRUST_ACTIONS.ROTATE,
     publicKeyJwk: newPublicKeyJwk,
     previousKeyFingerprint,
@@ -231,7 +250,6 @@ export async function rotateTrustedSigner(
     rationale,
     createdAt
   });
-  return staged.accepted ? staged : staged;
 }
 
 export function resolveTrustedSigner(registry = null, keyFingerprint = null, at = new Date().toISOString()) {
@@ -297,10 +315,12 @@ export async function verifyTrustRegistry(registry = null) {
       if (!event.previousKeyFingerprint || event.previousKeyFingerprint === event.keyFingerprint) {
         return { valid: false, reason: "TRUST_ROTATION_INVALID", index };
       }
+      const effectiveMs = new Date(event.effectiveAt).getTime();
+      const beforeEffective = new Date(effectiveMs - 1).toISOString();
       const predecessor = resolveTrustedSigner(
         { ...registry, events: registry.events.slice(0, index) },
         event.previousKeyFingerprint,
-        event.effectiveAt
+        beforeEffective
       );
       if (!predecessor || predecessor.state !== TRUST_STATES.ACTIVE) {
         return { valid: false, reason: "TRUST_ROTATION_PREDECESSOR_INVALID", index };
@@ -312,6 +332,18 @@ export async function verifyTrustRegistry(registry = null) {
     }
     if (event.action === TRUST_ACTIONS.RETIRE && event.state !== TRUST_STATES.RETIRED) {
       return { valid: false, reason: "TRUST_RETIRE_STATE_INVALID", index };
+    }
+    if (event.action === TRUST_ACTIONS.REVOKE || event.action === TRUST_ACTIONS.RETIRE) {
+      const effectiveState = resolveTrustedSigner(
+        { ...registry, events: registry.events.slice(0, index) },
+        event.keyFingerprint,
+        event.effectiveAt
+      );
+      if (!effectiveState || effectiveState.state === TRUST_STATES.REVOKED ||
+          (event.action === TRUST_ACTIONS.RETIRE && effectiveState.state !== TRUST_STATES.ACTIVE) ||
+          (event.action === TRUST_ACTIONS.REVOKE && effectiveState.state !== TRUST_STATES.ACTIVE && effectiveState.state !== TRUST_STATES.RETIRED)) {
+        return { valid: false, reason: "TRUST_TRANSITION_INVALID", index };
+      }
     }
 
     head = event.eventFingerprint;
@@ -407,7 +439,7 @@ export async function importTrustRegistry(raw = null) {
     const registry = typeof raw === "string" ? JSON.parse(raw) : raw;
     const verification = await verifyTrustRegistry(registry);
     return verification.valid
-      ? { valid: true, reason: "TRUST_REGISTRY_IMPORTED", registry: Object.freeze(canonicalRegistry(registry)) }
+      ? { valid: true, reason: "TRUST_REGISTRY_IMPORTED", registry: Object.freeze(JSON.parse(JSON.stringify(registry))) }
       : { valid: false, reason: verification.reason };
   } catch {
     return { valid: false, reason: "TRUST_REGISTRY_PARSE_ERROR" };
