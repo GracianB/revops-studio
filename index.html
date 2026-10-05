@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="REVOPS STUDIO · V29 Trusted Root Decision Operating System · CS × Data × AI × Systems">
+  <meta property="og:title" content="REVOPS STUDIO · V30 Trust Fabric Decision Operating System · CS × Data × AI × Systems">
   <meta property="og:description" content="Hiring Manager Mode · RevOps Studio público, Control Room, arquitectura determinista y proof técnico.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -1006,6 +1006,45 @@
             </label>
           </div>
           <p class="form-status" id="policyTrustRootV29Status" role="status" aria-live="polite">V29 exige una raíz distribuida o fijada fuera del snapshot para confianza externa.</p>
+        </section>
+
+        <section class="feedback-panel" aria-labelledby="policy-trust-fabric-v30-title">
+          <div class="feedback-head">
+            <div>
+              <span class="kicker">Trust Fabric · V30</span>
+              <h3 id="policy-trust-fabric-v30-title">La confianza deja de depender de una sola raíz: quórum criptográfico 2-de-3.</h3>
+            </div>
+            <span class="feedback-boundary">M-OF-N · FORK DETECTION</span>
+          </div>
+          <p>V30 introduce un conjunto de raíces con quórum explícito. El checkpoint solo es confiable cuando las firmas válidas alcanzan el umbral y el root set coincide con las identidades fijadas externamente. El sistema también detecta checkpoints divergentes y conflictos de firma.</p>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Fabric</span><strong id="policyTrustFabricV30Quorum">0 / 0</strong><small>quorum / threshold</small></div>
+            <div class="feedback-metric"><span>Roots</span><strong id="policyTrustFabricV30Roots">NOT INITIALISED</strong><small>fingerprints RF30</small></div>
+            <div class="feedback-metric"><span>Registry head</span><strong id="policyTrustFabricV30Head">T28-EMPTY</strong><small>checkpoint anclado</small></div>
+          </div>
+          <div class="feedback-form">
+            <label>Quorum threshold
+              <input id="policyTrustFabricV30Threshold" type="number" min="2" max="7" value="2">
+            </label>
+            <label>External root pins
+              <textarea id="policyTrustFabricV30Pins" rows="4" placeholder="RF30-...&#10;RF30-...&#10;RF30-..."></textarea>
+            </label>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="generateTrustFabricV30" type="button">Generate 3 roots</button>
+            <button class="btn btn-primary" id="signTrustFabricV30" type="button">Sign quorum checkpoint</button>
+            <button class="btn btn-secondary" id="verifyTrustFabricV30" type="button">Verify quorum</button>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-primary" id="verifyFabricAnchoredEvidenceV30" type="button">Verify evidence via quorum</button>
+            <button class="btn btn-secondary" id="exportTrustFabricV30" type="button">Export checkpoint</button>
+          </div>
+          <div class="feedback-actions">
+            <label>Import quorum checkpoint
+              <input id="importTrustFabricV30" type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <p class="form-status" id="policyTrustFabricV30Status" role="status" aria-live="polite">V30 requiere root pins externos para confianza independiente. Generar tres claves en el mismo navegador demuestra el mecanismo criptográfico, no independencia organizativa.</p>
         </section>
 
         <section class="history-panel" aria-labelledby="history-title">
