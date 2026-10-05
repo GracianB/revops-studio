@@ -325,6 +325,17 @@ test("V31 exports and imports only verified logs", async () => {
   assert.equal(imported.log.headEntryFingerprint, log.headEntryFingerprint);
 });
 
+test("V31 rejects an invalid observation timestamp during entry construction", async () => {
+  const checkpoint = await checkpointFixture();
+  const result = await buildTransparencyEntry({
+    sequence: 1,
+    checkpoint,
+    observedAt: "not-a-timestamp"
+  });
+  assert.equal(result.valid, false);
+  assert.equal(result.reason, "TRANSPARENCY_TIMESTAMP_INVALID");
+});
+
 test("V31 fails closed on malformed imported JSON", async () => {
   const imported = await importTransparencyLog("{broken");
   assert.equal(imported.valid, false);
