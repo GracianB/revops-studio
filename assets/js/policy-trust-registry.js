@@ -442,7 +442,11 @@ export async function verifyTrustedPolicyEvidence(
     return { valid: false, reason: "SIGNER_REVOKED", keyFingerprint: fingerprint, cryptographicKeyFingerprint };
   }
 
-  const current = resolveTrustedSigner(registry, fingerprint, new Date().toISOString());
+  const current = resolveTrustedSigner(
+    registry,
+    fingerprint,
+    verificationAt || new Date().toISOString()
+  );
   if (current?.state === TRUST_STATES.REVOKED) {
     return {
       valid: false,
