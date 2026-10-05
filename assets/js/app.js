@@ -117,6 +117,13 @@ import {
   exportTransparencyLog,
   importTransparencyLog
 } from "./policy-transparency.js";
+import {
+  DECISION_CERTIFICATE_VERSION,
+  buildDecisionCertificate,
+  verifyDecisionCertificate,
+  exportDecisionCertificate,
+  importDecisionCertificate
+} from "./policy-decision-certificate.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -712,6 +719,16 @@ function initPlayground() {
     v31Export: qs("#exportTransparencyV31"),
     v31ExportReceipt: qs("#exportTransparencyReceiptV31"),
     v31Import: qs("#importTransparencyV31"),
+    v32CertificateId: qs("#policyDecisionCertificateV32Id"),
+    v32Head: qs("#policyDecisionCertificateV32Head"),
+    v32Quorum: qs("#policyDecisionCertificateV32Quorum"),
+    v32Status: qs("#policyDecisionCertificateV32Status"),
+    v32MinWitnesses: qs("#policyDecisionCertificateV32MinWitnesses"),
+    v32HeadPin: qs("#policyDecisionCertificateV32HeadPin"),
+    v32Build: qs("#buildDecisionCertificateV32"),
+    v32Verify: qs("#verifyDecisionCertificateV32"),
+    v32Export: qs("#exportDecisionCertificateV32"),
+    v32Import: qs("#importDecisionCertificateV32"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -1026,6 +1043,7 @@ function initPlayground() {
   let signedTrustFabricCheckpointV30 = readTrustFabricCheckpointV30();
   let transparencyLogV31 = readTransparencyLogV31();
   let transparencyWitnessV31 = null;
+  let lastDecisionCertificateV32 = null;
   let lastSignedEvidenceV27 = null;
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
@@ -2141,6 +2159,7 @@ function initPlayground() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      lastSignedEvidenceV27 = signed.bundle;
       if (feedback.v27Status) {
         feedback.v27Status.textContent = "SIGNED · " + signed.keyFingerprint;
         feedback.v27Status.dataset.state = "ok";
@@ -3144,6 +3163,355 @@ function initPlayground() {
   });
 
   renderTransparencyV31();
+
+  const setDecisionCertificateStatusV32 = (message, ok = false) => {
+    if (!feedback.v32Status) return;
+    feedback.v32Status.textContent = message;
+    feedback.v32Status.dataset.state = ok ? "ok" : "error";
+  };
+
+  const renderDecisionCertificateV32 = () => {
+    const certificate = lastDecisionCertificateV32;
+    if (feedback.v32CertificateId) {
+      feedback.v32CertificateId.textContent =
+        certificate?.certificateId || "DC32-EMPTY";
+    }
+    if (feedback.v32Head) {
+      feedback.v32Head.textContent =
+        certificate?.transparency?.headEntryFingerprint ||
+        "TL31-EMPTY";
+    }
+    if (feedback.v32Quorum) {
+      const quorum = certificate?.trust?.quorum;
+      const threshold = certificate?.trust?.threshold;
+      feedback.v32Quorum.textContent =
+        quorum == null || threshold == null
+          ? "—"
+          : String(quorum) + "/" + String(threshold);
+    }
+  };
+
+  feedback.v32Build?.addEventListener("click", async () => {
+    const fingerprint =
+      lastWorkflowPlan?.datasetFingerprint || null;
+
+    if (!lastSignedEvidenceV27) {
+      setDecisionCertificateStatusV32(
+        "SIGNED_EVIDENCE_V27_REQUIRED"
+      );
+      return;
+    }
+
+    if (!signedTrustFabricCheckpointV30) {
+      setDecisionCertificateStatusV32(
+        "TRUST_FABRIC_CHECKPOINT_V30_REQUIRED"
+      );
+      return;
+    }
+
+    const entries =
+      Array.isArray(transparencyLogV31?.entries)
+        ? transparencyLogV31.entries
+        : [];
+
+    if (!entries.length) {
+      setDecisionCertificateStatusV32(
+        "TRANSPARENCY_LOG_V31_REQUIRED"
+      );
+      return;
+    }
+
+    if (
+      fingerprint &&
+      lastSignedEvidenceV27.datasetFingerprint !== fingerprint
+    ) {
+      setDecisionCertificateStatusV32(
+        "DATASET_SCOPE_MISMATCH"
+      );
+      return;
+    }
+
+    try {
+      const result =
+        await buildDecisionCertificate({
+          issuedAt:
+            new Date().toISOString(),
+
+          signedEvidenceBundle:
+            lastSignedEvidenceV27,
+
+          trustFabricCheckpoint:
+            signedTrustFabricCheckpointV30,
+
+          transparencyLog:
+            transparencyLogV31,
+
+          minWitnesses:
+            Math.max(
+              1,
+              Number(
+                feedback.v32MinWitnesses?.value
+              ) || 1
+            )
+        });
+
+      if (!result.valid) {
+        setDecisionCertificateStatusV32(
+          result.reason || result.status
+        );
+        return;
+      }
+
+      lastDecisionCertificateV32 =
+        result.certificate;
+
+      renderDecisionCertificateV32();
+
+      setDecisionCertificateStatusV32(
+        "CERTIFICATE_VALID · " +
+        result.certificate.certificateFingerprint,
+        true
+      );
+
+      addAudit(
+        auditEvent(
+          "POLICY_V32_CERTIFICATE_BUILT",
+          {
+            id:
+              result.certificate.certificateId
+          },
+          result.certificate
+            .certificateFingerprint
+        )
+      );
+
+    } catch (error) {
+      setDecisionCertificateStatusV32(
+        "CERTIFICATE_BUILD_ERROR · " +
+        error.message
+      );
+    }
+  });
+
+  feedback.v32Verify?.addEventListener("click", async () => {
+    if (!lastDecisionCertificateV32) {
+      setDecisionCertificateStatusV32(
+        "CERTIFICATE_REQUIRED"
+      );
+      return;
+    }
+
+    const fingerprint =
+      lastWorkflowPlan?.datasetFingerprint || null;
+
+    const certificateDataset =
+      lastDecisionCertificateV32
+        ?.decision
+        ?.datasetFingerprint || null;
+
+    const currentRows =
+      fingerprint &&
+      fingerprint === certificateDataset
+        ? buildObservedCalibrationRows(
+            buildRunAnalysis(
+              evaluated,
+              getForecastConfig()
+            ).forecast?.rows || [],
+            feedbackOutcomes
+          )
+        : null;
+
+    try {
+      const result =
+        await verifyDecisionCertificate(
+          lastDecisionCertificateV32,
+          {
+            rows:
+              currentRows,
+
+            expectedHeadFingerprint:
+              String(
+                feedback.v32HeadPin?.value || ""
+              ).trim() || null,
+
+            minWitnesses:
+              Math.max(
+                1,
+                Number(
+                  feedback.v32MinWitnesses?.value
+                ) || 1
+              ),
+
+            verificationAt:
+              new Date().toISOString()
+          }
+        );
+
+      setDecisionCertificateStatusV32(
+        result.valid
+          ? "CERTIFICATE_VALID · " +
+            result.certificateFingerprint
+          : result.status +
+            " · " +
+            (result.failures || [])
+              .map(
+                (item) =>
+                  item.code
+              )
+              .join(" · "),
+        result.valid
+      );
+
+      addAudit(
+        auditEvent(
+          result.valid
+            ? "POLICY_V32_CERTIFICATE_VERIFIED"
+            : "POLICY_V32_CERTIFICATE_REJECTED",
+          {
+            id:
+              lastDecisionCertificateV32
+                .certificateId
+          },
+          result.status
+        )
+      );
+
+    } catch (error) {
+      setDecisionCertificateStatusV32(
+        "CERTIFICATE_VERIFY_ERROR · " +
+        error.message
+      );
+    }
+  });
+
+  feedback.v32Export?.addEventListener("click", async () => {
+    if (!lastDecisionCertificateV32) {
+      setDecisionCertificateStatusV32(
+        "CERTIFICATE_REQUIRED"
+      );
+      return;
+    }
+
+    try {
+      const result =
+        await exportDecisionCertificate(
+          lastDecisionCertificateV32
+        );
+
+      if (!result.valid) {
+        setDecisionCertificateStatusV32(
+          result.reason
+        );
+        return;
+      }
+
+      const blob =
+        new Blob(
+          [result.json],
+          {
+            type:
+              "application/json"
+          }
+        );
+
+      const url =
+        URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+      link.download =
+        "revops-decision-certificate-v32-" +
+        lastDecisionCertificateV32
+          .certificateId +
+        ".json";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+
+      setDecisionCertificateStatusV32(
+        "EXPORTED · " +
+        result.certificateFingerprint,
+        true
+      );
+
+      addAudit(
+        auditEvent(
+          "POLICY_V32_CERTIFICATE_EXPORTED",
+          {
+            id:
+              lastDecisionCertificateV32
+                .certificateId
+          },
+          result.certificateFingerprint
+        )
+      );
+
+    } catch (error) {
+      setDecisionCertificateStatusV32(
+        "CERTIFICATE_EXPORT_ERROR · " +
+        error.message
+      );
+    }
+  });
+
+  feedback.v32Import?.addEventListener("change", async () => {
+    const file =
+      feedback.v32Import.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const imported =
+        await importDecisionCertificate(
+          await file.text()
+        );
+
+      if (!imported.valid) {
+        setDecisionCertificateStatusV32(
+          imported.reason
+        );
+        return;
+      }
+
+      lastDecisionCertificateV32 =
+        imported.certificate;
+
+      renderDecisionCertificateV32();
+
+      setDecisionCertificateStatusV32(
+        "IMPORTED · " +
+        lastDecisionCertificateV32
+          .certificateFingerprint,
+        true
+      );
+
+      addAudit(
+        auditEvent(
+          "POLICY_V32_CERTIFICATE_IMPORTED",
+          {
+            id:
+              lastDecisionCertificateV32
+                .certificateId
+          },
+          lastDecisionCertificateV32
+            .certificateFingerprint
+        )
+      );
+
+    } catch (error) {
+      setDecisionCertificateStatusV32(
+        "CERTIFICATE_IMPORT_ERROR · " +
+        error.message
+      );
+    }
+  });
+
+  renderDecisionCertificateV32();
 
   const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();
   if (feedback.v20WindowDays) feedback.v20WindowDays.value = String(adaptiveConfigV20.windowDays ?? 30);
