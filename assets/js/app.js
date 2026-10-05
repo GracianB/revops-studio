@@ -52,7 +52,9 @@ import {
   applyPolicyToAssumptions,
   buildRecalibrationProposal,
   decidePolicy,
-  summarisePolicy
+  summarisePolicy,
+  normaliseActor,
+  normaliseRationale
 } from "./policy-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -125,27 +127,45 @@ function writeAdaptiveCalibrationHistoryV20(history = [], datasetFingerprint = n
   } catch {}
 }
 
-const POLICY_V23_STORAGE_KEY = "revops-studio:policy:v23";
+const POLICY_V24_STORAGE_KEY = "revops-studio:policy:v24";
 
-function policyStorageKeyV23(datasetFingerprint = null) {
-  return POLICY_V23_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
+function policyStorageKeyV24(datasetFingerprint = null) {
+  return POLICY_V24_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
 }
 
-function readPolicyLedgerV23(datasetFingerprint = null) {
+function readPolicyLedgerV24(datasetFingerprint = null) {
   try {
-    const value = JSON.parse(localStorage.getItem(policyStorageKeyV23(datasetFingerprint)) || "[]");
+    const value = JSON.parse(localStorage.getItem(policyStorageKeyV24(datasetFingerprint)) || "[]");
     return Array.isArray(value) ? value : [];
   } catch {
     return [];
   }
 }
 
-function writePolicyLedgerV23(ledger = [], datasetFingerprint = null) {
+function writePolicyLedgerV24(ledger = [], datasetFingerprint = null) {
   try {
     localStorage.setItem(
-      policyStorageKeyV23(datasetFingerprint),
+      policyStorageKeyV24(datasetFingerprint),
       JSON.stringify(Array.isArray(ledger) ? ledger : [])
     );
+  } catch {}
+}
+
+const POLICY_V24_ACTOR_KEY = "revops-studio:policy:v24:actor";
+
+function readPolicyActorV24() {
+  try {
+    return normaliseActor(localStorage.getItem(POLICY_V24_ACTOR_KEY) || "") || "";
+  } catch {
+    return "";
+  }
+}
+
+function writePolicyActorV24(actor = "") {
+  const safeActor = normaliseActor(actor);
+  if (!safeActor) return;
+  try {
+    localStorage.setItem(POLICY_V24_ACTOR_KEY, safeActor);
   } catch {}
 }
 
@@ -482,19 +502,24 @@ function initPlayground() {
     v20MinSamples: qs("#calibrationV20MinSamples"),
     v20MinGroupSamples: qs("#calibrationV20MinGroupSamples"),
     v20Reset: qs("#resetCalibrationV20"),
-    v23Status: qs("#calibrationV23Status"),
-    v23Multiplier: qs("#calibrationV23Multiplier"),
-    v23Improvement: qs("#calibrationV23Improvement"),
-    v23Active: qs("#calibrationV23Active"),
-    v23Reason: qs("#calibrationV23Reason"),
-    v23Replay: qs("#calibrationV23Replay"),
-    v23Rows: qs("#calibrationV23Rows"),
-    v23Integrity: qs("#calibrationV23Integrity"),
-    v23PolicyId: qs("#calibrationV23PolicyId"),
-    v23Deviation: qs("#calibrationV23Deviation"),
-    v23Approve: qs("#approvePolicyV23"),
-    v23Reject: qs("#rejectPolicyV23"),
-    v23Rollback: qs("#rollbackPolicyV23")
+    v24Status: qs("#calibrationV24Status"),
+    v24Multiplier: qs("#calibrationV24Multiplier"),
+    v24Improvement: qs("#calibrationV24Improvement"),
+    v24Active: qs("#calibrationV24Active"),
+    v24Reason: qs("#calibrationV24Reason"),
+    v24Replay: qs("#calibrationV24Replay"),
+    v24Rows: qs("#calibrationV24Rows"),
+    v24Integrity: qs("#calibrationV24Integrity"),
+    v24PolicyId: qs("#calibrationV24PolicyId"),
+    v24Deviation: qs("#calibrationV24Deviation"),
+    v24Actor: qs("#calibrationV24Actor"),
+    v24SourceRun: qs("#calibrationV24SourceRun"),
+    v24Lineage: qs("#calibrationV24Lineage"),
+    policyActor: qs("#policyV24Actor"),
+    policyRationale: qs("#policyV24Rationale"),
+    v24Approve: qs("#approvePolicyV24"),
+    v24Reject: qs("#rejectPolicyV24"),
+    v24Rollback: qs("#rollbackPolicyV24")
   };
   const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
     style: "currency", currency: "EUR", maximumFractionDigits: 0
@@ -601,50 +626,65 @@ function initPlayground() {
       });
     }
 
-    const policyRowsV23 = buildObservedCalibrationRows(forecast?.rows || [], feedbackOutcomes);
-    lastPolicyProposalV23 = buildRecalibrationProposal({
+    const policyRowsV24 = buildObservedCalibrationRows(forecast?.rows || [], feedbackOutcomes);
+    lastPolicyProposalV24 = buildRecalibrationProposal({
       report: lastAdaptiveCalibrationReportV20,
-      rows: policyRowsV23,
+      rows: policyRowsV24,
       datasetFingerprint: plan?.datasetFingerprint || null,
       runId: plan?.runId || null,
       now: lastAdaptiveCalibrationReportV20?.generatedAt || new Date().toISOString(),
-      config: { minSamples: adaptiveConfigV20.minSamples }
+      config: { minSamples: adaptiveConfigV20.minSamples, proposalTtlHours: 24 }
     });
-    const policySummaryV23 = summarisePolicy({
-      proposal: lastPolicyProposalV23,
-      ledger: readPolicyLedgerV23(plan?.datasetFingerprint || null),
+    const policySummaryV24 = summarisePolicy({
+      proposal: lastPolicyProposalV24,
+      ledger: readPolicyLedgerV24(plan?.datasetFingerprint || null),
       datasetFingerprint: plan?.datasetFingerprint || null,
-      rows: policyRowsV23
+      rows: policyRowsV24
     });
-    if (feedback.v23Status) {
-      feedback.v23Status.textContent = lastPolicyProposalV23.status;
-      feedback.v23Status.dataset.state = lastPolicyProposalV23.status.toLowerCase();
+    if (feedback.policyActor && !feedback.policyActor.value) {
+      feedback.policyActor.value = readPolicyActorV24();
     }
-    if (feedback.v23Multiplier) {
-      feedback.v23Multiplier.textContent = Number(lastPolicyProposalV23.multiplier || 1).toFixed(2);
+    if (feedback.v24Status) {
+      feedback.v24Status.textContent = lastPolicyProposalV24.status;
+      feedback.v24Status.dataset.state = lastPolicyProposalV24.status.toLowerCase();
     }
-    if (feedback.v23Improvement) {
-      feedback.v23Improvement.textContent = lastPolicyProposalV23.improvement === null
+    if (feedback.v24Multiplier) {
+      feedback.v24Multiplier.textContent = Number(lastPolicyProposalV24.multiplier || 1).toFixed(2);
+    }
+    if (feedback.v24Improvement) {
+      feedback.v24Improvement.textContent = lastPolicyProposalV24.improvement === null
         ? "—"
-        : (lastPolicyProposalV23.improvement > 0 ? "+" : "") + lastPolicyProposalV23.improvement.toFixed(3);
+        : (lastPolicyProposalV24.improvement > 0 ? "+" : "") + lastPolicyProposalV24.improvement.toFixed(3);
     }
-    if (feedback.v23Active) {
-      feedback.v23Active.textContent = policySummaryV23.activeMultiplier === null
+    if (feedback.v24Active) {
+      feedback.v24Active.textContent = policySummaryV24.activeMultiplier === null
         ? "none"
-        : Number(policySummaryV23.activeMultiplier).toFixed(2);
+        : Number(policySummaryV24.activeMultiplier).toFixed(2);
     }
-    if (feedback.v23Reason) {
-      feedback.v23Reason.textContent = lastPolicyProposalV23.reason +
-        (policySummaryV23.activePolicyInstanceId ? " · active " + policySummaryV23.activePolicyInstanceId : "");
+    if (feedback.v24Reason) {
+      feedback.v24Reason.textContent = lastPolicyProposalV24.reason +
+        (policySummaryV24.activePolicyInstanceId ? " · active " + policySummaryV24.activePolicyInstanceId : "");
     }
-    if (feedback.v23Replay) feedback.v23Replay.textContent = lastPolicyProposalV23.replayFingerprint || "—";
-    if (feedback.v23Rows) feedback.v23Rows.textContent = lastPolicyProposalV23.rowsFingerprint || "—";
-    if (feedback.v23Integrity) feedback.v23Integrity.textContent = policySummaryV23.integrity;
-    if (feedback.v23PolicyId) feedback.v23PolicyId.textContent = policySummaryV23.activePolicyInstanceId || "none";
-    if (feedback.v23Deviation) {
-      feedback.v23Deviation.textContent = policySummaryV23.baseDeviation === null
+    if (feedback.v24Replay) feedback.v24Replay.textContent = lastPolicyProposalV24.replayFingerprint || "—";
+    if (feedback.v24Rows) feedback.v24Rows.textContent = lastPolicyProposalV24.rowsFingerprint || "—";
+    if (feedback.v24Integrity) feedback.v24Integrity.textContent = policySummaryV24.integrity;
+    if (feedback.v24PolicyId) feedback.v24PolicyId.textContent = policySummaryV24.activePolicyInstanceId || "none";
+    if (feedback.v24Deviation) {
+      feedback.v24Deviation.textContent = policySummaryV24.baseDeviation === null
         ? "0.0pp"
-        : ((policySummaryV23.baseDeviation > 0 ? "+" : "") + (Number(policySummaryV23.baseDeviation) * 100).toFixed(1) + "pp");
+        : ((policySummaryV24.baseDeviation > 0 ? "+" : "") + (Number(policySummaryV24.baseDeviation) * 100).toFixed(1) + "pp");
+    }
+    if (feedback.v24Actor) {
+      feedback.v24Actor.textContent = policySummaryV24.activeActor || normaliseActor(feedback.policyActor?.value) || "—";
+    }
+    if (feedback.v24SourceRun) {
+      feedback.v24SourceRun.textContent = policySummaryV24.sourceRunId || "—";
+    }
+    if (feedback.v24Lineage) {
+      feedback.v24Lineage.textContent =
+        policySummaryV24.activeLineageFingerprint ||
+        policySummaryV24.proposalLineageFingerprint ||
+        "—";
     }
 
     lastCalibrationReportV19 = buildCalibrationV19Report(
@@ -742,7 +782,7 @@ function initPlayground() {
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
   let lastCalibrationCapturedAtV20 = null;
-  let lastPolicyProposalV23 = null;
+  let lastPolicyProposalV24 = null;
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -896,7 +936,7 @@ function initPlayground() {
       lastWorkflowPlan?.datasetFingerprint ||
       lastSnapshot?.datasetFingerprint ||
       null;
-    return applyPolicyToAssumptions(base, activePolicy(readPolicyLedgerV23(fingerprint), fingerprint));
+    return applyPolicyToAssumptions(base, activePolicy(readPolicyLedgerV24(fingerprint), fingerprint));
   };
 
   const currentConfig = () => ({
@@ -1665,6 +1705,17 @@ function initPlayground() {
     persistAndRender();
   };
 
+  if (feedback.policyActor) feedback.policyActor.value = readPolicyActorV24();
+
+  feedback.policyActor?.addEventListener("change", () => {
+    const actor = normaliseActor(feedback.policyActor.value);
+    if (actor) {
+      feedback.policyActor.value = actor;
+      writePolicyActorV24(actor);
+    }
+    render();
+  });
+
   const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();
   if (feedback.v20WindowDays) feedback.v20WindowDays.value = String(adaptiveConfigV20.windowDays ?? 30);
   if (feedback.v20MinSamples) feedback.v20MinSamples.value = String(adaptiveConfigV20.minSamples ?? 8);
@@ -1850,9 +1901,9 @@ function initPlayground() {
             snapshotId: lastAdaptiveCalibrationReportV20.snapshotId
           }
         : null,
-      policyV23: summarisePolicy({
-        proposal: lastPolicyProposalV23,
-        ledger: readPolicyLedgerV23(lastWorkflowPlan?.datasetFingerprint || null),
+      policyV24: summarisePolicy({
+        proposal: lastPolicyProposalV24,
+        ledger: readPolicyLedgerV24(lastWorkflowPlan?.datasetFingerprint || null),
         datasetFingerprint: lastWorkflowPlan?.datasetFingerprint || null,
         rows: buildObservedCalibrationRows(
           buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
@@ -1864,12 +1915,12 @@ function initPlayground() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "revops-v23-" + artifact.runId.toLowerCase() + ".json";
+    anchor.download = "revops-v24-" + artifact.runId.toLowerCase() + ".json";
     anchor.click();
     URL.revokeObjectURL(url);
-    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V23 run artifact + feedback generated without raw CSV records"));
+    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V24 run artifact + feedback generated without raw CSV records"));
     status.dataset.state = "ok";
-    status.textContent = "Run artifact V23 generado: identidad, workflow y policy integrity, sin filas CSV.";
+    status.textContent = "Run artifact V24 generado: identidad, workflow y policy integrity, sin filas CSV.";
   });
 
 
@@ -2038,17 +2089,22 @@ function initPlayground() {
     render();
   });
 
-  const decidePolicyV23 = (decision) => {
-    if (!lastPolicyProposalV23 && decision !== "ROLLBACK") return;
+  const decidePolicyV24 = (decision) => {
+    if (!lastPolicyProposalV24 && decision !== "ROLLBACK") return;
     const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    const actor = normaliseActor(feedback.policyActor?.value || "");
+    const rationale = normaliseRationale(feedback.policyRationale?.value || "");
+    if (feedback.v24Reason && !actor) feedback.v24Reason.textContent = "ACTOR_IDENTITY_REQUIRED";
+    if (feedback.v24Reason && actor && !rationale) feedback.v24Reason.textContent = "MISSING_RATIONALE";
+    if (actor) writePolicyActorV24(actor);
     const result = decidePolicy({
-      ledger: readPolicyLedgerV23(fingerprint),
-      proposal: lastPolicyProposalV23,
+      ledger: readPolicyLedgerV24(fingerprint),
+      proposal: lastPolicyProposalV24,
       decision,
-      actor: "operator",
+      actor,
       datasetFingerprint: fingerprint,
       now: new Date().toISOString(),
-      reason: decision === "ROLLBACK" ? "operator rollback" : lastPolicyProposalV23?.reason,
+      reason: rationale,
       rows: decision === "APPROVE"
         ? buildObservedCalibrationRows(
             buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
@@ -2057,18 +2113,18 @@ function initPlayground() {
         : []
     });
     if (!result.accepted) {
-      if (feedback.v23Reason) feedback.v23Reason.textContent = result.reason;
-      addAudit(auditEvent("POLICY_V23_" + decision, { id: "V23" }, result.reason));
+      if (feedback.v24Reason) feedback.v24Reason.textContent = result.reason;
+      addAudit(auditEvent("POLICY_V24_" + decision, { id: "V24" }, result.reason));
       return;
     }
-    writePolicyLedgerV23(result.ledger, fingerprint);
-    addAudit(auditEvent("POLICY_V23_" + decision, { id: "V23" }, result.reason));
+    writePolicyLedgerV24(result.ledger, fingerprint);
+    addAudit(auditEvent("POLICY_V24_" + decision, { id: "V24" }, result.reason));
     render();
   };
 
-  feedback.v23Approve?.addEventListener("click", () => decidePolicyV23("APPROVE"));
-  feedback.v23Reject?.addEventListener("click", () => decidePolicyV23("REJECT"));
-  feedback.v23Rollback?.addEventListener("click", () => decidePolicyV23("ROLLBACK"));
+  feedback.v24Approve?.addEventListener("click", () => decidePolicyV24("APPROVE"));
+  feedback.v24Reject?.addEventListener("click", () => decidePolicyV24("REJECT"));
+  feedback.v24Rollback?.addEventListener("click", () => decidePolicyV24("ROLLBACK"));
 
   feedback.record?.addEventListener("click", () => {
     if (!lastWorkflowPlan || !lastOutcomeLedger) return;
