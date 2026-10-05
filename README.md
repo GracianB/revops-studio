@@ -1,6 +1,6 @@
 # RevOps Studio
 
-**A deterministic Revenue Operations decision system built around data quality, explainability, human approval and proof-bound policy integrity.**
+**A deterministic Revenue Operations decision system built around data quality, explainability, human approval and governed proof-bound policy lineage.**
 
 [![Live](https://img.shields.io/badge/LIVE-DAA428?style=for-the-badge)](https://gracianb.github.io/revops-studio/)
 [![Tests](https://img.shields.io/badge/TESTS-150%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
@@ -162,6 +162,32 @@ bounded policy instance
 Approval is fail-closed unless the supplied rows reproduce the proposal's evidence fingerprint, record count, Brier values and replay fingerprint. Approved ledger entries also require a dataset scope and bounded multiplier.
 
 This is a deterministic evidence-consistency layer for the local browser workflow, not a cryptographic trust boundary.
+
+## V24 · Policy governance & lineage
+
+V24 turns proof-bound recalibration into a governed decision record:
+
+```text
+operator identity
+   ↓
+decision rationale
+   ↓
+proposal + source run
+   ↓
+dataset fingerprint
+   ↓
+observed-row evidence
+   ↓
+replay fingerprint
+   ↓
+approval / rejection / rollback
+   ↓
+policy instance + lineage fingerprint
+```
+
+Policy approval now requires a non-generic operator identity, an explicit rationale, a live proposal within a 24-hour evidence window, a source run, dataset scope and the exact observed rows used by the replay. The ledger carries the actor, rationale and lineage fingerprints so later mutation is detected and the active policy remains scoped to its dataset.
+
+The UI stores the operator identity locally for convenience. This is an identity assertion, not authentication. V24 remains a local-first deterministic governance layer, not a cryptographic trust boundary or an enterprise identity provider.
 
 ## Human-in-the-loop by design
 
