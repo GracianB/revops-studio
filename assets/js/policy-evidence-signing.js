@@ -44,9 +44,9 @@ const base64UrlToBytes = (value = "") => {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 };
 
-const sha256Base64Url = async (value) => {
+const sha256Base64Url = async (value, prefix = "S27-") => {
   const digest = await getCrypto().subtle.digest("SHA-256", encoder.encode(String(value)));
-  return "S27-" + bytesToBase64Url(new Uint8Array(digest));
+  return prefix + bytesToBase64Url(new Uint8Array(digest));
 };
 
 const canonicalPayload = (bundle = null) => {
@@ -92,7 +92,7 @@ export async function generatePolicyEvidenceKeyPair() {
   );
   const privateKeyJwk = await cryptoObject.subtle.exportKey("jwk", keyPair.privateKey);
   if (!publicKeyJwk || !privateKeyJwk) throw new Error("KEY_EXPORT_FAILED");
-  const keyFingerprint = await sha256Base64Url(serialiseCanonical(publicKeyJwk));
+  const keyFingerprint = await sha256Base64Url(serialiseCanonical(publicKeyJwk), "K27-");
   return Object.freeze({
     publicKey: keyPair.publicKey,
     privateKey: keyPair.privateKey,
