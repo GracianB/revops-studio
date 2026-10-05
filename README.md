@@ -204,6 +204,26 @@ The export therefore remains privacy-preserving while making the policy lineage 
 
 V26 is still local-first. The operator identity remains an assertion, not authentication, and the fingerprints remain integrity evidence rather than cryptographic signatures.
 
+## V27 · Cryptographic policy evidence signatures
+
+V27 adds a real cryptographic signing layer on top of the portable V26 evidence package:
+
+`EVIDENCE → SHA-256 DIGEST → ECDSA P-256 SIGNATURE → PUBLIC-KEY VERIFICATION`
+
+The Control Room can generate an ephemeral P-256 signing key, sign the current V26 evidence package and export the signed JSON. The private key is kept only in memory for the active browser tab and is never written to `localStorage`.
+
+The signed package contains:
+
+- the V26 evidence package;
+- the ECDSA P-256 public JWK;
+- a public-key fingerprint;
+- a SHA-256 fingerprint of the exact signed payload;
+- the ECDSA signature.
+
+Verification can run without a pinned key to prove internal cryptographic consistency, or with an expected public-key fingerprint to prove that the package matches a specific signer key.
+
+V27 does **not** claim enterprise identity or authentication. Anyone can create a different valid key and sign a different package. Trust comes from pinning or otherwise distributing the expected public-key fingerprint.
+
 ## Human-in-the-loop by design
 
 RevOps Studio deliberately separates **recommendation** from **execution**.

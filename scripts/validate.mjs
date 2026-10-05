@@ -21,7 +21,9 @@ const required = [
   "assets/js/policy-engine.js",
   "tests/policy-engine.test.js",
   "assets/js/policy-evidence.js",
-  "tests/policy-evidence.test.js"
+  "tests/policy-evidence.test.js",
+  "assets/js/policy-evidence-signing.js",
+  "tests/policy-evidence-signing.test.js"
 ];
 
 const fail = (message) => {
@@ -132,7 +134,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "26.0.0") fail("package version must be 26.0.0");
+if (packageJson.version !== "27.0.0") fail("package version must be 27.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -191,11 +193,28 @@ for (const expected of [
   if (!policyEvidenceJs.includes(expected)) fail("missing V26 policy evidence export: " + expected);
 }
 
+const policySigningJs = fs.readFileSync(path.join(root, "assets/js/policy-evidence-signing.js"), "utf8");
+if (!policySigningJs.includes('export const POLICY_SIGNATURE_VERSION = "27.0";')) {
+  fail("policy signature version must be 27.0");
+}
+for (const expected of [
+  "POLICY_SIGNATURE_ALGORITHM",
+  "generatePolicyEvidenceKeyPair",
+  "importPolicyEvidencePrivateKey",
+  "buildPolicyEvidenceSigningPayload",
+  "signPolicyEvidenceBundle",
+  "verifyPolicyEvidenceSignature",
+  "serialiseSignedPolicyEvidenceBundle"
+]) {
+  if (!policySigningJs.includes(expected)) fail("missing V27 policy signature export: " + expected);
+}
+
+
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
-  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js",
+  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js","assets/js/policy-evidence-signing.js",
   "README.md"
 ];
 

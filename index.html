@@ -905,6 +905,31 @@
           <p class="form-status" id="policyEvidenceV26Status" role="status" aria-live="polite">V26 no exporta las filas del dataset. El paquete contiene la propuesta, el ledger y sus huellas verificables.</p>
         </section>
 
+        <section class="feedback-panel" aria-labelledby="policy-signature-v27-title">
+          <div class="feedback-head">
+            <div>
+              <span class="kicker">Cryptographic Evidence · V27</span>
+              <h3 id="policy-signature-v27-title">La evidencia ya puede viajar con una firma ECDSA verificable.</h3>
+            </div>
+            <span class="feedback-boundary">ECDSA P-256 · SHA-256</span>
+          </div>
+          <p>V27 firma el paquete V26 sin guardar la clave privada en localStorage. La verificación sin una clave pública esperada demuestra consistencia criptográfica; la verificación con una huella esperada demuestra además que coincide con el firmante que hayas fijado.</p>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Signer key</span><strong id="policySignatureV27Key">NOT GENERATED</strong><small>huella pública K27</small></div>
+            <div class="feedback-metric"><span>Status</span><strong id="policySignatureV27State">NO SIGNER</strong><small>estado del firmante</small></div>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="generatePolicySignerV27" type="button">Generate signer key</button>
+            <button class="btn btn-primary" id="signPolicyEvidenceV27" type="button">Sign current evidence</button>
+          </div>
+          <div class="feedback-actions">
+            <label>Verify signed evidence
+              <input id="importPolicySignedV27" type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <p class="form-status" id="policySignatureV27Status" role="status" aria-live="polite">La clave privada se mantiene solo en memoria de esta pestaña.</p>
+        </section>
+
         <section class="history-panel" aria-labelledby="history-title">
           <div class="history-head">
             <div>
