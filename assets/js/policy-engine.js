@@ -526,7 +526,9 @@ export function decidePolicy({
   });
 
   if (!safeActor) return reject("MISSING_ACTOR");
-  if (String(actor || "").trim().toLowerCase() === "operator") return reject("ACTOR_IDENTITY_REQUIRED");
+  const actorToken = String(actor || "").trim().toLowerCase();
+  const genericActorTokens = new Set(["operator", "default-actor", "default", "system", "unknown", "anonymous"]);
+  if (genericActorTokens.has(actorToken)) return reject("ACTOR_IDENTITY_REQUIRED");
   if (!safeRationale) return reject("MISSING_RATIONALE");
   if (!decidedAt) return reject("INVALID_TIME");
   if (!["APPROVE", "REJECT", "ROLLBACK"].includes(safeDecision)) return reject("INVALID_DECISION");
@@ -595,6 +597,7 @@ export function decidePolicy({
   if (safeDecision === "APPROVE") {
     const verification = verifyPolicyProposal(proposal, { rows, now: decidedAt, config: proposal?.configuration || {} });
     if (!verification.valid) return reject(verification.reason);
+    if (!proposal.runId) return reject("SOURCE_RUN_ID_REQUIRED");
     if (!fingerprint || fingerprint !== String(proposal.datasetFingerprint || "")) {
       return reject("DATASET_FINGERPRINT_REQUIRED");
     }
