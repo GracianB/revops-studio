@@ -292,7 +292,7 @@ test("V30 detects a trust-fabric fork", async () => {
   assert.equal(result.reason, "TRUST_FABRIC_FORK_DETECTED");
 });
 
-test("V30 detects root double-signing across divergent checkpoints", async () => {
+test("V30 detects root double-signing across divergent payloads", async () => {
   const { registry } = await registryFixture();
   const fixture = await fabricFixture(registry);
   const second = { ...fixture.signed, registry: { ...fixture.signed.registry, rationale: "forged fork" } };
@@ -309,7 +309,7 @@ test("V30 detects root double-signing across divergent checkpoints", async () =>
     expectedThreshold: 2
   });
   assert.equal(result.valid, false);
-  assert.equal(result.reason, "TRUST_FABRIC_FORK_DETECTED");
+  assert.equal(result.reason, "TRUST_FABRIC_DOUBLE_SIGN_DETECTED");
 });
 
 test("V30 anchors policy evidence through quorum trust", async () => {
