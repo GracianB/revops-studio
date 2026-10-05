@@ -40,16 +40,16 @@ function biasedRows(count = 10, probability = 0.8, successes = 4) {
   }));
 }
 
-test("V22 contract exposes a hard bounded recalibration step", () => {
+test("V23 contract exposes a hard bounded recalibration step", () => {
   const config = normalisePolicyConfig({ maxStep: 9, multiplierMin: 2, multiplierMax: 0.2 });
   assert.equal(config.maxStep, POLICY_HARD_MAX_STEP);
   assert.equal(config.maxStep, 0.15);
   assert.equal(config.multiplierMin, 0.5);
   assert.equal(config.multiplierMax, 1.5);
-  assert.equal(POLICY_CONTRACT_VERSION, "22.0");
+  assert.equal(POLICY_CONTRACT_VERSION, "23.0");
 });
 
-test("V22 blocks a stable report", () => {
+test("V23 blocks a stable report", () => {
   const proposal = buildRecalibrationProposal({
     report: report("STABLE"),
     rows: biasedRows(),
@@ -60,7 +60,7 @@ test("V22 blocks a stable report", () => {
   assert.equal(proposal.eligible, false);
 });
 
-test("V22 requires global drift before proposing global recalibration", () => {
+test("V23 requires global drift before proposing global recalibration", () => {
   const proposal = buildRecalibrationProposal({
     report: {
       severity: "CRITICAL",
@@ -74,7 +74,7 @@ test("V22 requires global drift before proposing global recalibration", () => {
   assert.equal(proposal.reason, "GLOBAL_DRIFT_REQUIRED");
 });
 
-test("V22 blocks insufficient samples even when drift is critical", () => {
+test("V23 blocks insufficient samples even when drift is critical", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL", true),
     rows: biasedRows(3),
@@ -83,7 +83,7 @@ test("V22 blocks insufficient samples even when drift is critical", () => {
   assert.equal(proposal.reason, "SAMPLE_INSUFFICIENT");
 });
 
-test("V22 proposes a clamped multiplier and requires replay improvement", () => {
+test("V23 proposes a clamped multiplier and requires replay improvement", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(12, 0.85, 3),
@@ -99,7 +99,7 @@ test("V22 proposes a clamped multiplier and requires replay improvement", () => 
   assert.equal(proposal.datasetFingerprint, "ds-1");
 });
 
-test("V22 proposal identity is deterministic", () => {
+test("V23 proposal identity is deterministic", () => {
   const input = {
     report: report("WARNING"),
     rows: biasedRows(10, 0.7, 2),
@@ -110,7 +110,7 @@ test("V22 proposal identity is deterministic", () => {
   assert.equal(first.proposalId, second.proposalId);
 });
 
-test("V22 rejects a candidate that does not improve the replay", () => {
+test("V23 rejects a candidate that does not improve the replay", () => {
   const rows = biasedRows(10, 0.55, 4);
   const proposal = buildRecalibrationProposal({
     report: report("WARNING"),
@@ -123,7 +123,7 @@ test("V22 rejects a candidate that does not improve the replay", () => {
   assert.ok(proposal.replay);
 });
 
-test("V22 approval requires an eligible proposal and an actor", () => {
+test("V23 approval requires an eligible proposal and an actor", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
@@ -146,11 +146,11 @@ test("V22 approval requires an eligible proposal and an actor", () => {
   assert.equal(approved.active.multiplier, proposal.multiplier);
 });
 
-test("V22 approval rejects a forged multiplier outside the hard step", () => {
+test("V23 approval rejects a forged multiplier outside the hard step", () => {
   const result = decidePolicy({
     proposal: {
       contractVersion: POLICY_CONTRACT_VERSION,
-      proposalId: "V22-forged",
+      proposalId: "V23-forged",
       eligible: true,
       multiplier: 1.4,
       datasetFingerprint: "ds-a"
@@ -164,7 +164,7 @@ test("V22 approval rejects a forged multiplier outside the hard step", () => {
   assert.equal(result.reason, "REPLAY_BINDING_MISMATCH");
 });
 
-test("V22 cannot approve an ineligible proposal", () => {
+test("V23 cannot approve an ineligible proposal", () => {
   const proposal = buildRecalibrationProposal({
     report: report("STABLE"),
     rows: biasedRows(),
@@ -180,7 +180,7 @@ test("V22 cannot approve an ineligible proposal", () => {
   assert.equal(result.reason, "PROPOSAL_NOT_ELIGIBLE");
 });
 
-test("V22 reject records the decision and leaves no active policy", () => {
+test("V23 reject records the decision and leaves no active policy", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
@@ -208,7 +208,7 @@ test("V22 reject records the decision and leaves no active policy", () => {
   assert.equal(second.reason, "ALREADY_DECIDED");
 });
 
-test("V22 rollback restores the previous approved policy", () => {
+test("V23 rollback restores the previous approved policy", () => {
   const first = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
@@ -234,13 +234,14 @@ test("V22 rollback restores the previous approved policy", () => {
     ledger: approvedSecond.ledger,
     decision: "ROLLBACK",
     actor: "operator",
+    datasetFingerprint: "ds-rollback",
     now: "2026-10-07T00:00:00.000Z"
   });
   assert.equal(rolled.accepted, true);
   assert.equal(rolled.active.proposalId, first.proposalId);
 });
 
-test("V22 isolates policy decisions by dataset fingerprint", () => {
+test("V23 isolates policy decisions by dataset fingerprint", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
@@ -270,7 +271,7 @@ test("V22 isolates policy decisions by dataset fingerprint", () => {
   }).activeMultiplier, null);
 });
 
-test("V22 applies the multiplier only to stage probabilities", () => {
+test("V23 applies the multiplier only to stage probabilities", () => {
   const adjusted = applyPolicyToAssumptions({
     qualified: 0.8,
     nurture: 0.4,
@@ -287,51 +288,52 @@ test("V22 applies the multiplier only to stage probabilities", () => {
   assert.equal(adjusted.weight, 1);
 });
 
-test("V22 summary exports the decision state without ledger rows", () => {
+test("V23 summary exports the decision state without ledger rows", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
     datasetFingerprint: "ds-summary",
     now
   });
-  const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-summary", now });
+  const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2), now });
   const summary = summarisePolicy({ proposal, ledger: approved.ledger, datasetFingerprint: "ds-summary" });
-  assert.equal(summary.contractVersion, "22.0");
+  assert.equal(summary.contractVersion, "23.0");
   assert.equal(summary.decisions, 1);
   assert.equal(summary.activeMultiplier, proposal.multiplier);
   assert.equal(Object.hasOwn(summary, "ledger"), false);
 });
 
-test("V22 proposal carries a replay binding anchored to the replay payload", () => {
+test("V23 proposal carries a replay binding anchored to the replay payload", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(12, 0.85, 3), datasetFingerprint: "ds-replay", runId: "run-replay", now });
-  assert.equal(proposal.contractVersion, "22.0");
+  assert.equal(proposal.contractVersion, "23.0");
   assert.equal(proposal.baseMultiplier, 1);
   assert.equal(proposal.replayFingerprint, buildReplayFingerprint(proposal.replay));
-  assert.equal(verifyPolicyProposal(proposal).valid, true);
+  assert.equal(verifyPolicyProposal(proposal, { rows: biasedRows(12, 0.85, 3) }).reason, "REPLAY_ROWS_VERIFIED");
 });
-test("V22 rejects approval when the replay payload changes after proposal generation", () => {
+test("V23 rejects approval when the replay payload changes after proposal generation", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(12, 0.85, 3), datasetFingerprint: "ds-tamper", runId: "run-tamper", now });
   const tampered = { ...proposal, replay: { ...proposal.replay, candidateBrier: Number((proposal.replay.candidateBrier + 0.01).toFixed(6)) } };
   const result = decidePolicy({ proposal: tampered, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-tamper", now });
   assert.equal(result.accepted, false);
   assert.equal(result.reason, "REPLAY_BINDING_MISMATCH");
 });
-test("V22 rejects a forged improvement even when the replay fingerprint is intact", () => {
+test("V23 rejects a forged improvement even when the replay fingerprint is intact", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(12, 0.85, 3), datasetFingerprint: "ds-improvement", now });
   const tampered = { ...proposal, improvement: Number((proposal.improvement + 0.1).toFixed(6)) };
   const result = decidePolicy({ proposal: tampered, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-improvement", now });
   assert.equal(result.accepted, false);
   assert.equal(result.reason, "REPLAY_IMPROVEMENT_MISMATCH");
 });
-test("V22 absolute boundary rejects a policy above the base ceiling", () => {
+test("V23 absolute boundary rejects a policy above the base ceiling", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(20, 0.95, 1), datasetFingerprint: "ds-boundary", now });
   const forged = { ...proposal, multiplier: 1.16, replay: { ...proposal.replay, multiplier: 1.16 } };
   forged.replayFingerprint = buildReplayFingerprint(forged.replay);
-  const result = decidePolicy({ proposal: forged, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-boundary", now });
+  forged.replayFingerprint = buildReplayFingerprint(forged.replay);
+  const result = decidePolicy({ proposal: forged, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-boundary", rows: biasedRows(20, 0.95, 1), now });
   assert.equal(result.accepted, false);
   assert.equal(result.reason, "POLICY_BOUNDARY_MISMATCH");
 });
-test("V22 approval creates a stable policy instance identity", () => {
+test("V23 approval creates a stable policy instance identity", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-policy-id", now });
   const a = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", now });
   const b = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", now });
@@ -340,15 +342,15 @@ test("V22 approval creates a stable policy instance identity", () => {
   assert.equal(a.active.policyId, b.active.policyId);
   assert.equal(a.active.replayFingerprint, proposal.replayFingerprint);
 });
-test("V22 summary exposes policy identity, base deviation and integrity state", () => {
+test("V23 summary exposes policy identity, base deviation and integrity state", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-summary", now });
   const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-summary", now });
   const summary = summarisePolicy({ proposal, ledger: approved.ledger, datasetFingerprint: "ds-summary" });
   assert.equal(summary.activePolicyInstanceId, approved.active.policyId);
   assert.equal(summary.baseDeviation, Number((proposal.multiplier - 1).toFixed(6)));
-  assert.equal(summary.integrity, "REPLAY_BINDING_VALID");
+  assert.equal(summary.integrity, "REPLAY_ROWS_VERIFIED");
 });
-test("V22 active policy application cannot escape the absolute boundary", () => {
+test("V23 active policy application cannot escape the absolute boundary", () => {
   const assumptions = { qualified: 0.8, nurture: 0.4, new: 0.2, downside: 0.75, upside: 1.15 };
   const adjusted = applyPolicyToAssumptions(assumptions, { multiplier: 1.5 });
   assert.equal(adjusted.qualified, 0.92);
@@ -356,4 +358,32 @@ test("V22 active policy application cannot escape the absolute boundary", () => 
   assert.equal(adjusted.new, 0.23);
   assert.equal(adjusted.downside, 0.75);
   assert.equal(adjusted.upside, 1.15);
+});
+
+test("V23 requires the observed rows to approve a proposal", () => {
+  const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-proof", now });
+  const result = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-proof", now });
+  assert.equal(result.accepted, false);
+  assert.equal(result.reason, "ROWS_REQUIRED_FOR_APPROVAL");
+});
+test("V23 rejects approval when the observed rows change", () => {
+  const originalRows = biasedRows(10, 0.9, 2);
+  const changedRows = biasedRows(10, 0.9, 1);
+  const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: originalRows, datasetFingerprint: "ds-real", now });
+  const result = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-real", rows: changedRows, now });
+  assert.equal(result.accepted, false);
+  assert.equal(result.reason, "ROWS_FINGERPRINT_MISMATCH");
+});
+test("V23 ledger drops an approved event with an invalid multiplier", () => {
+  const rows = biasedRows(10, 0.9, 2);
+  const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows, datasetFingerprint: "ds-ledger", now });
+  const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-ledger", rows, now });
+  const tampered = approved.ledger.map((event) => ({ ...event, multiplier: 1.9 }));
+  assert.equal(summarisePolicy({ ledger: tampered, datasetFingerprint: "ds-ledger" }).activeMultiplier, null);
+});
+test("V23 active policy is fail-closed without a dataset fingerprint", () => {
+  const rows = biasedRows(10, 0.9, 2);
+  const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows, datasetFingerprint: "ds-scope", now });
+  const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-scope", rows, now });
+  assert.equal(summarisePolicy({ ledger: approved.ledger }).activeMultiplier, null);
 });
