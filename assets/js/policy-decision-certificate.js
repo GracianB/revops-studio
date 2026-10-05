@@ -1282,9 +1282,11 @@ export async function exportDecisionCertificate(
     reason:
       "DECISION_CERTIFICATE_EXPORTED",
 
+    // Preserve the embedded V26–V31 artifact byte/order semantics on export.
+    // V32 fingerprinting remains canonical and independent from JSON presentation.
     json:
       JSON.stringify(
-        canonicalize(certificate),
+        certificate,
         null,
         2
       ),
