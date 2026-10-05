@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { webcrypto } from "node:crypto";
 import {
   POLICY_SIGNATURE_VERSION,
   POLICY_SIGNATURE_ALGORITHM,
@@ -17,7 +16,6 @@ import {
 } from "../assets/js/policy-engine.js";
 import { buildPolicyEvidenceBundle } from "../assets/js/policy-evidence.js";
 
-globalThis.crypto = webcrypto;
 
 const now = "2026-10-05T00:00:00.000Z";
 
