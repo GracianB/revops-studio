@@ -92,7 +92,7 @@ const requiredV18Ids = [
   "policyTransparencyV31Status", "generateTransparencyWitnessV31", "anchorTrustFabricV31",
   "witnessTransparencyHeadV31", "verifyTransparencyV31", "exportTransparencyV31",
   "exportTransparencyReceiptV31", "importTransparencyV31",
-  "policy-decision-certificate-title", "policyDecisionCertificateId", "policyDecisionCertificateHead", "policyDecisionCertificateQuorum", "policyDecisionCertificateStatus", "buildDecisionCertificateV32", "verifyDecisionCertificateV32", "exportDecisionCertificateV32", "importDecisionCertificateV32",
+  "policy-decision-certificate-title", "policyDecisionCertificateV32Id", "policyDecisionCertificateV32Head", "policyDecisionCertificateV32Quorum", "policyDecisionCertificateV32Status", "buildDecisionCertificateV32", "verifyDecisionCertificateV32", "exportDecisionCertificateV32", "importDecisionCertificateV32",
   "policyTrustRootV29RegistryHead", "policyTrustRootV29Status", "generateTrustRootV29",
   "signTrustRegistryV29", "verifyTrustRootV29", "verifyRootAnchoredEvidenceV29",
   "exportTrustRootV29", "importTrustRootV29",
