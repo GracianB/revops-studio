@@ -175,8 +175,6 @@ export function verifyPolicyProposal(proposal = null, { rows = null, now = null,
     return { valid: false, reason: "BASE_POLICY_MISMATCH" };
   }
 
-  if (!proposal.runId) return { valid: false, reason: "SOURCE_RUN_ID_MISSING" };
-
   const expectedProposalFingerprint = buildPolicyProposalFingerprint(proposal);
   if (!expectedProposalFingerprint || expectedProposalFingerprint !== proposal.proposalFingerprint) {
     return { valid: false, reason: "PROPOSAL_FINGERPRINT_MISMATCH" };
@@ -593,6 +591,7 @@ export function decidePolicy({
     return reject("DATASET_MISMATCH");
   }
   if (safeDecision === "APPROVE" && !proposal.eligible) return reject("PROPOSAL_NOT_ELIGIBLE");
+  if (safeDecision === "APPROVE" && !proposal.runId) return reject("SOURCE_RUN_ID_REQUIRED");
   if (safeDecision === "APPROVE") {
     const verification = verifyPolicyProposal(proposal, { rows, now: decidedAt, config: proposal?.configuration || {} });
     if (!verification.valid) return reject(verification.reason);
