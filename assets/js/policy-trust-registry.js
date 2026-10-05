@@ -311,8 +311,19 @@ export async function verifyTrustRegistry(registry = null) {
       return { valid: false, reason: "TRUST_EVENT_FINGERPRINT_MISMATCH", index };
     }
 
+    if (event.action === TRUST_ACTIONS.REGISTER) {
+      if (event.state !== TRUST_STATES.ACTIVE || event.previousKeyFingerprint) {
+        return { valid: false, reason: "TRUST_REGISTER_INVALID", index };
+      }
+      if (registry.events.slice(0, index).some((prior) => prior.keyFingerprint === event.keyFingerprint)) {
+        return { valid: false, reason: "TRUST_DUPLICATE_SIGNER", index };
+      }
+    }
+
     if (event.action === TRUST_ACTIONS.ROTATE) {
-      if (!event.previousKeyFingerprint || event.previousKeyFingerprint === event.keyFingerprint) {
+      if (event.state !== TRUST_STATES.ACTIVE ||
+          !event.previousKeyFingerprint ||
+          event.previousKeyFingerprint === event.keyFingerprint) {
         return { valid: false, reason: "TRUST_ROTATION_INVALID", index };
       }
       const effectiveMs = new Date(event.effectiveAt).getTime();
@@ -325,6 +336,11 @@ export async function verifyTrustRegistry(registry = null) {
       if (!predecessor || predecessor.state !== TRUST_STATES.ACTIVE) {
         return { valid: false, reason: "TRUST_ROTATION_PREDECESSOR_INVALID", index };
       }
+    }
+
+    if ((event.action === TRUST_ACTIONS.REVOKE || event.action === TRUST_ACTIONS.RETIRE) &&
+        event.previousKeyFingerprint !== event.keyFingerprint) {
+      return { valid: false, reason: "TRUST_TRANSITION_TARGET_INVALID", index };
     }
 
     if (event.action === TRUST_ACTIONS.REVOKE && event.state !== TRUST_STATES.REVOKED) {
