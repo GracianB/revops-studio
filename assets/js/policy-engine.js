@@ -1,6 +1,6 @@
 import { calculateCalibrationMetrics } from "./calibration-engine.js";
 
-export const POLICY_CONTRACT_VERSION = "24.0";
+export const POLICY_CONTRACT_VERSION = "25.0";
 
 export const POLICY_DEFAULTS = Object.freeze({
   minSamples: 8,
@@ -96,12 +96,12 @@ const lineageCanonical = ({
 });
 
 export function buildPolicyLineageFingerprint(fields = {}) {
-  return "L24-" + stableHash(JSON.stringify(lineageCanonical(fields)));
+  return "L25-" + stableHash(JSON.stringify(lineageCanonical(fields)));
 }
 
 export function buildPolicyProposalFingerprint(proposal = null) {
   if (!proposal || typeof proposal !== "object") return null;
-  return "P24-" + stableHash(JSON.stringify({
+  return "V25P-" + stableHash(JSON.stringify({
     contractVersion: proposal.contractVersion || null,
     proposalId: proposal.proposalId || null,
     generatedAt: isoTime(proposal.generatedAt),
@@ -151,7 +151,7 @@ export function buildRowsFingerprint(rows = []) {
       observedSuccess: Number(row.observedSuccess)
     }))
     .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  return "D24-" + stableHash(JSON.stringify(canonical));
+  return "D25-" + stableHash(JSON.stringify(canonical));
 }
 
 export function buildReplayFingerprint(replay = null) {
@@ -166,7 +166,7 @@ export function buildReplayFingerprint(replay = null) {
   };
   if (!Number.isFinite(canonical.records) || canonical.multiplier === null ||
       canonical.currentBrier === null || canonical.candidateBrier === null) return null;
-  return "R23-" + stableHash(JSON.stringify(canonical));
+  return "R25-" + stableHash(JSON.stringify(canonical));
 }
 
 export function verifyPolicyProposal(proposal = null, { rows = null, now = null, config = {} } = {}) {
