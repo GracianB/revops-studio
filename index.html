@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="REVOPS STUDIO · V25 Policy Integrity Decision Operating System · CS × Data × AI × Systems">
+  <meta property="og:title" content="REVOPS STUDIO · V29 Trusted Root Decision Operating System · CS × Data × AI × Systems">
   <meta property="og:description" content="Hiring Manager Mode · RevOps Studio público, Control Room, arquitectura determinista y proof técnico.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -54,7 +54,7 @@
   <link rel="stylesheet" href="./assets/css/main.css">
   <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
   <script type="module" src="./assets/js/app.js" defer></script>
-  <title>REVOPS STUDIO · V18 Decision Operating System · RevOps · Data · AI · Systems</title>
+  <title>REVOPS STUDIO · V29 Trusted Root Decision Operating System · RevOps · Data · AI · Systems</title>
 </head>
 
 <body>
@@ -98,7 +98,7 @@
 
 <div class="notice">
   <div class="notice-inner">
-    <span><strong>CONTROL ROOM · V18</strong> · diagnóstico 30 min · sistema público e inspeccionable</span>
+    <span><strong>CONTROL ROOM · V29</strong> · diagnóstico 30 min · sistema público e inspeccionable</span>
     <a class="text-link" href="#contacto">Ver el flujo ↘</a>
   </div>
 </div>
@@ -971,6 +971,41 @@
             </label>
           </div>
           <p class="form-status" id="policyTrustV28Status" role="status" aria-live="polite">V28 no confía en una firma únicamente porque la criptografía sea válida.</p>
+        </section>
+
+        <section class="feedback-panel" aria-labelledby="policy-trust-root-v29-title">
+          <div class="feedback-head">
+            <div>
+              <span class="kicker">Trusted Root · V29</span>
+              <h3 id="policy-trust-root-v29-title">La confianza sale del navegador: registry firmado, root verificable.</h3>
+            </div>
+            <span class="feedback-boundary">ROOT · PIN · VERIFY</span>
+          </div>
+          <p>V29 firma el snapshot completo del registro V28 con una clave raíz ECDSA P-256. La clave privada vive solo en memoria. Sin un pin externo, la verificación demuestra consistencia criptográfica, pero no constituye confianza independiente.</p>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Root key</span><strong id="policyTrustRootV29">NOT INITIALISED</strong><small>fingerprint RK29</small></div>
+            <div class="feedback-metric"><span>Registry head</span><strong id="policyTrustRootV29RegistryHead">T28-EMPTY</strong><small>head anclado por firma</small></div>
+          </div>
+          <div class="feedback-form">
+            <label>External root pin
+              <input id="policyTrustRootV29Pin" type="text" maxlength="120" placeholder="RK29-...">
+            </label>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="generateTrustRootV29" type="button">Generate root key</button>
+            <button class="btn btn-primary" id="signTrustRegistryV29" type="button">Sign current registry</button>
+            <button class="btn btn-secondary" id="verifyTrustRootV29" type="button">Verify root</button>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-primary" id="verifyRootAnchoredEvidenceV29" type="button">Verify root-anchored evidence</button>
+            <button class="btn btn-secondary" id="exportTrustRootV29" type="button">Export root snapshot</button>
+          </div>
+          <div class="feedback-actions">
+            <label>Import signed root snapshot
+              <input id="importTrustRootV29" type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <p class="form-status" id="policyTrustRootV29Status" role="status" aria-live="polite">V29 exige una raíz distribuida o fijada fuera del snapshot para confianza externa.</p>
         </section>
 
         <section class="history-panel" aria-labelledby="history-title">
