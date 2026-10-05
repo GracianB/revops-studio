@@ -618,7 +618,10 @@ test(
     assert.equal(
       imported.valid,
       true,
-      imported.reason
+      JSON.stringify({
+        reason: imported.reason,
+        verification: imported.verification
+      })
     );
 
     assert.equal(
