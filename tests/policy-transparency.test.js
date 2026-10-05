@@ -257,27 +257,27 @@ test("V31 verifies a witness set", async () => {
 test("V31 detects witness equivocation for the same sequence", async () => {
   const { log } = await logFixture();
   const witness = await generateTransparencyWitnessKeyPair();
+  const conflictEntry = {
+    ...log.entries[1],
+    sequence: 1,
+    eventFingerprint: "TL31-conflicting-entry"
+  };
   const a = await signTransparencyWitnessAttestation(log.entries[0], {
     privateKey: witness.privateKey,
     publicKeyJwk: witness.publicKeyJwk,
     observedAt: now
   });
-  const b = await signTransparencyWitnessAttestation(log.entries[1], {
+  const b = await signTransparencyWitnessAttestation(conflictEntry, {
     privateKey: witness.privateKey,
     publicKeyJwk: witness.publicKeyJwk,
     observedAt: now
   });
-  const forged = {
-    ...b.attestation,
-    sequence: 1,
-    checkpointFingerprint: log.entries[0].checkpoint.checkpointFingerprint
-  };
   const result = await verifyTransparencyWitnessSet(
-    [a.attestation, forged],
-    { entries: log.entries, minWitnesses: 1 }
+    [a.attestation, b.attestation],
+    { entries: [log.entries[0], conflictEntry], minWitnesses: 1 }
   );
   assert.equal(result.valid, false);
-  assert.equal(result.reason, "TRANSPARENCY_WITNESS_INVALID");
+  assert.equal(result.reason, "TRANSPARENCY_WITNESS_EQUIVOCATION_DETECTED");
 });
 
 test("V31 rejects witness-count insufficiency", async () => {
