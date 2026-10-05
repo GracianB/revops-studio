@@ -620,16 +620,31 @@ export async function verifyTransparencyWitnessSet(
   );
   const results = [];
   const witnesses = new Set();
+  const seenByWitnessAndSequence = new Map();
 
   for (const attestation of attestations) {
-    if (witnesses.has(attestation?.witnessFingerprint)) {
-      return { valid: false, reason: "TRANSPARENCY_WITNESS_DUPLICATE" };
-    }
     const entry = entryMap.get(attestation?.entryFingerprint);
     const result = await verifyTransparencyWitnessAttestation(attestation, { entry });
     if (!result.valid) {
       return { valid: false, reason: "TRANSPARENCY_WITNESS_INVALID", failed: result };
     }
+
+    const conflictKey = result.witnessFingerprint + ":" + result.sequence;
+    const previous = seenByWitnessAndSequence.get(conflictKey);
+    if (previous) {
+      if (previous.checkpointFingerprint !== result.checkpointFingerprint) {
+        return {
+          valid: false,
+          reason: "TRANSPARENCY_WITNESS_EQUIVOCATION_DETECTED",
+          witnessFingerprint: result.witnessFingerprint,
+          sequence: result.sequence,
+          checkpointFingerprints: [previous.checkpointFingerprint, result.checkpointFingerprint]
+        };
+      }
+      return { valid: false, reason: "TRANSPARENCY_WITNESS_DUPLICATE" };
+    }
+
+    seenByWitnessAndSequence.set(conflictKey, result);
     witnesses.add(result.witnessFingerprint);
     results.push(result);
   }
