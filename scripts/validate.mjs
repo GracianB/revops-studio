@@ -25,7 +25,23 @@ const required = [
   "assets/js/policy-evidence-signing.js",
   "tests/policy-evidence-signing.test.js",
   "assets/js/policy-trust-registry.js",
-  "tests/policy-trust-registry.test.js"
+  "tests/policy-trust-registry.test.js",
+  "assets/js/decision-certificate-control-v33.js",
+  "tests/decision-certificate-control-v33.test.js",
+  "assets/js/decision-certificate-security-v34.js",
+  "tests/decision-certificate-security-v34.test.js",
+  "assets/js/release-regression-v35.js",
+  "tests/release-regression-v35.test.js",
+  "assets/js/reliability-contract-v36.js",
+  "tests/reliability-contract-v36.test.js",
+  "assets/js/release-security-v38.js",
+  "tests/release-security-v38.test.js",
+  "assets/js/release-integration-v39.js",
+  "tests/release-integration-v39.test.js",
+  "assets/js/final-release-v40.js",
+  "tests/final-release-v40.test.js",
+  "scripts/release-gate-v40.mjs",
+  "V40-FINAL-RELEASE.md",
 ];
 
 const fail = (message) => {
@@ -155,12 +171,12 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "32.0.0") fail("package version must be 32.0.0");
+if (packageJson.version !== "40.0.0") fail("package version must be 40.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
   total + (fs.readFileSync(path.join(root, "tests", file), "utf8").match(/test\(/g) || []).length, 0);
-if (declaredTests < 87) fail("V18 regression suite must contain at least 87 tests");
+if (declaredTests < 300) fail("V40 regression suite must contain at least 300 tests");
 const ledgerExports = [
   "createExecutionLedger",
   "appendExecutionEvent",
@@ -338,6 +354,43 @@ for (const expected of [
   if (!transparencyJs.includes(expected)) fail("missing V31 transparency export: " + expected);
 }
 
+
+
+const securityV38Js = fs.readFileSync(path.join(root, "assets/js/release-security-v38.js"), "utf8");
+if (!securityV38Js.includes('export const SECURITY_HARDENING_V38_VERSION = "38.0";')) fail("V38 security version must be 38.0");
+for (const expected of [
+  "safeParseDecisionCertificate",
+  "validateCertificateBoundary",
+  "findForbiddenKeys",
+  "calculateJsonDepth"
+]) {
+  if (!securityV38Js.includes(expected)) fail("missing V38 security export: " + expected);
+}
+
+const integrationV39Js = fs.readFileSync(path.join(root, "assets/js/release-integration-v39.js"), "utf8");
+if (!integrationV39Js.includes('export const RELEASE_INTEGRATION_V39_VERSION = "39.0";')) fail("V39 integration version must be 39.0");
+for (const expected of [
+  "EXPECTED_RELEASE_COMPONENTS",
+  "buildComponentManifest",
+  "verifyComponentManifest",
+  "buildReleaseLineage",
+  "verifyReleaseLineage"
+]) {
+  if (!integrationV39Js.includes(expected)) fail("missing V39 integration export: " + expected);
+}
+
+const finalV40Js = fs.readFileSync(path.join(root, "assets/js/final-release-v40.js"), "utf8");
+if (!finalV40Js.includes('export const FINAL_RELEASE_V40_VERSION = "40.0";')) fail("V40 final version must be 40.0");
+for (const expected of [
+  "FINAL_RELEASE_SCHEMA",
+  "canonicalizeFinalRelease",
+  "fingerprintFinalRelease",
+  "buildFinalReleaseCertificate",
+  "verifyFinalReleaseCertificate",
+  "exportFinalReleaseCertificate"
+]) {
+  if (!finalV40Js.includes(expected)) fail("missing V40 final export: " + expected);
+}
 
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js","assets/js/policy-transparency.js",
