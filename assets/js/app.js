@@ -54,7 +54,10 @@ import {
   decidePolicy,
   summarisePolicy,
   normaliseActor,
-  normaliseRationale
+  normaliseRationale,
+  verifyPolicyLedger,
+  verifyActivePolicy,
+  replayPolicyLedger
 } from "./policy-engine.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -127,45 +130,45 @@ function writeAdaptiveCalibrationHistoryV20(history = [], datasetFingerprint = n
   } catch {}
 }
 
-const POLICY_V24_STORAGE_KEY = "revops-studio:policy:v24";
+const POLICY_V25_STORAGE_KEY = "revops-studio:policy:v24";
 
-function policyStorageKeyV24(datasetFingerprint = null) {
-  return POLICY_V24_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
+function policyStorageKeyV25(datasetFingerprint = null) {
+  return POLICY_V25_STORAGE_KEY + ":" + String(datasetFingerprint || "global");
 }
 
-function readPolicyLedgerV24(datasetFingerprint = null) {
+function readPolicyLedgerV25(datasetFingerprint = null) {
   try {
-    const value = JSON.parse(localStorage.getItem(policyStorageKeyV24(datasetFingerprint)) || "[]");
+    const value = JSON.parse(localStorage.getItem(policyStorageKeyV25(datasetFingerprint)) || "[]");
     return Array.isArray(value) ? value : [];
   } catch {
     return [];
   }
 }
 
-function writePolicyLedgerV24(ledger = [], datasetFingerprint = null) {
+function writePolicyLedgerV25(ledger = [], datasetFingerprint = null) {
   try {
     localStorage.setItem(
-      policyStorageKeyV24(datasetFingerprint),
+      policyStorageKeyV25(datasetFingerprint),
       JSON.stringify(Array.isArray(ledger) ? ledger : [])
     );
   } catch {}
 }
 
-const POLICY_V24_ACTOR_KEY = "revops-studio:policy:v24:actor";
+const POLICY_V25_ACTOR_KEY = "revops-studio:policy:v24:actor";
 
-function readPolicyActorV24() {
+function readPolicyActorV25() {
   try {
-    return normaliseActor(localStorage.getItem(POLICY_V24_ACTOR_KEY) || "") || "";
+    return normaliseActor(localStorage.getItem(POLICY_V25_ACTOR_KEY) || "") || "";
   } catch {
     return "";
   }
 }
 
-function writePolicyActorV24(actor = "") {
+function writePolicyActorV25(actor = "") {
   const safeActor = normaliseActor(actor);
   if (!safeActor) return;
   try {
-    localStorage.setItem(POLICY_V24_ACTOR_KEY, safeActor);
+    localStorage.setItem(POLICY_V25_ACTOR_KEY, safeActor);
   } catch {}
 }
 
@@ -502,24 +505,24 @@ function initPlayground() {
     v20MinSamples: qs("#calibrationV20MinSamples"),
     v20MinGroupSamples: qs("#calibrationV20MinGroupSamples"),
     v20Reset: qs("#resetCalibrationV20"),
-    v24Status: qs("#calibrationV24Status"),
-    v24Multiplier: qs("#calibrationV24Multiplier"),
-    v24Improvement: qs("#calibrationV24Improvement"),
-    v24Active: qs("#calibrationV24Active"),
-    v24Reason: qs("#calibrationV24Reason"),
-    v24Replay: qs("#calibrationV24Replay"),
-    v24Rows: qs("#calibrationV24Rows"),
-    v24Integrity: qs("#calibrationV24Integrity"),
-    v24PolicyId: qs("#calibrationV24PolicyId"),
-    v24Deviation: qs("#calibrationV24Deviation"),
-    v24Actor: qs("#calibrationV24Actor"),
-    v24SourceRun: qs("#calibrationV24SourceRun"),
-    v24Lineage: qs("#calibrationV24Lineage"),
-    policyActor: qs("#policyV24Actor"),
-    policyRationale: qs("#policyV24Rationale"),
-    v24Approve: qs("#approvePolicyV24"),
-    v24Reject: qs("#rejectPolicyV24"),
-    v24Rollback: qs("#rollbackPolicyV24")
+    v24Status: qs("#calibrationV25Status"),
+    v24Multiplier: qs("#calibrationV25Multiplier"),
+    v24Improvement: qs("#calibrationV25Improvement"),
+    v24Active: qs("#calibrationV25Active"),
+    v24Reason: qs("#calibrationV25Reason"),
+    v24Replay: qs("#calibrationV25Replay"),
+    v24Rows: qs("#calibrationV25Rows"),
+    v24Integrity: qs("#calibrationV25Integrity"),
+    v24PolicyId: qs("#calibrationV25PolicyId"),
+    v24Deviation: qs("#calibrationV25Deviation"),
+    v24Actor: qs("#calibrationV25Actor"),
+    v24SourceRun: qs("#calibrationV25SourceRun"),
+    v24Lineage: qs("#calibrationV25Lineage"),
+    policyActor: qs("#policyV25Actor"),
+    policyRationale: qs("#policyV25Rationale"),
+    v24Approve: qs("#approvePolicyV25"),
+    v24Reject: qs("#rejectPolicyV25"),
+    v24Rollback: qs("#rollbackPolicyV25")
   };
   const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
     style: "currency", currency: "EUR", maximumFractionDigits: 0
@@ -626,64 +629,64 @@ function initPlayground() {
       });
     }
 
-    const policyRowsV24 = buildObservedCalibrationRows(forecast?.rows || [], feedbackOutcomes);
-    lastPolicyProposalV24 = buildRecalibrationProposal({
+    const policyRowsV25 = buildObservedCalibrationRows(forecast?.rows || [], feedbackOutcomes);
+    lastPolicyProposalV25 = buildRecalibrationProposal({
       report: lastAdaptiveCalibrationReportV20,
-      rows: policyRowsV24,
+      rows: policyRowsV25,
       datasetFingerprint: plan?.datasetFingerprint || null,
       runId: plan?.runId || null,
       now: lastAdaptiveCalibrationReportV20?.generatedAt || new Date().toISOString(),
       config: { minSamples: adaptiveConfigV20.minSamples, proposalTtlHours: 24 }
     });
-    const policySummaryV24 = summarisePolicy({
-      proposal: lastPolicyProposalV24,
-      ledger: readPolicyLedgerV24(plan?.datasetFingerprint || null),
+    const policySummaryV25 = summarisePolicy({
+      proposal: lastPolicyProposalV25,
+      ledger: readPolicyLedgerV25(plan?.datasetFingerprint || null),
       datasetFingerprint: plan?.datasetFingerprint || null,
-      rows: policyRowsV24
+      rows: policyRowsV25
     });
     if (feedback.policyActor && !feedback.policyActor.value) {
-      feedback.policyActor.value = readPolicyActorV24();
+      feedback.policyActor.value = readPolicyActorV25();
     }
     if (feedback.v24Status) {
-      feedback.v24Status.textContent = lastPolicyProposalV24.status;
-      feedback.v24Status.dataset.state = lastPolicyProposalV24.status.toLowerCase();
+      feedback.v24Status.textContent = lastPolicyProposalV25.status;
+      feedback.v24Status.dataset.state = lastPolicyProposalV25.status.toLowerCase();
     }
     if (feedback.v24Multiplier) {
-      feedback.v24Multiplier.textContent = Number(lastPolicyProposalV24.multiplier || 1).toFixed(2);
+      feedback.v24Multiplier.textContent = Number(lastPolicyProposalV25.multiplier || 1).toFixed(2);
     }
     if (feedback.v24Improvement) {
-      feedback.v24Improvement.textContent = lastPolicyProposalV24.improvement === null
+      feedback.v24Improvement.textContent = lastPolicyProposalV25.improvement === null
         ? "—"
-        : (lastPolicyProposalV24.improvement > 0 ? "+" : "") + lastPolicyProposalV24.improvement.toFixed(3);
+        : (lastPolicyProposalV25.improvement > 0 ? "+" : "") + lastPolicyProposalV25.improvement.toFixed(3);
     }
     if (feedback.v24Active) {
-      feedback.v24Active.textContent = policySummaryV24.activeMultiplier === null
+      feedback.v24Active.textContent = policySummaryV25.activeMultiplier === null
         ? "none"
-        : Number(policySummaryV24.activeMultiplier).toFixed(2);
+        : Number(policySummaryV25.activeMultiplier).toFixed(2);
     }
     if (feedback.v24Reason) {
-      feedback.v24Reason.textContent = lastPolicyProposalV24.reason +
-        (policySummaryV24.activePolicyInstanceId ? " · active " + policySummaryV24.activePolicyInstanceId : "");
+      feedback.v24Reason.textContent = lastPolicyProposalV25.reason +
+        (policySummaryV25.activePolicyInstanceId ? " · active " + policySummaryV25.activePolicyInstanceId : "");
     }
-    if (feedback.v24Replay) feedback.v24Replay.textContent = lastPolicyProposalV24.replayFingerprint || "—";
-    if (feedback.v24Rows) feedback.v24Rows.textContent = lastPolicyProposalV24.rowsFingerprint || "—";
-    if (feedback.v24Integrity) feedback.v24Integrity.textContent = policySummaryV24.integrity;
-    if (feedback.v24PolicyId) feedback.v24PolicyId.textContent = policySummaryV24.activePolicyInstanceId || "none";
+    if (feedback.v24Replay) feedback.v24Replay.textContent = lastPolicyProposalV25.replayFingerprint || "—";
+    if (feedback.v24Rows) feedback.v24Rows.textContent = lastPolicyProposalV25.rowsFingerprint || "—";
+    if (feedback.v24Integrity) feedback.v24Integrity.textContent = policySummaryV25.integrity;
+    if (feedback.v24PolicyId) feedback.v24PolicyId.textContent = policySummaryV25.activePolicyInstanceId || "none";
     if (feedback.v24Deviation) {
-      feedback.v24Deviation.textContent = policySummaryV24.baseDeviation === null
+      feedback.v24Deviation.textContent = policySummaryV25.baseDeviation === null
         ? "0.0pp"
-        : ((policySummaryV24.baseDeviation > 0 ? "+" : "") + (Number(policySummaryV24.baseDeviation) * 100).toFixed(1) + "pp");
+        : ((policySummaryV25.baseDeviation > 0 ? "+" : "") + (Number(policySummaryV25.baseDeviation) * 100).toFixed(1) + "pp");
     }
     if (feedback.v24Actor) {
-      feedback.v24Actor.textContent = policySummaryV24.activeActor || normaliseActor(feedback.policyActor?.value) || "—";
+      feedback.v24Actor.textContent = policySummaryV25.activeActor || normaliseActor(feedback.policyActor?.value) || "—";
     }
     if (feedback.v24SourceRun) {
-      feedback.v24SourceRun.textContent = policySummaryV24.sourceRunId || "—";
+      feedback.v24SourceRun.textContent = policySummaryV25.sourceRunId || "—";
     }
     if (feedback.v24Lineage) {
       feedback.v24Lineage.textContent =
-        policySummaryV24.activeLineageFingerprint ||
-        policySummaryV24.proposalLineageFingerprint ||
+        policySummaryV25.activeLineageFingerprint ||
+        policySummaryV25.proposalLineageFingerprint ||
         "—";
     }
 
@@ -782,7 +785,7 @@ function initPlayground() {
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
   let lastCalibrationCapturedAtV20 = null;
-  let lastPolicyProposalV24 = null;
+  let lastPolicyProposalV25 = null;
 
   const readStored = () => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
@@ -936,7 +939,7 @@ function initPlayground() {
       lastWorkflowPlan?.datasetFingerprint ||
       lastSnapshot?.datasetFingerprint ||
       null;
-    return applyPolicyToAssumptions(base, activePolicy(readPolicyLedgerV24(fingerprint), fingerprint));
+    return applyPolicyToAssumptions(base, activePolicy(readPolicyLedgerV25(fingerprint), fingerprint));
   };
 
   const currentConfig = () => ({
@@ -1705,13 +1708,45 @@ function initPlayground() {
     persistAndRender();
   };
 
-  if (feedback.policyActor) feedback.policyActor.value = readPolicyActorV24();
+  if (feedback.policyActor) feedback.policyActor.value = readPolicyActorV25();
+
+  feedback.v25Verify?.addEventListener("click", () => {
+    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    const ledger = readPolicyLedgerV25(fingerprint);
+    const datasetRows = buildObservedCalibrationRows(
+      buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+      feedbackOutcomes
+    );
+    const ledgerResult = replayPolicyLedger(ledger, { datasetFingerprint: fingerprint });
+    const activeResult = ledgerResult.active
+      ? verifyActivePolicy(ledgerResult.active, {
+          rows: datasetRows,
+          datasetFingerprint: fingerprint
+        })
+      : { valid: false, reason: "NO_ACTIVE_POLICY" };
+
+    const verified = ledgerResult.valid && (!ledgerResult.active || activeResult.valid);
+    if (feedback.v25Reason) {
+      feedback.v25Reason.textContent = ledgerResult.reason + " · " + activeResult.reason;
+    }
+    if (feedback.v25Ledger) feedback.v25Ledger.textContent = ledgerResult.reason;
+    if (feedback.v25ActiveIntegrity) feedback.v25ActiveIntegrity.textContent = activeResult.reason;
+    status.dataset.state = verified ? "ok" : "error";
+    status.textContent = verified
+      ? "Policy lineage replay verificado contra el ledger y la evidencia actual."
+      : "Policy lineage rechazado: la evidencia o la cadena histórica no coincide.";
+    addAudit(auditEvent(
+      verified ? "POLICY_V25_REPLAY_OK" : "POLICY_V25_REPLAY_REJECTED",
+      { id: fingerprint || "POLICY" },
+      ledgerResult.reason + " · " + activeResult.reason
+    ));
+  });
 
   feedback.policyActor?.addEventListener("change", () => {
     const actor = normaliseActor(feedback.policyActor.value);
     if (actor) {
       feedback.policyActor.value = actor;
-      writePolicyActorV24(actor);
+      writePolicyActorV25(actor);
     }
     render();
   });
@@ -1901,9 +1936,9 @@ function initPlayground() {
             snapshotId: lastAdaptiveCalibrationReportV20.snapshotId
           }
         : null,
-      policyV24: summarisePolicy({
-        proposal: lastPolicyProposalV24,
-        ledger: readPolicyLedgerV24(lastWorkflowPlan?.datasetFingerprint || null),
+      policyV25: summarisePolicy({
+        proposal: lastPolicyProposalV25,
+        ledger: readPolicyLedgerV25(lastWorkflowPlan?.datasetFingerprint || null),
         datasetFingerprint: lastWorkflowPlan?.datasetFingerprint || null,
         rows: buildObservedCalibrationRows(
           buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
@@ -1918,9 +1953,9 @@ function initPlayground() {
     anchor.download = "revops-v24-" + artifact.runId.toLowerCase() + ".json";
     anchor.click();
     URL.revokeObjectURL(url);
-    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V24 run artifact + feedback generated without raw CSV records"));
+    addAudit(auditEvent("EXPORT", { id: artifact.runId }, "V25 run artifact + feedback generated without raw CSV records"));
     status.dataset.state = "ok";
-    status.textContent = "Run artifact V24 generado: identidad, workflow y policy integrity, sin filas CSV.";
+    status.textContent = "Run artifact V25 generado: identidad, workflow y policy integrity, sin filas CSV.";
   });
 
 
@@ -2089,17 +2124,17 @@ function initPlayground() {
     render();
   });
 
-  const decidePolicyV24 = (decision) => {
-    if (!lastPolicyProposalV24 && decision !== "ROLLBACK") return;
+  const decidePolicyV25 = (decision) => {
+    if (!lastPolicyProposalV25 && decision !== "ROLLBACK") return;
     const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
     const actor = normaliseActor(feedback.policyActor?.value || "");
     const rationale = normaliseRationale(feedback.policyRationale?.value || "");
     if (feedback.v24Reason && !actor) feedback.v24Reason.textContent = "ACTOR_IDENTITY_REQUIRED";
     if (feedback.v24Reason && actor && !rationale) feedback.v24Reason.textContent = "MISSING_RATIONALE";
-    if (actor) writePolicyActorV24(actor);
+    if (actor) writePolicyActorV25(actor);
     const result = decidePolicy({
-      ledger: readPolicyLedgerV24(fingerprint),
-      proposal: lastPolicyProposalV24,
+      ledger: readPolicyLedgerV25(fingerprint),
+      proposal: lastPolicyProposalV25,
       decision,
       actor,
       datasetFingerprint: fingerprint,
@@ -2114,17 +2149,17 @@ function initPlayground() {
     });
     if (!result.accepted) {
       if (feedback.v24Reason) feedback.v24Reason.textContent = result.reason;
-      addAudit(auditEvent("POLICY_V24_" + decision, { id: "V24" }, result.reason));
+      addAudit(auditEvent("POLICY_V25_" + decision, { id: "V25" }, result.reason));
       return;
     }
-    writePolicyLedgerV24(result.ledger, fingerprint);
-    addAudit(auditEvent("POLICY_V24_" + decision, { id: "V24" }, result.reason));
+    writePolicyLedgerV25(result.ledger, fingerprint);
+    addAudit(auditEvent("POLICY_V25_" + decision, { id: "V25" }, result.reason));
     render();
   };
 
-  feedback.v24Approve?.addEventListener("click", () => decidePolicyV24("APPROVE"));
-  feedback.v24Reject?.addEventListener("click", () => decidePolicyV24("REJECT"));
-  feedback.v24Rollback?.addEventListener("click", () => decidePolicyV24("ROLLBACK"));
+  feedback.v24Approve?.addEventListener("click", () => decidePolicyV25("APPROVE"));
+  feedback.v24Reject?.addEventListener("click", () => decidePolicyV25("REJECT"));
+  feedback.v24Rollback?.addEventListener("click", () => decidePolicyV25("ROLLBACK"));
 
   feedback.record?.addEventListener("click", () => {
     if (!lastWorkflowPlan || !lastOutcomeLedger) return;
