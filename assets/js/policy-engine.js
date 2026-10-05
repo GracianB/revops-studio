@@ -81,7 +81,7 @@ export function buildReplayFingerprint(replay = null) {
   };
   if (!Number.isFinite(canonical.records) || canonical.multiplier === null ||
       canonical.currentBrier === null || canonical.candidateBrier === null) return null;
-  return "R22-" + stableHash(JSON.stringify(canonical));
+  return "R23-" + stableHash(JSON.stringify(canonical));
 }
 
 export function verifyPolicyProposal(proposal = null, { rows = null } = {}) {
@@ -279,7 +279,8 @@ export function buildRecalibrationProposal({
       generatedAt,
       multiplier: round(multiplier),
       records: safeRows.length,
-      bias: round(bias)
+      bias: round(bias),
+      rowsFingerprint
     })),
     generatedAt,
     datasetFingerprint: fingerprint,
@@ -316,7 +317,10 @@ export function normalisePolicyLedger(ledger = []) {
     if (!decisionId || !decidedAt || !actor) return null;
     if (!["APPROVE", "REJECT", "ROLLBACK"].includes(decision)) return null;
     if (decision !== "ROLLBACK" && !proposalId) return null;
-    if (decision === "APPROVE" && (!multiplier || !datasetEventFingerprint || !policyId || !replayFingerprint)) return null;
+    if (
+      decision === "APPROVE" &&
+      (!multiplier || !datasetEventFingerprint || !policyId || !replayFingerprint)
+    ) return null;
 
     return Object.freeze({
       decisionId,
@@ -492,7 +496,7 @@ export function applyPolicyToAssumptions(assumptions = {}, policy = null) {
   };
 }
 
-export function summarisePolicy({ proposal = null, ledger = [], datasetFingerprint = null } = {}) {
+export function summarisePolicy({ proposal = null, ledger = [], datasetFingerprint = null, rows = null } = {}) {
   const active = activePolicy(ledger, datasetFingerprint);
   return Object.freeze({
     contractVersion: POLICY_CONTRACT_VERSION,

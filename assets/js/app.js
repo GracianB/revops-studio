@@ -610,12 +610,11 @@ function initPlayground() {
       now: lastAdaptiveCalibrationReportV20?.generatedAt || new Date().toISOString(),
       config: { minSamples: adaptiveConfigV20.minSamples }
     });
-    const policyRowsV23 = buildObservedCalibrationRows(forecast?.rows || [], feedbackOutcomes);
     const policySummaryV23 = summarisePolicy({
       proposal: lastPolicyProposalV23,
       ledger: readPolicyLedgerV23(plan?.datasetFingerprint || null),
-      datasetFingerprint: plan?.datasetFingerprint || null
-      ,rows: policyRowsV23
+      datasetFingerprint: plan?.datasetFingerprint || null,
+      rows: policyRowsV23
     });
     if (feedback.v23Status) {
       feedback.v23Status.textContent = lastPolicyProposalV23.status;
@@ -1854,7 +1853,11 @@ function initPlayground() {
       policyV23: summarisePolicy({
         proposal: lastPolicyProposalV23,
         ledger: readPolicyLedgerV23(lastWorkflowPlan?.datasetFingerprint || null),
-        datasetFingerprint: lastWorkflowPlan?.datasetFingerprint || null
+        datasetFingerprint: lastWorkflowPlan?.datasetFingerprint || null,
+        rows: buildObservedCalibrationRows(
+          buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+          feedbackOutcomes
+        )
       })
     };
     const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: "application/json" });
@@ -2046,10 +2049,12 @@ function initPlayground() {
       datasetFingerprint: fingerprint,
       now: new Date().toISOString(),
       reason: decision === "ROLLBACK" ? "operator rollback" : lastPolicyProposalV23?.reason,
-      rows: buildObservedCalibrationRows(
-        buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
-        feedbackOutcomes
-      )
+      rows: decision === "APPROVE"
+        ? buildObservedCalibrationRows(
+            buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+            feedbackOutcomes
+          )
+        : []
     });
     if (!result.accepted) {
       if (feedback.v23Reason) feedback.v23Reason.textContent = result.reason;
