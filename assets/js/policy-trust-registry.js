@@ -399,15 +399,22 @@ export async function verifyTrustedPolicyEvidence(
     return { valid: false, reason: cryptoResult.reason, cryptographic: cryptoResult };
   }
 
-  const fingerprint = cryptoResult.keyFingerprint;
+  const cryptographicKeyFingerprint = cryptoResult.keyFingerprint;
+  const fingerprint = await buildTrustedSignerFingerprint(signedBundle?.signature?.publicKeyJwk);
+  if (!fingerprint) return { valid: false, reason: "TRUST_KEY_FINGERPRINT_INVALID" };
   if (expectedKeyFingerprint && String(expectedKeyFingerprint) !== fingerprint) {
     return { valid: false, reason: "TRUST_SIGNER_KEY_MISMATCH", keyFingerprint: fingerprint };
   }
 
   const trusted = resolveTrustedSigner(registry, fingerprint, signedAt);
-  if (!trusted) return { valid: false, reason: "SIGNER_NOT_TRUSTED", keyFingerprint: fingerprint };
+  if (!trusted) return {
+    valid: false,
+    reason: "SIGNER_NOT_TRUSTED",
+    keyFingerprint: fingerprint,
+    cryptographicKeyFingerprint
+  };
   if (trusted.state === TRUST_STATES.REVOKED) {
-    return { valid: false, reason: "SIGNER_REVOKED", keyFingerprint: fingerprint };
+    return { valid: false, reason: "SIGNER_REVOKED", keyFingerprint: fingerprint, cryptographicKeyFingerprint };
   }
 
   const current = resolveTrustedSigner(registry, fingerprint, new Date().toISOString());
@@ -426,6 +433,7 @@ export async function verifyTrustedPolicyEvidence(
     valid: true,
     reason: historical ? "TRUSTED_HISTORICAL_SIGNATURE" : "TRUSTED_ACTIVE_SIGNATURE",
     keyFingerprint: fingerprint,
+    cryptographicKeyFingerprint,
     signerStateAtSigning: trusted.state,
     signerStateNow: current?.state || trusted.state,
     registryHeadFingerprint: registryResult.headFingerprint,
