@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="REVOPS STUDIO · V31 Trust Transparency Decision Operating System · CS × Data × AI × Systems">
+  <meta property="og:title" content="REVOPS STUDIO · V32 Decision Certificate Operating System · CS × Data × AI × Systems">
   <meta property="og:description" content="Hiring Manager Mode · RevOps Studio público, Control Room, arquitectura determinista y proof técnico.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -54,7 +54,7 @@
   <link rel="stylesheet" href="./assets/css/main.css">
   <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
   <script type="module" src="./assets/js/app.js" defer></script>
-  <title>REVOPS STUDIO · V31 Trust Transparency Decision Operating System · RevOps · Data · AI · Systems</title>
+  <title>REVOPS STUDIO · V32 Decision Certificate Operating System · RevOps · Data · AI · Systems</title>
 </head>
 
 <body>
@@ -1085,6 +1085,96 @@
             </label>
           </div>
           <p class="form-status" id="policyTransparencyV31Status" role="status" aria-live="polite">V31 es integridad y transparencia verificable. Un witness generado en el mismo navegador demuestra una firma válida, no independencia operativa.</p>
+        </section>
+
+        <section class="feedback-panel" aria-labelledby="policy-decision-certificate-title">
+          <div class="feedback-head">
+            <div>
+              <span class="kicker">Decision Certificate · V32</span>
+              <h3 id="policy-decision-certificate-title">Una decisión. Una prueba. Una huella verificable.</h3>
+            </div>
+            <span class="feedback-boundary">EVIDENCE · TRUST · TRANSPARENCY · WITNESS</span>
+          </div>
+
+          <p>
+            V32 encapsula la cadena real V26–V31. No duplica la criptografía:
+            verifica evidencia, firma, registry, trust fabric, quorum,
+            transparencia y witnesses, y los empaqueta en un certificado portable.
+          </p>
+
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric">
+              <span>Certificate</span>
+              <strong id="policyDecisionCertificateV32Id">DC32-EMPTY</strong>
+              <small>identidad determinista</small>
+            </div>
+
+            <div class="feedback-metric">
+              <span>Transparency head</span>
+              <strong id="policyDecisionCertificateV32Head">TL31-EMPTY</strong>
+              <small>head certificado</small>
+            </div>
+
+            <div class="feedback-metric">
+              <span>Trust quorum</span>
+              <strong id="policyDecisionCertificateV32Quorum">—</strong>
+              <small>roots verificadas</small>
+            </div>
+          </div>
+
+          <div class="feedback-form">
+            <label>External transparency head pin
+              <input
+                id="policyDecisionCertificateV32HeadPin"
+                type="text"
+                placeholder="TL31-..."
+              >
+            </label>
+
+            <label>Minimum head witnesses
+              <input
+                id="policyDecisionCertificateV32MinWitnesses"
+                type="number"
+                min="1"
+                max="32"
+                value="1"
+              >
+            </label>
+          </div>
+
+          <div class="feedback-actions">
+            <button class="btn btn-primary" id="buildDecisionCertificateV32" type="button">
+              Build Decision Certificate
+            </button>
+
+            <button class="btn btn-secondary" id="verifyDecisionCertificateV32" type="button">
+              Verify Certificate
+            </button>
+          </div>
+
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="exportDecisionCertificateV32" type="button">
+              Export Certificate
+            </button>
+
+            <label>
+              Import Certificate
+              <input
+                id="importDecisionCertificateV32"
+                type="file"
+                accept="application/json,.json"
+              >
+            </label>
+          </div>
+
+          <p
+            class="form-status"
+            id="policyDecisionCertificateV32Status"
+            role="status"
+            aria-live="polite"
+          >
+            V32 requiere evidencia firmada V27, checkpoint V30, transparencia V31 y al menos un witness del head actual.
+          </p>
         </section>
 
         <section class="history-panel" aria-labelledby="history-title">
