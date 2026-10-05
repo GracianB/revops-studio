@@ -891,6 +891,18 @@
             <button class="btn btn-secondary" id="rejectPolicyV25" type="button">Reject policy</button>
             <button class="btn btn-secondary" id="rollbackPolicyV25" type="button">Rollback policy</button>
           </div>
+
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Evidence manifest</span><strong id="calibrationV26Manifest">—</strong><small>huella portátil</small></div>
+            <div class="feedback-metric"><span>Verification</span><strong id="calibrationV26Verification">—</strong><small>estado del paquete</small></div>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="exportPolicyEvidenceV26" type="button">Export policy evidence</button>
+            <label>Verify exported evidence
+              <input id="importPolicyEvidenceV26" type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <p class="form-status" id="policyEvidenceV26Status" role="status" aria-live="polite">V26 no exporta las filas del dataset. El paquete contiene la propuesta, el ledger y sus huellas verificables.</p>
         </section>
 
         <section class="history-panel" aria-labelledby="history-title">

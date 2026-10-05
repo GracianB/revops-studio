@@ -59,6 +59,11 @@ import {
   verifyActivePolicy,
   replayPolicyLedger
 } from "./policy-engine.js";
+import {
+  buildPolicyEvidenceBundle,
+  verifyPolicyEvidenceBundle,
+  serialisePolicyEvidenceBundle
+} from "./policy-evidence.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -520,6 +525,15 @@ function initPlayground() {
     v24Lineage: qs("#calibrationV25Lineage"),
     policyActor: qs("#policyV25Actor"),
     policyRationale: qs("#policyV25Rationale"),
+    v25Verify: qs("#verifyPolicyV25"),
+    v25Reason: qs("#calibrationV25Reason"),
+    v25Ledger: qs("#calibrationV25Ledger"),
+    v25ActiveIntegrity: qs("#calibrationV25ActiveIntegrity"),
+    v26Manifest: qs("#calibrationV26Manifest"),
+    v26Verification: qs("#calibrationV26Verification"),
+    v26Status: qs("#policyEvidenceV26Status"),
+    v26Export: qs("#exportPolicyEvidenceV26"),
+    v26Import: qs("#importPolicyEvidenceV26"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -688,6 +702,21 @@ function initPlayground() {
         policySummaryV25.activeLineageFingerprint ||
         policySummaryV25.proposalLineageFingerprint ||
         "—";
+    }
+
+    const policyEvidenceV26 = buildPolicyEvidenceBundle({
+      datasetFingerprint: plan?.datasetFingerprint || null,
+      proposal: lastPolicyProposalV25,
+      ledger: readPolicyLedgerV25(plan?.datasetFingerprint || null),
+      rows: policyRowsV25,
+      exportedAt: new Date().toISOString()
+    });
+    if (feedback.v26Manifest) feedback.v26Manifest.textContent = policyEvidenceV26.manifestFingerprint || "—";
+    if (feedback.v26Verification) feedback.v26Verification.textContent =
+      policyEvidenceV26.verification?.reason || policyEvidenceV26.reason || "—";
+    if (feedback.v26Status) {
+      feedback.v26Status.textContent = policyEvidenceV26.verification?.reason || policyEvidenceV26.reason || "—";
+      feedback.v26Status.dataset.state = policyEvidenceV26.verification?.valid ? "ok" : "error";
     }
 
     lastCalibrationReportV19 = buildCalibrationV19Report(
@@ -1749,6 +1778,81 @@ function initPlayground() {
       writePolicyActorV25(actor);
     }
     render();
+  });
+
+  feedback.v26Export?.addEventListener("click", () => {
+    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    const bundle = buildPolicyEvidenceBundle({
+      datasetFingerprint: fingerprint,
+      proposal: lastPolicyProposalV25,
+      ledger: readPolicyLedgerV25(fingerprint),
+      rows: buildObservedCalibrationRows(
+        buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+        feedbackOutcomes
+      ),
+      exportedAt: new Date().toISOString()
+    });
+    if (!bundle.valid) {
+      if (feedback.v26Status) {
+        feedback.v26Status.textContent = bundle.reason;
+        feedback.v26Status.dataset.state = "error";
+      }
+      return;
+    }
+    const json = serialisePolicyEvidenceBundle(bundle);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "revops-policy-evidence-v26-" + (fingerprint || "unknown") + ".json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    if (feedback.v26Status) {
+      feedback.v26Status.textContent = "EXPORTED · " + bundle.manifestFingerprint;
+      feedback.v26Status.dataset.state = "ok";
+    }
+    addAudit(auditEvent(
+      "POLICY_V26_EVIDENCE_EXPORTED",
+      { id: fingerprint || "POLICY" },
+      bundle.manifestFingerprint
+    ));
+  });
+
+  feedback.v26Import?.addEventListener("change", async () => {
+    const file = feedback.v26Import.files?.[0];
+    if (!file) return;
+    try {
+      const raw = await file.text();
+      const bundle = JSON.parse(raw);
+      const currentFingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+      const currentRows = currentFingerprint && bundle.datasetFingerprint === currentFingerprint
+        ? buildObservedCalibrationRows(
+            buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+            feedbackOutcomes
+          )
+        : null;
+      const result = verifyPolicyEvidenceBundle(bundle, {
+        rows: currentRows,
+        datasetFingerprint: bundle.datasetFingerprint || null
+      });
+      if (feedback.v26Status) {
+        feedback.v26Status.textContent = result.reason;
+        feedback.v26Status.dataset.state = result.valid ? "ok" : "error";
+      }
+      addAudit(auditEvent(
+        result.valid ? "POLICY_V26_EVIDENCE_VERIFIED" : "POLICY_V26_EVIDENCE_REJECTED",
+        { id: bundle.datasetFingerprint || "POLICY" },
+        result.reason
+      ));
+    } catch (error) {
+      if (feedback.v26Status) {
+        feedback.v26Status.textContent = "EVIDENCE_PARSE_ERROR · " + error.message;
+        feedback.v26Status.dataset.state = "error";
+      }
+      addAudit(auditEvent("POLICY_V26_EVIDENCE_REJECTED", { id: "POLICY" }, "invalid JSON"));
+    }
   });
 
   const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();

@@ -19,7 +19,9 @@ const required = [
   "assets/js/adaptive-calibration-engine.js",
   "tests/adaptive-calibration-engine.test.js",
   "assets/js/policy-engine.js",
-  "tests/policy-engine.test.js"
+  "tests/policy-engine.test.js",
+  "assets/js/policy-evidence.js",
+  "tests/policy-evidence.test.js"
 ];
 
 const fail = (message) => {
@@ -70,6 +72,8 @@ const requiredV18Ids = [
   "calibrationV20MinGroupSamples", "resetCalibrationV20",
   "calibration-v25-title", "calibrationV25Status", "calibrationV25Multiplier",
   "calibrationV25Improvement", "calibrationV25Active", "calibrationV25Reason", "calibrationV25Replay", "calibrationV25Rows", "calibrationV25Integrity", "calibrationV25PolicyId", "calibrationV25Deviation", "calibrationV25Actor", "calibrationV25SourceRun", "calibrationV25Lineage", "policyV25Actor", "policyV25Rationale", "calibrationV25Replay", "calibrationV25PolicyId", "calibrationV25Deviation",
+  "calibrationV26Manifest", "calibrationV26Verification", "policyEvidenceV26Status",
+  "exportPolicyEvidenceV26", "importPolicyEvidenceV26",
   "approvePolicyV25", "rejectPolicyV25", "rollbackPolicyV25",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
@@ -128,7 +132,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "25.0.0") fail("package version must be 23.0.0");
+if (packageJson.version !== "26.0.0") fail("package version must be 26.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -168,16 +172,30 @@ for (const expected of [
 
 
 const policyJs = fs.readFileSync(path.join(root, "assets/js/policy-engine.js"), "utf8");
-if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "25.0";')) fail("policy contract must be 24.0");
+if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "25.0";')) fail("policy contract must be 25.0");
 for (const expected of ["POLICY_ABSOLUTE_MIN", "POLICY_ABSOLUTE_MAX", "buildReplayFingerprint", "buildRowsFingerprint", "verifyPolicyProposal", "buildPolicyProposalFingerprint", "buildPolicyLineageFingerprint", "buildPolicyInstanceFingerprint", "verifyPolicyLedger", "verifyActivePolicy", "replayPolicyLedger", "normaliseActor", "normaliseRationale"]) {
-  if (!policyJs.includes(expected)) fail("missing V22 policy integrity export: " + expected);
+  if (!policyJs.includes(expected)) fail("missing V25 policy integrity export: " + expected);
+}
+
+const policyEvidenceJs = fs.readFileSync(path.join(root, "assets/js/policy-evidence.js"), "utf8");
+if (!policyEvidenceJs.includes('export const POLICY_EVIDENCE_VERSION = "26.0";')) {
+  fail("policy evidence version must be 26.0");
+}
+for (const expected of [
+  "POLICY_EVIDENCE_SCHEMA",
+  "buildPolicyEvidenceManifest",
+  "buildPolicyEvidenceBundle",
+  "verifyPolicyEvidenceBundle",
+  "serialisePolicyEvidenceBundle"
+]) {
+  if (!policyEvidenceJs.includes(expected)) fail("missing V26 policy evidence export: " + expected);
 }
 
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
-  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js",
+  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js",
   "README.md"
 ];
 
