@@ -2159,6 +2159,7 @@ function initPlayground() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      lastSignedEvidenceV27 = signed.bundle;
       if (feedback.v27Status) {
         feedback.v27Status.textContent = "SIGNED · " + signed.keyFingerprint;
         feedback.v27Status.dataset.state = "ok";
