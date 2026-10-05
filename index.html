@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="REVOPS STUDIO · V18 Decision Operating System · CS × Data × AI × Systems">
+  <meta property="og:title" content="REVOPS STUDIO · V22 Policy Integrity Decision Operating System · CS × Data × AI × Systems">
   <meta property="og:description" content="Hiring Manager Mode · RevOps Studio público, Control Room, arquitectura determinista y proof técnico.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -845,26 +845,26 @@
           </div>
         </section>
 
-        <section class="feedback-panel" aria-labelledby="calibration-v21-title">
+        <section class="feedback-panel" aria-labelledby="calibration-v22-title">
           <div class="feedback-head">
             <div>
-              <span class="kicker">Controlled Policy · V21</span>
+              <span class="kicker">Controlled Policy · V22</span>
               <h3 id="calibration-v21-title">El recálculo se aplica solo si el replay mejora y un operador lo aprueba.</h3>
             </div>
             <span class="feedback-boundary">LOCAL · APPROVAL REQUIRED</span>
           </div>
-          <p>V21 convierte la recomendación de V20 en una propuesta acotada. Compara el Brier actual contra el candidato, no toca los pesos de scoring y deja rechazo y rollback explícitos.</p>
+          <p>V22 añade integridad de policy sobre V21: el replay queda ligado a la propuesta, la política efectiva permanece dentro de ±0.15 respecto a la base y cada aprobación obtiene una identidad reproducible.</p>
           <div class="feedback-metrics" aria-live="polite">
-            <div class="feedback-metric"><span>Status</span><strong id="calibrationV21Status">ABSENT</strong><small>elegibilidad del replay</small></div>
-            <div class="feedback-metric"><span>Multiplier</span><strong id="calibrationV21Multiplier">1.00</strong><small>ajuste máximo ±0.15</small></div>
-            <div class="feedback-metric"><span>Improvement</span><strong id="calibrationV21Improvement">—</strong><small>Brier actual − candidato</small></div>
-            <div class="feedback-metric"><span>Active</span><strong id="calibrationV21Active">none</strong><small>política aprobada</small></div>
+            <div class="feedback-metric"><span>Status</span><strong id="calibrationV22Status">ABSENT</strong><small>elegibilidad del replay</small></div>
+            <div class="feedback-metric"><span>Multiplier</span><strong id="calibrationV22Multiplier">1.00</strong><small>ajuste máximo ±0.15</small></div>
+            <div class="feedback-metric"><span>Improvement</span><strong id="calibrationV22Improvement">—</strong><small>Brier actual − candidato</small></div>
+            <div class="feedback-metric"><span>Active</span><strong id="calibrationV22Active">none</strong><small>política aprobada</small></div>
           </div>
-          <p id="calibrationV21Reason">Sin propuesta. V21 no cambia el forecast hasta que haya una aprobación explícita.</p>
+          <p id="calibrationV22Reason">Sin propuesta. V21 no cambia el forecast hasta que haya una aprobación explícita.</p>
           <div class="feedback-actions">
-            <button class="btn btn-primary" id="approvePolicyV21" type="button">Approve policy</button>
-            <button class="btn btn-secondary" id="rejectPolicyV21" type="button">Reject policy</button>
-            <button class="btn btn-secondary" id="rollbackPolicyV21" type="button">Rollback policy</button>
+            <button class="btn btn-primary" id="approvePolicyV22" type="button">Approve policy</button>
+            <button class="btn btn-secondary" id="rejectPolicyV22" type="button">Reject policy</button>
+            <button class="btn btn-secondary" id="rollbackPolicyV22" type="button">Rollback policy</button>
           </div>
         </section>
 
