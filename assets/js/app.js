@@ -93,6 +93,18 @@ import {
   exportSignedTrustRegistrySnapshot,
   importSignedTrustRegistrySnapshot
 } from "./policy-trust-root.js";
+import {
+  TRUST_FABRIC_VERSION,
+  generateTrustFabricKeySet,
+  createTrustFabric,
+  signTrustFabricCheckpoint,
+  verifyTrustFabricCheckpoint,
+  verifyTrustFabricCheckpointSet,
+  verifyTrustedPolicyEvidenceViaFabric,
+  buildTrustFabricVerificationReceipt,
+  exportTrustFabricCheckpoint,
+  importTrustFabricCheckpoint
+} from "./policy-trust-fabric.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -237,6 +249,23 @@ function readTrustRootSnapshotV29() {
 function writeTrustRootSnapshotV29(snapshot) {
   try {
     localStorage.setItem(POLICY_TRUST_ROOT_V29_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {}
+}
+
+const POLICY_TRUST_FABRIC_V30_STORAGE_KEY = "revops-studio:policy-trust-fabric:v30";
+
+function readTrustFabricCheckpointV30() {
+  try {
+    const value = JSON.parse(localStorage.getItem(POLICY_TRUST_FABRIC_V30_STORAGE_KEY) || "null");
+    return value && typeof value === "object" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeTrustFabricCheckpointV30(snapshot) {
+  try {
+    localStorage.setItem(POLICY_TRUST_FABRIC_V30_STORAGE_KEY, JSON.stringify(snapshot));
   } catch {}
 }
 
@@ -631,6 +660,18 @@ function initPlayground() {
     v29VerifyEvidence: qs("#verifyRootAnchoredEvidenceV29"),
     v29Export: qs("#exportTrustRootV29"),
     v29Import: qs("#importTrustRootV29"),
+    v30Quorum: qs("#policyTrustFabricV30Quorum"),
+    v30Roots: qs("#policyTrustFabricV30Roots"),
+    v30Head: qs("#policyTrustFabricV30Head"),
+    v30Threshold: qs("#policyTrustFabricV30Threshold"),
+    v30Pins: qs("#policyTrustFabricV30Pins"),
+    v30Status: qs("#policyTrustFabricV30Status"),
+    v30Generate: qs("#generateTrustFabricV30"),
+    v30Sign: qs("#signTrustFabricV30"),
+    v30Verify: qs("#verifyTrustFabricV30"),
+    v30VerifyEvidence: qs("#verifyFabricAnchoredEvidenceV30"),
+    v30Export: qs("#exportTrustFabricV30"),
+    v30Import: qs("#importTrustFabricV30"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -940,6 +981,9 @@ function initPlayground() {
   let policyTrustRegistryV28 = readPolicyTrustRegistryV28();
   let trustRootKeyPairV29 = null;
   let signedTrustRootSnapshotV29 = readTrustRootSnapshotV29();
+  let trustFabricKeysV30 = [];
+  let trustFabricV30 = null;
+  let signedTrustFabricCheckpointV30 = readTrustFabricCheckpointV30();
   let lastSignedEvidenceV27 = null;
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
@@ -2572,6 +2616,240 @@ function initPlayground() {
   });
 
   renderTrustRootV29();
+
+  const setTrustFabricStatusV30 = (message, ok = false) => {
+    if (!feedback.v30Status) return;
+    feedback.v30Status.textContent = message;
+    feedback.v30Status.dataset.state = ok ? "ok" : "error";
+  };
+
+  const renderTrustFabricV30 = () => {
+    const roots = trustFabricV30?.roots || signedTrustFabricCheckpointV30?.fabric?.roots || [];
+    const threshold = trustFabricV30?.threshold ?? signedTrustFabricCheckpointV30?.fabric?.threshold ?? null;
+    const verified = signedTrustFabricCheckpointV30?.signatures?.length || 0;
+    if (feedback.v30Roots) {
+      feedback.v30Roots.textContent = roots.length
+        ? roots.map((root) => root.rootFingerprint).join(" · ")
+        : "NOT INITIALISED";
+    }
+    if (feedback.v30Threshold && threshold !== null) {
+      feedback.v30Threshold.value = String(threshold);
+    }
+    if (feedback.v30Head) {
+      feedback.v30Head.textContent =
+        signedTrustFabricCheckpointV30?.registryHeadFingerprint || policyTrustRegistryV28?.headFingerprint || "T28-EMPTY";
+    }
+    if (feedback.v30Quorum) {
+      feedback.v30Quorum.textContent = threshold !== null
+        ? (verified + " / " + threshold)
+        : "0 / 0";
+    }
+  };
+
+  feedback.v30Generate?.addEventListener("click", async () => {
+    try {
+      const count = 3;
+      trustFabricKeysV30 = await generateTrustFabricKeySet(count);
+      const fabricResult = await createTrustFabric({
+        rootPublicKeys: trustFabricKeysV30.map((key) => key.publicKeyJwk),
+        threshold: Math.min(2, count)
+      });
+      if (!fabricResult.valid) {
+        setTrustFabricStatusV30(fabricResult.reason);
+        return;
+      }
+      trustFabricV30 = fabricResult;
+      if (feedback.v30Pins) {
+        feedback.v30Pins.value = trustFabricV30.roots.map((root) => root.rootFingerprint).join("\n");
+      }
+      renderTrustFabricV30();
+      setTrustFabricStatusV30(
+        "FABRIC_GENERATED · " + trustFabricV30.fabricFingerprint + " · 2-of-3",
+        true
+      );
+      addAudit(auditEvent("POLICY_V30_FABRIC_GENERATED", { id: trustFabricV30.fabricFingerprint }, TRUST_FABRIC_VERSION));
+    } catch (error) {
+      setTrustFabricStatusV30("FABRIC_GENERATE_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v30Sign?.addEventListener("click", async () => {
+    if (!trustFabricV30 || trustFabricKeysV30.length < trustFabricV30.threshold) {
+      setTrustFabricStatusV30("FABRIC_KEYS_REQUIRED");
+      return;
+    }
+    const actor = normaliseActor(feedback.policyActor?.value || "");
+    const rationale = normaliseRationale(feedback.policyRationale?.value || "");
+    if (!actor) {
+      setTrustFabricStatusV30("TRUST_ACTOR_REQUIRED");
+      return;
+    }
+    if (!rationale) {
+      setTrustFabricStatusV30("TRUST_RATIONALE_REQUIRED");
+      return;
+    }
+    try {
+      const result = await signTrustFabricCheckpoint(policyTrustRegistryV28, {
+        fabric: trustFabricV30,
+        rootSigners: trustFabricKeysV30,
+        actor,
+        rationale,
+        signedAt: new Date().toISOString()
+      });
+      if (!result.valid) {
+        setTrustFabricStatusV30(result.reason);
+        return;
+      }
+      signedTrustFabricCheckpointV30 = result.snapshot;
+      writeTrustFabricCheckpointV30(signedTrustFabricCheckpointV30);
+      renderTrustFabricV30();
+      setTrustFabricStatusV30(
+        "CHECKPOINT_SIGNED · " + result.snapshot.checkpointFingerprint + " · quorum " +
+        result.snapshot.signatures.length + "/" + trustFabricV30.threshold,
+        true
+      );
+      addAudit(auditEvent("POLICY_V30_FABRIC_CHECKPOINT_SIGNED", {
+        id: result.snapshot.checkpointFingerprint
+      }, "quorum " + result.snapshot.signatures.length + "/" + trustFabricV30.threshold));
+    } catch (error) {
+      setTrustFabricStatusV30("FABRIC_SIGN_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v30Verify?.addEventListener("click", async () => {
+    if (!signedTrustFabricCheckpointV30) {
+      setTrustFabricStatusV30("FABRIC_CHECKPOINT_REQUIRED");
+      return;
+    }
+    try {
+      const pinValues = (feedback.v30Pins?.value || "")
+        .split(/[,s]+/)
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const threshold = Number(feedback.v30Threshold?.value);
+      const result = await verifyTrustFabricCheckpoint(signedTrustFabricCheckpointV30, {
+        expectedRootFingerprints: pinValues.length ? pinValues : null,
+        expectedThreshold: Number.isInteger(threshold) && threshold > 0 ? threshold : null
+      });
+      renderTrustFabricV30();
+      setTrustFabricStatusV30(
+        result.valid
+          ? "QUORUM_VERIFIED · " + result.quorum + "/" + result.threshold + " · " + result.registryHeadFingerprint
+          : result.reason,
+        result.valid
+      );
+      addAudit(auditEvent(
+        result.valid ? "POLICY_V30_QUORUM_VERIFIED" : "POLICY_V30_QUORUM_REJECTED",
+        { id: result.fabricFingerprint || "FABRIC" },
+        result.reason
+      ));
+    } catch (error) {
+      setTrustFabricStatusV30("FABRIC_VERIFY_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v30VerifyEvidence?.addEventListener("click", async () => {
+    if (!signedTrustFabricCheckpointV30) {
+      setTrustFabricStatusV30("FABRIC_CHECKPOINT_REQUIRED");
+      return;
+    }
+    if (!lastSignedEvidenceV27) {
+      setTrustFabricStatusV30("SIGNED_EVIDENCE_REQUIRED");
+      return;
+    }
+    try {
+      const currentFingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+      const currentRows = currentFingerprint && lastSignedEvidenceV27.datasetFingerprint === currentFingerprint
+        ? buildObservedCalibrationRows(
+            buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+            feedbackOutcomes
+          )
+        : null;
+      const pinValues = (feedback.v30Pins?.value || "")
+        .split(/[,s]+/)
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const threshold = Number(feedback.v30Threshold?.value);
+      const result = await verifyTrustedPolicyEvidenceViaFabric(lastSignedEvidenceV27, {
+        checkpoint: signedTrustFabricCheckpointV30,
+        expectedRootFingerprints: pinValues.length ? pinValues : null,
+        expectedThreshold: Number.isInteger(threshold) && threshold > 0 ? threshold : null,
+        rows: currentRows
+      });
+      let receipt = null;
+      if (result.valid) {
+        receipt = await buildTrustFabricVerificationReceipt(result);
+      }
+      setTrustFabricStatusV30(
+        result.valid
+          ? result.reason + " · receipt " + (receipt?.fingerprint || "READY")
+          : result.reason,
+        result.valid
+      );
+      addAudit(auditEvent(
+        result.valid ? "POLICY_V30_EVIDENCE_QUORUM_VERIFIED" : "POLICY_V30_EVIDENCE_QUORUM_REJECTED",
+        { id: result.signerKeyFingerprint || "POLICY" },
+        result.reason
+      ));
+    } catch (error) {
+      setTrustFabricStatusV30("FABRIC_EVIDENCE_VERIFY_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v30Export?.addEventListener("click", async () => {
+    if (!signedTrustFabricCheckpointV30) {
+      setTrustFabricStatusV30("FABRIC_CHECKPOINT_REQUIRED");
+      return;
+    }
+    try {
+      const result = await exportTrustFabricCheckpoint(signedTrustFabricCheckpointV30);
+      if (!result.valid) {
+        setTrustFabricStatusV30(result.reason);
+        return;
+      }
+      const blob = new Blob([result.json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "revops-policy-trust-fabric-v30.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setTrustFabricStatusV30("EXPORTED · " + result.checkpointFingerprint, true);
+    } catch (error) {
+      setTrustFabricStatusV30("FABRIC_EXPORT_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v30Import?.addEventListener("change", async () => {
+    const file = feedback.v30Import.files?.[0];
+    if (!file) return;
+    try {
+      const imported = await importTrustFabricCheckpoint(await file.text());
+      if (!imported.valid) {
+        setTrustFabricStatusV30(imported.reason);
+        return;
+      }
+      signedTrustFabricCheckpointV30 = imported.snapshot;
+      trustFabricV30 = signedTrustFabricCheckpointV30.fabric;
+      trustFabricKeysV30 = [];
+      writeTrustFabricCheckpointV30(signedTrustFabricCheckpointV30);
+      if (feedback.v30Pins) {
+        feedback.v30Pins.value = signedTrustFabricCheckpointV30.fabric.roots
+          .map((root) => root.rootFingerprint).join("\n");
+      }
+      renderTrustFabricV30();
+      setTrustFabricStatusV30(
+        "IMPORTED · " + signedTrustFabricCheckpointV30.checkpointFingerprint,
+        true
+      );
+    } catch (error) {
+      setTrustFabricStatusV30("FABRIC_IMPORT_ERROR · " + error.message);
+    }
+  });
+
+  renderTrustFabricV30();
 
   const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();
   if (feedback.v20WindowDays) feedback.v20WindowDays.value = String(adaptiveConfigV20.windowDays ?? 30);
