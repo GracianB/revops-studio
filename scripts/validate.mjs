@@ -19,7 +19,9 @@ const required = [
   "assets/js/adaptive-calibration-engine.js",
   "tests/adaptive-calibration-engine.test.js",
   "assets/js/policy-engine.js",
-  "tests/policy-engine.test.js"
+  "tests/policy-engine.test.js",
+  "assets/js/policy-evidence.js",
+  "tests/policy-evidence.test.js"
 ];
 
 const fail = (message) => {
@@ -70,6 +72,8 @@ const requiredV18Ids = [
   "calibrationV20MinGroupSamples", "resetCalibrationV20",
   "calibration-v25-title", "calibrationV25Status", "calibrationV25Multiplier",
   "calibrationV25Improvement", "calibrationV25Active", "calibrationV25Reason", "calibrationV25Replay", "calibrationV25Rows", "calibrationV25Integrity", "calibrationV25PolicyId", "calibrationV25Deviation", "calibrationV25Actor", "calibrationV25SourceRun", "calibrationV25Lineage", "policyV25Actor", "policyV25Rationale", "calibrationV25Replay", "calibrationV25PolicyId", "calibrationV25Deviation",
+  "calibrationV26Manifest", "calibrationV26Verification", "policyEvidenceV26Status",
+  "exportPolicyEvidenceV26", "importPolicyEvidenceV26",
   "approvePolicyV25", "rejectPolicyV25", "rollbackPolicyV25",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
@@ -128,7 +132,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "25.0.0") fail("package version must be 23.0.0");
+if (packageJson.version !== "26.0.0") fail("package version must be 26.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
