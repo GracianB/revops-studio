@@ -1816,7 +1816,7 @@ function initPlayground() {
     );
     const artifact = {
       ...artifactBase,
-      contractVersion: "22.0"
+      contractVersion: "22.0",
       feedback: lastFeedbackAnalysis
         ? {
             outcomeFingerprint: lastFeedbackAnalysis.outcomeFingerprint,
