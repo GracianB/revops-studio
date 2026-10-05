@@ -116,6 +116,14 @@ async function appendTrustEvent(
   } = {}
 ) {
   const current = registry && typeof registry === "object" ? registry : createTrustRegistry();
+  const baseline = await verifyTrustRegistry(current);
+  if (!baseline.valid) {
+    return {
+      accepted: false,
+      reason: "TRUST_REGISTRY_INVALID",
+      verification: baseline
+    };
+  }
   const safeKey = publicJwk(jwk);
   const keyFingerprint = await buildTrustedSignerFingerprint(safeKey);
   const effective = iso(effectiveAt);
@@ -152,7 +160,7 @@ async function appendTrustEvent(
   const next = {
     schema: TRUST_REGISTRY_SCHEMA,
     registryVersion: TRUST_REGISTRY_VERSION,
-    events: [...(Array.isArray(current.events) ? current.events.map(canonicalEvent) : []), {
+    events: [...(Array.isArray(current.events) ? current.events : []), {
       ...event,
       eventFingerprint
     }],
