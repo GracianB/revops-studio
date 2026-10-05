@@ -521,26 +521,16 @@ export async function verifyTrustFabricCheckpointSet(
     results.push(result);
   }
 
-  const heads = [...new Set(results.map((result) => result.registryHeadFingerprint))];
-  if (heads.length > 1) {
-    return {
-      valid: false,
-      reason: "TRUST_FABRIC_FORK_DETECTED",
-      registryHeads: heads
-    };
-  }
-
-  const signerByHead = new Map();
-  for (let index = 0; index < results.length; index += 1) {
-    const head = results[index].registryHeadFingerprint;
-    for (const rootFingerprint of results[index].verifiedRoots) {
-      if (!signerByHead.has(rootFingerprint)) signerByHead.set(rootFingerprint, new Set());
-      signerByHead.get(rootFingerprint).add(head);
+  const signerByPayload = new Map();
+  for (const result of results) {
+    for (const rootFingerprint of result.verifiedRoots) {
+      if (!signerByPayload.has(rootFingerprint)) signerByPayload.set(rootFingerprint, new Set());
+      signerByPayload.get(rootFingerprint).add(result.payloadFingerprint);
     }
   }
 
-  const doubleSigners = [...signerByHead.entries()]
-    .filter(([, signedHeads]) => signedHeads.size > 1)
+  const doubleSigners = [...signerByPayload.entries()]
+    .filter(([, payloads]) => payloads.size > 1)
     .map(([rootFingerprint]) => rootFingerprint);
 
   if (doubleSigners.length) {
@@ -548,6 +538,15 @@ export async function verifyTrustFabricCheckpointSet(
       valid: false,
       reason: "TRUST_FABRIC_DOUBLE_SIGN_DETECTED",
       doubleSigners
+    };
+  }
+
+  const heads = [...new Set(results.map((result) => result.registryHeadFingerprint))];
+  if (heads.length > 1) {
+    return {
+      valid: false,
+      reason: "TRUST_FABRIC_FORK_DETECTED",
+      registryHeads: heads
     };
   }
 
