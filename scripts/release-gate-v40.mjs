@@ -105,11 +105,26 @@ if (!lineageResult.valid) {
 }
 
 const testFiles = fs.readdirSync(path.join(root, "tests")).filter((file) => file.endsWith(".test.js"));
-const testCount = testFiles.reduce((total, file) => total + (fs.readFileSync(path.join(root, "tests", file), "utf8").match(/test\(/g) || []).length, 0);
+const testCount = testFiles.reduce(
+  (total, file) =>
+    total + (fs.readFileSync(path.join(root, "tests", file), "utf8").match(/test\\(/g) || []).length,
+  0
+);
 
 if (testCount < FINAL_RELEASE_MIN_TESTS) {
   throw new Error("V40 requires at least " + FINAL_RELEASE_MIN_TESTS + " tests; found " + testCount);
 }
+
+// Execute the real pre-release verification. Do not certify gates merely by asserting booleans.
+// Calling npm run verify here would recurse into this release gate, so package.json exposes the
+// exact pre-release verification portion as a separate script.
+execFileSync("npm", ["run", "verify:pre-release"], {
+  cwd: root,
+  stdio: "inherit"
+});
+
+const validationPass = true;
+const verificationPass = true;
 
 execFileSync("git", ["diff", "--check"], { cwd: root, stdio: "pipe" });
 
@@ -133,18 +148,23 @@ const releaseFiles = [
   "assets/js/final-release-v40.js"
 ];
 
-const sourceFingerprints = Object.fromEntries(releaseFiles.map((file) => [
-  file,
-  createHash("sha256").update(fs.readFileSync(path.join(root, file))).digest("hex")
-]));
+const sourceFingerprints = Object.fromEntries(
+  releaseFiles.map((file) => [
+    file,
+    createHash("sha256").update(fs.readFileSync(path.join(root, file))).digest("hex")
+  ])
+);
 
-const gitHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+const gitHead = execFileSync("git", ["rev-parse", "HEAD"], {
+  cwd: root,
+  encoding: "utf8"
+}).trim();
 
 const certificate = buildFinalReleaseCertificate({
   packageVersion: packageJson.version,
   testCount,
-  validationPass: true,
-  verificationPass: true,
+  validationPass,
+  verificationPass,
   patchIntegrityPass: true,
   components,
   sourceFingerprints,
