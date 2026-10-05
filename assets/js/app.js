@@ -74,6 +74,7 @@ import {
   TRUST_REGISTRY_VERSION,
   createTrustRegistry,
   buildTrustedSignerFingerprint,
+  resolveTrustedSigner,
   registerTrustedSigner,
   retireTrustedSigner,
   revokeTrustedSigner,
@@ -795,7 +796,16 @@ function initPlayground() {
     if (feedback.v28Key && lastSignedEvidenceV27?.signature?.keyFingerprint) {
       feedback.v28Key.value = lastSignedEvidenceV27.signature.keyFingerprint;
     }
-    if (feedback.v28State) feedback.v28State.textContent = "UNKNOWN";
+    if (feedback.v28State) {
+      const selectedKey = feedback.v28Key?.value || lastSignedEvidenceV27?.signature?.keyFingerprint || "";
+      const trustKey = selectedKey && selectedKey.startsWith("K28-")
+        ? selectedKey
+        : "";
+      const currentSigner = trustKey
+        ? resolveTrustedSigner(policyTrustRegistryV28, trustKey, new Date().toISOString())
+        : null;
+      feedback.v28State.textContent = currentSigner?.state || (trustKey ? "NOT TRUSTED" : "UNKNOWN");
+    }
 
     lastCalibrationReportV19 = buildCalibrationV19Report(
       forecast?.rows || [],
