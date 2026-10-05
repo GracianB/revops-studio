@@ -22,8 +22,6 @@ import { buildRecalibrationProposal, decidePolicy } from "../assets/js/policy-en
 import { buildPolicyEvidenceBundle } from "../assets/js/policy-evidence.js";
 
 const now = "2026-10-05T00:00:00.000Z";
-globalThis.trustTestNow = now;
-
 function report() {
   return {
     severity: "CRITICAL",
@@ -153,7 +151,7 @@ test("V28 rotates an active signer to a successor", async () => {
   });
   assert.equal(rotated.accepted, true, rotated.reason);
   const newFp = await buildTrustedSignerFingerprint(newKeys.publicKeyJwk);
-  assert.equal(resolveTrustedSigner(rotated.registry, oldFp, "2026-10-06T12:00:00.000Z").state, "ACTIVE");
+  assert.equal(resolveTrustedSigner(rotated.registry, oldFp, "2026-10-06T12:00:00.000Z").state, "RETIRED");
   assert.equal(resolveTrustedSigner(rotated.registry, newFp, "2026-10-06T12:00:00.000Z").state, "ACTIVE");
 });
 
@@ -227,6 +225,23 @@ test("V28 accepts historical signatures from retired signers", async () => {
   const result = await verifyTrustedPolicyEvidence(evidence.signed.bundle, { registry });
   assert.equal(result.valid, true, result.reason);
   assert.equal(result.reason, "TRUSTED_HISTORICAL_SIGNATURE");
+});
+
+test("V28 revocation invalidates a signature that was created before compromise", async () => {
+  const keys = await generatePolicyEvidenceKeyPair();
+  let registry = await trustedRegistry(keys);
+  const evidence = await signedBundle(keys, now);
+  const fingerprint = await buildTrustedSignerFingerprint(keys.publicKeyJwk);
+  registry = (await revokeTrustedSigner(registry, {
+    keyFingerprint: fingerprint,
+    effectiveAt: "2026-10-06T00:00:00.000Z",
+    actor: "security-owner",
+    rationale: "key compromise discovered after signing",
+    createdAt: "2026-10-06T00:00:00.000Z"
+  })).registry;
+  const result = await verifyTrustedPolicyEvidence(evidence.signed.bundle, { registry });
+  assert.equal(result.valid, false);
+  assert.equal(result.reason, "SIGNER_REVOKED");
 });
 
 test("V28 exports and re-imports a verified trust registry", async () => {
