@@ -68,9 +68,9 @@ const requiredV18Ids = [
   "calibrationV20Alerts", "calibrationV20Recommendations",
   "calibrationV20WindowDays", "calibrationV20MinSamples",
   "calibrationV20MinGroupSamples", "resetCalibrationV20",
-  "calibration-v24-title", "calibrationV24Status", "calibrationV24Multiplier",
-  "calibrationV24Improvement", "calibrationV24Active", "calibrationV24Reason", "calibrationV24Replay", "calibrationV24Rows", "calibrationV24Integrity", "calibrationV24PolicyId", "calibrationV24Deviation", "calibrationV24Actor", "calibrationV24SourceRun", "calibrationV24Lineage", "policyV24Actor", "policyV24Rationale", "calibrationV24Replay", "calibrationV24PolicyId", "calibrationV24Deviation",
-  "approvePolicyV24", "rejectPolicyV24", "rollbackPolicyV24",
+  "calibration-v25-title", "calibrationV25Status", "calibrationV25Multiplier",
+  "calibrationV25Improvement", "calibrationV25Active", "calibrationV25Reason", "calibrationV25Replay", "calibrationV25Rows", "calibrationV25Integrity", "calibrationV25PolicyId", "calibrationV25Deviation", "calibrationV25Actor", "calibrationV25SourceRun", "calibrationV25Lineage", "policyV25Actor", "policyV25Rationale", "calibrationV25Replay", "calibrationV25PolicyId", "calibrationV25Deviation",
+  "approvePolicyV25", "rejectPolicyV25", "rollbackPolicyV25",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
   "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
@@ -128,7 +128,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "24.0.0") fail("package version must be 23.0.0");
+if (packageJson.version !== "25.0.0") fail("package version must be 23.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -168,8 +168,8 @@ for (const expected of [
 
 
 const policyJs = fs.readFileSync(path.join(root, "assets/js/policy-engine.js"), "utf8");
-if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "24.0";')) fail("policy contract must be 24.0");
-for (const expected of ["POLICY_ABSOLUTE_MIN", "POLICY_ABSOLUTE_MAX", "buildReplayFingerprint", "buildRowsFingerprint", "verifyPolicyProposal", "buildPolicyProposalFingerprint", "buildPolicyLineageFingerprint", "normaliseActor", "normaliseRationale"]) {
+if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "25.0";')) fail("policy contract must be 24.0");
+for (const expected of ["POLICY_ABSOLUTE_MIN", "POLICY_ABSOLUTE_MAX", "buildReplayFingerprint", "buildRowsFingerprint", "verifyPolicyProposal", "buildPolicyProposalFingerprint", "buildPolicyLineageFingerprint", "buildPolicyInstanceFingerprint", "verifyPolicyLedger", "verifyActivePolicy", "replayPolicyLedger", "normaliseActor", "normaliseRationale"]) {
   if (!policyJs.includes(expected)) fail("missing V22 policy integrity export: " + expected);
 }
 
