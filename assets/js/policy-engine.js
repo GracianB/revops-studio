@@ -76,6 +76,7 @@ export function normaliseRationale(reason = "") {
 const lineageCanonical = ({
   proposalId = null,
   runId = null,
+  sourceRunId = null,
   datasetFingerprint = null,
   rowsFingerprint = null,
   replayFingerprint = null,
@@ -85,7 +86,7 @@ const lineageCanonical = ({
 } = {}) => ({
   contractVersion: POLICY_CONTRACT_VERSION,
   proposalId: proposalId || null,
-  sourceRunId: runId || null,
+  sourceRunId: runId || sourceRunId || null,
   datasetFingerprint: datasetFingerprint || null,
   rowsFingerprint: rowsFingerprint || null,
   replayFingerprint: replayFingerprint || null,
