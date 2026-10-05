@@ -107,7 +107,7 @@ if (!lineageResult.valid) {
 const testFiles = fs.readdirSync(path.join(root, "tests")).filter((file) => file.endsWith(".test.js"));
 const testCount = testFiles.reduce(
   (total, file) =>
-    total + (fs.readFileSync(path.join(root, "tests", file), "utf8").match(/test\\(/g) || []).length,
+    total + (fs.readFileSync(path.join(root, "tests", file), "utf8").match(/test\(/g) || []).length,
   0
 );
 
