@@ -581,7 +581,8 @@ function initPlayground() {
     v27Sign: qs("#signPolicyEvidenceV27"),
     v27Import: qs("#importPolicySignedV27"),
     v28Registry: qs("#policyTrustV28Registry"),
-    v28Key: qs("#policyTrustV28Key"),
+    v28Key: qs("#policyTrustV28KeyInput"),
+    v28State: qs("#policyTrustV28State"),
     v28NewJwk: qs("#policyTrustV28NewJwk"),
     v28Status: qs("#policyTrustV28Status"),
     v28Register: qs("#registerTrustedSignerV28"),
@@ -794,6 +795,7 @@ function initPlayground() {
     if (feedback.v28Key && lastSignedEvidenceV27?.signature?.keyFingerprint) {
       feedback.v28Key.value = lastSignedEvidenceV27.signature.keyFingerprint;
     }
+    if (feedback.v28State) feedback.v28State.textContent = "UNKNOWN";
 
     lastCalibrationReportV19 = buildCalibrationV19Report(
       forecast?.rows || [],
@@ -2103,6 +2105,7 @@ function initPlayground() {
       policyTrustRegistryV28 = result.registry;
       writePolicyTrustRegistryV28(policyTrustRegistryV28);
       const verification = await verifyTrustRegistry(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "ACTIVE";
       setPolicyTrustStatusV28(
         verification.valid
           ? "REGISTERED · " + result.event.keyFingerprint
@@ -2145,6 +2148,7 @@ function initPlayground() {
       }
       policyTrustRegistryV28 = result.registry;
       writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "RETIRED";
       setPolicyTrustStatusV28("RETIRED · " + keyFingerprint, true);
       addAudit(auditEvent("POLICY_V28_SIGNER_RETIRED", { id: keyFingerprint }, result.event.eventId));
     } catch (error) {
@@ -2181,6 +2185,7 @@ function initPlayground() {
       }
       policyTrustRegistryV28 = result.registry;
       writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "REVOKED";
       setPolicyTrustStatusV28("REVOKED · " + keyFingerprint, true);
       addAudit(auditEvent("POLICY_V28_SIGNER_REVOKED", { id: keyFingerprint }, result.event.eventId));
     } catch (error) {
@@ -2224,6 +2229,7 @@ function initPlayground() {
       policyTrustRegistryV28 = result.registry;
       writePolicyTrustRegistryV28(policyTrustRegistryV28);
       const verification = await verifyTrustRegistry(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = verification.valid ? "ACTIVE" : "INVALID";
       setPolicyTrustStatusV28(
         verification.valid ? "ROTATED · " + result.event.keyFingerprint : "TRUST_REGISTRY_INVALID",
         verification.valid
@@ -2260,6 +2266,9 @@ function initPlayground() {
         feedback.v28Registry.textContent =
           (result.signerStateNow || "TRUSTED") + " · " +
           (result.registryHeadFingerprint || policyTrustRegistryV28.headFingerprint);
+      }
+      if (feedback.v28State) {
+        feedback.v28State.textContent = result.signerStateNow || (result.valid ? "TRUSTED" : "REJECTED");
       }
       addAudit(auditEvent(
         result.valid ? "POLICY_V28_TRUST_VERIFIED" : "POLICY_V28_TRUST_REJECTED",
@@ -2317,6 +2326,7 @@ function initPlayground() {
       }
       policyTrustRegistryV28 = imported.registry;
       writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "IMPORTED";
       setPolicyTrustStatusV28("IMPORTED · " + policyTrustRegistryV28.headFingerprint, true);
       if (feedback.v28Registry) {
         feedback.v28Registry.textContent =
