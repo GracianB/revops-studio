@@ -1,6 +1,6 @@
 # RevOps Studio
 
-**A deterministic Revenue Operations decision system built around data quality, explainability, human approval and governed proof-bound policy lineage.**
+**A deterministic Revenue Operations decision system built around data quality, explainability, human approval and replay-verifiable policy lineage.**
 
 [![Live](https://img.shields.io/badge/LIVE-DAA428?style=for-the-badge)](https://gracianb.github.io/revops-studio/)
 [![Tests](https://img.shields.io/badge/TESTS-150%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
@@ -163,31 +163,29 @@ Approval is fail-closed unless the supplied rows reproduce the proposal's eviden
 
 This is a deterministic evidence-consistency layer for the local browser workflow, not a cryptographic trust boundary.
 
-## V24 · Policy governance & lineage
+## V25 · Policy lineage replay
 
-V24 turns proof-bound recalibration into a governed decision record:
+V25 adds a deterministic verification layer over the governed policy ledger:
 
 ```text
-operator identity
+policy proposal
    ↓
-decision rationale
+approval event
    ↓
-proposal + source run
+policy instance
    ↓
-dataset fingerprint
+historical ledger replay
    ↓
-observed-row evidence
+active-policy replay against current evidence
    ↓
-replay fingerprint
-   ↓
-approval / rejection / rollback
-   ↓
-policy instance + lineage fingerprint
+VERIFIED / REJECTED
 ```
 
-Policy approval now requires a non-generic operator identity, an explicit rationale, a live proposal within a 24-hour evidence window, a source run, dataset scope and the exact observed rows used by the replay. The ledger carries the actor, rationale and lineage fingerprints so later mutation is detected and the active policy remains scoped to its dataset.
+The system can now verify the complete policy history for a dataset scope, detect forged policy identities, reject invalid rollback events and replay the active policy against the exact observed evidence currently loaded.
 
-The UI stores the operator identity locally for convenience. This is an identity assertion, not authentication. V24 remains a local-first deterministic governance layer, not a cryptographic trust boundary or an enterprise identity provider.
+The Control Room exposes separate states for proposal integrity, historical ledger replay and active-policy replay. This makes a previously approved policy inspectable after the fact instead of treating the local ledger as inherently trustworthy.
+
+V25 remains a deterministic local-first control layer. The operator identity is still an assertion stored locally, not authentication, and the ledger fingerprints are tamper-evident rather than cryptographic proof.
 
 ## Human-in-the-loop by design
 
