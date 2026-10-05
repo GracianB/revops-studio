@@ -289,7 +289,8 @@ export async function verifyTrustRegistry(registry = null) {
   for (let index = 0; index < registry.events.length; index += 1) {
     const raw = registry.events[index];
     const event = canonicalEvent(raw);
-    if (!event || !event.eventId || !event.eventFingerprint) {
+    const eventFingerprint = raw?.eventFingerprint || null;
+    if (!event || !event.eventId || !eventFingerprint) {
       return { valid: false, reason: "TRUST_EVENT_INVALID", index };
     }
     if (seen.has(event.eventId)) return { valid: false, reason: "TRUST_DUPLICATE_EVENT", index };
@@ -307,7 +308,7 @@ export async function verifyTrustRegistry(registry = null) {
     }
 
     const expectedEvent = await buildEventFingerprint(event);
-    if (expectedEvent !== event.eventFingerprint) {
+    if (expectedEvent !== eventFingerprint) {
       return { valid: false, reason: "TRUST_EVENT_FINGERPRINT_MISMATCH", index };
     }
 
@@ -362,7 +363,7 @@ export async function verifyTrustRegistry(registry = null) {
       }
     }
 
-    head = event.eventFingerprint;
+    head = eventFingerprint;
   }
 
   if (registry.headFingerprint !== head) {
