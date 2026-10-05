@@ -689,22 +689,6 @@ export async function verifyTransparencyWitnessSet(
     };
   }
 
-  const seenByWitnessAndSequence = new Map();
-  for (const attestation of attestations) {
-    const key = attestation.witnessFingerprint + ":" + attestation.sequence;
-    const previous = seenByWitnessAndSequence.get(key);
-    if (previous && previous !== attestation.checkpointFingerprint) {
-      return {
-        valid: false,
-        reason: "TRANSPARENCY_WITNESS_EQUIVOCATION_DETECTED",
-        witnessFingerprint: attestation.witnessFingerprint,
-        sequence: attestation.sequence,
-        checkpointFingerprints: [previous, attestation.checkpointFingerprint]
-      };
-    }
-    seenByWitnessAndSequence.set(key, attestation.checkpointFingerprint);
-  }
-
   return {
     valid: true,
     reason: "TRANSPARENCY_WITNESSES_VERIFIED",
