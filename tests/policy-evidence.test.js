@@ -83,7 +83,8 @@ test("V26 builds a stable manifest from policy lineage", () => {
   assert.equal(manifest.policyContractVersion, "25.0");
   assert.equal(manifest.datasetFingerprint, "ds-v26");
   assert.equal(manifest.ledgerEventCount, 1);
-  assert.equal(typeof manifest.proposalLineage.lineageFingerprint, "string");
+  assert.equal(manifest.proposalLineage.contractVersion, "25.0");
+  assert.equal(manifest.proposalLineage.sourceRunId, "run-v26");
 });
 
 test("V26 creates a portable bundle without raw rows", () => {
