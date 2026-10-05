@@ -259,6 +259,22 @@ V29 supports an explicit external root pin. Verification without a pin proves on
 
 This is still not enterprise authentication. The public application is intentionally local-first. A production deployment would distribute or pin the approved root fingerprint through an independent trust channel rather than trusting browser storage.
 
+## V30 · Trust Fabric & quorum verification
+
+V30 takes the trust model from a single root to an explicit M-of-N cryptographic trust fabric:
+
+ROOT SET → QUORUM CHECKPOINT → TRUST REGISTRY → TRUSTED SIGNER → POLICY EVIDENCE
+
+The fabric defines a fixed set of P-256 root identities and an explicit threshold. A checkpoint is valid only when enough distinct pinned roots sign the exact same registry state, governance metadata and timestamp.
+
+V30 also adds conflict analysis over multiple checkpoints. Divergent registry heads are reported as a trust-fabric fork. A single checkpoint cannot silently redefine the root set or quorum because the verification can require an externally supplied root fingerprint set and threshold.
+
+The Control Room can generate three cryptographic roots for demonstration, sign a 2-of-3 checkpoint, verify the quorum and verify signed policy evidence through the entire chain. This demonstrates the mechanism, but roots generated in one browser session are not operationally independent organisations or HSMs.
+
+Verification receipts expose the fabric fingerprint, registry head, threshold, achieved quorum and verified root identities. They are portable audit evidence, not authentication.
+
+V30 remains local-first. Independent trust still depends on distributing the approved root fingerprint set and quorum policy outside the snapshot, through a channel that the browser cannot rewrite.
+
 ## Human-in-the-loop by design
 
 RevOps Studio deliberately separates **recommendation** from **execution**.
