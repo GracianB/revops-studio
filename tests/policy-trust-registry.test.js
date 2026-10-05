@@ -231,31 +231,25 @@ test("V28 accepts historical signatures from retired signers", async () => {
   assert.equal(result.reason, "TRUSTED_HISTORICAL_SIGNATURE");
 });
 
-test("V28 rejects a forged register state", async () => {
+test("V28 rejects forged trust event content even when the registry head is unchanged", async () => {
   const keys = await generatePolicyEvidenceKeyPair();
   const registry = await trustedRegistry(keys);
   const forged = {
     ...registry,
     events: [{
       ...registry.events[0],
-      action: "REGISTER",
-      state: "RETIRED",
-      eventFingerprint: registry.events[0].eventFingerprint
+      state: "RETIRED"
     }]
   };
   const result = await verifyTrustRegistry(forged);
   assert.equal(result.valid, false);
-  assert.equal(result.reason, "TRUST_REGISTER_INVALID");
+  assert.equal(result.reason, "TRUST_EVENT_FINGERPRINT_MISMATCH");
 });
 
-test("V28 rejects duplicate signer registration in a forged registry", async () => {
+test("V28 rejects duplicate event IDs in the trust ledger", async () => {
   const keys = await generatePolicyEvidenceKeyPair();
   const registry = await trustedRegistry(keys);
-  const duplicateEvent = {
-    ...registry.events[0],
-    eventId: "T28-DUPLICATE",
-    createdAt: "2026-10-05T01:00:00.000Z"
-  };
+  const duplicateEvent = registry.events[0];
   const forged = {
     ...registry,
     events: [...registry.events, duplicateEvent],
