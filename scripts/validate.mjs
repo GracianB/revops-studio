@@ -87,6 +87,11 @@ const requiredV18Ids = [
   "policyTrustFabricV30Status", "generateTrustFabricV30", "signTrustFabricV30",
   "verifyTrustFabricV30", "verifyFabricAnchoredEvidenceV30", "exportTrustFabricV30",
   "importTrustFabricV30",
+  "policy-transparency-v31-title", "policyTransparencyV31Entries", "policyTransparencyV31Head",
+  "policyTransparencyV31Witnesses", "policyTransparencyV31HeadPin", "policyTransparencyV31MinWitnesses",
+  "policyTransparencyV31Status", "generateTransparencyWitnessV31", "anchorTrustFabricV31",
+  "witnessTransparencyHeadV31", "verifyTransparencyV31", "exportTransparencyV31",
+  "exportTransparencyReceiptV31", "importTransparencyV31",
   "policyTrustRootV29RegistryHead", "policyTrustRootV29Status", "generateTrustRootV29",
   "signTrustRegistryV29", "verifyTrustRootV29", "verifyRootAnchoredEvidenceV29",
   "exportTrustRootV29", "importTrustRootV29",
@@ -149,7 +154,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "30.0.0") fail("package version must be 30.0.0");
+if (packageJson.version !== "31.0.0") fail("package version must be 31.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -289,9 +294,33 @@ for (const expected of [
   if (!trustFabricJs.includes(expected)) fail("missing V30 trust fabric export: " + expected);
 }
 
+const transparencyJs = fs.readFileSync(path.join(root, "assets/js/policy-transparency.js"), "utf8");
+if (!transparencyJs.includes('export const TRANSPARENCY_VERSION = "31.0";')) {
+  fail("transparency version must be 31.0");
+}
+for (const expected of [
+  "TRANSPARENCY_SCHEMA",
+  "TRANSPARENCY_ALGORITHM",
+  "createTransparencyLog",
+  "buildTransparencyEntry",
+  "appendTransparencyCheckpoint",
+  "generateTransparencyWitnessKeyPair",
+  "buildTransparencyWitnessPayload",
+  "signTransparencyWitnessAttestation",
+  "verifyTransparencyWitnessAttestation",
+  "verifyTransparencyLog",
+  "verifyTransparencyLogSet",
+  "verifyTransparencyWitnessSet",
+  "buildTransparencyReceipt",
+  "exportTransparencyLog",
+  "importTransparencyLog"
+]) {
+  if (!transparencyJs.includes(expected)) fail("missing V31 transparency export: " + expected);
+}
+
 
 const sourceFiles = [
-  "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
+  "index.html","gracias.html","assets/css/main.css","assets/js/app.js","assets/js/policy-transparency.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
   "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js","assets/js/policy-evidence-signing.js","assets/js/policy-trust-registry.js","assets/js/policy-trust-root.js",

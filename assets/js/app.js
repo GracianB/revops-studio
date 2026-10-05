@@ -105,6 +105,18 @@ import {
   exportTrustFabricCheckpoint,
   importTrustFabricCheckpoint
 } from "./policy-trust-fabric.js";
+import {
+  TRANSPARENCY_VERSION,
+  createTransparencyLog,
+  appendTransparencyCheckpoint,
+  generateTransparencyWitnessKeyPair,
+  signTransparencyWitnessAttestation,
+  verifyTransparencyLog,
+  verifyTransparencyWitnessSet,
+  buildTransparencyReceipt,
+  exportTransparencyLog,
+  importTransparencyLog
+} from "./policy-transparency.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -269,7 +281,22 @@ function writeTrustFabricCheckpointV30(snapshot) {
   } catch {}
 }
 
+const POLICY_TRANSPARENCY_V31_STORAGE_KEY = "revops-studio:policy-transparency:v31";
 
+function readTransparencyLogV31() {
+  try {
+    const value = JSON.parse(localStorage.getItem(POLICY_TRANSPARENCY_V31_STORAGE_KEY) || "null");
+    return value && typeof value === "object" ? value : createTransparencyLog();
+  } catch {
+    return createTransparencyLog();
+  }
+}
+
+function writeTransparencyLogV31(log) {
+  try {
+    localStorage.setItem(POLICY_TRANSPARENCY_V31_STORAGE_KEY, JSON.stringify(log));
+  } catch {}
+}
 
 }
 
@@ -672,6 +699,19 @@ function initPlayground() {
     v30VerifyEvidence: qs("#verifyFabricAnchoredEvidenceV30"),
     v30Export: qs("#exportTrustFabricV30"),
     v30Import: qs("#importTrustFabricV30"),
+    v31Entries: qs("#policyTransparencyV31Entries"),
+    v31Head: qs("#policyTransparencyV31Head"),
+    v31Witnesses: qs("#policyTransparencyV31Witnesses"),
+    v31HeadPin: qs("#policyTransparencyV31HeadPin"),
+    v31MinWitnesses: qs("#policyTransparencyV31MinWitnesses"),
+    v31Status: qs("#policyTransparencyV31Status"),
+    v31GenerateWitness: qs("#generateTransparencyWitnessV31"),
+    v31Anchor: qs("#anchorTrustFabricV31"),
+    v31Witness: qs("#witnessTransparencyHeadV31"),
+    v31Verify: qs("#verifyTransparencyV31"),
+    v31Export: qs("#exportTransparencyV31"),
+    v31ExportReceipt: qs("#exportTransparencyReceiptV31"),
+    v31Import: qs("#importTransparencyV31"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -984,6 +1024,8 @@ function initPlayground() {
   let trustFabricKeysV30 = [];
   let trustFabricV30 = null;
   let signedTrustFabricCheckpointV30 = readTrustFabricCheckpointV30();
+  let transparencyLogV31 = readTransparencyLogV31();
+  let transparencyWitnessV31 = null;
   let lastSignedEvidenceV27 = null;
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
@@ -2850,6 +2892,258 @@ function initPlayground() {
   });
 
   renderTrustFabricV30();
+
+  const setTransparencyStatusV31 = (message, ok = false) => {
+    if (!feedback.v31Status) return;
+    feedback.v31Status.textContent = message;
+    feedback.v31Status.dataset.state = ok ? "ok" : "error";
+  };
+
+  const renderTransparencyV31 = () => {
+    const entries = Array.isArray(transparencyLogV31?.entries) ? transparencyLogV31.entries : [];
+    const witnesses = Array.isArray(transparencyLogV31?.witnesses) ? transparencyLogV31.witnesses : [];
+    if (feedback.v31Entries) feedback.v31Entries.textContent = String(entries.length);
+    if (feedback.v31Head) {
+      feedback.v31Head.textContent = transparencyLogV31?.headEntryFingerprint || "TL31-EMPTY";
+    }
+    if (feedback.v31Witnesses) feedback.v31Witnesses.textContent = String(witnesses.length);
+  };
+
+  feedback.v31GenerateWitness?.addEventListener("click", async () => {
+    try {
+      transparencyWitnessV31 = await generateTransparencyWitnessKeyPair();
+      setTransparencyStatusV31(
+        "WITNESS_GENERATED · " + transparencyWitnessV31.witnessFingerprint + " · private key memory-only",
+        true
+      );
+      addAudit(auditEvent(
+        "POLICY_V31_WITNESS_GENERATED",
+        { id: transparencyWitnessV31.witnessFingerprint },
+        TRANSPARENCY_VERSION
+      ));
+    } catch (error) {
+      setTransparencyStatusV31("WITNESS_GENERATE_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v31Anchor?.addEventListener("click", async () => {
+    if (!signedTrustFabricCheckpointV30) {
+      setTransparencyStatusV31("FABRIC_CHECKPOINT_REQUIRED");
+      return;
+    }
+    try {
+      const result = await appendTransparencyCheckpoint(
+        transparencyLogV31,
+        signedTrustFabricCheckpointV30,
+        { observedAt: new Date().toISOString() }
+      );
+      if (!result.valid) {
+        setTransparencyStatusV31(result.reason);
+        return;
+      }
+      transparencyLogV31 = result.log;
+      writeTransparencyLogV31(transparencyLogV31);
+      renderTransparencyV31();
+      setTransparencyStatusV31(
+        "CHECKPOINT_ANCHORED · seq " + result.entry.sequence + " · " + result.entry.eventFingerprint,
+        true
+      );
+      addAudit(auditEvent(
+        "POLICY_V31_CHECKPOINT_ANCHORED",
+        { id: result.entry.eventFingerprint },
+        "sequence " + result.entry.sequence
+      ));
+    } catch (error) {
+      setTransparencyStatusV31("TRANSPARENCY_ANCHOR_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v31Witness?.addEventListener("click", async () => {
+    const entries = Array.isArray(transparencyLogV31?.entries) ? transparencyLogV31.entries : [];
+    if (!entries.length) {
+      setTransparencyStatusV31("TRANSPARENCY_ENTRY_REQUIRED");
+      return;
+    }
+    if (!transparencyWitnessV31) {
+      setTransparencyStatusV31("WITNESS_KEY_REQUIRED");
+      return;
+    }
+    try {
+      const latest = entries.at(-1);
+      const result = await signTransparencyWitnessAttestation(latest, {
+        privateKey: transparencyWitnessV31.privateKey,
+        publicKeyJwk: transparencyWitnessV31.publicKeyJwk,
+        witnessId: transparencyWitnessV31.witnessFingerprint,
+        observedAt: new Date().toISOString()
+      });
+      if (!result.valid) {
+        setTransparencyStatusV31(result.reason);
+        return;
+      }
+
+      const witnesses = Array.isArray(transparencyLogV31.witnesses) ? transparencyLogV31.witnesses : [];
+      const candidateLog = {
+        ...transparencyLogV31,
+        witnesses: [...witnesses, result.attestation]
+      };
+      const witnessVerification = await verifyTransparencyWitnessSet(
+        candidateLog.witnesses,
+        { entries: candidateLog.entries, minWitnesses: 1 }
+      );
+      if (!witnessVerification.valid) {
+        setTransparencyStatusV31(witnessVerification.reason);
+        return;
+      }
+
+      transparencyLogV31 = Object.freeze(candidateLog);
+      writeTransparencyLogV31(transparencyLogV31);
+      renderTransparencyV31();
+      setTransparencyStatusV31(
+        "WITNESS_ATTESTED · " + result.attestation.witnessFingerprint + " · seq " + latest.sequence,
+        true
+      );
+      addAudit(auditEvent(
+        "POLICY_V31_WITNESS_ATTESTED",
+        { id: result.attestation.attestationFingerprint },
+        "sequence " + latest.sequence
+      ));
+    } catch (error) {
+      setTransparencyStatusV31("WITNESS_SIGN_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v31Verify?.addEventListener("click", async () => {
+    try {
+      const pin = String(feedback.v31HeadPin?.value || "").trim();
+      const logResult = await verifyTransparencyLog(
+        transparencyLogV31,
+        { expectedHeadFingerprint: pin || null }
+      );
+      if (!logResult.valid) {
+        setTransparencyStatusV31(logResult.reason);
+        addAudit(auditEvent("POLICY_V31_TRANSPARENCY_REJECTED", { id: "LOG" }, logResult.reason));
+        return;
+      }
+
+      const witnesses = Array.isArray(transparencyLogV31.witnesses) ? transparencyLogV31.witnesses : [];
+      const required = Math.max(1, Number(feedback.v31MinWitnesses?.value) || 1);
+      const witnessResult = witnesses.length
+        ? await verifyTransparencyWitnessSet(witnesses, {
+            entries: transparencyLogV31.entries,
+            minWitnesses: required
+          })
+        : { valid: false, reason: "TRANSPARENCY_WITNESS_QUORUM_NOT_REACHED", witnesses: [], required };
+
+      if (!witnessResult.valid) {
+        setTransparencyStatusV31(
+          "LOG_VERIFIED · HEAD " + logResult.headSequence + " · " + witnessResult.reason,
+          false
+        );
+        return;
+      }
+
+      setTransparencyStatusV31(
+        "TRANSPARENCY_VERIFIED · head " + logResult.headSequence +
+        " · witnesses " + witnessResult.quorum,
+        true
+      );
+      addAudit(auditEvent(
+        "POLICY_V31_TRANSPARENCY_VERIFIED",
+        { id: logResult.headEntryFingerprint },
+        "witnesses " + witnessResult.quorum
+      ));
+    } catch (error) {
+      setTransparencyStatusV31("TRANSPARENCY_VERIFY_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v31Export?.addEventListener("click", async () => {
+    try {
+      const result = await exportTransparencyLog(transparencyLogV31);
+      if (!result.valid) {
+        setTransparencyStatusV31(result.reason);
+        return;
+      }
+      const blob = new Blob([result.json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "revops-policy-transparency-v31.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setTransparencyStatusV31("EXPORTED · " + result.headEntryFingerprint, true);
+    } catch (error) {
+      setTransparencyStatusV31("TRANSPARENCY_EXPORT_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v31ExportReceipt?.addEventListener("click", async () => {
+    try {
+      const logResult = await verifyTransparencyLog(transparencyLogV31);
+      if (!logResult.valid) {
+        setTransparencyStatusV31(logResult.reason);
+        return;
+      }
+      const witnesses = Array.isArray(transparencyLogV31.witnesses) ? transparencyLogV31.witnesses : [];
+      const witnessResult = witnesses.length
+        ? await verifyTransparencyWitnessSet(witnesses, {
+            entries: transparencyLogV31.entries,
+            minWitnesses: 1
+          })
+        : null;
+      if (witnessResult && !witnessResult.valid) {
+        setTransparencyStatusV31(witnessResult.reason);
+        return;
+      }
+      const receipt = await buildTransparencyReceipt(logResult, witnessResult);
+      if (!receipt.valid) {
+        setTransparencyStatusV31(receipt.reason);
+        return;
+      }
+      const blob = new Blob([JSON.stringify(receipt.receipt, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "revops-policy-transparency-receipt-v31.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setTransparencyStatusV31("RECEIPT_EXPORTED · " + receipt.fingerprint, true);
+    } catch (error) {
+      setTransparencyStatusV31("TRANSPARENCY_RECEIPT_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v31Import?.addEventListener("change", async () => {
+    const file = feedback.v31Import.files?.[0];
+    if (!file) return;
+    try {
+      const imported = await importTransparencyLog(await file.text());
+      if (!imported.valid) {
+        setTransparencyStatusV31(imported.reason);
+        return;
+      }
+      transparencyLogV31 = imported.log;
+      writeTransparencyLogV31(transparencyLogV31);
+      renderTransparencyV31();
+      setTransparencyStatusV31(
+        "IMPORTED · head " + (transparencyLogV31.headEntryFingerprint || "EMPTY"),
+        true
+      );
+      addAudit(auditEvent(
+        "POLICY_V31_TRANSPARENCY_IMPORTED",
+        { id: transparencyLogV31.headEntryFingerprint || "EMPTY" },
+        "entries " + transparencyLogV31.entries.length
+      ));
+    } catch (error) {
+      setTransparencyStatusV31("TRANSPARENCY_IMPORT_ERROR · " + error.message);
+    }
+  });
+
+  renderTransparencyV31();
 
   const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();
   if (feedback.v20WindowDays) feedback.v20WindowDays.value = String(adaptiveConfigV20.windowDays ?? 30);
