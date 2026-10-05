@@ -342,8 +342,8 @@ test("V23 absolute boundary rejects a policy above the base ceiling", () => {
 });
 test("V23 approval creates a stable policy instance identity", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-policy-id", now });
-  const a = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", now });
-  const b = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", now });
+  const a = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", rows: biasedRows(10, 0.9, 2), now });
+  const b = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", rows: biasedRows(10, 0.9, 2), now });
   assert.equal(a.accepted, true, a.reason);
   assert.equal(typeof a.active.policyId, "string");
   assert.equal(a.active.policyId, b.active.policyId);
