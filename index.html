@@ -865,6 +865,19 @@
              <div class="feedback-metric"><span>Policy ID</span><strong id="calibrationV24PolicyId">none</strong><small>instancia activa</small></div>
              <div class="feedback-metric"><span>Base Δ</span><strong id="calibrationV24Deviation">0.0pp</strong><small>desviación desde 1.00×</small></div>
           </div>
+          <div class="feedback-form">
+            <label>Operator identity
+              <input id="policyV24Actor" type="text" maxlength="80" autocomplete="name" placeholder="Nombre o identificador operativo" required>
+            </label>
+            <label>Decision rationale
+              <textarea id="policyV24Rationale" maxlength="500" rows="3" placeholder="Justifica por qué apruebas, rechazas o reviertes esta propuesta." required></textarea>
+            </label>
+          </div>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Actor</span><strong id="calibrationV24Actor">—</strong><small>identidad declarada</small></div>
+            <div class="feedback-metric"><span>Source run</span><strong id="calibrationV24SourceRun">—</strong><small>origen de la propuesta</small></div>
+            <div class="feedback-metric"><span>Lineage</span><strong id="calibrationV24Lineage">—</strong><small>huella de decisión</small></div>
+          </div>
           <p id="calibrationV24Reason">Sin propuesta. V24 no cambia el forecast hasta que el replay esté verificado y haya una aprobación explícita.</p>
           <div class="feedback-actions">
             <button class="btn btn-primary" id="approvePolicyV24" type="button">Approve policy</button>
