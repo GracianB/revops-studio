@@ -116,7 +116,7 @@ export async function importPolicyEvidencePrivateKey(jwk = null) {
     ["sign"]
   );
   const publicKeyJwk = canonicalPublicJwk(jwk);
-  const keyFingerprint = await sha256Base64Url(serialiseCanonical(publicKeyJwk));
+  const keyFingerprint = await sha256Base64Url(serialiseCanonical(publicKeyJwk), "K27-");
   return Object.freeze({ privateKey, publicKeyJwk, keyFingerprint });
 }
 
@@ -153,7 +153,7 @@ export async function signPolicyEvidenceBundle(bundle = null, { privateKey, publ
 
   if (!keyData.publicKeyJwk) return { valid: false, reason: "PUBLIC_KEY_REQUIRED" };
 
-  const keyFingerprint = await sha256Base64Url(serialiseCanonical(keyData.publicKeyJwk));
+  const keyFingerprint = await sha256Base64Url(serialiseCanonical(keyData.publicKeyJwk), "K27-");
   const payloadResult = await buildPolicyEvidenceSigningPayload(bundle);
   if (!payloadResult.valid) return payloadResult;
 
@@ -215,7 +215,7 @@ export async function verifyPolicyEvidenceSignature(
   const publicKeyJwk = canonicalPublicJwk(signature.publicKeyJwk);
   if (!publicKeyJwk) return { valid: false, reason: "PUBLIC_KEY_INVALID" };
 
-  const keyFingerprint = await sha256Base64Url(serialiseCanonical(publicKeyJwk));
+  const keyFingerprint = await sha256Base64Url(serialiseCanonical(publicKeyJwk), "K27-");
   if (keyFingerprint !== signature.keyFingerprint) {
     return { valid: false, reason: "KEY_FINGERPRINT_MISMATCH" };
   }
@@ -225,7 +225,7 @@ export async function verifyPolicyEvidenceSignature(
   if (expectedPublicKeyJwk) {
     const expected = canonicalPublicJwk(expectedPublicKeyJwk);
     if (!expected) return { valid: false, reason: "EXPECTED_PUBLIC_KEY_INVALID" };
-    const expectedFingerprint = await sha256Base64Url(serialiseCanonical(expected));
+    const expectedFingerprint = await sha256Base64Url(serialiseCanonical(expected), "K27-");
     if (expectedFingerprint !== keyFingerprint) {
       return { valid: false, reason: "SIGNER_KEY_MISMATCH" };
     }
