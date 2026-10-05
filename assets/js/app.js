@@ -70,6 +70,19 @@ import {
   verifyPolicyEvidenceSignature,
   serialiseSignedPolicyEvidenceBundle
 } from "./policy-evidence-signing.js";
+import {
+  TRUST_REGISTRY_VERSION,
+  createTrustRegistry,
+  buildTrustedSignerFingerprint,
+  registerTrustedSigner,
+  retireTrustedSigner,
+  revokeTrustedSigner,
+  rotateTrustedSigner,
+  verifyTrustRegistry,
+  verifyTrustedPolicyEvidence,
+  exportTrustRegistry,
+  importTrustRegistry
+} from "./policy-trust-registry.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -183,12 +196,34 @@ function writePolicyActorV25(actor = "") {
   } catch {}
 }
 
+const POLICY_TRUST_V28_STORAGE_KEY = "revops-studio:policy-trust:v28";
+
+function readPolicyTrustRegistryV28() {
+  try {
+    const value = JSON.parse(localStorage.getItem(POLICY_TRUST_V28_STORAGE_KEY) || "null");
+    return value && typeof value === "object" ? value : createTrustRegistry();
+  } catch {
+    return createTrustRegistry();
+  }
+}
+
+function writePolicyTrustRegistryV28(registry) {
+  try {
+    localStorage.setItem(POLICY_TRUST_V28_STORAGE_KEY, JSON.stringify(registry));
+  } catch {}
+}
+
 
 }
 
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+function awaitableTrustRegistrySummary(registry) {
+  if (!registry || !Array.isArray(registry.events)) return "EMPTY";
+  return (registry.headFingerprint || "T28-EMPTY") + " · " + registry.events.length + " events";
+}
 
 function track(eventName, props = {}) {
   if (typeof window.plausible === "function") window.plausible(eventName, { props });
@@ -545,6 +580,18 @@ function initPlayground() {
     v27Generate: qs("#generatePolicySignerV27"),
     v27Sign: qs("#signPolicyEvidenceV27"),
     v27Import: qs("#importPolicySignedV27"),
+    v28Registry: qs("#policyTrustV28Registry"),
+    v28Key: qs("#policyTrustV28Key"),
+    v28NewJwk: qs("#policyTrustV28NewJwk"),
+    v28Status: qs("#policyTrustV28Status"),
+    v28Register: qs("#registerTrustedSignerV28"),
+    v28Retire: qs("#retireTrustedSignerV28"),
+    v28Revoke: qs("#revokeTrustedSignerV28"),
+    v28Rotate: qs("#rotateTrustedSignerV28"),
+    v28Export: qs("#exportTrustRegistryV28"),
+    v28Import: qs("#importTrustRegistryV28"),
+    v28Verify: qs("#verifyTrustedEvidenceV28"),
+    v28EvidenceImport: qs("#importTrustedEvidenceV28"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -740,6 +787,14 @@ function initPlayground() {
       feedback.v27Status.dataset.state = policyEvidenceSignerV27 ? "ok" : "controlled";
     }
 
+    if (feedback.v28Registry) {
+      const trustState = awaitableTrustRegistrySummary(policyTrustRegistryV28);
+      feedback.v28Registry.textContent = trustState;
+    }
+    if (feedback.v28Key && lastSignedEvidenceV27?.signature?.keyFingerprint) {
+      feedback.v28Key.value = lastSignedEvidenceV27.signature.keyFingerprint;
+    }
+
     lastCalibrationReportV19 = buildCalibrationV19Report(
       forecast?.rows || [],
       feedbackOutcomes,
@@ -833,6 +888,8 @@ function initPlayground() {
   let guidedStep = 0;
   let feedbackOutcomes = [];
   let policyEvidenceSignerV27 = null;
+  let policyTrustRegistryV28 = readPolicyTrustRegistryV28();
+  let lastSignedEvidenceV27 = null;
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
   let lastCalibrationCapturedAtV20 = null;
