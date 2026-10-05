@@ -930,6 +930,49 @@
           <p class="form-status" id="policySignatureV27Status" role="status" aria-live="polite">La clave privada se mantiene solo en memoria de esta pestaña.</p>
         </section>
 
+        <section class="feedback-panel" aria-labelledby="policy-trust-v28-title">
+          <div class="feedback-head">
+            <div>
+              <span class="kicker">Trusted Signers · V28</span>
+              <h3 id="policy-trust-v28-title">La firma solo vale como evidencia confiable si la clave está en el registro de confianza.</h3>
+            </div>
+            <span class="feedback-boundary">ACTIVE · RETIRED · REVOKED</span>
+          </div>
+          <p>V28 mantiene un ledger de confianza append-only. Una rotación retira la clave anterior y activa la sucesora. Una retirada conserva la validez histórica anterior. Una revocación bloquea la confianza de esa clave incluso para firmas históricas.</p>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Registry</span><strong id="policyTrustV28Registry">T28-EMPTY · 0 events</strong><small>head verificable</small></div>
+            <div class="feedback-metric"><span>Signer</span><strong id="policyTrustV28Key">—</strong><small>fingerprint K28</small></div>
+            <div class="feedback-metric"><span>State</span><strong id="policyTrustV28State">UNKNOWN</strong><small>estado según registro</small></div>
+          </div>
+          <div class="feedback-form">
+            <label>Selected signer fingerprint
+              <input id="policyTrustV28KeyInput" type="text" maxlength="100" placeholder="K28-...">
+            </label>
+            <label>Successor public JWK
+              <textarea id="policyTrustV28NewJwk" rows="4" placeholder='{"kty":"EC","crv":"P-256","x":"...","y":"..."}'></textarea>
+            </label>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="registerTrustedSignerV28" type="button">Register signer</button>
+            <button class="btn btn-secondary" id="retireTrustedSignerV28" type="button">Retire signer</button>
+            <button class="btn btn-secondary" id="revokeTrustedSignerV28" type="button">Revoke signer</button>
+            <button class="btn btn-primary" id="rotateTrustedSignerV28" type="button">Rotate signer</button>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="verifyTrustedEvidenceV28" type="button">Verify trusted evidence</button>
+            <button class="btn btn-secondary" id="exportTrustRegistryV28" type="button">Export trust registry</button>
+          </div>
+          <div class="feedback-actions">
+            <label>Import signed evidence
+              <input id="importTrustedEvidenceV28" type="file" accept="application/json,.json">
+            </label>
+            <label>Import trust registry
+              <input id="importTrustRegistryV28" type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <p class="form-status" id="policyTrustV28Status" role="status" aria-live="polite">V28 no confía en una firma únicamente porque la criptografía sea válida.</p>
+        </section>
+
         <section class="history-panel" aria-labelledby="history-title">
           <div class="history-head">
             <div>
