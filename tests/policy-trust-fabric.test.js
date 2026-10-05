@@ -78,13 +78,14 @@ async function evidenceFixture(datasetFingerprint = "ds-v30") {
     privateKey: evidenceKeys.privateKey,
     publicKeyJwk: evidenceKeys.publicKeyJwk
   });
-  return { observed, signed };
+  return { observed, signed, publicKeyJwk: evidenceKeys.publicKeyJwk };
 }
 
-async function registryFixture() {
-  const signerKeys = await generatePolicyEvidenceKeyPair();
+async function registryFixture(publicKeyJwk = null) {
+  const signerKeys = publicKeyJwk ? null : await generatePolicyEvidenceKeyPair();
+  const signerPublicKey = publicKeyJwk || signerKeys.publicKeyJwk;
   const registered = await registerTrustedSigner(createTrustRegistry(), {
-    publicKeyJwk: signerKeys.publicKeyJwk,
+    publicKeyJwk: signerPublicKey,
     effectiveAt: now,
     actor: "security-owner",
     rationale: "V30 test signer",
@@ -93,7 +94,7 @@ async function registryFixture() {
   assert.equal(registered.accepted, true, registered.reason);
   return {
     signerKeys,
-    signerFingerprint: await buildTrustedSignerFingerprint(signerKeys.publicKeyJwk),
+    signerFingerprint: await buildTrustedSignerFingerprint(signerPublicKey),
     registry: registered.registry
   };
 }
@@ -296,7 +297,7 @@ test("V30 detects root double-signing across divergent checkpoints", async () =>
 
 test("V30 anchors policy evidence through quorum trust", async () => {
   const evidence = await evidenceFixture("ds-v30-quorum");
-  const { registry } = await registryFixture();
+  const { registry } = await registryFixture(evidence.publicKeyJwk);
   const fabric = await fabricFixture(registry);
   const result = await verifyTrustedPolicyEvidenceViaFabric(evidence.signed.bundle, {
     checkpoint: fabric.signed,
@@ -311,7 +312,7 @@ test("V30 anchors policy evidence through quorum trust", async () => {
 
 test("V30 creates a portable verification receipt", async () => {
   const evidence = await evidenceFixture("ds-v30-receipt");
-  const { registry } = await registryFixture();
+  const { registry } = await registryFixture(evidence.publicKeyJwk);
   const fabric = await fabricFixture(registry);
   const verification = await verifyTrustedPolicyEvidenceViaFabric(evidence.signed.bundle, {
     checkpoint: fabric.signed,
