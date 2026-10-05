@@ -128,6 +128,7 @@ test("V23 approval requires an eligible proposal and an actor", () => {
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
     datasetFingerprint: "ds-actor",
+    rows: biasedRows(10, 0.9, 2),
     now
   });
   const missingActor = decidePolicy({ proposal, decision: "APPROVE", now });
@@ -142,7 +143,7 @@ test("V23 approval requires an eligible proposal and an actor", () => {
     rows: biasedRows(10, 0.9, 2),
     now
   });
-  assert.equal(approved.accepted, true);
+  assert.equal(approved.accepted, true, approved.reason);
   assert.equal(approved.active.proposalId, proposal.proposalId);
   assert.equal(approved.active.multiplier, proposal.multiplier);
 });
@@ -343,7 +344,7 @@ test("V23 approval creates a stable policy instance identity", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-policy-id", now });
   const a = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", now });
   const b = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-policy-id", now });
-  assert.equal(a.accepted, true);
+  assert.equal(a.accepted, true, a.reason);
   assert.equal(typeof a.active.policyId, "string");
   assert.equal(a.active.policyId, b.active.policyId);
   assert.equal(a.active.replayFingerprint, proposal.replayFingerprint);
@@ -351,7 +352,7 @@ test("V23 approval creates a stable policy instance identity", () => {
 test("V23 summary exposes policy identity, base deviation and integrity state", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-summary", now });
   const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2), now });
-  const summary = summarisePolicy({ proposal, ledger: approved.ledger, datasetFingerprint: "ds-summary" });
+  const summary = summarisePolicy({ proposal, ledger: approved.ledger, datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2) });
   assert.equal(summary.activePolicyInstanceId, approved.active.policyId);
   assert.equal(summary.baseDeviation, Number((proposal.multiplier - 1).toFixed(6)));
   assert.equal(summary.integrity, "REPLAY_ROWS_VERIFIED");
@@ -392,4 +393,12 @@ test("V23 active policy is fail-closed without a dataset fingerprint", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows, datasetFingerprint: "ds-scope", now });
   const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "operator", datasetFingerprint: "ds-scope", rows, now });
   assert.equal(summarisePolicy({ ledger: approved.ledger }).activeMultiplier, null);
+});
+
+test("V23 diagnostic: evidence verification returns a verified state", () => {
+  const rows = biasedRows(10, 0.9, 2);
+  const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows, datasetFingerprint: "ds-diagnostic", now });
+  const verification = verifyPolicyProposal(proposal, { rows });
+  assert.equal(verification.valid, true, verification.reason);
+  assert.equal(verification.reason, "REPLAY_ROWS_VERIFIED");
 });

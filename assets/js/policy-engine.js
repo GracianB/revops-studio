@@ -309,7 +309,8 @@ export function normalisePolicyLedger(ledger = []) {
     const proposalId = String(event?.proposalId ?? "");
     const decidedAt = isoTime(event?.decidedAt);
     const actor = String(event?.actor ?? "").trim();
-    const multiplier = clamp(event?.multiplier, POLICY_ABSOLUTE_MIN, POLICY_ABSOLUTE_MAX);
+    const rawMultiplier = numeric(event?.multiplier);
+    const multiplier = clamp(rawMultiplier, POLICY_ABSOLUTE_MIN, POLICY_ABSOLUTE_MAX);
     const datasetEventFingerprint = event?.datasetFingerprint ? String(event.datasetFingerprint) : null;
     const policyId = event?.policyId ? String(event.policyId) : null;
     const replayFingerprint = event?.replayFingerprint ? String(event.replayFingerprint) : null;
@@ -319,7 +320,12 @@ export function normalisePolicyLedger(ledger = []) {
     if (decision !== "ROLLBACK" && !proposalId) return null;
     if (
       decision === "APPROVE" &&
-      (!multiplier || !datasetEventFingerprint || !policyId || !replayFingerprint)
+      (rawMultiplier === null ||
+       rawMultiplier < POLICY_ABSOLUTE_MIN ||
+       rawMultiplier > POLICY_ABSOLUTE_MAX ||
+       !datasetEventFingerprint ||
+       !policyId ||
+       !replayFingerprint)
     ) return null;
 
     return Object.freeze({
@@ -512,7 +518,7 @@ export function summarisePolicy({ proposal = null, ledger = [], datasetFingerpri
     activeMultiplier: active?.multiplier ?? null,
     baseDeviation: active?.multiplier === null || active?.multiplier === undefined ? null : round(Number(active.multiplier) - 1),
     replayFingerprint: proposal?.replayFingerprint || null,
-    integrity: proposal ? verifyPolicyProposal(proposal).reason : "ABSENT",
+    integrity: proposal ? verifyPolicyProposal(proposal, { rows }).reason : "ABSENT",
     rowsFingerprint: proposal?.rowsFingerprint || null,
     decisions: normalisePolicyLedger(ledger).length
   });
