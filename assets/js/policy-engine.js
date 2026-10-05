@@ -1,6 +1,6 @@
 import { calculateCalibrationMetrics } from "./calibration-engine.js";
 
-export const POLICY_CONTRACT_VERSION = "23.0";
+export const POLICY_CONTRACT_VERSION = "24.0";
 
 export const POLICY_DEFAULTS = Object.freeze({
   minSamples: 8,
@@ -9,12 +9,15 @@ export const POLICY_DEFAULTS = Object.freeze({
   multiplierMin: 0.5,
   multiplierMax: 1.5,
   biasFloor: 0.02,
-  historyLimit: 24
+  historyLimit: 24,
+  proposalTtlHours: 24
 });
 
 export const POLICY_HARD_MAX_STEP = 0.15;
 export const POLICY_ABSOLUTE_MIN = 1 - POLICY_HARD_MAX_STEP;
 export const POLICY_ABSOLUTE_MAX = 1 + POLICY_HARD_MAX_STEP;
+export const POLICY_PROPOSAL_TTL_HOURS = 24;
+export const POLICY_PROPOSAL_TTL_MS = POLICY_PROPOSAL_TTL_HOURS * 60 * 60 * 1000;
 
 const REVIEW_CODES = new Set([
   "CONTROLLED_RECALIBRATION",
@@ -56,6 +59,64 @@ const stableHash = (value) => {
   return (hash >>> 0).toString(16).padStart(8, "0");
 };
 
+const normaliseTextIdentity = (value, maxLength) => {
+  const text = String(value ?? "").trim().replace(/\s+/g, " ");
+  if (!text || text.length > maxLength || /[\u0000-\u001F\u007F]/.test(text)) return null;
+  return text;
+};
+
+export function normaliseActor(actor = "") {
+  return normaliseTextIdentity(actor, 80);
+}
+
+export function normaliseRationale(reason = "") {
+  return normaliseTextIdentity(reason, 500);
+}
+
+const lineageCanonical = ({
+  proposalId = null,
+  runId = null,
+  sourceRunId = null,
+  datasetFingerprint = null,
+  rowsFingerprint = null,
+  replayFingerprint = null,
+  policyId = null,
+  decidedAt = null,
+  actor = null
+} = {}) => ({
+  contractVersion: POLICY_CONTRACT_VERSION,
+  proposalId: proposalId || null,
+  sourceRunId: runId || sourceRunId || null,
+  datasetFingerprint: datasetFingerprint || null,
+  rowsFingerprint: rowsFingerprint || null,
+  replayFingerprint: replayFingerprint || null,
+  policyId: policyId || null,
+  decidedAt: isoTime(decidedAt),
+  actor: actor || null
+});
+
+export function buildPolicyLineageFingerprint(fields = {}) {
+  return "L24-" + stableHash(JSON.stringify(lineageCanonical(fields)));
+}
+
+export function buildPolicyProposalFingerprint(proposal = null) {
+  if (!proposal || typeof proposal !== "object") return null;
+  return "P24-" + stableHash(JSON.stringify({
+    contractVersion: proposal.contractVersion || null,
+    proposalId: proposal.proposalId || null,
+    generatedAt: isoTime(proposal.generatedAt),
+    datasetFingerprint: proposal.datasetFingerprint || null,
+    runId: proposal.runId || null,
+    records: Number(proposal.records),
+    multiplier: round(proposal.multiplier),
+    bias: round(proposal.bias),
+    improvement: round(proposal.improvement),
+    replayFingerprint: proposal.replayFingerprint || null,
+    rowsFingerprint: proposal.rowsFingerprint || null,
+    baseMultiplier: round(proposal.baseMultiplier)
+  }));
+}
+
 export function buildRowsFingerprint(rows = []) {
   const safeRows = normaliseRows(rows);
   if (!safeRows.length) return null;
@@ -66,7 +127,7 @@ export function buildRowsFingerprint(rows = []) {
       observedSuccess: Number(row.observedSuccess)
     }))
     .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  return "D23-" + stableHash(JSON.stringify(canonical));
+  return "D24-" + stableHash(JSON.stringify(canonical));
 }
 
 export function buildReplayFingerprint(replay = null) {
@@ -84,7 +145,7 @@ export function buildReplayFingerprint(replay = null) {
   return "R23-" + stableHash(JSON.stringify(canonical));
 }
 
-export function verifyPolicyProposal(proposal = null, { rows = null } = {}) {
+export function verifyPolicyProposal(proposal = null, { rows = null, now = null, config = {} } = {}) {
   if (!proposal || typeof proposal !== "object") return { valid: false, reason: "MISSING_PROPOSAL" };
   if (proposal.contractVersion !== POLICY_CONTRACT_VERSION) return { valid: false, reason: "PROPOSAL_VERSION_MISMATCH" };
 
@@ -115,7 +176,41 @@ export function verifyPolicyProposal(proposal = null, { rows = null } = {}) {
     return { valid: false, reason: "BASE_POLICY_MISMATCH" };
   }
 
+  const expectedProposalFingerprint = buildPolicyProposalFingerprint(proposal);
+  if (!expectedProposalFingerprint || expectedProposalFingerprint !== proposal.proposalFingerprint) {
+    return { valid: false, reason: "PROPOSAL_FINGERPRINT_MISMATCH" };
+  }
+
+  const expectedLineage = lineageCanonical({
+    proposalId: proposal.proposalId,
+    runId: proposal.runId,
+    datasetFingerprint: proposal.datasetFingerprint,
+    rowsFingerprint: proposal.rowsFingerprint,
+    replayFingerprint: proposal.replayFingerprint
+  });
+  const suppliedLineage = proposal.lineage || {};
+  if (JSON.stringify(suppliedLineage) !== JSON.stringify(expectedLineage)) {
+    return { valid: false, reason: "PROPOSAL_LINEAGE_MISMATCH" };
+  }
+  if (proposal.lineageFingerprint !== buildPolicyLineageFingerprint(expectedLineage)) {
+    return { valid: false, reason: "PROPOSAL_LINEAGE_FINGERPRINT_MISMATCH" };
+  }
+
   if (!proposal.rowsFingerprint) return { valid: false, reason: "ROWS_FINGERPRINT_MISSING" };
+
+  if (now !== null) {
+    const nowIso = isoTime(now);
+    const generatedMs = new Date(proposal.generatedAt).getTime();
+    const nowMs = nowIso ? new Date(nowIso).getTime() : NaN;
+    const ttlHours = normalisePolicyConfig(config).proposalTtlHours;
+    if (!Number.isFinite(nowMs) || !Number.isFinite(generatedMs)) {
+      return { valid: false, reason: "INVALID_PROPOSAL_TIME" };
+    }
+    if (nowMs < generatedMs) return { valid: false, reason: "PROPOSAL_TIME_TRAVEL" };
+    if (nowMs - generatedMs > ttlHours * 60 * 60 * 1000) {
+      return { valid: false, reason: "PROPOSAL_EXPIRED" };
+    }
+  }
   if (rows === null) return { valid: true, reason: "STRUCTURAL_ONLY", fingerprint };
 
   const observedRowsFingerprint = buildRowsFingerprint(rows);
@@ -165,7 +260,8 @@ export function normalisePolicyConfig(config = {}) {
     multiplierMin: ordered ? multiplierMin : defaults.multiplierMin,
     multiplierMax: ordered ? multiplierMax : defaults.multiplierMax,
     biasFloor: clamp(config.biasFloor, 0, 1) ?? defaults.biasFloor,
-    historyLimit: Math.round(clamp(config.historyLimit, 1, 120) ?? defaults.historyLimit)
+    historyLimit: Math.round(clamp(config.historyLimit, 1, 120) ?? defaults.historyLimit),
+    proposalTtlHours: Math.round(clamp(config.proposalTtlHours, 1, 168) ?? defaults.proposalTtlHours)
   };
 }
 
@@ -227,9 +323,25 @@ export function buildRecalibrationProposal({
   const fingerprint = datasetFingerprint ? String(datasetFingerprint) : null;
   const rowsFingerprint = buildRowsFingerprint(safeRows);
 
-  const blocked = (reason) => Object.freeze({
+  const freezeProposal = (payload) => {
+    const lineage = lineageCanonical({
+      proposalId: payload.proposalId,
+      runId: payload.runId,
+      datasetFingerprint: payload.datasetFingerprint,
+      rowsFingerprint: payload.rowsFingerprint,
+      replayFingerprint: payload.replayFingerprint
+    });
+    return Object.freeze({
+      ...payload,
+      proposalFingerprint: buildPolicyProposalFingerprint(payload),
+      lineage: Object.freeze(lineage),
+      lineageFingerprint: buildPolicyLineageFingerprint(lineage)
+    });
+  };
+
+  const blocked = (reason) => freezeProposal({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V23-" + stableHash(JSON.stringify({
+    proposalId: "V24-" + stableHash(JSON.stringify({
       reason,
       fingerprint,
       runId: runId || null,
@@ -271,9 +383,9 @@ export function buildRecalibrationProposal({
   const improvement = round((replay.currentBrier ?? 0) - (replay.candidateBrier ?? 0));
   const eligible = improvement !== null && improvement >= options.minImprovement;
 
-  return Object.freeze({
+  return freezeProposal({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V23-" + stableHash(JSON.stringify({
+    proposalId: "V24-" + stableHash(JSON.stringify({
       fingerprint,
       runId: runId || null,
       generatedAt,
@@ -314,10 +426,18 @@ export function normalisePolicyLedger(ledger = []) {
     const datasetEventFingerprint = event?.datasetFingerprint ? String(event.datasetFingerprint) : null;
     const policyId = event?.policyId ? String(event.policyId) : null;
     const replayFingerprint = event?.replayFingerprint ? String(event.replayFingerprint) : null;
+    const rationale = normaliseRationale(event?.rationale ?? event?.reason);
+    const sourceRunId = event?.runId ? String(event.runId) : null;
+    const proposalGeneratedAt = isoTime(event?.proposalGeneratedAt);
+    const proposalFingerprint = event?.proposalFingerprint ? String(event.proposalFingerprint) : null;
+    const rowsFingerprint = event?.rowsFingerprint ? String(event.rowsFingerprint) : null;
+    const lineageFingerprint = event?.lineageFingerprint ? String(event.lineageFingerprint) : null;
 
-    if (!decisionId || !decidedAt || !actor) return null;
+    if (!decisionId || !decidedAt || !actor || !rationale || !lineageFingerprint) return null;
     if (!["APPROVE", "REJECT", "ROLLBACK"].includes(decision)) return null;
     if (decision !== "ROLLBACK" && !proposalId) return null;
+    if (decision !== "APPROVE" && !rationale) return null;
+    if (decision === "ROLLBACK" && (!datasetEventFingerprint || !policyId || !sourceRunId)) return null;
     if (
       decision === "APPROVE" &&
       (rawMultiplier === null ||
@@ -325,8 +445,24 @@ export function normalisePolicyLedger(ledger = []) {
        rawMultiplier > POLICY_ABSOLUTE_MAX ||
        !datasetEventFingerprint ||
        !policyId ||
-       !replayFingerprint)
+       !replayFingerprint ||
+       !rowsFingerprint ||
+       !sourceRunId ||
+       !proposalGeneratedAt ||
+       !proposalFingerprint)
     ) return null;
+
+    const expectedLineageFingerprint = buildPolicyLineageFingerprint({
+      proposalId: proposalId || null,
+      runId: sourceRunId,
+      datasetFingerprint: datasetEventFingerprint,
+      rowsFingerprint,
+      replayFingerprint,
+      policyId,
+      decidedAt,
+      actor
+    });
+    if (lineageFingerprint !== expectedLineageFingerprint) return null;
 
     return Object.freeze({
       decisionId,
@@ -334,12 +470,18 @@ export function normalisePolicyLedger(ledger = []) {
       decision,
       actor,
       decidedAt,
+      runId: sourceRunId,
+      proposalGeneratedAt,
       datasetFingerprint: datasetEventFingerprint,
       multiplier: decision === "APPROVE" ? multiplier : null,
       policyId,
       replayFingerprint,
+      rowsFingerprint,
+      proposalFingerprint,
+      lineageFingerprint,
       baseMultiplier: numeric(event?.baseMultiplier) === null ? 1 : round(event.baseMultiplier),
-      reason: String(event?.reason || "")
+      rationale,
+      reason: rationale
     });
   }).filter(Boolean);
 }
@@ -370,7 +512,8 @@ export function decidePolicy({
   rows = []
 } = {}) {
   const safeDecision = String(decision || "").toUpperCase();
-  const safeActor = String(actor || "").trim();
+  const safeActor = normaliseActor(actor);
+  const safeRationale = normaliseRationale(reason);
   const decidedAt = isoTime(now);
   const fingerprint = datasetFingerprint ? String(datasetFingerprint) : null;
   const current = normalisePolicyLedger(ledger);
@@ -383,6 +526,10 @@ export function decidePolicy({
   });
 
   if (!safeActor) return reject("MISSING_ACTOR");
+  const actorToken = String(actor || "").trim().toLowerCase();
+  const genericActorTokens = new Set(["operator", "default-actor", "default", "system", "unknown", "anonymous"]);
+  if (genericActorTokens.has(actorToken)) return reject("ACTOR_IDENTITY_REQUIRED");
+  if (!safeRationale) return reject("MISSING_RATIONALE");
   if (!decidedAt) return reject("INVALID_TIME");
   if (!["APPROVE", "REJECT", "ROLLBACK"].includes(safeDecision)) return reject("INVALID_DECISION");
   if ((safeDecision === "APPROVE" || safeDecision === "ROLLBACK") && !fingerprint) {
@@ -392,30 +539,48 @@ export function decidePolicy({
   if (safeDecision === "ROLLBACK") {
     const active = activePolicy(current, fingerprint);
     if (!active) return reject("NO_ACTIVE_POLICY");
-    const decisionId = "V23D-" + stableHash(JSON.stringify({
+    const decisionId = "V24D-" + stableHash(JSON.stringify({
       decision: "ROLLBACK",
       proposalId: active.proposalId,
       decidedAt,
-      actor: safeActor
+      actor: safeActor,
+      rationale: safeRationale
     }));
     if (current.some((event) => event.decisionId === decisionId)) return reject("ALREADY_DECIDED");
-    const next = [...current, {
+    const policyId = "V24P-" + stableHash(JSON.stringify({
+      rollbackOf: active.policyId || active.decisionId,
+      decidedAt,
+      actor: safeActor,
+      rationale: safeRationale
+    }));
+    const nextEvent = {
       decisionId,
       proposalId: active.proposalId,
       decision: "ROLLBACK",
       actor: safeActor,
       decidedAt,
+      runId: active.runId || null,
+      proposalGeneratedAt: active.proposalGeneratedAt || null,
       datasetFingerprint: fingerprint,
       multiplier: null,
-      policyId: "V23P-" + stableHash(JSON.stringify({
-        rollbackOf: active.policyId || active.decisionId,
+      policyId,
+      replayFingerprint: active.replayFingerprint || null,
+      rowsFingerprint: active.rowsFingerprint || null,
+      proposalFingerprint: active.proposalFingerprint || null,
+      lineageFingerprint: buildPolicyLineageFingerprint({
+        proposalId: active.proposalId,
+        runId: active.runId || null,
+        datasetFingerprint: fingerprint,
+        rowsFingerprint: active.rowsFingerprint || null,
+        replayFingerprint: active.replayFingerprint || null,
+        policyId,
         decidedAt,
         actor: safeActor
-      })),
-      replayFingerprint: active.replayFingerprint || null,
+      }),
       baseMultiplier: 1,
-      reason: reason || "operator rollback"
-    }].slice(-POLICY_DEFAULTS.historyLimit);
+      rationale: safeRationale
+    };
+    const next = [...current, nextEvent].slice(-POLICY_DEFAULTS.historyLimit);
     return {
       accepted: true,
       reason: "ROLLED_BACK",
@@ -430,8 +595,9 @@ export function decidePolicy({
   }
   if (safeDecision === "APPROVE" && !proposal.eligible) return reject("PROPOSAL_NOT_ELIGIBLE");
   if (safeDecision === "APPROVE") {
-    const verification = verifyPolicyProposal(proposal, { rows });
+    const verification = verifyPolicyProposal(proposal, { rows, now: decidedAt, config: proposal?.configuration || {} });
     if (!verification.valid) return reject(verification.reason);
+    if (!proposal.runId) return reject("SOURCE_RUN_ID_REQUIRED");
     if (!fingerprint || fingerprint !== String(proposal.datasetFingerprint || "")) {
       return reject("DATASET_FINGERPRINT_REQUIRED");
     }
@@ -443,34 +609,58 @@ export function decidePolicy({
   );
   if (already) return reject("ALREADY_DECIDED");
 
-  const decisionId = "V23D-" + stableHash(JSON.stringify({
+  const proposalFingerprint = proposal.proposalFingerprint || buildPolicyProposalFingerprint(proposal);
+  const policyId = safeDecision === "APPROVE"
+    ? "V24P-" + stableHash(JSON.stringify({
+        proposalId: proposal.proposalId,
+        proposalFingerprint,
+        multiplier: round(proposal.multiplier),
+        replayFingerprint: proposal.replayFingerprint,
+        rowsFingerprint: proposal.rowsFingerprint,
+        datasetFingerprint: fingerprint,
+        decidedAt,
+        actor: safeActor,
+        rationale: safeRationale
+      }))
+    : null;
+  const decisionId = "V24D-" + stableHash(JSON.stringify({
     decision: safeDecision,
     proposalId: proposal.proposalId,
+    proposalFingerprint,
     decidedAt,
-    actor: safeActor
+    actor: safeActor,
+    rationale: safeRationale
   }));
 
-  const next = [...current, {
+  const datasetScope = fingerprint || proposal.datasetFingerprint || null;
+  const nextEvent = {
     decisionId,
     proposalId: proposal.proposalId,
     decision: safeDecision,
     actor: safeActor,
     decidedAt,
-    datasetFingerprint: fingerprint || proposal.datasetFingerprint || null,
+    runId: proposal.runId || null,
+    proposalGeneratedAt: isoTime(proposal.generatedAt),
+    datasetFingerprint: datasetScope,
     multiplier: safeDecision === "APPROVE" ? proposal.multiplier : null,
-    policyId: safeDecision === "APPROVE"
-      ? "V23P-" + stableHash(JSON.stringify({
-          proposalId: proposal.proposalId,
-          multiplier: round(proposal.multiplier),
-          replayFingerprint: proposal.replayFingerprint,
-          datasetFingerprint: fingerprint,
-          decidedAt
-        }))
-      : null,
-    replayFingerprint: safeDecision === "APPROVE" ? proposal.replayFingerprint : null,
+    policyId,
+    replayFingerprint: proposal.replayFingerprint || null,
+    rowsFingerprint: proposal.rowsFingerprint || null,
+    proposalFingerprint,
+    lineageFingerprint: buildPolicyLineageFingerprint({
+      proposalId: proposal.proposalId,
+      runId: proposal.runId || null,
+      datasetFingerprint: datasetScope,
+      rowsFingerprint: proposal.rowsFingerprint || null,
+      replayFingerprint: proposal.replayFingerprint || null,
+      policyId,
+      decidedAt,
+      actor: safeActor
+    }),
     baseMultiplier: 1,
-    reason: reason || proposal.reason || ""
-  }].slice(-POLICY_DEFAULTS.historyLimit);
+    rationale: safeRationale
+  };
+  const next = [...current, nextEvent].slice(-POLICY_DEFAULTS.historyLimit);
 
   return {
     accepted: true,
@@ -478,6 +668,20 @@ export function decidePolicy({
     ledger: normalisePolicyLedger(next),
     active: activePolicy(next, fingerprint)
   };
+}
+
+export function buildPolicyDecisionLineage({ proposal = null, decisionEvent = null } = {}) {
+  const source = decisionEvent || proposal || {};
+  return Object.freeze(lineageCanonical({
+    proposalId: source.proposalId || null,
+    runId: source.runId || source.sourceRunId || null,
+    datasetFingerprint: source.datasetFingerprint || null,
+    rowsFingerprint: source.rowsFingerprint || null,
+    replayFingerprint: source.replayFingerprint || null,
+    policyId: source.policyId || source.activePolicyInstanceId || null,
+    decidedAt: source.decidedAt || null,
+    actor: source.actor || null
+  }));
 }
 
 export function applyPolicyToAssumptions(assumptions = {}, policy = null) {
@@ -518,8 +722,18 @@ export function summarisePolicy({ proposal = null, ledger = [], datasetFingerpri
     activeMultiplier: active?.multiplier ?? null,
     baseDeviation: active?.multiplier === null || active?.multiplier === undefined ? null : round(Number(active.multiplier) - 1),
     replayFingerprint: proposal?.replayFingerprint || null,
+    proposalFingerprint: proposal?.proposalFingerprint || null,
+    proposalLineageFingerprint: proposal?.lineageFingerprint || null,
+    sourceRunId: proposal?.runId || null,
     integrity: proposal ? verifyPolicyProposal(proposal, { rows }).reason : "ABSENT",
     rowsFingerprint: proposal?.rowsFingerprint || null,
+    activeActor: active?.actor || null,
+    activeRationale: active?.rationale || null,
+    activeRunId: active?.runId || null,
+    activeDatasetFingerprint: active?.datasetFingerprint || null,
+    activeRowsFingerprint: active?.rowsFingerprint || null,
+    activeReplayFingerprint: active?.replayFingerprint || null,
+    activeLineageFingerprint: active?.lineageFingerprint || null,
     decisions: normalisePolicyLedger(ledger).length
   });
 }
