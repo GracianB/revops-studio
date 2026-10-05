@@ -117,6 +117,30 @@ export function buildPolicyProposalFingerprint(proposal = null) {
   }));
 }
 
+export function buildPolicyInstanceFingerprint({
+  proposalId = null,
+  proposalFingerprint = null,
+  multiplier = null,
+  replayFingerprint = null,
+  rowsFingerprint = null,
+  datasetFingerprint = null,
+  decidedAt = null,
+  actor = null,
+  rationale = null
+} = {}) {
+  return "P25-" + stableHash(JSON.stringify({
+    proposalId: proposalId || null,
+    proposalFingerprint: proposalFingerprint || null,
+    multiplier: round(multiplier),
+    replayFingerprint: replayFingerprint || null,
+    rowsFingerprint: rowsFingerprint || null,
+    datasetFingerprint: datasetFingerprint || null,
+    decidedAt: isoTime(decidedAt),
+    actor: actor || null,
+    rationale: rationale || null
+  }));
+}
+
 export function buildRowsFingerprint(rows = []) {
   const safeRows = normaliseRows(rows);
   if (!safeRows.length) return null;
@@ -341,7 +365,7 @@ export function buildRecalibrationProposal({
 
   const blocked = (reason) => freezeProposal({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V24-" + stableHash(JSON.stringify({
+    proposalId: "V25-" + stableHash(JSON.stringify({
       reason,
       fingerprint,
       runId: runId || null,
@@ -385,7 +409,7 @@ export function buildRecalibrationProposal({
 
   return freezeProposal({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V24-" + stableHash(JSON.stringify({
+    proposalId: "V25-" + stableHash(JSON.stringify({
       fingerprint,
       runId: runId || null,
       generatedAt,
@@ -539,7 +563,7 @@ export function decidePolicy({
   if (safeDecision === "ROLLBACK") {
     const active = activePolicy(current, fingerprint);
     if (!active) return reject("NO_ACTIVE_POLICY");
-    const decisionId = "V24D-" + stableHash(JSON.stringify({
+    const decisionId = "V25D-" + stableHash(JSON.stringify({
       decision: "ROLLBACK",
       proposalId: active.proposalId,
       decidedAt,
@@ -547,7 +571,7 @@ export function decidePolicy({
       rationale: safeRationale
     }));
     if (current.some((event) => event.decisionId === decisionId)) return reject("ALREADY_DECIDED");
-    const policyId = "V24P-" + stableHash(JSON.stringify({
+    const policyId = "V25P-" + stableHash(JSON.stringify({
       rollbackOf: active.policyId || active.decisionId,
       decidedAt,
       actor: safeActor,
@@ -611,19 +635,19 @@ export function decidePolicy({
 
   const proposalFingerprint = proposal.proposalFingerprint || buildPolicyProposalFingerprint(proposal);
   const policyId = safeDecision === "APPROVE"
-    ? "V24P-" + stableHash(JSON.stringify({
+    ? buildPolicyInstanceFingerprint({
         proposalId: proposal.proposalId,
         proposalFingerprint,
-        multiplier: round(proposal.multiplier),
+        multiplier: proposal.multiplier,
         replayFingerprint: proposal.replayFingerprint,
         rowsFingerprint: proposal.rowsFingerprint,
         datasetFingerprint: fingerprint,
         decidedAt,
         actor: safeActor,
         rationale: safeRationale
-      }))
+      })
     : null;
-  const decisionId = "V24D-" + stableHash(JSON.stringify({
+  const decisionId = "V25D-" + stableHash(JSON.stringify({
     decision: safeDecision,
     proposalId: proposal.proposalId,
     proposalFingerprint,
@@ -668,6 +692,153 @@ export function decidePolicy({
     ledger: normalisePolicyLedger(next),
     active: activePolicy(next, fingerprint)
   };
+}
+
+export function verifyPolicyLedger(ledger = [], { datasetFingerprint = null } = {}) {
+  if (!Array.isArray(ledger)) return { valid: false, reason: "LEDGER_INVALID" };
+  if (!ledger.length) {
+    return { valid: true, reason: "LEDGER_EMPTY", eventCount: 0, active: null };
+  }
+
+  const scope = datasetFingerprint ? String(datasetFingerprint) : null;
+  const seenDecisionIds = new Set();
+  const seenProposalDecisions = new Set();
+  const stacks = new Map();
+  let previousTime = null;
+  let scopedCount = 0;
+
+  for (let index = 0; index < ledger.length; index += 1) {
+    const raw = ledger[index];
+    const event = normalisePolicyLedger([raw])[0];
+    if (!event) return { valid: false, reason: "LEDGER_EVENT_INVALID", index };
+
+    if (seenDecisionIds.has(event.decisionId)) {
+      return { valid: false, reason: "LEDGER_DUPLICATE_DECISION_ID", index };
+    }
+    seenDecisionIds.add(event.decisionId);
+
+    const time = new Date(event.decidedAt).getTime();
+    if (previousTime !== null && time < previousTime) {
+      return { valid: false, reason: "LEDGER_ORDER_INVALID", index };
+    }
+    previousTime = time;
+
+    if (scope && event.datasetFingerprint !== scope) continue;
+    scopedCount += 1;
+
+    const stack = stacks.get(event.datasetFingerprint) || [];
+    const proposalKey = event.proposalId || event.decisionId;
+
+    if (event.decision === "APPROVE") {
+      if (seenProposalDecisions.has(event.proposalId)) {
+        return { valid: false, reason: "LEDGER_DUPLICATE_PROPOSAL_DECISION", index };
+      }
+      seenProposalDecisions.add(event.proposalId);
+      const expectedPolicyId = buildPolicyInstanceFingerprint({
+        proposalId: event.proposalId,
+        proposalFingerprint: event.proposalFingerprint,
+        multiplier: event.multiplier,
+        replayFingerprint: event.replayFingerprint,
+        rowsFingerprint: event.rowsFingerprint,
+        datasetFingerprint: event.datasetFingerprint,
+        decidedAt: event.decidedAt,
+        actor: event.actor,
+        rationale: event.rationale
+      });
+      if (expectedPolicyId !== event.policyId) {
+        return { valid: false, reason: "POLICY_ID_MISMATCH", index };
+      }
+      stack.push(event);
+    } else if (event.decision === "REJECT") {
+      if (seenProposalDecisions.has(proposalKey)) {
+        return { valid: false, reason: "LEDGER_DUPLICATE_PROPOSAL_DECISION", index };
+      }
+      seenProposalDecisions.add(proposalKey);
+    } else if (event.decision === "ROLLBACK") {
+      const active = stack.at(-1);
+      if (!active) return { valid: false, reason: "ROLLBACK_WITHOUT_ACTIVE_POLICY", index };
+      if (event.proposalId !== active.proposalId ||
+          event.runId !== active.runId ||
+          event.datasetFingerprint !== active.datasetFingerprint ||
+          event.rowsFingerprint !== active.rowsFingerprint ||
+          event.replayFingerprint !== active.replayFingerprint ||
+          event.proposalFingerprint !== active.proposalFingerprint) {
+        return { valid: false, reason: "ROLLBACK_LINEAGE_MISMATCH", index };
+      }
+      stack.pop();
+    }
+
+    stacks.set(event.datasetFingerprint, stack);
+  }
+
+  const scopedStack = scope
+    ? (stacks.get(scope) || [])
+    : [...stacks.values()].flat();
+  return {
+    valid: true,
+    reason: "LEDGER_REPLAY_VERIFIED",
+    eventCount: scopedCount,
+    active: scopedStack.at(-1) || null
+  };
+}
+
+export function verifyActivePolicy(active = null, { rows = null, datasetFingerprint = null } = {}) {
+  if (!active) return { valid: false, reason: "NO_ACTIVE_POLICY" };
+  if (!datasetFingerprint) return { valid: false, reason: "DATASET_FINGERPRINT_REQUIRED" };
+  if (active.datasetFingerprint !== String(datasetFingerprint)) {
+    return { valid: false, reason: "ACTIVE_DATASET_MISMATCH" };
+  }
+  const expectedPolicyId = buildPolicyInstanceFingerprint({
+    proposalId: active.proposalId,
+    proposalFingerprint: active.proposalFingerprint,
+    multiplier: active.multiplier,
+    replayFingerprint: active.replayFingerprint,
+    rowsFingerprint: active.rowsFingerprint,
+    datasetFingerprint: active.datasetFingerprint,
+    decidedAt: active.decidedAt,
+    actor: active.actor,
+    rationale: active.rationale
+  });
+  if (expectedPolicyId !== active.policyId) {
+    return { valid: false, reason: "POLICY_ID_MISMATCH" };
+  }
+
+  const expectedLineage = lineageCanonical({
+    proposalId: active.proposalId,
+    runId: active.runId,
+    datasetFingerprint: active.datasetFingerprint,
+    rowsFingerprint: active.rowsFingerprint,
+    replayFingerprint: active.replayFingerprint,
+    policyId: active.policyId,
+    decidedAt: active.decidedAt,
+    actor: active.actor
+  });
+  if (active.lineageFingerprint !== buildPolicyLineageFingerprint(expectedLineage)) {
+    return { valid: false, reason: "ACTIVE_LINEAGE_MISMATCH" };
+  }
+
+  if (rows === null) return { valid: true, reason: "ACTIVE_STRUCTURAL_ONLY" };
+  const observedRowsFingerprint = buildRowsFingerprint(rows);
+  if (!observedRowsFingerprint) return { valid: false, reason: "ROWS_REQUIRED_FOR_ACTIVE_REPLAY" };
+  if (observedRowsFingerprint !== active.rowsFingerprint) {
+    return { valid: false, reason: "ACTIVE_ROWS_MISMATCH" };
+  }
+
+  const replay = replayProbabilityPolicy(rows, active.multiplier);
+  if (buildReplayFingerprint(replay) !== active.replayFingerprint) {
+    return { valid: false, reason: "ACTIVE_REPLAY_MISMATCH" };
+  }
+
+  return {
+    valid: true,
+    reason: "ACTIVE_REPLAY_VERIFIED",
+    rowsFingerprint: observedRowsFingerprint,
+    replayFingerprint: active.replayFingerprint
+  };
+}
+
+export function replayPolicyLedger(ledger = [], options = {}) {
+  return verifyPolicyLedger(ledger, options);
 }
 
 export function buildPolicyDecisionLineage({ proposal = null, decisionEvent = null } = {}) {
@@ -725,7 +896,16 @@ export function summarisePolicy({ proposal = null, ledger = [], datasetFingerpri
     proposalFingerprint: proposal?.proposalFingerprint || null,
     proposalLineageFingerprint: proposal?.lineageFingerprint || null,
     sourceRunId: proposal?.runId || null,
+    proposalIntegrity: proposal ? verifyPolicyProposal(proposal, { rows }).reason : "ABSENT",
     integrity: proposal ? verifyPolicyProposal(proposal, { rows }).reason : "ABSENT",
+    ledgerIntegrity: verifyPolicyLedger(ledger, { datasetFingerprint }).reason,
+    activePolicyIntegrity: active
+      ? verifyActivePolicy(active, { rows, datasetFingerprint }).reason
+      : "NO_ACTIVE_POLICY",
+    lineageReplay: verifyPolicyLedger(ledger, { datasetFingerprint }).valid &&
+      (!active || verifyActivePolicy(active, { rows, datasetFingerprint }).valid)
+      ? "VERIFIED"
+      : "REJECTED",
     rowsFingerprint: proposal?.rowsFingerprint || null,
     activeActor: active?.actor || null,
     activeRationale: active?.rationale || null,
