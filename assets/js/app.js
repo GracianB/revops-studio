@@ -84,6 +84,15 @@ import {
   exportTrustRegistry,
   importTrustRegistry
 } from "./policy-trust-registry.js";
+import {
+  TRUST_ROOT_VERSION,
+  generateTrustRootKeyPair,
+  signTrustRegistrySnapshot,
+  verifySignedTrustRegistrySnapshot,
+  verifyTrustedPolicyEvidenceViaRoot,
+  exportSignedTrustRegistrySnapshot,
+  importSignedTrustRegistrySnapshot
+} from "./policy-trust-root.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -213,6 +222,24 @@ function writePolicyTrustRegistryV28(registry) {
     localStorage.setItem(POLICY_TRUST_V28_STORAGE_KEY, JSON.stringify(registry));
   } catch {}
 }
+
+const POLICY_TRUST_ROOT_V29_STORAGE_KEY = "revops-studio:policy-trust-root:v29";
+
+function readTrustRootSnapshotV29() {
+  try {
+    const value = JSON.parse(localStorage.getItem(POLICY_TRUST_ROOT_V29_STORAGE_KEY) || "null");
+    return value && typeof value === "object" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeTrustRootSnapshotV29(snapshot) {
+  try {
+    localStorage.setItem(POLICY_TRUST_ROOT_V29_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {}
+}
+
 
 
 }
@@ -594,6 +621,16 @@ function initPlayground() {
     v28Import: qs("#importTrustRegistryV28"),
     v28Verify: qs("#verifyTrustedEvidenceV28"),
     v28EvidenceImport: qs("#importTrustedEvidenceV28"),
+    v29Root: qs("#policyTrustRootV29"),
+    v29Pin: qs("#policyTrustRootV29Pin"),
+    v29RegistryHead: qs("#policyTrustRootV29RegistryHead"),
+    v29Status: qs("#policyTrustRootV29Status"),
+    v29Generate: qs("#generateTrustRootV29"),
+    v29Sign: qs("#signTrustRegistryV29"),
+    v29VerifyRegistry: qs("#verifyTrustRootV29"),
+    v29VerifyEvidence: qs("#verifyRootAnchoredEvidenceV29"),
+    v29Export: qs("#exportTrustRootV29"),
+    v29Import: qs("#importTrustRootV29"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -901,6 +938,8 @@ function initPlayground() {
   let feedbackOutcomes = [];
   let policyEvidenceSignerV27 = null;
   let policyTrustRegistryV28 = readPolicyTrustRegistryV28();
+  let trustRootKeyPairV29 = null;
+  let signedTrustRootSnapshotV29 = readTrustRootSnapshotV29();
   let lastSignedEvidenceV27 = null;
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
@@ -2349,6 +2388,190 @@ function initPlayground() {
       setPolicyTrustStatusV28("TRUST_IMPORT_ERROR · " + error.message);
     }
   });
+
+  const setTrustRootStatusV29 = (message, ok = false) => {
+    if (!feedback.v29Status) return;
+    feedback.v29Status.textContent = message;
+    feedback.v29Status.dataset.state = ok ? "ok" : "error";
+  };
+
+  const renderTrustRootV29 = () => {
+    if (feedback.v29Root) {
+      feedback.v29Root.textContent =
+        trustRootKeyPairV29?.rootKeyFingerprint ||
+        signedTrustRootSnapshotV29?.rootKeyFingerprint ||
+        "NOT INITIALISED";
+    }
+    if (feedback.v29RegistryHead) {
+      feedback.v29RegistryHead.textContent =
+        signedTrustRootSnapshotV29?.trustRegistryHeadFingerprint ||
+        policyTrustRegistryV28?.headFingerprint ||
+        "T28-EMPTY";
+    }
+  };
+
+  feedback.v29Generate?.addEventListener("click", async () => {
+    try {
+      trustRootKeyPairV29 = await generateTrustRootKeyPair();
+      if (feedback.v29Pin) feedback.v29Pin.value = trustRootKeyPairV29.rootKeyFingerprint;
+      renderTrustRootV29();
+      setTrustRootStatusV29(
+        "ROOT_GENERATED · " + trustRootKeyPairV29.rootKeyFingerprint + " · private key memory-only",
+        true
+      );
+      addAudit(auditEvent("POLICY_V29_ROOT_GENERATED", { id: trustRootKeyPairV29.rootKeyFingerprint }, TRUST_ROOT_VERSION));
+    } catch (error) {
+      setTrustRootStatusV29("ROOT_GENERATE_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v29Sign?.addEventListener("click", async () => {
+    if (!trustRootKeyPairV29) {
+      setTrustRootStatusV29("ROOT_KEY_REQUIRED");
+      return;
+    }
+    try {
+      const result = await signTrustRegistrySnapshot(policyTrustRegistryV28, {
+        privateKey: trustRootKeyPairV29.privateKey,
+        publicKeyJwk: trustRootKeyPairV29.publicKeyJwk
+      });
+      if (!result.valid) {
+        setTrustRootStatusV29(result.reason);
+        return;
+      }
+      signedTrustRootSnapshotV29 = result.snapshot;
+      writeTrustRootSnapshotV29(signedTrustRootSnapshotV29);
+      renderTrustRootV29();
+      setTrustRootStatusV29(
+        "ROOT_SIGNED · " + signedTrustRootSnapshotV29.trustRegistryHeadFingerprint,
+        true
+      );
+      addAudit(auditEvent("POLICY_V29_ROOT_SNAPSHOT_SIGNED", {
+        id: signedTrustRootSnapshotV29.rootKeyFingerprint
+      }, signedTrustRootSnapshotV29.trustRegistryHeadFingerprint));
+    } catch (error) {
+      setTrustRootStatusV29("ROOT_SIGN_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v29VerifyRegistry?.addEventListener("click", async () => {
+    if (!signedTrustRootSnapshotV29) {
+      setTrustRootStatusV29("ROOT_SNAPSHOT_REQUIRED");
+      return;
+    }
+    try {
+      const pin = feedback.v29Pin?.value?.trim() || null;
+      const result = await verifySignedTrustRegistrySnapshot(signedTrustRootSnapshotV29, {
+        expectedRootKeyFingerprint: pin
+      });
+      const mode = pin ? "PINNED" : "INTERNAL";
+      setTrustRootStatusV29(
+        result.valid
+          ? "ROOT_VERIFIED_" + mode + " · " + result.rootKeyFingerprint
+          : result.reason,
+        result.valid
+      );
+      if (result.valid) renderTrustRootV29();
+      addAudit(auditEvent(
+        result.valid ? "POLICY_V29_ROOT_VERIFIED" : "POLICY_V29_ROOT_REJECTED",
+        { id: result.rootKeyFingerprint || "ROOT" },
+        result.reason
+      ));
+    } catch (error) {
+      setTrustRootStatusV29("ROOT_VERIFY_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v29VerifyEvidence?.addEventListener("click", async () => {
+    if (!signedTrustRootSnapshotV29) {
+      setTrustRootStatusV29("ROOT_SNAPSHOT_REQUIRED");
+      return;
+    }
+    if (!lastSignedEvidenceV27) {
+      setTrustRootStatusV29("SIGNED_EVIDENCE_REQUIRED");
+      return;
+    }
+    try {
+      const currentFingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+      const currentRows = currentFingerprint && lastSignedEvidenceV27.datasetFingerprint === currentFingerprint
+        ? buildObservedCalibrationRows(
+            buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+            feedbackOutcomes
+          )
+        : null;
+      const pin = feedback.v29Pin?.value?.trim() || null;
+      const result = await verifyTrustedPolicyEvidenceViaRoot(lastSignedEvidenceV27, {
+        signedRegistrySnapshot: signedTrustRootSnapshotV29,
+        expectedRootKeyFingerprint: pin,
+        rows: currentRows
+      });
+      setTrustRootStatusV29(
+        result.valid
+          ? "ROOT_ANCHORED · " + result.signerKeyFingerprint
+          : result.reason,
+        result.valid
+      );
+      addAudit(auditEvent(
+        result.valid ? "POLICY_V29_EVIDENCE_ROOT_ANCHORED" : "POLICY_V29_EVIDENCE_ROOT_REJECTED",
+        { id: result.signerKeyFingerprint || "POLICY" },
+        result.reason
+      ));
+    } catch (error) {
+      setTrustRootStatusV29("ROOT_EVIDENCE_VERIFY_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v29Export?.addEventListener("click", async () => {
+    if (!signedTrustRootSnapshotV29) {
+      setTrustRootStatusV29("ROOT_SNAPSHOT_REQUIRED");
+      return;
+    }
+    try {
+      const result = await exportSignedTrustRegistrySnapshot(signedTrustRootSnapshotV29);
+      if (!result.valid) {
+        setTrustRootStatusV29(result.reason);
+        return;
+      }
+      const blob = new Blob([result.json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "revops-policy-trust-root-v29.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setTrustRootStatusV29("EXPORTED · " + result.rootKeyFingerprint, true);
+    } catch (error) {
+      setTrustRootStatusV29("ROOT_EXPORT_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v29Import?.addEventListener("change", async () => {
+    const file = feedback.v29Import.files?.[0];
+    if (!file) return;
+    try {
+      const imported = await importSignedTrustRegistrySnapshot(await file.text());
+      if (!imported.valid) {
+        setTrustRootStatusV29(imported.reason);
+        return;
+      }
+      signedTrustRootSnapshotV29 = imported.snapshot;
+      writeTrustRootSnapshotV29(signedTrustRootSnapshotV29);
+      if (feedback.v29Pin && !feedback.v29Pin.value.trim()) {
+        feedback.v29Pin.value = signedTrustRootSnapshotV29.rootKeyFingerprint;
+      }
+      renderTrustRootV29();
+      setTrustRootStatusV29(
+        "IMPORTED · " + signedTrustRootSnapshotV29.rootKeyFingerprint,
+        true
+      );
+    } catch (error) {
+      setTrustRootStatusV29("ROOT_IMPORT_ERROR · " + error.message);
+    }
+  });
+
+  renderTrustRootV29();
 
   const adaptiveConfigV20 = readAdaptiveCalibrationConfigV20();
   if (feedback.v20WindowDays) feedback.v20WindowDays.value = String(adaptiveConfigV20.windowDays ?? 30);
