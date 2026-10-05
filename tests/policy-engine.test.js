@@ -318,7 +318,7 @@ test("V25 summary exports the decision state without ledger rows", () => {
   });
   const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "gracian-local", reason: "test governance", datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2), now });
   const summary = summarisePolicy({ proposal, ledger: approved.ledger, datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2) });
-  assert.equal(summary.contractVersion, "24.0");
+  assert.equal(summary.contractVersion, "25.0");
   assert.equal(summary.decisions, 1);
   assert.equal(summary.activeMultiplier, proposal.multiplier);
   assert.equal(Object.hasOwn(summary, "ledger"), false);
@@ -326,7 +326,7 @@ test("V25 summary exports the decision state without ledger rows", () => {
 
 test("V25 proposal carries a replay binding anchored to the replay payload", () => {
   const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(12, 0.85, 3), datasetFingerprint: "ds-replay", runId: "run-replay", now });
-  assert.equal(proposal.contractVersion, "24.0");
+  assert.equal(proposal.contractVersion, "25.0");
   assert.equal(proposal.baseMultiplier, 1);
   assert.equal(proposal.replayFingerprint, buildReplayFingerprint(proposal.replay));
   assert.equal(verifyPolicyProposal(proposal, { rows: biasedRows(12, 0.85, 3) }).reason, "REPLAY_ROWS_VERIFIED");
@@ -461,7 +461,7 @@ test("V25 proposal contains a complete deterministic lineage", () => {
   const proposal = buildRecalibrationProposal({
     report: report("CRITICAL"), rows, datasetFingerprint: "ds-lineage", runId: "run-lineage", now
   });
-  assert.equal(proposal.contractVersion, "24.0");
+  assert.equal(proposal.contractVersion, "25.0");
   assert.equal(proposal.rowsFingerprint, buildRowsFingerprint(rows));
   assert.equal(proposal.proposalFingerprint, buildPolicyProposalFingerprint(proposal));
   assert.equal(proposal.lineageFingerprint, buildPolicyLineageFingerprint(proposal.lineage));
@@ -588,7 +588,22 @@ test("V25 ledger replay rejects a forged policy instance identity", () => {
     rows,
     now
   });
-  const tampered = result.ledger.map((event) => ({ ...event, policyId: "P25-forged" }));
+  const source = result.ledger[0];
+  const tamperedPolicyId = "V25P-forged";
+  const tampered = [{
+    ...source,
+    policyId: tamperedPolicyId,
+    lineageFingerprint: buildPolicyLineageFingerprint({
+      proposalId: source.proposalId,
+      runId: source.runId,
+      datasetFingerprint: source.datasetFingerprint,
+      rowsFingerprint: source.rowsFingerprint,
+      replayFingerprint: source.replayFingerprint,
+      policyId: tamperedPolicyId,
+      decidedAt: source.decidedAt,
+      actor: source.actor
+    })
+  }];
   assert.equal(
     verifyPolicyLedger(tampered, { datasetFingerprint: "ds-forged-policy" }).reason,
     "POLICY_ID_MISMATCH"
