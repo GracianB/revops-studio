@@ -275,6 +275,34 @@ Verification receipts expose the fabric fingerprint, registry head, threshold, a
 
 V30 remains local-first. Independent trust still depends on distributing the approved root fingerprint set and quorum policy outside the snapshot, through a channel that the browser cannot rewrite.
 
+## V31 · Trust Transparency & Witness Log
+
+V31 adds the temporal transparency layer above the V30 trust fabric:
+
+`CHECKPOINT → APPEND-ONLY LOG → HEAD → WITNESS → RECEIPT`
+
+Each V30 checkpoint is anchored as a sequential transparency entry containing the previous entry fingerprint, checkpoint fingerprint, registry head, fabric fingerprint, payload fingerprint and an observed timestamp. The log has a deterministic TL31-* event fingerprint and a single verifiable head.
+
+The verifier fails closed on:
+
+- sequence gaps or duplicate sequence observations;
+- broken previous-entry links;
+- modified event fingerprints;
+- duplicate checkpoint anchors;
+- timestamp regression;
+- missing checkpoint references;
+- invalid V30 checkpoints;
+- external head-pin mismatch;
+- conflicting observations across transparency logs.
+
+V31 also introduces cryptographic witnesses using ECDSA P-256. A witness signs the exact log entry it observed and produces a portable WA31-* attestation. Witness keys are kept in browser memory only. Multiple valid attestations can be checked for a given head, and a witness that signs two different checkpoints for the same sequence is reported as witness equivocation.
+
+The exported transparency log carries the verified V30 checkpoint snapshots, so a reviewer can verify the chain without relying on browser state. A separate transparency receipt exposes the verified head, latest checkpoint and witness set.
+
+This closes an important gap left by V30: cryptographic validity proves that a checkpoint is well-formed, while transparency proves that the checkpoint also belongs to a consistent, auditable history. Multiple logs can be compared to detect conflicting observations at the same sequence.
+
+V31 is still local-first. A browser-generated witness demonstrates a real cryptographic signature, not an independently operated external organisation. Strong external trust requires distributing the approved transparency head and witness identities through a channel outside the application.
+
 ## Human-in-the-loop by design
 
 RevOps Studio deliberately separates **recommendation** from **execution**.
