@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
   FINAL_RELEASE_V40_VERSION, FINAL_RELEASE_SCHEMA, FINAL_RELEASE_MIN_TESTS,
   buildFinalReleaseCertificate, verifyFinalReleaseCertificate,
@@ -8,6 +9,7 @@ import {
 
 const components = { V25:"25.0",V26:"26.0",V27:"27.0",V28:"28.0",V29:"29.0",V30:"30.0",V31:"31.0",V32:"32.0",V33:"33.0",V34:"34.0",V35:"35.0",V36:"36.0",V37:"37.0",V38:"38.0",V39:"39.0",V40:"40.0" };
 function input() { return { packageVersion:"40.0.0", testCount:FINAL_RELEASE_MIN_TESTS, validationPass:true, verificationPass:true, patchIntegrityPass:true, components, sourceFingerprints:{"package.json":"sha256:test"}, gitHead:"abc123" }; }
+
 test("V40 exposes the definitive contract", () => { assert.equal(FINAL_RELEASE_V40_VERSION, "40.0"); assert.equal(FINAL_RELEASE_SCHEMA, "revops-studio-final-release"); });
 test("V40 canonicalization sorts object keys", () => assert.equal(canonicalizeFinalRelease({ b:2, a:1 }), '{"a":1,"b":2}'));
 test("V40 fingerprint is deterministic", () => assert.equal(buildFinalReleaseCertificate(input()).releaseFingerprint, buildFinalReleaseCertificate(input()).releaseFingerprint));
@@ -21,3 +23,12 @@ test("V40 rejects a failed gate", () => { const d=input(); d.validationPass=fals
 test("V40 rejects component substitution", () => { const d=input(); d.components={...components,V31:"30.0"}; assert.equal(verifyFinalReleaseCertificate(buildFinalReleaseCertificate(d)).valid,false); });
 test("V40 export is valid JSON", () => { const c=buildFinalReleaseCertificate(input()); assert.deepEqual(JSON.parse(exportFinalReleaseCertificate(c)),c); });
 test("V40 fingerprint ignores embedded fingerprint", () => { const c=buildFinalReleaseCertificate(input()); const f=fingerprintFinalRelease(c); c.releaseFingerprint="different"; assert.equal(fingerprintFinalRelease(c),f); });
+test("V40 release gate executes the real pre-release verification", () => {
+  const gate = fs.readFileSync(new URL("../scripts/release-gate-v40.mjs", import.meta.url), "utf8");
+  assert.match(gate, /execFileSync\("npm", \["run", "verify:pre-release"\]/);
+});
+test("V40 package separates pre-release verification from release certification", () => {
+  const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(typeof pkg.scripts["verify:pre-release"], "string");
+  assert.match(pkg.scripts.verify, /^npm run verify:pre-release && npm run release:check$/);
+});
