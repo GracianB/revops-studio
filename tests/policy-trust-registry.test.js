@@ -193,6 +193,8 @@ test("V28 revocation blocks trust even when cryptography is valid", async () => 
     createdAt: "2026-10-06T00:00:00.000Z"
   })).registry;
   const evidence = await signedBundle(keys, "2026-10-07T00:00:00.000Z");
+  const registryCheck = await verifyTrustRegistry(registry);
+  assert.equal(registryCheck.valid, true, registryCheck.reason);
   const result = await verifyTrustedPolicyEvidence(evidence.signed.bundle, { registry });
   assert.equal(result.valid, false);
   assert.equal(result.reason, "SIGNER_REVOKED");
@@ -222,6 +224,8 @@ test("V28 accepts historical signatures from retired signers", async () => {
     createdAt: "2026-10-06T00:00:00.000Z"
   })).registry;
   const evidence = await signedBundle(keys, now);
+  const registryCheck = await verifyTrustRegistry(registry);
+  assert.equal(registryCheck.valid, true, registryCheck.reason);
   const result = await verifyTrustedPolicyEvidence(evidence.signed.bundle, { registry });
   assert.equal(result.valid, true, result.reason);
   assert.equal(result.reason, "TRUSTED_HISTORICAL_SIGNATURE");
