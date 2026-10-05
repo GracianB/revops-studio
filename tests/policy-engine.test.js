@@ -131,6 +131,7 @@ test("V24 approval requires an eligible proposal and an actor", () => {
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
     datasetFingerprint: "ds-actor",
+    runId: "run-actor",
     rows: biasedRows(10, 0.9, 2),
     now
   });
@@ -141,7 +142,7 @@ test("V24 approval requires an eligible proposal and an actor", () => {
   const approved = decidePolicy({
     proposal,
     decision: "APPROVE",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-actor",
     rows: biasedRows(10, 0.9, 2),
     now
@@ -161,7 +162,7 @@ test("V24 approval rejects a forged multiplier outside the hard step", () => {
       datasetFingerprint: "ds-a"
     },
     decision: "APPROVE",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-a",
     now
   });
@@ -179,7 +180,7 @@ test("V24 cannot approve an ineligible proposal", () => {
   const result = decidePolicy({
     proposal,
     decision: "APPROVE",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-ineligible",
     rows: biasedRows(),
     now
@@ -193,12 +194,13 @@ test("V24 reject records the decision and leaves no active policy", () => {
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
     datasetFingerprint: "ds-reject",
+    runId: "run-reject",
     now
   });
   const rejected = decidePolicy({
     proposal,
     decision: "REJECT",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-reject",
     now,
     reason: "not now"
@@ -209,7 +211,7 @@ test("V24 reject records the decision and leaves no active policy", () => {
     ledger: rejected.ledger,
     proposal,
     decision: "APPROVE",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-reject",
     rows: biasedRows(10, 0.9, 2),
     now
@@ -222,12 +224,14 @@ test("V24 rollback restores the previous approved policy", () => {
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
     datasetFingerprint: "ds-rollback",
+    runId: "run-rollback-first",
     now
   });
   const second = buildRecalibrationProposal({
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.7, 1),
     datasetFingerprint: "ds-rollback",
+    runId: "run-rollback-second",
     now: "2026-10-06T00:00:00.000Z"
   });
   const approvedFirst = decidePolicy({ proposal: first, decision: "APPROVE", actor: "gracian-local", reason: "test governance", datasetFingerprint: "ds-rollback", rows: biasedRows(10, 0.9, 2), now });
@@ -235,7 +239,7 @@ test("V24 rollback restores the previous approved policy", () => {
     ledger: approvedFirst.ledger,
     proposal: second,
     decision: "APPROVE",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-rollback",
     rows: biasedRows(10, 0.7, 1),
     now: "2026-10-06T00:00:00.000Z"
@@ -243,7 +247,7 @@ test("V24 rollback restores the previous approved policy", () => {
   const rolled = decidePolicy({
     ledger: approvedSecond.ledger,
     decision: "ROLLBACK",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-rollback",
     now: "2026-10-07T00:00:00.000Z"
   });
@@ -256,12 +260,13 @@ test("V24 isolates policy decisions by dataset fingerprint", () => {
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
     datasetFingerprint: "ds-a",
+    runId: "run-ds-a",
     now
   });
   const approved = decidePolicy({
     proposal,
     decision: "APPROVE",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-a",
     rows: biasedRows(10, 0.9, 2),
     now
@@ -270,7 +275,7 @@ test("V24 isolates policy decisions by dataset fingerprint", () => {
     ledger: approved.ledger,
     proposal,
     decision: "APPROVE",
-    actor: "operator",
+    actor: "gracian-local", reason: "test governance",
     datasetFingerprint: "ds-b",
     now
   });
@@ -304,6 +309,7 @@ test("V24 summary exports the decision state without ledger rows", () => {
     report: report("CRITICAL"),
     rows: biasedRows(10, 0.9, 2),
     datasetFingerprint: "ds-summary",
+    runId: "run-summary",
     now
   });
   const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "gracian-local", reason: "test governance", datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2), now });
@@ -412,7 +418,7 @@ test("V24 requires a real actor identity", () => {
     report: report("CRITICAL"), rows, datasetFingerprint: "ds-actor", runId: "run-actor", now
   });
   const result = decidePolicy({
-    proposal, decision: "APPROVE", actor: "operator", reason: "test governance",
+    proposal, decision: "APPROVE", actor: "default-actor", reason: "test governance", reason: "test governance",
     datasetFingerprint: "ds-actor", rows, now
   });
   assert.equal(result.accepted, false);
@@ -474,7 +480,7 @@ test("V24 rejects tampered proposal lineage", () => {
     reason: "tamper test", datasetFingerprint: "ds-lineage-tamper", rows, now
   });
   assert.equal(result.accepted, false);
-  assert.equal(result.reason, "PROPOSAL_FINGERPRINT_MISMATCH");
+  assert.equal(result.reason, "PROPOSAL_LINEAGE_MISMATCH");
 });
 
 test("V24 approval stores actor, rationale and complete policy lineage", () => {
