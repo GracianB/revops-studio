@@ -548,13 +548,29 @@ export async function verifyTransparencyLog(
     };
   }
 
+  let witnessVerification = null;
+  if (Array.isArray(log.witnesses) && log.witnesses.length) {
+    witnessVerification = await verifyTransparencyWitnessSet(log.witnesses, {
+      entries: log.entries,
+      minWitnesses: TRANSPARENCY_MIN_WITNESSES
+    });
+    if (!witnessVerification.valid) {
+      return {
+        valid: false,
+        reason: "TRANSPARENCY_WITNESS_CHAIN_INVALID",
+        witness: witnessVerification
+      };
+    }
+  }
+
   return {
     valid: true,
     reason: "TRANSPARENCY_LOG_VERIFIED",
     headSequence: log.entries.length,
     headEntryFingerprint: expectedHead,
     checkpoints: log.checkpoints.length,
-    latestCheckpointFingerprint: log.entries.at(-1)?.checkpoint?.checkpointFingerprint || null
+    latestCheckpointFingerprint: log.entries.at(-1)?.checkpoint?.checkpointFingerprint || null,
+    witnessVerification
   };
 }
 
