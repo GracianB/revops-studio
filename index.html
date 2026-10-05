@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="REVOPS STUDIO · V30 Trust Fabric Decision Operating System · CS × Data × AI × Systems">
+  <meta property="og:title" content="REVOPS STUDIO · V31 Trust Transparency Decision Operating System · CS × Data × AI × Systems">
   <meta property="og:description" content="Hiring Manager Mode · RevOps Studio público, Control Room, arquitectura determinista y proof técnico.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -54,7 +54,7 @@
   <link rel="stylesheet" href="./assets/css/main.css">
   <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
   <script type="module" src="./assets/js/app.js" defer></script>
-  <title>REVOPS STUDIO · V29 Trusted Root Decision Operating System · RevOps · Data · AI · Systems</title>
+  <title>REVOPS STUDIO · V31 Trust Transparency Decision Operating System · RevOps · Data · AI · Systems</title>
 </head>
 
 <body>
@@ -1045,6 +1045,46 @@
             </label>
           </div>
           <p class="form-status" id="policyTrustFabricV30Status" role="status" aria-live="polite">V30 requiere root pins externos para confianza independiente. Generar tres claves en el mismo navegador demuestra el mecanismo criptográfico, no independencia organizativa.</p>
+        </section>
+
+        <section class="feedback-panel" aria-labelledby="policy-transparency-v31-title">
+          <div class="feedback-head">
+            <div>
+              <span class="kicker">Trust Transparency · V31</span>
+              <h3 id="policy-transparency-v31-title">La confianza ya no termina en el checkpoint: ahora queda una historia verificable.</h3>
+            </div>
+            <span class="feedback-boundary">APPEND-ONLY · WITNESS · EQUIVOCATION</span>
+          </div>
+          <p>V31 encadena checkpoints V30 con secuencia, enlace al evento anterior y un head verificable. Los witnesses pueden atestiguar un checkpoint sin convertirse en una autoridad global. El sistema detecta huecos, regresiones temporales, forks y equivocation, y permite fijar el head externamente.</p>
+          <div class="feedback-metrics" aria-live="polite">
+            <div class="feedback-metric"><span>Log entries</span><strong id="policyTransparencyV31Entries">0</strong><small>secuencia TL31</small></div>
+            <div class="feedback-metric"><span>Transparency head</span><strong id="policyTransparencyV31Head">TL31-EMPTY</strong><small>head verificable</small></div>
+            <div class="feedback-metric"><span>Witnesses</span><strong id="policyTransparencyV31Witnesses">0</strong><small>atestaciones</small></div>
+          </div>
+          <div class="feedback-form">
+            <label>External transparency head pin
+              <input id="policyTransparencyV31HeadPin" type="text" placeholder="TL31-...">
+            </label>
+            <label>Minimum witnesses
+              <input id="policyTransparencyV31MinWitnesses" type="number" min="1" max="32" value="1">
+            </label>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-secondary" id="generateTransparencyWitnessV31" type="button">Generate witness</button>
+            <button class="btn btn-primary" id="anchorTrustFabricV31" type="button">Anchor V30 checkpoint</button>
+            <button class="btn btn-secondary" id="witnessTransparencyHeadV31" type="button">Witness current head</button>
+          </div>
+          <div class="feedback-actions">
+            <button class="btn btn-primary" id="verifyTransparencyV31" type="button">Verify transparency</button>
+            <button class="btn btn-secondary" id="exportTransparencyV31" type="button">Export transparency log</button>
+            <button class="btn btn-secondary" id="exportTransparencyReceiptV31" type="button">Export receipt</button>
+          </div>
+          <div class="feedback-actions">
+            <label>Import transparency log
+              <input id="importTransparencyV31" type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <p class="form-status" id="policyTransparencyV31Status" role="status" aria-live="polite">V31 es integridad y transparencia verificable. Un witness generado en el mismo navegador demuestra una firma válida, no independencia operativa.</p>
         </section>
 
         <section class="history-panel" aria-labelledby="history-title">
