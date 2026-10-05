@@ -404,7 +404,8 @@ export async function verifyTrustedPolicyEvidence(
     registry = null,
     at = null,
     rows = null,
-    expectedKeyFingerprint = null
+    expectedKeyFingerprint = null,
+    verificationAt = null
   } = {}
 ) {
   const registryResult = await verifyTrustRegistry(registry);
