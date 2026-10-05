@@ -128,7 +128,7 @@ export function buildPolicyInstanceFingerprint({
   actor = null,
   rationale = null
 } = {}) {
-  return "P25-" + stableHash(JSON.stringify({
+  return "V25P-" + stableHash(JSON.stringify({
     proposalId: proposalId || null,
     proposalFingerprint: proposalFingerprint || null,
     multiplier: round(multiplier),
