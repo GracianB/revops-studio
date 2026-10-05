@@ -135,12 +135,12 @@ test("V27 rejects a tampered signed payload", async () => {
 test("V27 rejects a payload with modified signature bytes", async () => {
   const { signed } = await signedEvidence();
   const original = signed.bundle.signature.signature;
-  const last = original.at(-1) === "A" ? "B" : "A";
+  const first = original[0] === "A" ? "B" : "A";
   const forged = {
     ...signed.bundle,
     signature: {
       ...signed.bundle.signature,
-      signature: original.slice(0, -1) + last
+      signature: first + original.slice(1)
     }
   };
   const verified = await verifyPolicyEvidenceSignature(forged);
