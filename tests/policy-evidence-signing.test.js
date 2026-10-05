@@ -80,7 +80,7 @@ test("V27 generates a portable P-256 key identity", async () => {
   const keys = await generatePolicyEvidenceKeyPair();
   assert.equal(keys.publicKeyJwk.kty, "EC");
   assert.equal(keys.publicKeyJwk.crv, "P-256");
-  assert.match(keys.keyFingerprint, /^S27-/);
+  assert.match(keys.keyFingerprint, /^K27-/);
   assert.ok(keys.privateKey);
 });
 
