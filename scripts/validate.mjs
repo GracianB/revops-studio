@@ -81,6 +81,10 @@ const requiredV18Ids = [
   "policyTrustV28NewJwk", "policyTrustV28Status", "registerTrustedSignerV28",
   "retireTrustedSignerV28", "revokeTrustedSignerV28", "rotateTrustedSignerV28",
   "verifyTrustedEvidenceV28", "exportTrustRegistryV28", "importTrustedEvidenceV28", "importTrustRegistryV28",
+  "policy-trust-root-v29-title", "policyTrustRootV29", "policyTrustRootV29Pin",
+  "policyTrustRootV29RegistryHead", "policyTrustRootV29Status", "generateTrustRootV29",
+  "signTrustRegistryV29", "verifyTrustRootV29", "verifyRootAnchoredEvidenceV29",
+  "exportTrustRootV29", "importTrustRootV29",
   "exportPolicyEvidenceV26", "importPolicyEvidenceV26",
   "approvePolicyV25", "rejectPolicyV25", "rollbackPolicyV25",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
@@ -140,7 +144,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "28.0.0") fail("package version must be 28.0.0");
+if (packageJson.version !== "29.0.0") fail("package version must be 29.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -239,12 +243,32 @@ for (const expected of [
   if (!policyTrustJs.includes(expected)) fail("missing V28 trust registry export: " + expected);
 }
 
+const trustRootJs = fs.readFileSync(path.join(root, "assets/js/policy-trust-root.js"), "utf8");
+if (!trustRootJs.includes('export const TRUST_ROOT_VERSION = "29.0";')) {
+  fail("trust root version must be 29.0");
+}
+for (const expected of [
+  "TRUST_ROOT_SCHEMA",
+  "TRUST_ROOT_ALGORITHM",
+  "buildTrustRootKeyFingerprint",
+  "generateTrustRootKeyPair",
+  "importTrustRootPrivateKey",
+  "buildTrustRegistryRootPayload",
+  "signTrustRegistrySnapshot",
+  "verifySignedTrustRegistrySnapshot",
+  "verifyTrustedPolicyEvidenceViaRoot",
+  "exportSignedTrustRegistrySnapshot",
+  "importSignedTrustRegistrySnapshot"
+]) {
+  if (!trustRootJs.includes(expected)) fail("missing V29 trust root export: " + expected);
+}
+
 
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
-  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js","assets/js/policy-evidence-signing.js","assets/js/policy-trust-registry.js",
+  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js","assets/js/policy-evidence-signing.js","assets/js/policy-trust-registry.js","assets/js/policy-trust-root.js",
   "README.md"
 ];
 
