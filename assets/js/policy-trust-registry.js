@@ -411,7 +411,17 @@ export async function verifyTrustedPolicyEvidence(
   }
 
   const current = resolveTrustedSigner(registry, fingerprint, new Date().toISOString());
-  const historical = trusted.state === TRUST_STATES.RETIRED;
+  if (current?.state === TRUST_STATES.REVOKED) {
+    return {
+      valid: false,
+      reason: "SIGNER_REVOKED",
+      keyFingerprint: fingerprint,
+      signerStateAtSigning: trusted.state,
+      signerStateNow: current.state
+    };
+  }
+
+  const historical = trusted.state === TRUST_STATES.ACTIVE && current?.state === TRUST_STATES.RETIRED;
   return {
     valid: true,
     reason: historical ? "TRUSTED_HISTORICAL_SIGNATURE" : "TRUSTED_ACTIVE_SIGNATURE",
