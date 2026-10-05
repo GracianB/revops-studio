@@ -359,7 +359,7 @@ test("V24 approval creates a stable policy instance identity", () => {
   assert.equal(a.active.replayFingerprint, proposal.replayFingerprint);
 });
 test("V24 summary exposes policy identity, base deviation and integrity state", () => {
-  const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-summary", now });
+  const proposal = buildRecalibrationProposal({ report: report("CRITICAL"), rows: biasedRows(10, 0.9, 2), datasetFingerprint: "ds-summary", runId: "run-summary", now });
   const approved = decidePolicy({ proposal, decision: "APPROVE", actor: "gracian-local", reason: "test governance", datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2), now });
   const summary = summarisePolicy({ proposal, ledger: approved.ledger, datasetFingerprint: "ds-summary", rows: biasedRows(10, 0.9, 2) });
   assert.equal(summary.activePolicyInstanceId, approved.active.policyId);
