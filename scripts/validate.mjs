@@ -23,7 +23,9 @@ const required = [
   "assets/js/policy-evidence.js",
   "tests/policy-evidence.test.js",
   "assets/js/policy-evidence-signing.js",
-  "tests/policy-evidence-signing.test.js"
+  "tests/policy-evidence-signing.test.js",
+  "assets/js/policy-trust-registry.js",
+  "tests/policy-trust-registry.test.js"
 ];
 
 const fail = (message) => {
@@ -75,6 +77,10 @@ const requiredV18Ids = [
   "calibration-v25-title", "calibrationV25Status", "calibrationV25Multiplier",
   "calibrationV25Improvement", "calibrationV25Active", "calibrationV25Reason", "calibrationV25Replay", "calibrationV25Rows", "calibrationV25Integrity", "calibrationV25PolicyId", "calibrationV25Deviation", "calibrationV25Actor", "calibrationV25SourceRun", "calibrationV25Lineage", "policyV25Actor", "policyV25Rationale", "calibrationV25Replay", "calibrationV25PolicyId", "calibrationV25Deviation",
   "calibrationV26Manifest", "calibrationV26Verification", "policyEvidenceV26Status",
+  "policy-trust-v28-title", "policyTrustV28Registry", "policyTrustV28KeyInput", "policyTrustV28State",
+  "policyTrustV28NewJwk", "policyTrustV28Status", "registerTrustedSignerV28",
+  "retireTrustedSignerV28", "revokeTrustedSignerV28", "rotateTrustedSignerV28",
+  "verifyTrustedEvidenceV28", "exportTrustRegistryV28", "importTrustedEvidenceV28", "importTrustRegistryV28",
   "exportPolicyEvidenceV26", "importPolicyEvidenceV26",
   "approvePolicyV25", "rejectPolicyV25", "rollbackPolicyV25",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
@@ -134,7 +140,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "27.0.0") fail("package version must be 27.0.0");
+if (packageJson.version !== "28.0.0") fail("package version must be 28.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -210,11 +216,35 @@ for (const expected of [
 }
 
 
+const policyTrustJs = fs.readFileSync(path.join(root, "assets/js/policy-trust-registry.js"), "utf8");
+if (!policyTrustJs.includes('export const TRUST_REGISTRY_VERSION = "28.0";')) {
+  fail("trust registry version must be 28.0");
+}
+for (const expected of [
+  "TRUST_REGISTRY_SCHEMA",
+  "TRUST_STATES",
+  "TRUST_ACTIONS",
+  "createTrustRegistry",
+  "buildTrustedSignerFingerprint",
+  "registerTrustedSigner",
+  "retireTrustedSigner",
+  "revokeTrustedSigner",
+  "rotateTrustedSigner",
+  "resolveTrustedSigner",
+  "verifyTrustRegistry",
+  "verifyTrustedPolicyEvidence",
+  "exportTrustRegistry",
+  "importTrustRegistry"
+]) {
+  if (!policyTrustJs.includes(expected)) fail("missing V28 trust registry export: " + expected);
+}
+
+
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
-  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js","assets/js/policy-evidence-signing.js",
+  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js","assets/js/policy-evidence-signing.js","assets/js/policy-trust-registry.js",
   "README.md"
 ];
 

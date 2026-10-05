@@ -70,6 +70,20 @@ import {
   verifyPolicyEvidenceSignature,
   serialiseSignedPolicyEvidenceBundle
 } from "./policy-evidence-signing.js";
+import {
+  TRUST_REGISTRY_VERSION,
+  createTrustRegistry,
+  buildTrustedSignerFingerprint,
+  resolveTrustedSigner,
+  registerTrustedSigner,
+  retireTrustedSigner,
+  revokeTrustedSigner,
+  rotateTrustedSigner,
+  verifyTrustRegistry,
+  verifyTrustedPolicyEvidence,
+  exportTrustRegistry,
+  importTrustRegistry
+} from "./policy-trust-registry.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -183,12 +197,34 @@ function writePolicyActorV25(actor = "") {
   } catch {}
 }
 
+const POLICY_TRUST_V28_STORAGE_KEY = "revops-studio:policy-trust:v28";
+
+function readPolicyTrustRegistryV28() {
+  try {
+    const value = JSON.parse(localStorage.getItem(POLICY_TRUST_V28_STORAGE_KEY) || "null");
+    return value && typeof value === "object" ? value : createTrustRegistry();
+  } catch {
+    return createTrustRegistry();
+  }
+}
+
+function writePolicyTrustRegistryV28(registry) {
+  try {
+    localStorage.setItem(POLICY_TRUST_V28_STORAGE_KEY, JSON.stringify(registry));
+  } catch {}
+}
+
 
 }
 
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+function awaitableTrustRegistrySummary(registry) {
+  if (!registry || !Array.isArray(registry.events)) return "EMPTY";
+  return (registry.headFingerprint || "T28-EMPTY") + " · " + registry.events.length + " events";
+}
 
 function track(eventName, props = {}) {
   if (typeof window.plausible === "function") window.plausible(eventName, { props });
@@ -545,6 +581,19 @@ function initPlayground() {
     v27Generate: qs("#generatePolicySignerV27"),
     v27Sign: qs("#signPolicyEvidenceV27"),
     v27Import: qs("#importPolicySignedV27"),
+    v28Registry: qs("#policyTrustV28Registry"),
+    v28Key: qs("#policyTrustV28KeyInput"),
+    v28State: qs("#policyTrustV28State"),
+    v28NewJwk: qs("#policyTrustV28NewJwk"),
+    v28Status: qs("#policyTrustV28Status"),
+    v28Register: qs("#registerTrustedSignerV28"),
+    v28Retire: qs("#retireTrustedSignerV28"),
+    v28Revoke: qs("#revokeTrustedSignerV28"),
+    v28Rotate: qs("#rotateTrustedSignerV28"),
+    v28Export: qs("#exportTrustRegistryV28"),
+    v28Import: qs("#importTrustRegistryV28"),
+    v28Verify: qs("#verifyTrustedEvidenceV28"),
+    v28EvidenceImport: qs("#importTrustedEvidenceV28"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -740,6 +789,24 @@ function initPlayground() {
       feedback.v27Status.dataset.state = policyEvidenceSignerV27 ? "ok" : "controlled";
     }
 
+    if (feedback.v28Registry) {
+      const trustState = awaitableTrustRegistrySummary(policyTrustRegistryV28);
+      feedback.v28Registry.textContent = trustState;
+    }
+    if (feedback.v28Key && lastSignedEvidenceV27?.signature?.keyFingerprint) {
+      feedback.v28Key.value = lastSignedEvidenceV27.signature.keyFingerprint;
+    }
+    if (feedback.v28State) {
+      const selectedKey = feedback.v28Key?.value || lastSignedEvidenceV27?.signature?.keyFingerprint || "";
+      const trustKey = selectedKey && selectedKey.startsWith("K28-")
+        ? selectedKey
+        : "";
+      const currentSigner = trustKey
+        ? resolveTrustedSigner(policyTrustRegistryV28, trustKey, new Date().toISOString())
+        : null;
+      feedback.v28State.textContent = currentSigner?.state || (trustKey ? "NOT TRUSTED" : "UNKNOWN");
+    }
+
     lastCalibrationReportV19 = buildCalibrationV19Report(
       forecast?.rows || [],
       feedbackOutcomes,
@@ -833,6 +900,8 @@ function initPlayground() {
   let guidedStep = 0;
   let feedbackOutcomes = [];
   let policyEvidenceSignerV27 = null;
+  let policyTrustRegistryV28 = readPolicyTrustRegistryV28();
+  let lastSignedEvidenceV27 = null;
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
   let lastCalibrationCapturedAtV20 = null;
@@ -1986,6 +2055,12 @@ function initPlayground() {
         feedback.v27Status.textContent = result.reason + qualifier;
         feedback.v27Status.dataset.state = result.valid ? "ok" : "error";
       }
+      if (result.valid) {
+        lastSignedEvidenceV27 = bundle;
+        if (feedback.v28Key) {
+          feedback.v28Key.value = await buildTrustedSignerFingerprint(bundle.signature?.publicKeyJwk);
+        }
+      }
       addAudit(auditEvent(
         result.valid ? "POLICY_V27_SIGNATURE_VERIFIED" : "POLICY_V27_SIGNATURE_REJECTED",
         { id: bundle.datasetFingerprint || "POLICY" },
@@ -1997,6 +2072,281 @@ function initPlayground() {
         feedback.v27Status.dataset.state = "error";
       }
       addAudit(auditEvent("POLICY_V27_SIGNATURE_REJECTED", { id: "POLICY" }, "invalid JSON"));
+    }
+  });
+
+  const setPolicyTrustStatusV28 = (message, ok = false) => {
+    if (!feedback.v28Status) return;
+    feedback.v28Status.textContent = message;
+    feedback.v28Status.dataset.state = ok ? "ok" : "error";
+  };
+
+  const trustGovernanceV28 = () => ({
+    actor: normaliseActor(feedback.policyActor?.value || ""),
+    rationale: normaliseRationale(feedback.policyRationale?.value || ""),
+    effectiveAt: new Date().toISOString()
+  });
+
+  feedback.v28Register?.addEventListener("click", async () => {
+    const bundleKey = lastSignedEvidenceV27?.signature?.publicKeyJwk || null;
+    if (!bundleKey) {
+      setPolicyTrustStatusV28("SIGNED_EVIDENCE_REQUIRED");
+      return;
+    }
+    const { actor, rationale, effectiveAt } = trustGovernanceV28();
+    if (!actor) {
+      setPolicyTrustStatusV28("TRUST_ACTOR_REQUIRED");
+      return;
+    }
+    if (!rationale) {
+      setPolicyTrustStatusV28("TRUST_RATIONALE_REQUIRED");
+      return;
+    }
+    try {
+      const result = await registerTrustedSigner(policyTrustRegistryV28, {
+        publicKeyJwk: bundleKey,
+        effectiveAt,
+        actor,
+        rationale,
+        createdAt: effectiveAt
+      });
+      if (!result.accepted) {
+        setPolicyTrustStatusV28(result.reason);
+        return;
+      }
+      policyTrustRegistryV28 = result.registry;
+      writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      const verification = await verifyTrustRegistry(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "ACTIVE";
+      setPolicyTrustStatusV28(
+        verification.valid
+          ? "REGISTERED · " + result.event.keyFingerprint
+          : "TRUST_REGISTRY_INVALID",
+        verification.valid
+      );
+      if (feedback.v28Key) feedback.v28Key.value = result.event.keyFingerprint;
+      addAudit(auditEvent("POLICY_V28_SIGNER_REGISTERED", { id: result.event.keyFingerprint }, result.event.eventId));
+    } catch (error) {
+      setPolicyTrustStatusV28("TRUST_REGISTER_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v28Retire?.addEventListener("click", async () => {
+    const keyFingerprint = normaliseActor(feedback.v28Key?.value || "");
+    const { actor, rationale, effectiveAt } = trustGovernanceV28();
+    if (!keyFingerprint) {
+      setPolicyTrustStatusV28("TRUST_SIGNER_REQUIRED");
+      return;
+    }
+    if (!actor) {
+      setPolicyTrustStatusV28("TRUST_ACTOR_REQUIRED");
+      return;
+    }
+    if (!rationale) {
+      setPolicyTrustStatusV28("TRUST_RATIONALE_REQUIRED");
+      return;
+    }
+    try {
+      const result = await retireTrustedSigner(policyTrustRegistryV28, {
+        keyFingerprint,
+        effectiveAt,
+        actor,
+        rationale,
+        createdAt: effectiveAt
+      });
+      if (!result.accepted) {
+        setPolicyTrustStatusV28(result.reason);
+        return;
+      }
+      policyTrustRegistryV28 = result.registry;
+      writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "RETIRED";
+      setPolicyTrustStatusV28("RETIRED · " + keyFingerprint, true);
+      addAudit(auditEvent("POLICY_V28_SIGNER_RETIRED", { id: keyFingerprint }, result.event.eventId));
+    } catch (error) {
+      setPolicyTrustStatusV28("TRUST_RETIRE_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v28Revoke?.addEventListener("click", async () => {
+    const keyFingerprint = normaliseActor(feedback.v28Key?.value || "");
+    const { actor, rationale, effectiveAt } = trustGovernanceV28();
+    if (!keyFingerprint) {
+      setPolicyTrustStatusV28("TRUST_SIGNER_REQUIRED");
+      return;
+    }
+    if (!actor) {
+      setPolicyTrustStatusV28("TRUST_ACTOR_REQUIRED");
+      return;
+    }
+    if (!rationale) {
+      setPolicyTrustStatusV28("TRUST_RATIONALE_REQUIRED");
+      return;
+    }
+    try {
+      const result = await revokeTrustedSigner(policyTrustRegistryV28, {
+        keyFingerprint,
+        effectiveAt,
+        actor,
+        rationale,
+        createdAt: effectiveAt
+      });
+      if (!result.accepted) {
+        setPolicyTrustStatusV28(result.reason);
+        return;
+      }
+      policyTrustRegistryV28 = result.registry;
+      writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "REVOKED";
+      setPolicyTrustStatusV28("REVOKED · " + keyFingerprint, true);
+      addAudit(auditEvent("POLICY_V28_SIGNER_REVOKED", { id: keyFingerprint }, result.event.eventId));
+    } catch (error) {
+      setPolicyTrustStatusV28("TRUST_REVOKE_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v28Rotate?.addEventListener("click", async () => {
+    const previousKeyFingerprint = normaliseActor(feedback.v28Key?.value || "");
+    const raw = feedback.v28NewJwk?.value?.trim() || "";
+    const { actor, rationale, effectiveAt } = trustGovernanceV28();
+    if (!previousKeyFingerprint) {
+      setPolicyTrustStatusV28("TRUST_SIGNER_REQUIRED");
+      return;
+    }
+    if (!raw) {
+      setPolicyTrustStatusV28("NEW_PUBLIC_KEY_REQUIRED");
+      return;
+    }
+    if (!actor) {
+      setPolicyTrustStatusV28("TRUST_ACTOR_REQUIRED");
+      return;
+    }
+    if (!rationale) {
+      setPolicyTrustStatusV28("TRUST_RATIONALE_REQUIRED");
+      return;
+    }
+    try {
+      const result = await rotateTrustedSigner(policyTrustRegistryV28, {
+        previousKeyFingerprint,
+        newPublicKeyJwk: JSON.parse(raw),
+        effectiveAt,
+        actor,
+        rationale,
+        createdAt: effectiveAt
+      });
+      if (!result.accepted) {
+        setPolicyTrustStatusV28(result.reason);
+        return;
+      }
+      policyTrustRegistryV28 = result.registry;
+      writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      const verification = await verifyTrustRegistry(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = verification.valid ? "ACTIVE" : "INVALID";
+      setPolicyTrustStatusV28(
+        verification.valid ? "ROTATED · " + result.event.keyFingerprint : "TRUST_REGISTRY_INVALID",
+        verification.valid
+      );
+      if (feedback.v28Key) feedback.v28Key.value = result.event.keyFingerprint;
+      addAudit(auditEvent("POLICY_V28_SIGNER_ROTATED", { id: result.event.keyFingerprint }, result.event.eventId));
+    } catch (error) {
+      setPolicyTrustStatusV28("TRUST_ROTATE_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v28Verify?.addEventListener("click", async () => {
+    if (!lastSignedEvidenceV27) {
+      setPolicyTrustStatusV28("SIGNED_EVIDENCE_REQUIRED");
+      return;
+    }
+    try {
+      const currentFingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+      const currentRows = currentFingerprint && lastSignedEvidenceV27.datasetFingerprint === currentFingerprint
+        ? buildObservedCalibrationRows(
+            buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+            feedbackOutcomes
+          )
+        : null;
+      const result = await verifyTrustedPolicyEvidence(lastSignedEvidenceV27, {
+        registry: policyTrustRegistryV28,
+        rows: currentRows
+      });
+      setPolicyTrustStatusV28(
+        result.reason + (result.keyFingerprint ? " · " + result.keyFingerprint : ""),
+        result.valid
+      );
+      if (result.valid && feedback.v28Registry) {
+        feedback.v28Registry.textContent =
+          (result.signerStateNow || "TRUSTED") + " · " +
+          (result.registryHeadFingerprint || policyTrustRegistryV28.headFingerprint);
+      }
+      if (feedback.v28State) {
+        feedback.v28State.textContent = result.signerStateNow || (result.valid ? "TRUSTED" : "REJECTED");
+      }
+      addAudit(auditEvent(
+        result.valid ? "POLICY_V28_TRUST_VERIFIED" : "POLICY_V28_TRUST_REJECTED",
+        { id: result.keyFingerprint || "POLICY" },
+        result.reason
+      ));
+    } catch (error) {
+      setPolicyTrustStatusV28("TRUST_VERIFY_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v28EvidenceImport?.addEventListener("change", async () => {
+    const file = feedback.v28EvidenceImport.files?.[0];
+    if (!file) return;
+    try {
+      lastSignedEvidenceV27 = JSON.parse(await file.text());
+      if (feedback.v28Key) feedback.v28Key.value = lastSignedEvidenceV27.signature?.keyFingerprint || "";
+      feedback.v28Verify?.click();
+    } catch (error) {
+      lastSignedEvidenceV27 = null;
+      setPolicyTrustStatusV28("SIGNED_EVIDENCE_PARSE_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v28Export?.addEventListener("click", async () => {
+    try {
+      const result = await exportTrustRegistry(policyTrustRegistryV28);
+      if (!result.valid) {
+        setPolicyTrustStatusV28(result.reason);
+        return;
+      }
+      const blob = new Blob([result.json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "revops-policy-trust-registry-v28.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setPolicyTrustStatusV28("EXPORTED · " + result.headFingerprint, true);
+    } catch (error) {
+      setPolicyTrustStatusV28("TRUST_EXPORT_ERROR · " + error.message);
+    }
+  });
+
+  feedback.v28Import?.addEventListener("change", async () => {
+    const file = feedback.v28Import.files?.[0];
+    if (!file) return;
+    try {
+      const imported = await importTrustRegistry(await file.text());
+      if (!imported.valid) {
+        setPolicyTrustStatusV28(imported.reason);
+        return;
+      }
+      policyTrustRegistryV28 = imported.registry;
+      writePolicyTrustRegistryV28(policyTrustRegistryV28);
+      if (feedback.v28State) feedback.v28State.textContent = "IMPORTED";
+      setPolicyTrustStatusV28("IMPORTED · " + policyTrustRegistryV28.headFingerprint, true);
+      if (feedback.v28Registry) {
+        feedback.v28Registry.textContent =
+          policyTrustRegistryV28.headFingerprint + " · " +
+          policyTrustRegistryV28.events.length + " events";
+      }
+    } catch (error) {
+      setPolicyTrustStatusV28("TRUST_IMPORT_ERROR · " + error.message);
     }
   });
 

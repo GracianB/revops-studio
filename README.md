@@ -224,6 +224,25 @@ Verification can run without a pinned key to prove internal cryptographic consis
 
 V27 does **not** claim enterprise identity or authentication. Anyone can create a different valid key and sign a different package. Trust comes from pinning or otherwise distributing the expected public-key fingerprint.
 
+## V28 · Trusted signer registry
+
+V28 adds a governed trust layer above the V27 cryptographic signature:
+
+`SIGNATURE → KEY FINGERPRINT → TRUST REGISTRY → TEMPORAL TRUST DECISION`
+
+The trust registry is an append-only local ledger with its own event fingerprints and head fingerprint.
+
+Supported lifecycle actions:
+
+- **REGISTER** creates an `ACTIVE` trusted signer.
+- **RETIRE** stops the signer for new evidence while preserving historical signatures created before retirement.
+- **ROTATE** retires the predecessor and activates a new signer at the declared effective time.
+- **REVOKE** is an emergency trust break. Evidence signed by that key is rejected even when the signature itself remains cryptographically valid.
+
+Trust verification evaluates the signer state **at the evidence signing time** and again at the current time. This makes routine key retirement different from emergency key revocation.
+
+The registry can be exported and re-imported only after its event fingerprints and head have been verified. The registry itself is still a local trust anchor, so moving it between machines is not equivalent to enterprise identity management. For a stronger deployment boundary, the exported registry head or approved signer fingerprints should be distributed and pinned through an external trusted channel.
+
 ## Human-in-the-loop by design
 
 RevOps Studio deliberately separates **recommendation** from **execution**.
