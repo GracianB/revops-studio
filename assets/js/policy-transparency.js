@@ -125,6 +125,7 @@ export function createTransparencyLog() {
     algorithm: TRANSPARENCY_ALGORITHM,
     entries: [],
     checkpoints: [],
+    witnesses: [],
     headSequence: 0,
     headEntryFingerprint: null
   });
