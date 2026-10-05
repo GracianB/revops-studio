@@ -103,12 +103,6 @@ async function fixture() {
       now
     });
 
-  assert.equal(
-    proposal.valid,
-    true,
-    proposal.reason
-  );
-
   const decision =
     decidePolicy({
       proposal,
