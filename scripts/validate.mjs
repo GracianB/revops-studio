@@ -172,16 +172,30 @@ for (const expected of [
 
 
 const policyJs = fs.readFileSync(path.join(root, "assets/js/policy-engine.js"), "utf8");
-if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "25.0";')) fail("policy contract must be 24.0");
+if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "25.0";')) fail("policy contract must be 25.0");
 for (const expected of ["POLICY_ABSOLUTE_MIN", "POLICY_ABSOLUTE_MAX", "buildReplayFingerprint", "buildRowsFingerprint", "verifyPolicyProposal", "buildPolicyProposalFingerprint", "buildPolicyLineageFingerprint", "buildPolicyInstanceFingerprint", "verifyPolicyLedger", "verifyActivePolicy", "replayPolicyLedger", "normaliseActor", "normaliseRationale"]) {
-  if (!policyJs.includes(expected)) fail("missing V22 policy integrity export: " + expected);
+  if (!policyJs.includes(expected)) fail("missing V25 policy integrity export: " + expected);
+}
+
+const policyEvidenceJs = fs.readFileSync(path.join(root, "assets/js/policy-evidence.js"), "utf8");
+if (!policyEvidenceJs.includes('export const POLICY_EVIDENCE_VERSION = "26.0";')) {
+  fail("policy evidence version must be 26.0");
+}
+for (const expected of [
+  "POLICY_EVIDENCE_SCHEMA",
+  "buildPolicyEvidenceManifest",
+  "buildPolicyEvidenceBundle",
+  "verifyPolicyEvidenceBundle",
+  "serialisePolicyEvidenceBundle"
+]) {
+  if (!policyEvidenceJs.includes(expected)) fail("missing V26 policy evidence export: " + expected);
 }
 
 const sourceFiles = [
   "index.html","gracias.html","assets/css/main.css","assets/js/app.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
-  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js",
+  "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js",
   "README.md"
 ];
 
