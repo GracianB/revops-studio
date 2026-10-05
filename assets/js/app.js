@@ -64,6 +64,12 @@ import {
   verifyPolicyEvidenceBundle,
   serialisePolicyEvidenceBundle
 } from "./policy-evidence.js";
+import {
+  generatePolicyEvidenceKeyPair,
+  signPolicyEvidenceBundle,
+  verifyPolicyEvidenceSignature,
+  serialiseSignedPolicyEvidenceBundle
+} from "./policy-evidence-signing.js";
 
 const STORAGE_KEY = "revops-studio:brief:v2";
 const ANALYTICS_EVENT = "Reservar";
@@ -534,6 +540,11 @@ function initPlayground() {
     v26Status: qs("#policyEvidenceV26Status"),
     v26Export: qs("#exportPolicyEvidenceV26"),
     v26Import: qs("#importPolicyEvidenceV26"),
+    v27Key: qs("#policySignatureV27Key"),
+    v27Status: qs("#policySignatureV27Status"),
+    v27Generate: qs("#generatePolicySignerV27"),
+    v27Sign: qs("#signPolicyEvidenceV27"),
+    v27Import: qs("#importPolicySignedV27"),
     v24Approve: qs("#approvePolicyV25"),
     v24Reject: qs("#rejectPolicyV25"),
     v24Rollback: qs("#rollbackPolicyV25")
@@ -719,6 +730,16 @@ function initPlayground() {
       feedback.v26Status.dataset.state = policyEvidenceV26.verification?.valid ? "ok" : "error";
     }
 
+    if (feedback.v27Key) {
+      feedback.v27Key.textContent = policyEvidenceSignerV27?.keyFingerprint || "NOT GENERATED";
+    }
+    if (feedback.v27Status) {
+      feedback.v27Status.textContent = policyEvidenceSignerV27
+        ? "SIGNER READY · " + policyEvidenceSignerV27.keyFingerprint
+        : "NO SIGNER";
+      feedback.v27Status.dataset.state = policyEvidenceSignerV27 ? "ok" : "controlled";
+    }
+
     lastCalibrationReportV19 = buildCalibrationV19Report(
       forecast?.rows || [],
       feedbackOutcomes,
@@ -811,6 +832,7 @@ function initPlayground() {
   let activeTableStage = "all";
   let guidedStep = 0;
   let feedbackOutcomes = [];
+  let policyEvidenceSignerV27 = null;
   let lastCalibrationReportV19 = null;
   let lastAdaptiveCalibrationReportV20 = null;
   let lastCalibrationCapturedAtV20 = null;
@@ -1852,6 +1874,129 @@ function initPlayground() {
         feedback.v26Status.dataset.state = "error";
       }
       addAudit(auditEvent("POLICY_V26_EVIDENCE_REJECTED", { id: "POLICY" }, "invalid JSON"));
+    }
+  });
+
+  feedback.v27Generate?.addEventListener("click", async () => {
+    try {
+      policyEvidenceSignerV27 = await generatePolicyEvidenceKeyPair();
+      if (feedback.v27Key) feedback.v27Key.textContent = policyEvidenceSignerV27.keyFingerprint;
+      if (feedback.v27Status) {
+        feedback.v27Status.textContent = "SIGNER READY · private key kept in memory only";
+        feedback.v27Status.dataset.state = "ok";
+      }
+      addAudit(auditEvent(
+        "POLICY_V27_SIGNER_GENERATED",
+        { id: policyEvidenceSignerV27.keyFingerprint },
+        "ECDSA P-256"
+      ));
+    } catch (error) {
+      if (feedback.v27Status) {
+        feedback.v27Status.textContent = "SIGNER_ERROR · " + error.message;
+        feedback.v27Status.dataset.state = "error";
+      }
+    }
+  });
+
+  feedback.v27Sign?.addEventListener("click", async () => {
+    if (!policyEvidenceSignerV27?.privateKey) {
+      if (feedback.v27Status) {
+        feedback.v27Status.textContent = "PRIVATE_SIGNER_REQUIRED · generate a signer first";
+        feedback.v27Status.dataset.state = "error";
+      }
+      return;
+    }
+    const fingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+    const rows = buildObservedCalibrationRows(
+      buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+      feedbackOutcomes
+    );
+    const bundle = buildPolicyEvidenceBundle({
+      datasetFingerprint: fingerprint,
+      proposal: lastPolicyProposalV25,
+      ledger: readPolicyLedgerV25(fingerprint),
+      rows,
+      exportedAt: new Date().toISOString()
+    });
+    if (!bundle.valid) {
+      if (feedback.v27Status) {
+        feedback.v27Status.textContent = bundle.reason;
+        feedback.v27Status.dataset.state = "error";
+      }
+      return;
+    }
+    try {
+      const signed = await signPolicyEvidenceBundle(bundle, {
+        privateKey: policyEvidenceSignerV27.privateKey,
+        publicKeyJwk: policyEvidenceSignerV27.publicKeyJwk
+      });
+      if (!signed.valid) {
+        if (feedback.v27Status) {
+          feedback.v27Status.textContent = signed.reason;
+          feedback.v27Status.dataset.state = "error";
+        }
+        return;
+      }
+      const json = serialiseSignedPolicyEvidenceBundle(signed.bundle);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "revops-policy-signed-v27-" + (fingerprint || "unknown") + ".json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      if (feedback.v27Status) {
+        feedback.v27Status.textContent = "SIGNED · " + signed.keyFingerprint;
+        feedback.v27Status.dataset.state = "ok";
+      }
+      addAudit(auditEvent(
+        "POLICY_V27_EVIDENCE_SIGNED",
+        { id: fingerprint || "POLICY" },
+        signed.keyFingerprint
+      ));
+    } catch (error) {
+      if (feedback.v27Status) {
+        feedback.v27Status.textContent = "SIGN_ERROR · " + error.message;
+        feedback.v27Status.dataset.state = "error";
+      }
+    }
+  });
+
+  feedback.v27Import?.addEventListener("change", async () => {
+    const file = feedback.v27Import.files?.[0];
+    if (!file) return;
+    try {
+      const bundle = JSON.parse(await file.text());
+      const currentFingerprint = lastWorkflowPlan?.datasetFingerprint || null;
+      const currentRows = currentFingerprint && bundle.datasetFingerprint === currentFingerprint
+        ? buildObservedCalibrationRows(
+            buildRunAnalysis(evaluated, getForecastConfig()).forecast?.rows || [],
+            feedbackOutcomes
+          )
+        : null;
+      const result = await verifyPolicyEvidenceSignature(bundle, {
+        expectedKeyFingerprint: policyEvidenceSignerV27?.keyFingerprint || null,
+        datasetFingerprint: bundle.datasetFingerprint || null,
+        rows: currentRows
+      });
+      if (feedback.v27Status) {
+        const qualifier = policyEvidenceSignerV27 ? " · PINNED KEY" : " · UNPINNED KEY";
+        feedback.v27Status.textContent = result.reason + qualifier;
+        feedback.v27Status.dataset.state = result.valid ? "ok" : "error";
+      }
+      addAudit(auditEvent(
+        result.valid ? "POLICY_V27_SIGNATURE_VERIFIED" : "POLICY_V27_SIGNATURE_REJECTED",
+        { id: bundle.datasetFingerprint || "POLICY" },
+        result.reason
+      ));
+    } catch (error) {
+      if (feedback.v27Status) {
+        feedback.v27Status.textContent = "SIGNATURE_PARSE_ERROR · " + error.message;
+        feedback.v27Status.dataset.state = "error";
+      }
+      addAudit(auditEvent("POLICY_V27_SIGNATURE_REJECTED", { id: "POLICY" }, "invalid JSON"));
     }
   });
 
