@@ -82,6 +82,11 @@ const requiredV18Ids = [
   "retireTrustedSignerV28", "revokeTrustedSignerV28", "rotateTrustedSignerV28",
   "verifyTrustedEvidenceV28", "exportTrustRegistryV28", "importTrustedEvidenceV28", "importTrustRegistryV28",
   "policy-trust-root-v29-title", "policyTrustRootV29", "policyTrustRootV29Pin",
+  "policy-trust-fabric-v30-title", "policyTrustFabricV30Quorum", "policyTrustFabricV30Roots",
+  "policyTrustFabricV30Head", "policyTrustFabricV30Threshold", "policyTrustFabricV30Pins",
+  "policyTrustFabricV30Status", "generateTrustFabricV30", "signTrustFabricV30",
+  "verifyTrustFabricV30", "verifyFabricAnchoredEvidenceV30", "exportTrustFabricV30",
+  "importTrustFabricV30",
   "policyTrustRootV29RegistryHead", "policyTrustRootV29Status", "generateTrustRootV29",
   "signTrustRegistryV29", "verifyTrustRootV29", "verifyRootAnchoredEvidenceV29",
   "exportTrustRootV29", "importTrustRootV29",
@@ -144,7 +149,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "29.0.0") fail("package version must be 29.0.0");
+if (packageJson.version !== "30.0.0") fail("package version must be 30.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -261,6 +266,27 @@ for (const expected of [
   "importSignedTrustRegistrySnapshot"
 ]) {
   if (!trustRootJs.includes(expected)) fail("missing V29 trust root export: " + expected);
+}
+
+const trustFabricJs = fs.readFileSync(path.join(root, "assets/js/policy-trust-fabric.js"), "utf8");
+if (!trustFabricJs.includes('export const TRUST_FABRIC_VERSION = "30.0";')) {
+  fail("trust fabric version must be 30.0");
+}
+for (const expected of [
+  "TRUST_FABRIC_SCHEMA",
+  "TRUST_FABRIC_ALGORITHM",
+  "generateTrustFabricKeySet",
+  "createTrustFabric",
+  "buildTrustFabricPayload",
+  "signTrustFabricCheckpoint",
+  "verifyTrustFabricCheckpoint",
+  "verifyTrustFabricCheckpointSet",
+  "verifyTrustedPolicyEvidenceViaFabric",
+  "buildTrustFabricVerificationReceipt",
+  "exportTrustFabricCheckpoint",
+  "importTrustFabricCheckpoint"
+]) {
+  if (!trustFabricJs.includes(expected)) fail("missing V30 trust fabric export: " + expected);
 }
 
 
