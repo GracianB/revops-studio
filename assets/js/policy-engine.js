@@ -1,6 +1,6 @@
 import { calculateCalibrationMetrics } from "./calibration-engine.js";
 
-export const POLICY_CONTRACT_VERSION = "21.0";
+export const POLICY_CONTRACT_VERSION = "22.0";
 
 export const POLICY_DEFAULTS = Object.freeze({
   minSamples: 8,
@@ -13,6 +13,8 @@ export const POLICY_DEFAULTS = Object.freeze({
 });
 
 export const POLICY_HARD_MAX_STEP = 0.15;
+export const POLICY_ABSOLUTE_MIN = 1 - POLICY_HARD_MAX_STEP;
+export const POLICY_ABSOLUTE_MAX = 1 + POLICY_HARD_MAX_STEP;
 
 const REVIEW_CODES = new Set([
   "CONTROLLED_RECALIBRATION",
@@ -53,6 +55,41 @@ const stableHash = (value) => {
 
   return (hash >>> 0).toString(16).padStart(8, "0");
 };
+
+export function buildReplayFingerprint(replay = null) {
+  if (!replay || typeof replay !== "object") return null;
+  const canonical = {
+    records: Number(replay.records),
+    multiplier: round(replay.multiplier),
+    currentBrier: round(replay.currentBrier),
+    candidateBrier: round(replay.candidateBrier),
+    currentCalibrationError: round(replay.current?.calibrationError),
+    candidateCalibrationError: round(replay.candidate?.calibrationError)
+  };
+  if (!Number.isFinite(canonical.records) || canonical.multiplier === null ||
+      canonical.currentBrier === null || canonical.candidateBrier === null) return null;
+  return "R22-" + stableHash(JSON.stringify(canonical));
+}
+
+export function verifyPolicyProposal(proposal = null) {
+  if (!proposal || typeof proposal !== "object") return { valid: false, reason: "MISSING_PROPOSAL" };
+  if (proposal.contractVersion !== POLICY_CONTRACT_VERSION) return { valid: false, reason: "PROPOSAL_VERSION_MISMATCH" };
+  const replay = proposal.replay;
+  const fingerprint = buildReplayFingerprint(replay);
+  if (!fingerprint || fingerprint !== proposal.replayFingerprint) return { valid: false, reason: "REPLAY_BINDING_MISMATCH" };
+  const records = Number(proposal.records);
+  if (!Number.isInteger(records) || records < 0 || records !== Number(replay.records)) return { valid: false, reason: "REPLAY_RECORDS_MISMATCH" };
+  const multiplier = Number(proposal.multiplier);
+  if (!Number.isFinite(multiplier) || multiplier < POLICY_ABSOLUTE_MIN || multiplier > POLICY_ABSOLUTE_MAX ||
+      round(multiplier) !== round(replay.multiplier)) return { valid: false, reason: "POLICY_BOUNDARY_MISMATCH" };
+  const currentBrier = Number(replay.currentBrier);
+  const candidateBrier = Number(replay.candidateBrier);
+  const expectedImprovement = round(currentBrier - candidateBrier);
+  if (!Number.isFinite(currentBrier) || !Number.isFinite(candidateBrier) ||
+      round(proposal.improvement) !== expectedImprovement) return { valid: false, reason: "REPLAY_IMPROVEMENT_MISMATCH" };
+  if (proposal.baseMultiplier !== undefined && round(proposal.baseMultiplier) !== 1) return { valid: false, reason: "BASE_POLICY_MISMATCH" };
+  return { valid: true, reason: "REPLAY_BINDING_VALID", fingerprint };
+}
 
 export function normalisePolicyConfig(config = {}) {
   const defaults = POLICY_DEFAULTS;
@@ -137,7 +174,7 @@ export function buildRecalibrationProposal({
 
   const blocked = (reason) => Object.freeze({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V21-" + stableHash(JSON.stringify({
+    proposalId: "V22-" + stableHash(JSON.stringify({
       reason,
       fingerprint,
       runId: runId || null,
@@ -155,6 +192,8 @@ export function buildRecalibrationProposal({
     bias: null,
     improvement: null,
     replay: null,
+    replayFingerprint: null,
+    baseMultiplier: 1,
     configuration: options
   });
 
@@ -168,8 +207,8 @@ export function buildRecalibrationProposal({
   if (bias === null || Math.abs(bias) < options.biasFloor) return blocked("BIAS_BELOW_FLOOR");
 
   const step = clamp(bias, -options.maxStep, options.maxStep);
-  const multiplier = clamp(1 + step, options.multiplierMin, options.multiplierMax);
-  if (multiplier === null || Math.abs(multiplier - 1) < 0.000001) return blocked("NO_ADJUSTMENT");
+  const multiplier = clamp(1 + step, POLICY_ABSOLUTE_MIN, POLICY_ABSOLUTE_MAX);
+  if (multiplier === null || multiplier < POLICY_ABSOLUTE_MIN || multiplier > POLICY_ABSOLUTE_MAX || Math.abs(multiplier - 1) < 0.000001) return blocked("NO_ADJUSTMENT");
 
   const replay = replayProbabilityPolicy(safeRows, multiplier);
   const improvement = round((replay.currentBrier ?? 0) - (replay.candidateBrier ?? 0));
@@ -177,7 +216,7 @@ export function buildRecalibrationProposal({
 
   return Object.freeze({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V21-" + stableHash(JSON.stringify({
+    proposalId: "V22-" + stableHash(JSON.stringify({
       fingerprint,
       runId: runId || null,
       generatedAt,
@@ -196,6 +235,8 @@ export function buildRecalibrationProposal({
     bias: round(bias),
     improvement,
     replay,
+    replayFingerprint: buildReplayFingerprint(replay),
+    baseMultiplier: 1,
     configuration: options
   });
 }
@@ -223,6 +264,9 @@ export function normalisePolicyLedger(ledger = []) {
       decidedAt,
       datasetFingerprint: event?.datasetFingerprint ? String(event.datasetFingerprint) : null,
       multiplier: decision === "APPROVE" ? multiplier : null,
+      policyId: event?.policyId ? String(event.policyId) : null,
+      replayFingerprint: event?.replayFingerprint ? String(event.replayFingerprint) : null,
+      baseMultiplier: numeric(event?.baseMultiplier) === null ? 1 : round(event.baseMultiplier),
       reason: String(event?.reason || "")
     });
   }).filter(Boolean);
@@ -273,7 +317,7 @@ export function decidePolicy({
   if (safeDecision === "ROLLBACK") {
     const active = activePolicy(current, fingerprint);
     if (!active) return reject("NO_ACTIVE_POLICY");
-    const decisionId = "V21D-" + stableHash(JSON.stringify({
+    const decisionId = "V22D-" + stableHash(JSON.stringify({
       decision: "ROLLBACK",
       proposalId: active.proposalId,
       decidedAt,
@@ -288,6 +332,13 @@ export function decidePolicy({
       decidedAt,
       datasetFingerprint: fingerprint,
       multiplier: null,
+      policyId: "V22P-" + stableHash(JSON.stringify({
+        rollbackOf: active.policyId || active.decisionId,
+        decidedAt,
+        actor: safeActor
+      })),
+      replayFingerprint: active.replayFingerprint || null,
+      baseMultiplier: 1,
       reason: reason || "operator rollback"
     }].slice(-POLICY_DEFAULTS.historyLimit);
     return {
@@ -303,20 +354,11 @@ export function decidePolicy({
     return reject("DATASET_MISMATCH");
   }
   if (safeDecision === "APPROVE" && !proposal.eligible) return reject("PROPOSAL_NOT_ELIGIBLE");
-  if (safeDecision === "APPROVE" && proposal.contractVersion !== POLICY_CONTRACT_VERSION) {
-    return reject("PROPOSAL_VERSION_MISMATCH");
-  }
-
   if (safeDecision === "APPROVE") {
-    const proposedMultiplier = numeric(proposal.multiplier);
-    const lowerBound = 1 - POLICY_HARD_MAX_STEP;
-    const upperBound = 1 + POLICY_HARD_MAX_STEP;
-    if (
-      proposedMultiplier === null ||
-      proposedMultiplier < lowerBound ||
-      proposedMultiplier > upperBound
-    ) {
-      return reject("PROPOSAL_STEP_EXCEEDED");
+    const verification = verifyPolicyProposal(proposal);
+    if (!verification.valid) return reject(verification.reason);
+    if (!fingerprint || fingerprint !== String(proposal.datasetFingerprint || "")) {
+      return reject("DATASET_FINGERPRINT_REQUIRED");
     }
   }
 
@@ -326,7 +368,7 @@ export function decidePolicy({
   );
   if (already) return reject("ALREADY_DECIDED");
 
-  const decisionId = "V21D-" + stableHash(JSON.stringify({
+  const decisionId = "V22D-" + stableHash(JSON.stringify({
     decision: safeDecision,
     proposalId: proposal.proposalId,
     decidedAt,
@@ -341,6 +383,17 @@ export function decidePolicy({
     decidedAt,
     datasetFingerprint: fingerprint || proposal.datasetFingerprint || null,
     multiplier: safeDecision === "APPROVE" ? proposal.multiplier : null,
+    policyId: safeDecision === "APPROVE"
+      ? "V22P-" + stableHash(JSON.stringify({
+          proposalId: proposal.proposalId,
+          multiplier: round(proposal.multiplier),
+          replayFingerprint: proposal.replayFingerprint,
+          datasetFingerprint: fingerprint,
+          decidedAt
+        }))
+      : null,
+    replayFingerprint: safeDecision === "APPROVE" ? proposal.replayFingerprint : null,
+    baseMultiplier: 1,
     reason: reason || proposal.reason || ""
   }].slice(-POLICY_DEFAULTS.historyLimit);
 
@@ -353,7 +406,7 @@ export function decidePolicy({
 }
 
 export function applyPolicyToAssumptions(assumptions = {}, policy = null) {
-  const multiplier = clamp(policy?.multiplier, POLICY_DEFAULTS.multiplierMin, POLICY_DEFAULTS.multiplierMax);
+  const multiplier = clamp(policy?.multiplier, POLICY_ABSOLUTE_MIN, POLICY_ABSOLUTE_MAX);
   const base = {
     qualified: numeric(assumptions?.qualified),
     nurture: numeric(assumptions?.nurture),
@@ -386,7 +439,11 @@ export function summarisePolicy({ proposal = null, ledger = [], datasetFingerpri
     improvement: proposal?.improvement ?? null,
     records: proposal?.records ?? 0,
     activePolicyId: active?.decisionId || null,
+    activePolicyInstanceId: active?.policyId || null,
     activeMultiplier: active?.multiplier ?? null,
+    baseDeviation: active?.multiplier === null || active?.multiplier === undefined ? null : round(Number(active.multiplier) - 1),
+    replayFingerprint: proposal?.replayFingerprint || null,
+    integrity: proposal ? verifyPolicyProposal(proposal).reason : "ABSENT",
     decisions: normalisePolicyLedger(ledger).length
   });
 }

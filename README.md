@@ -1,9 +1,9 @@
 # RevOps Studio
 
-**A deterministic Revenue Operations decision system built around data quality, explainability and human approval.**
+**A deterministic Revenue Operations decision system built around data quality, explainability, human approval and controlled policy integrity.**
 
 [![Live](https://img.shields.io/badge/LIVE-DAA428?style=for-the-badge)](https://gracianb.github.io/revops-studio/)
-[![Tests](https://img.shields.io/badge/TESTS-50%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
+[![Tests](https://img.shields.io/badge/TESTS-140%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
 [![JavaScript](https://img.shields.io/badge/JavaScript-181717?style=for-the-badge&logo=javascript)](https://github.com/GracianB/revops-studio)
 
 RevOps Studio is the public technical proof behind a broader operating idea:
@@ -118,6 +118,28 @@ V15 also adds a privacy-preserving run artifact. It contains run identity, datas
 
 A replay check can verify that an artifact belongs to the dataset currently loaded in the browser.
 ---
+
+## V22 · Policy integrity
+
+V22 extends the controlled recalibration layer with a stricter policy contract:
+
+```text
+V20 recommendation
+   ↓
+V21 proposal
+   ↓
+V22 replay binding
+   ↓
+explicit approval
+   ↓
+versioned policy instance
+   ↓
+bounded effective forecast
+```
+
+The approved policy stays within an absolute ±0.15 multiplier from the base policy. The proposal carries a deterministic replay fingerprint and approval verifies that fingerprint together with the replay record count, multiplier and Brier improvement.
+
+This is a tamper-evident consistency layer for the local browser workflow, not a cryptographic trust boundary.
 
 ## Human-in-the-loop by design
 
