@@ -57,7 +57,7 @@ const canonicalCheckpointReference = (checkpoint = null) => {
   if (!checkpoint || typeof checkpoint !== "object") return null;
   return {
     checkpointFingerprint: checkpoint.checkpointFingerprint || null,
-    fabricFingerprint: checkpoint.fabric?.fabricFingerprint || null,
+    fabricFingerprint: checkpoint.fabric?.fabricFingerprint || checkpoint.fabricFingerprint || null,
     registryHeadFingerprint: checkpoint.registryHeadFingerprint || null,
     payloadFingerprint: checkpoint.payloadFingerprint || null,
     signedAt: checkpoint.signedAt || null
