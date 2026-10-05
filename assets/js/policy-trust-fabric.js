@@ -205,6 +205,8 @@ export async function createTrustFabric({
   const fabricFingerprint = await deriveFabricFingerprint(base);
   return Object.freeze({
     ...base,
+    valid: true,
+    reason: "TRUST_FABRIC_CREATED",
     fabricFingerprint
   });
 }
