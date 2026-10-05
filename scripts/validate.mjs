@@ -68,9 +68,9 @@ const requiredV18Ids = [
   "calibrationV20Alerts", "calibrationV20Recommendations",
   "calibrationV20WindowDays", "calibrationV20MinSamples",
   "calibrationV20MinGroupSamples", "resetCalibrationV20",
-  "calibration-v22-title", "calibrationV22Status", "calibrationV22Multiplier",
-  "calibrationV22Improvement", "calibrationV22Active", "calibrationV22Reason", "calibrationV22Replay", "calibrationV22PolicyId", "calibrationV22Deviation",
-  "approvePolicyV22", "rejectPolicyV22", "rollbackPolicyV22",
+  "calibration-v23-title", "calibrationV23Status", "calibrationV23Multiplier",
+  "calibrationV23Improvement", "calibrationV23Active", "calibrationV23Reason", "calibrationV23Replay", "calibrationV23Rows", "calibrationV23Integrity", "calibrationV23PolicyId", "calibrationV23Deviation", "calibrationV23Replay", "calibrationV23PolicyId", "calibrationV23Deviation",
+  "approvePolicyV23", "rejectPolicyV23", "rollbackPolicyV23",
   "feedbackActualRevenue", "feedbackResponseHours", "recordFeedback",
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
   "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
@@ -128,7 +128,7 @@ const outcomeImport = appJs.includes('from "./outcome-engine.js"');
 if (!outcomeImport) fail("app.js outcome engine import missing");
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (packageJson.version !== "22.0.0") fail("package version must be 22.0.0");
+if (packageJson.version !== "23.0.0") fail("package version must be 23.0.0");
 const testFiles = fs.readdirSync(path.join(root, "tests"))
   .filter((file) => file.endsWith(".test.js"));
 const declaredTests = testFiles.reduce((total, file) =>
@@ -168,8 +168,8 @@ for (const expected of [
 
 
 const policyJs = fs.readFileSync(path.join(root, "assets/js/policy-engine.js"), "utf8");
-if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "22.0";')) fail("policy contract must be 22.0");
-for (const expected of ["POLICY_ABSOLUTE_MIN", "POLICY_ABSOLUTE_MAX", "buildReplayFingerprint", "verifyPolicyProposal"]) {
+if (!policyJs.includes('export const POLICY_CONTRACT_VERSION = "23.0";')) fail("policy contract must be 22.0");
+for (const expected of ["POLICY_ABSOLUTE_MIN", "POLICY_ABSOLUTE_MAX", "buildReplayFingerprint", "buildRowsFingerprint", "verifyPolicyProposal"]) {
   if (!policyJs.includes(expected)) fail("missing V22 policy integrity export: " + expected);
 }
 

@@ -1,6 +1,6 @@
 import { calculateCalibrationMetrics } from "./calibration-engine.js";
 
-export const POLICY_CONTRACT_VERSION = "22.0";
+export const POLICY_CONTRACT_VERSION = "23.0";
 
 export const POLICY_DEFAULTS = Object.freeze({
   minSamples: 8,
@@ -56,6 +56,19 @@ const stableHash = (value) => {
   return (hash >>> 0).toString(16).padStart(8, "0");
 };
 
+export function buildRowsFingerprint(rows = []) {
+  const safeRows = normaliseRows(rows);
+  if (!safeRows.length) return null;
+  const canonical = safeRows
+    .map((row) => ({
+      leadId: row.leadId,
+      probability: round(row.probability),
+      observedSuccess: Number(row.observedSuccess)
+    }))
+    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  return "D23-" + stableHash(JSON.stringify(canonical));
+}
+
 export function buildReplayFingerprint(replay = null) {
   if (!replay || typeof replay !== "object") return null;
   const canonical = {
@@ -68,27 +81,68 @@ export function buildReplayFingerprint(replay = null) {
   };
   if (!Number.isFinite(canonical.records) || canonical.multiplier === null ||
       canonical.currentBrier === null || canonical.candidateBrier === null) return null;
-  return "R22-" + stableHash(JSON.stringify(canonical));
+  return "R23-" + stableHash(JSON.stringify(canonical));
 }
 
-export function verifyPolicyProposal(proposal = null) {
+export function verifyPolicyProposal(proposal = null, { rows = null } = {}) {
   if (!proposal || typeof proposal !== "object") return { valid: false, reason: "MISSING_PROPOSAL" };
   if (proposal.contractVersion !== POLICY_CONTRACT_VERSION) return { valid: false, reason: "PROPOSAL_VERSION_MISMATCH" };
+
   const replay = proposal.replay;
   const fingerprint = buildReplayFingerprint(replay);
   if (!fingerprint || fingerprint !== proposal.replayFingerprint) return { valid: false, reason: "REPLAY_BINDING_MISMATCH" };
+
   const records = Number(proposal.records);
-  if (!Number.isInteger(records) || records < 0 || records !== Number(replay.records)) return { valid: false, reason: "REPLAY_RECORDS_MISMATCH" };
+  if (!Number.isInteger(records) || records < 0 || records !== Number(replay?.records)) {
+    return { valid: false, reason: "REPLAY_RECORDS_MISMATCH" };
+  }
+
   const multiplier = Number(proposal.multiplier);
   if (!Number.isFinite(multiplier) || multiplier < POLICY_ABSOLUTE_MIN || multiplier > POLICY_ABSOLUTE_MAX ||
-      round(multiplier) !== round(replay.multiplier)) return { valid: false, reason: "POLICY_BOUNDARY_MISMATCH" };
+      round(multiplier) !== round(replay.multiplier)) {
+    return { valid: false, reason: "POLICY_BOUNDARY_MISMATCH" };
+  }
+
   const currentBrier = Number(replay.currentBrier);
   const candidateBrier = Number(replay.candidateBrier);
   const expectedImprovement = round(currentBrier - candidateBrier);
   if (!Number.isFinite(currentBrier) || !Number.isFinite(candidateBrier) ||
-      round(proposal.improvement) !== expectedImprovement) return { valid: false, reason: "REPLAY_IMPROVEMENT_MISMATCH" };
-  if (proposal.baseMultiplier !== undefined && round(proposal.baseMultiplier) !== 1) return { valid: false, reason: "BASE_POLICY_MISMATCH" };
-  return { valid: true, reason: "REPLAY_BINDING_VALID", fingerprint };
+      round(proposal.improvement) !== expectedImprovement) {
+    return { valid: false, reason: "REPLAY_IMPROVEMENT_MISMATCH" };
+  }
+
+  if (proposal.baseMultiplier !== undefined && round(proposal.baseMultiplier) !== 1) {
+    return { valid: false, reason: "BASE_POLICY_MISMATCH" };
+  }
+
+  if (!proposal.rowsFingerprint) return { valid: false, reason: "ROWS_FINGERPRINT_MISSING" };
+  if (rows === null) return { valid: true, reason: "STRUCTURAL_ONLY", fingerprint };
+
+  const observedRowsFingerprint = buildRowsFingerprint(rows);
+  if (!observedRowsFingerprint) return { valid: false, reason: "ROWS_REQUIRED_FOR_APPROVAL" };
+  if (observedRowsFingerprint !== proposal.rowsFingerprint) {
+    return { valid: false, reason: "ROWS_FINGERPRINT_MISMATCH" };
+  }
+
+  const recomputedReplay = replayProbabilityPolicy(rows, multiplier);
+  if (recomputedReplay.records !== records) return { valid: false, reason: "REPLAY_RECORDS_MISMATCH" };
+
+  const recomputedFingerprint = buildReplayFingerprint(recomputedReplay);
+  if (recomputedFingerprint !== proposal.replayFingerprint) {
+    return { valid: false, reason: "REPLAY_ROWS_MISMATCH" };
+  }
+
+  if (round(recomputedReplay.currentBrier) !== round(currentBrier) ||
+      round(recomputedReplay.candidateBrier) !== round(candidateBrier)) {
+    return { valid: false, reason: "REPLAY_BRIER_MISMATCH" };
+  }
+
+  return {
+    valid: true,
+    reason: "REPLAY_ROWS_VERIFIED",
+    fingerprint,
+    rowsFingerprint: observedRowsFingerprint
+  };
 }
 
 export function normalisePolicyConfig(config = {}) {
@@ -171,15 +225,17 @@ export function buildRecalibrationProposal({
   const safeRows = normaliseRows(rows);
   const metrics = calculateCalibrationMetrics(safeRows);
   const fingerprint = datasetFingerprint ? String(datasetFingerprint) : null;
+  const rowsFingerprint = buildRowsFingerprint(safeRows);
 
   const blocked = (reason) => Object.freeze({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V22-" + stableHash(JSON.stringify({
+    proposalId: "V23-" + stableHash(JSON.stringify({
       reason,
       fingerprint,
       runId: runId || null,
       generatedAt,
-      records: safeRows.length
+      records: safeRows.length,
+      rowsFingerprint
     })),
     generatedAt,
     datasetFingerprint: fingerprint,
@@ -193,6 +249,7 @@ export function buildRecalibrationProposal({
     improvement: null,
     replay: null,
     replayFingerprint: null,
+    rowsFingerprint,
     baseMultiplier: 1,
     configuration: options
   });
@@ -216,13 +273,14 @@ export function buildRecalibrationProposal({
 
   return Object.freeze({
     contractVersion: POLICY_CONTRACT_VERSION,
-    proposalId: "V22-" + stableHash(JSON.stringify({
+    proposalId: "V23-" + stableHash(JSON.stringify({
       fingerprint,
       runId: runId || null,
       generatedAt,
       multiplier: round(multiplier),
       records: safeRows.length,
-      bias: round(bias)
+      bias: round(bias),
+      rowsFingerprint
     })),
     generatedAt,
     datasetFingerprint: fingerprint,
@@ -236,6 +294,7 @@ export function buildRecalibrationProposal({
     improvement,
     replay,
     replayFingerprint: buildReplayFingerprint(replay),
+    rowsFingerprint,
     baseMultiplier: 1,
     configuration: options
   });
@@ -250,11 +309,24 @@ export function normalisePolicyLedger(ledger = []) {
     const proposalId = String(event?.proposalId ?? "");
     const decidedAt = isoTime(event?.decidedAt);
     const actor = String(event?.actor ?? "").trim();
-    const multiplier = clamp(event?.multiplier, 0.05, 3);
+    const rawMultiplier = numeric(event?.multiplier);
+    const multiplier = clamp(rawMultiplier, POLICY_ABSOLUTE_MIN, POLICY_ABSOLUTE_MAX);
+    const datasetEventFingerprint = event?.datasetFingerprint ? String(event.datasetFingerprint) : null;
+    const policyId = event?.policyId ? String(event.policyId) : null;
+    const replayFingerprint = event?.replayFingerprint ? String(event.replayFingerprint) : null;
 
     if (!decisionId || !decidedAt || !actor) return null;
     if (!["APPROVE", "REJECT", "ROLLBACK"].includes(decision)) return null;
     if (decision !== "ROLLBACK" && !proposalId) return null;
+    if (
+      decision === "APPROVE" &&
+      (rawMultiplier === null ||
+       rawMultiplier < POLICY_ABSOLUTE_MIN ||
+       rawMultiplier > POLICY_ABSOLUTE_MAX ||
+       !datasetEventFingerprint ||
+       !policyId ||
+       !replayFingerprint)
+    ) return null;
 
     return Object.freeze({
       decisionId,
@@ -262,10 +334,10 @@ export function normalisePolicyLedger(ledger = []) {
       decision,
       actor,
       decidedAt,
-      datasetFingerprint: event?.datasetFingerprint ? String(event.datasetFingerprint) : null,
+      datasetFingerprint: datasetEventFingerprint,
       multiplier: decision === "APPROVE" ? multiplier : null,
-      policyId: event?.policyId ? String(event.policyId) : null,
-      replayFingerprint: event?.replayFingerprint ? String(event.replayFingerprint) : null,
+      policyId,
+      replayFingerprint,
       baseMultiplier: numeric(event?.baseMultiplier) === null ? 1 : round(event.baseMultiplier),
       reason: String(event?.reason || "")
     });
@@ -273,9 +345,8 @@ export function normalisePolicyLedger(ledger = []) {
 }
 
 export function activePolicy(ledger = [], datasetFingerprint = null) {
+  if (!datasetFingerprint) return null;
   const events = normalisePolicyLedger(ledger).filter((event) =>
-    !datasetFingerprint ||
-    !event.datasetFingerprint ||
     event.datasetFingerprint === String(datasetFingerprint)
   );
   const stack = [];
@@ -295,7 +366,8 @@ export function decidePolicy({
   actor = "",
   now = new Date().toISOString(),
   datasetFingerprint = null,
-  reason = ""
+  reason = "",
+  rows = []
 } = {}) {
   const safeDecision = String(decision || "").toUpperCase();
   const safeActor = String(actor || "").trim();
@@ -313,11 +385,14 @@ export function decidePolicy({
   if (!safeActor) return reject("MISSING_ACTOR");
   if (!decidedAt) return reject("INVALID_TIME");
   if (!["APPROVE", "REJECT", "ROLLBACK"].includes(safeDecision)) return reject("INVALID_DECISION");
+  if ((safeDecision === "APPROVE" || safeDecision === "ROLLBACK") && !fingerprint) {
+    return reject("DATASET_FINGERPRINT_REQUIRED");
+  }
 
   if (safeDecision === "ROLLBACK") {
     const active = activePolicy(current, fingerprint);
     if (!active) return reject("NO_ACTIVE_POLICY");
-    const decisionId = "V22D-" + stableHash(JSON.stringify({
+    const decisionId = "V23D-" + stableHash(JSON.stringify({
       decision: "ROLLBACK",
       proposalId: active.proposalId,
       decidedAt,
@@ -332,7 +407,7 @@ export function decidePolicy({
       decidedAt,
       datasetFingerprint: fingerprint,
       multiplier: null,
-      policyId: "V22P-" + stableHash(JSON.stringify({
+      policyId: "V23P-" + stableHash(JSON.stringify({
         rollbackOf: active.policyId || active.decisionId,
         decidedAt,
         actor: safeActor
@@ -355,7 +430,7 @@ export function decidePolicy({
   }
   if (safeDecision === "APPROVE" && !proposal.eligible) return reject("PROPOSAL_NOT_ELIGIBLE");
   if (safeDecision === "APPROVE") {
-    const verification = verifyPolicyProposal(proposal);
+    const verification = verifyPolicyProposal(proposal, { rows });
     if (!verification.valid) return reject(verification.reason);
     if (!fingerprint || fingerprint !== String(proposal.datasetFingerprint || "")) {
       return reject("DATASET_FINGERPRINT_REQUIRED");
@@ -368,7 +443,7 @@ export function decidePolicy({
   );
   if (already) return reject("ALREADY_DECIDED");
 
-  const decisionId = "V22D-" + stableHash(JSON.stringify({
+  const decisionId = "V23D-" + stableHash(JSON.stringify({
     decision: safeDecision,
     proposalId: proposal.proposalId,
     decidedAt,
@@ -384,7 +459,7 @@ export function decidePolicy({
     datasetFingerprint: fingerprint || proposal.datasetFingerprint || null,
     multiplier: safeDecision === "APPROVE" ? proposal.multiplier : null,
     policyId: safeDecision === "APPROVE"
-      ? "V22P-" + stableHash(JSON.stringify({
+      ? "V23P-" + stableHash(JSON.stringify({
           proposalId: proposal.proposalId,
           multiplier: round(proposal.multiplier),
           replayFingerprint: proposal.replayFingerprint,
@@ -427,7 +502,7 @@ export function applyPolicyToAssumptions(assumptions = {}, policy = null) {
   };
 }
 
-export function summarisePolicy({ proposal = null, ledger = [], datasetFingerprint = null } = {}) {
+export function summarisePolicy({ proposal = null, ledger = [], datasetFingerprint = null, rows = null } = {}) {
   const active = activePolicy(ledger, datasetFingerprint);
   return Object.freeze({
     contractVersion: POLICY_CONTRACT_VERSION,
@@ -443,7 +518,8 @@ export function summarisePolicy({ proposal = null, ledger = [], datasetFingerpri
     activeMultiplier: active?.multiplier ?? null,
     baseDeviation: active?.multiplier === null || active?.multiplier === undefined ? null : round(Number(active.multiplier) - 1),
     replayFingerprint: proposal?.replayFingerprint || null,
-    integrity: proposal ? verifyPolicyProposal(proposal).reason : "ABSENT",
+    integrity: proposal ? verifyPolicyProposal(proposal, { rows }).reason : "ABSENT",
+    rowsFingerprint: proposal?.rowsFingerprint || null,
     decisions: normalisePolicyLedger(ledger).length
   });
 }
