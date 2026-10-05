@@ -2057,7 +2057,9 @@ function initPlayground() {
       }
       if (result.valid) {
         lastSignedEvidenceV27 = bundle;
-        if (feedback.v28Key) feedback.v28Key.value = bundle.signature?.keyFingerprint || "";
+        if (feedback.v28Key) {
+          feedback.v28Key.value = await buildTrustedSignerFingerprint(bundle.signature?.publicKeyJwk);
+        }
       }
       addAudit(auditEvent(
         result.valid ? "POLICY_V27_SIGNATURE_VERIFIED" : "POLICY_V27_SIGNATURE_REJECTED",
