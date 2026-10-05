@@ -79,17 +79,32 @@ A V40 release can only be CERTIFIED when all required gates and all required com
 
 The repository exposes npm run release:check.
 
-The gate verifies:
+The release gate does not merely set the validation and verification flags in the certificate. Before certification it executes the repository's real pre-release verification script, which runs the regression tests, validator and JavaScript syntax checks.
+
+The gate then verifies:
 
 1. required release files exist;
 2. package version is exactly 40.0.0;
 3. V25–V40 component versions match the release contract;
 4. release lineage is valid;
 5. at least 300 deterministic tests exist;
-6. git diff --check passes;
-7. source fingerprints are captured;
-8. a V40 release certificate can be built;
-9. the generated certificate can verify itself.
+6. the real pre-release verification completes successfully;
+7. git diff --check passes;
+8. source fingerprints are captured;
+9. a V40 release certificate can be built;
+10. the generated certificate can verify itself.
+
+The public verify command remains composable:
+
+npm run verify:pre-release
+
+runs the tests, validator and syntax checks.
+
+npm run verify
+
+runs the pre-release verification and then the definitive release certificate gate.
+
+The separation prevents recursive execution of the release gate while ensuring the certificate cannot claim gates that were never executed.
 
 ## Security boundary
 
