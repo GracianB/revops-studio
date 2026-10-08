@@ -43,10 +43,16 @@
         <p id="scenarioDescription" class="workbench-instructions">Valida pedidos, evita duplicados y aparta excepciones.</p>
         <label class="workbench-editor-label" for="workflowSource">Datos delimitados por punto y coma o coma</label>
         <textarea id="workflowSource" spellcheck="false" rows="10" aria-describedby="sourceHelp" maxlength="12000"></textarea>
-        <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador.</p>
+        <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador. Puedes editar un registro desde la tabla sin reescribir el CSV.</p>
+        <div class="workbench-import">
+          <label for="importWorkflow" class="workbench-import-label">Importar un CSV del equipo (local)</label>
+          <input id="importWorkflow" type="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="importHelp">
+          <p class="workbench-hint" id="importHelp">Se lee en esta pestaña, no se sube. Solo para datos de prueba o anonimizados. Cabeceras según el escenario seleccionado.</p>
+        </div>
         <div class="workbench-editor-actions">
           <button class="btn btn-primary" type="button" id="runWorkflow">Ejecutar proceso <span aria-hidden="true">↗</span></button>
           <button class="btn btn-secondary" type="button" id="resetWorkflow">Restaurar ejemplo</button>
+          <button class="btn btn-secondary" type="button" id="undoCorrection" disabled>Deshacer corrección</button>
         </div>
         <p id="workflowError" class="workbench-error" role="alert" hidden></p>
       </section>
@@ -68,12 +74,26 @@
         <div class="workbench-output-actions">
           <button class="btn btn-secondary" type="button" id="exportWorkflow" disabled>Exportar CSV ↗</button>
           <button class="btn btn-secondary" type="button" id="copyWorkflow" disabled>Copiar resumen</button>
+          <button class="btn btn-secondary" type="button" id="exportActionQueue" disabled>Exportar cola lista (sin históricos)</button>
         </div>
       </section>
     </div>
     <section class="workbench-rows" aria-labelledby="workbench-table-title">
-      <div class="workbench-section-head"><div><span class="workbench-section-index">04 / AUDITORÍA DE REGISTROS</span><h2 id="workbench-table-title">Cada decisión tiene un motivo.</h2></div><p>La cola de salida nunca se ejecuta sobre sistemas externos. Puedes detectar y corregir incidencias editando el CSV.</p></div>
-      <div class="workbench-table-scroll"><table class="workbench-table"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th></tr></thead><tbody id="workflowRows"><tr><td colspan="4">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
+      <div class="workbench-section-head"><div><span class="workbench-section-index">04 / AUDITORÍA DE REGISTROS</span><h2 id="workbench-table-title">Cada decisión tiene un motivo.</h2></div><p>Filtra errores, corrige cada registro directamente, compara los resultados y exporta solo las acciones preparadas. Ninguna se ejecuta en sistemas externos.</p></div>
+      <div class="workbench-review-toolbar" role="group" aria-label="Filtrar registros según el resultado">
+        <button type="button" class="workbench-filter is-active" data-workflow-filter="all" aria-pressed="true">Todos</button>
+        <button type="button" class="workbench-filter" data-workflow-filter="bloqueado" aria-pressed="false">Bloqueados</button>
+        <button type="button" class="workbench-filter" data-workflow-filter="revisar" aria-pressed="false">A revisar</button>
+        <button type="button" class="workbench-filter" data-workflow-filter="listo" aria-pressed="false">Listos</button>
+      </div>
+      <p class="workbench-filter-status" id="workflowFilterStatus" role="status" aria-live="polite">Elige un escenario para ver los registros.</p>
+      <div class="workbench-table-scroll"><table class="workbench-table"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th><th scope="col">Corregir</th></tr></thead><tbody id="workflowRows"><tr><td colspan="5">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
+      <form id="workflowEditForm" class="workbench-edit" hidden aria-labelledby="workbench-edit-title">
+        <div class="workbench-edit-heading"><div><span class="workbench-section-index">CORRECCIÓN LOCAL · SIN ENVÍOS</span><h3 id="workbench-edit-title">Corregir registro</h3><p id="workflowEditHint">Los cambios solo afectan a los datos de esta pestaña. Se vuelve a ejecutar todo el proceso.</p></div><button type="button" class="workbench-edit-close" id="cancelWorkflowEdit">Cerrar ×</button></div>
+        <div class="workbench-edit-grid" id="workflowEditFields"></div>
+        <div class="workbench-editor-actions"><button type="submit" class="btn btn-primary" id="saveWorkflowEdit">Guardar y volver a procesar</button><button type="button" class="btn btn-secondary" id="cancelWorkflowEditSecondary">Cancelar</button></div>
+        <p class="workbench-edit-status" id="workflowEditStatus" role="status" aria-live="polite"></p>
+      </form>
     </section>
     <aside class="workbench-next" aria-labelledby="workbench-next-title"><div><span class="workbench-section-index">05 / DE LA DEMO A TU PROCESO</span><h2 id="workbench-next-title">¿Y con tus herramientas reales?</h2><p>El siguiente paso sería analizar permisos, reglas, excepciones y un caso real, no conectar un CRM a ciegas. Llévate un resumen de esta simulación a tu consulta, sin enviar los registros.</p></div><a class="btn btn-primary" id="demoContact" href="./#contacto">Consultar un proceso parecido ↗</a></aside>
     <p class="workbench-privacy">Diseñado como demostración local, determinista y sin dependencias de IA. Los resultados no garantizan ahorros, no son datos de empresas y no constituyen un sistema de producción.</p>
