@@ -304,6 +304,12 @@ try {
   await tablet.locator("#menuBtn").click();
   assert.equal(await tablet.locator("#menuBtn").getAttribute("aria-expanded"),"true");
   await tablet.setViewportSize({width:1024,height:850});
+  // matchMedia("change") is dispatched asynchronously: wait for the real UI state.
+  await tablet.waitForFunction(() => {
+    const button=document.querySelector("#menuBtn");
+    return button?.getAttribute("aria-expanded")==="false" &&
+      !document.body.classList.contains("menu-open");
+  },null,{timeout:5000});
   assert.equal(await tablet.locator("#menuBtn").getAttribute("aria-expanded"),"false");
   assert.equal(await tablet.evaluate(()=>document.body.classList.contains("menu-open")),false);
   await tablet.close();
