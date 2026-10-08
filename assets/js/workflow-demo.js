@@ -236,6 +236,7 @@ $("workflowSource").addEventListener("input",()=>{
   renderEmpty();
 });
 $("runWorkflow").addEventListener("click",()=>{
+  closeColumnMapper();
   try{
     const result=runWorkflow(scenario,$("workflowSource").value);
     errorText("");
@@ -347,6 +348,7 @@ $("importWorkflow").addEventListener("change",async event=>{
   if(!file)return;
   const selectedScenario=scenario;
   const previous=$("workflowSource").value;
+  closeColumnMapper();
   try{
     if(!/\.(csv|txt)$/i.test(file.name))throw Error("Selecciona un archivo CSV o TXT.");
     if(file.size>32000)throw Error("Archivo demasiado grande. Límite de 32 KB.");
