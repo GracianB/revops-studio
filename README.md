@@ -1,4 +1,4 @@
-## RevOps Studio · Web comercial V45 (motor técnico V40)
+## RevOps Studio · Web comercial V46 (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
 
@@ -40,6 +40,16 @@ Las tres tarjetas ofrecen una vía `Tengo un problema parecido` hacia el formula
 - `node scripts/build-commercial-css.mjs` regenera el fichero desde `main.css`; `npm run css:check` impide publicar si la versión derivada está desincronizada. `npm run verify` incluye ese control.
 - El script externo opcional de analítica utiliza `async` y `fetchpriority="low"`, sin bloquear `DOMContentLoaded` como un script diferido. La recepción de contactos y el motor técnico no cambian.
 - El smoke de Chrome y Firefox compara estilo computado y dimensiones de la hoja antigua versus la nueva en portada de escritorio/móvil, página de privacidad y confirmación, modos claro/oscuro. El test de Node impone presupuestos de 55 KB para CSS comercial y 18,5 KB para JavaScript comercial. Los presupuestos son de *payload local sin comprimir*, no métricas de red del visitante.
+
+### V46 · Presupuestos de carga simulada
+
+El CI mide la portada en **Chrome real con caché deshabilitada y red/CPU simuladas**, servida desde un HTTP local reproducible. Se prueban 1366 px con perfil 4G (100 ms de latencia, ~1,68 Mbit/s) y 390 px con perfil 3G (250 ms, ~0,76 Mbit/s, CPU ×4). Recursos externos como la analítica se sustituyen en la prueba para aislar exclusivamente los activos propios; no se envían correos ni se contactan servicios de terceros.
+
+- **Presupuesto duro:** como máximo 130 000 bytes de transferencia *first-party* y 9 solicitudes, sin el CSS del laboratorio, `app.js` ni `laboratorio.html` en la portada. Se comprueba el HTML, hoja comercial, tema, `site.js` y su módulo de respuesta.
+- **Renderizado:** medición de First Contentful Paint (FCP), Largest Contentful Paint (LCP, cuando el navegador lo proporciona) y Cumulative Layout Shift (CLS). Los umbrales son conservadores para reducir ruido del runner y detectar regresiones severas, no reflejan una certificación Core Web Vitals para visitantes.
+- **Informe:** `scripts/performance-budget.mjs` crea `.ci-artifacts/performance-v46.json`. El workflow de validación lo adjunta como artefacto descargable durante 30 días, con bytes, solicitudes, perfiles y valores capturados.
+- **Reproducción:** `npm run perf:check` después de instalar `playwright-core@1.58.2` y tener Chrome disponible. `npm run verify` conserva las pruebas de unidad, el chequeo CSS y el motor V40.
+- **Límite de evidencia:** la simulación mide una página servida localmente, sin CDN externo, latencia de Internet real, ni condiciones de hardware auténticas. Para comparar el rendimiento experimentado por usuarios reales hacen falta métricas de campo como CrUX / RUM.
 
 ### Diseño y QA
 - Tema claro y oscuro con preferencia del sistema, botón accesible y persistencia opcional.
