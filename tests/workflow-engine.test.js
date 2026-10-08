@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { SCENARIOS,parseDelimited,runWorkflow,exportResultCsv } from "../assets/js/workflow-engine.js";
+import { SCENARIOS,parseDelimited,runWorkflow,exportResultCsv,editWorkflowRecord,exportActionQueueCsv } from "../assets/js/workflow-engine.js";
 
 test("all three real demo workflows process their examples with human exceptions",()=>{
   const counts={
@@ -80,4 +80,57 @@ test("exported results contain reasons, quote-safe CSV and prevent spreadsheet f
   assert.match(output,/"'=HYPERLINK\(""bad""\)"/);
   assert.match(output,/revisar/);
   assert.throws(()=>exportResultCsv(null),/Ejecuta/);
+});
+
+
+test("inline corrections repair duplicate IDs and rerun the complete workflow",()=>{
+  const input=SCENARIOS.orders.sample;
+  const original=runWorkflow("orders",input);
+  assert.equal(original.counts.bloqueado,2);
+  // Fourth physical record is a duplicated order.
+  const edited=editWorkflowRecord("orders",input,2,{pedido:"PED-999"});
+  const result=runWorkflow("orders",edited);
+  assert.deepEqual(result.counts,{total:6,listo:4,revisar:1,bloqueado:1});
+  assert.equal(result.rows[2].values.pedido,"PED-999");
+  assert.equal(runWorkflow("orders",input).counts.bloqueado,2,"original text remains immutable");
+});
+
+test("inline correction serializes quoted delimiters and records safely",()=>{
+  const source="ticket;asunto;prioridad;estado\nT-1;Original;alta;abierto";
+  const fixed=editWorkflowRecord("support",source,0,{asunto:'Información; "urgente", revisar'});
+  const r=runWorkflow("support",fixed);
+  assert.equal(r.rows[0].values.asunto,'Información; "urgente", revisar');
+  assert.equal(r.counts.revisar,1);
+  assert.match(fixed,/""urgente""/);
+});
+
+test("an inline correction cannot change unknown fields, invalid rows or exceed size bounds",()=>{
+  const input=SCENARIOS.data.sample;
+  assert.throws(()=>editWorkflowRecord("data",input,-1,{fuente:"ok"}),/fila existente/);
+  assert.throws(()=>editWorkflowRecord("data",input,99,{fuente:"ok"}),/fila existente/);
+  assert.throws(()=>editWorkflowRecord("data",input,0,{__protoHack:"x"}),/Campo no permitido/);
+  assert.throws(()=>editWorkflowRecord("data",input,0,{fuente:"a".repeat(401)}),/400 caracteres/);
+  assert.throws(()=>editWorkflowRecord("data",input,0,{fuente:12}),/400 caracteres/);
+  assert.throws(()=>editWorkflowRecord("data",input,0,null),/Corrección no válida/);
+});
+
+test("the prepared queue excludes historical items and unsafe states without running actions",()=>{
+  const orders=runWorkflow("orders",SCENARIOS.orders.sample);
+  const output=exportActionQueueCsv(orders);
+  const parsed=parseDelimited(output);
+  assert.equal(parsed.rows.length,2,"two new orders, not three ready statuses");
+  assert.ok(parsed.rows.every(row=>row.estado==="Preparado, NO ejecutado"));
+  assert.ok(parsed.rows.every(row=>row.pedido!=="PED-105"),"closed historical order excluded");
+  assert.ok(parsed.rows.every(row=>row.pedido!=="PED-103"),"blocked order excluded");
+  assert.ok(parsed.rows.every(row=>row.pedido!=="PED-104"),"human review order excluded");
+  const support=parseDelimited(exportActionQueueCsv(runWorkflow("support",SCENARIOS.support.sample)));
+  assert.equal(support.rows.length,2);
+  assert.ok(!support.rows.some(row=>row.ticket==="TK-204"));
+  assert.throws(()=>exportActionQueueCsv(null),/Ejecuta el proceso primero/);
+});
+
+test("the actionable queue remains CSV-formula-safe for spreadsheet consumers",()=>{
+  const input='pedido;cliente;email;total;estado\nQ-1;"=HYPERLINK(""danger"")";test@example.test;11;nuevo';
+  const csv=exportActionQueueCsv(runWorkflow("orders",input));
+  assert.match(csv,/"'=HYPERLINK\(""danger""\)"/);
 });
