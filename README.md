@@ -94,6 +94,19 @@ La documentación de alcance [190 mejoras verificables](docs/PRODUCTO-190-MEJORA
 
 No se añade sincronización, persistencia ni ejecución real en CRM. Estas medidas no garantizan que un CSV sea seguro en todas las aplicaciones.
 
+### Primera visita · recorrido guiado para clientes no técnicos
+
+El inicio de `demo.html` ya no obliga a entender archivos CSV, «cola de salida» o reglas de validación. Quien llega desde la portada sin parámetros entra en **modo sencillo**, con un recorrido real de cuatro pasos:
+
+1. Elegir un problema cotidiano («pedidos duplicados», «incidencias acumuladas» o «datos que no cuadran») en vez de una categoría técnica.
+2. Ver un resumen con contadores calculados por el motor real, distinguiendo bloqueos, revisión humana y acciones preparadas.
+3. Pulsar «Quiero corregir uno»: se abre directamente la fila problemática, marca el campo conflictivo y da instrucciones en lenguaje de negocio.
+4. Ver cómo han cambiado los contadores al guardar y descargar un informe agregado, sin IDs, correos ni filas. Si desea contratar, puede llevar solo el resumen al formulario, sin envío automático.
+
+**Modo avanzado siempre disponible:** botón visible para revelar toda la mesa original con 18 ejemplos, importaciones, mapeo de columnas, filtros, informes y exportaciones. El cambio de vista preserva la simulación. Las URL `?scenario=orders|support|data` continúan abriendo el modo completo para no romper enlaces existentes. `?scenario=orders&view=simple` abre la vista sencilla.
+
+Esta es una mejora fundada en un **caso de uso hipotético** y verificada con pruebas de navegador, no un estudio de usabilidad externo. Véase el [caso de uso completo](docs/CASO-USO-PRIMERA-VISITA.md), con puntos de abandono, solución y criterios de aceptación. Se inspira en [Nielsen Norman Group, Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/) y el [patrón de inicio de GOV.UK](https://design-system.service.gov.uk/patterns/start-using-a-service/).
+
 ### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
