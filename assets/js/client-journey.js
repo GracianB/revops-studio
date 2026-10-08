@@ -132,7 +132,7 @@ export function createClientJourney({mode,onMode,onChoose,onFix,onDownload,onCon
   document.querySelectorAll("[data-client-problem]").forEach(button=>button.addEventListener("click",()=>{
     const next=button.dataset.clientProblem;
     const didChange=onChoose(next);
-    if(didChange)setScenario(next,null);
+    if(didChange)transition("problem",false);
   }));
   primary.addEventListener("click",()=>{
     if(stage==="problem"){transition("result");return;}
