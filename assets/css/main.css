@@ -1643,3 +1643,35 @@ body{background:radial-gradient(ellipse 620px 460px at 78% 0%,rgba(222,109,101,.
 .case-context button{margin-top:9px;border:0;padding:3px 0;background:transparent;color:var(--accent);font-size:12px;font-weight:750;cursor:pointer}
 @media(max-width:700px){.study-decisions summary{min-height:50px}.study-discuss{min-height:50px}}
 @media(prefers-reduced-motion:reduce){.study-decisions summary span{transition:none!important}}
+
+
+/* V44 · Commercial UI stability, compact-screen rhythm and genuine filtering. */
+.service-card[hidden]{display:none!important}
+.filter-status{margin:5px 0 17px;color:var(--muted);font:650 12px/1.5 var(--mono)}
+.service-toolbar{margin-bottom:8px}
+.filter-btn{min-height:44px}
+.filter-btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.mobile-nav.is-open{max-height:calc(100dvh - 82px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+:where(#problemas,#servicios,#oferta,#casos,#proceso,#preguntas,#contacto,#quien,#playground){scroll-margin-top:88px}
+@media(min-width:701px) and (max-width:1050px){
+  .case-studies .study-card:first-child{grid-column:1/-1}
+  .case-studies .study-card:first-child .case-visual{min-height:140px}
+}
+@media(max-width:700px){
+  .notice-inner{overflow:visible;white-space:normal;min-height:46px;padding-block:8px;gap:7px 12px}
+  .notice-inner a{overflow-wrap:anywhere}
+  .hero-v41 .hero-actions{display:grid;grid-template-columns:1fr;gap:10px}
+  .hero-v41 .hero-actions .btn{width:100%;min-height:48px}
+  .case-studies .study-card:first-child{grid-column:auto}
+  .study-card{gap:0}
+  .service-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .filter-btn{min-height:44px}
+  .contact-link strong{overflow-wrap:anywhere}
+  .case-visual>div{gap:7px}
+}
+@media(max-width:430px){
+  .mobile-nav{grid-template-columns:1fr 1fr}
+  .study-card h3{font-size:clamp(22px,6vw,26px);line-height:1.15}
+  .study-card .study-proof p{font-size:12px}
+  .case-credibility{padding:18px}
+}
