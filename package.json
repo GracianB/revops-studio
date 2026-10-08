@@ -10,6 +10,7 @@
     "verify": "npm run verify:pre-release && npm run release:check",
     "release:check": "node scripts/release-gate-v40.mjs",
     "css:build": "node scripts/build-commercial-css.mjs",
-    "css:check": "node scripts/build-commercial-css.mjs --check"
+    "css:check": "node scripts/build-commercial-css.mjs --check",
+    "perf:check": "node scripts/performance-budget.mjs"
   }
 }
