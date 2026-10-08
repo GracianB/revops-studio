@@ -1,6 +1,7 @@
 import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActionQueueCsv } from "./workflow-engine.js";
 import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
 import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
+import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} from "./workflow-product-kit.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -9,7 +10,7 @@ const allowed=Object.keys(SCENARIOS);
 const query=new URLSearchParams(location.search).get("scenario");
 let scenario=allowed.includes(query)?query:"orders";
 let latest=null;
-let activeFilter="all",editIndex=null,undoSource=null;
+let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let mappingSource=null,mappingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
 function errorText(message){
@@ -17,6 +18,7 @@ function errorText(message){
   if(!element)return;
   element.hidden=!message;
   element.textContent=message||"";
+  if(message)element.focus();
 }
 function invalidate(message){
   latest=null;
@@ -138,8 +140,11 @@ function chooseScenario(next){
   $("workflowSource").value=data.sample;
   $("importWorkflow").value="";
   closeColumnMapper();
-  undoSource=null;
-  $("undoCorrection").disabled=true;
+  undoSource=null;redoSource=null;
+  $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
+  $("workflowSort").value="source";
+  $("workflowRecipe").value="original";
+  setText("recipeHint",RECIPE_LABELS.original.description);
   activeFilter="all";
   $("workflowSearch").value="";
   syncFilterButtons();
@@ -219,6 +224,59 @@ function firstBlocked(){
   applyFilter();
   openEditor(index);
 }
+function renderQuality(){
+  if(!latest)return;
+  try{
+    const snapshot=qualitySnapshot(scenario,$("workflowSource").value);
+    setText("qualityCompleteness",snapshot.completeness+" %");
+    const target=$("qualityFields"),frag=document.createDocumentFragment();
+    for(const [name,count] of Object.entries(snapshot.blanks)){
+      const item=document.createElement("span");
+      item.className="workbench-quality-field"+(count?" has-gaps":"");
+      item.textContent=name+": "+(count?count+" sin dato":"completo");
+      frag.append(item);
+    }
+    target.replaceChildren(frag);
+  }catch{
+    setText("qualityCompleteness","—");
+    $("qualityFields").replaceChildren();
+  }
+}
+function sortResults(){
+  if(!latest)return;
+  const parent=$("workflowRows");
+  const originals=new Map([...parent.querySelectorAll(".workbench-row")].map(tr=>[Number(tr.dataset.editIndex),tr]));
+  for(const item of orderRows(latest,$("workflowSort").value)){
+    const node=originals.get(item.sourceIndex);
+    if(node)parent.append(node);
+  }
+}
+function downloadWorkflowExample(){
+  const csv=recipe(scenario,"clear").split("\n").slice(0,2).join("\n")+"\n";
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const uri=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=uri;a.download="revops-plantilla-"+scenario+".csv";
+  document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(uri),1000);
+  setText("recipeHint","Plantilla descargada con una fila ficticia y cabeceras correctas.");
+}
+function loadWorkflowExample(){
+  try{
+    const name=$("workflowRecipe").value,txt=recipe(scenario,name);
+    const parsed=runWorkflow(scenario,txt);
+    $("workflowSource").value=txt;
+    undoSource=null;redoSource=null;
+    $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
+    closeColumnMapper();errorText("");
+    activeFilter="all";syncFilterButtons();
+    $("workflowSort").value="source";$("workflowSearch").value="";
+    render(parsed);
+    $("changeComparison").hidden=true;
+    setText("workflowStatus","Ejemplo «"+RECIPE_LABELS[name].label+"» procesado. Puedes editar sus filas.");
+    $("lectura-resultados").scrollIntoView({behavior:"instant",block:"start"});
+  }catch(error){errorText(error?.message||"No se pudo cargar el ejemplo.");}
+}
 function renderEmpty(){
   for(const id of ["countTotal","countReady","countReview","countBlocked"])setText(id,"0");
   const rows=$("workflowRows");
@@ -227,6 +285,8 @@ function renderEmpty(){
   td.colSpan=5;td.textContent="Ejecuta el proceso para ver el detalle de cada registro.";
   setText("workflowFilterStatus","Ejecuta un escenario para filtrar y corregir los registros.");
   $("workflowNoResults").hidden=true;
+  $("qualityFields").replaceChildren();
+  setText("qualityCompleteness","0 %");
   $("fixFirstIssue").disabled=true;
   $("quickDemoAction").disabled=true;
   tr.append(td);rows.append(tr);
@@ -272,6 +332,7 @@ function render(result){
     cell(tr,row.action);
     tr.className="workbench-row";
     tr.dataset.status=row.status;
+    tr.dataset.editIndex=String(index);
     tr.dataset.search=normalizeSearch([row.id,row.reason,row.action].join(" "));
     const edit=cell(tr,"");
     const trigger=document.createElement("button");
@@ -284,6 +345,8 @@ function render(result){
     frag.append(tr);
   }
   body.replaceChildren(frag);
+  sortResults();
+  renderQuality();
   renderInsights(result);
   applyFilter();
   setText("workflowStatus",result.counts.total+" registros analizados. "+result.counts.listo+" listos, "+
@@ -337,8 +400,8 @@ async function copySummary(){
 $("workflowSource").addEventListener("input",()=>{
   errorText("");
   closeColumnMapper();
-  undoSource=null;
-  $("undoCorrection").disabled=true;
+  undoSource=null;redoSource=null;
+  $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
   invalidate("Has modificado las entradas. Ejecuta el proceso para actualizar los resultados.");
   renderEmpty();
 });
@@ -370,6 +433,13 @@ function syncFilterButtons(){
 }
 function applyFilter(){
   const all=latest?.rows.length||0;
+  const counts=latest?.counts;
+  const labels={all:"Todos",bloqueado:"Bloqueados",revisar:"A revisar",listo:"Listos"};
+  for(const button of document.querySelectorAll("[data-workflow-filter]")){
+    const status=button.dataset.workflowFilter;
+    const number=status==="all"?all:(counts?.[status]||0);
+    button.textContent=labels[status]+" ("+number+")";
+  }
   const search=normalizeSearch($("workflowSearch").value);
   let visible=0;
   $("workflowRows").querySelectorAll(".workbench-row").forEach(tr=>{
@@ -387,6 +457,7 @@ function applyFilter(){
 function openEditor(index){
   if(!latest?.rows[index])return;
   const row=latest.rows[index];
+  const affected=issueColumn(scenario,row);
   editIndex=index;
   const parent=$("workflowEditFields");
   parent.replaceChildren();
@@ -395,7 +466,8 @@ function openEditor(index){
     wrap.className="workbench-edit-field";
     const label=document.createElement("label");
     label.htmlFor="editField-"+column;
-    label.textContent=column;
+    const guide=fieldGuide(scenario,column);
+    label.textContent=guide.label;
     const input=document.createElement("input");
     input.id=label.htmlFor;
     input.name=column;
@@ -403,14 +475,38 @@ function openEditor(index){
     input.required=false;
     input.maxLength=400;
     input.value=row.values[column]||"";
-    wrap.append(label,input);
+    input.placeholder=guide.example;
+    const hint=document.createElement("small");
+    hint.id="help-"+column;
+    hint.className="workbench-field-guide";
+    hint.textContent=guide.help;
+    input.setAttribute("aria-describedby",hint.id);
+    if(affected===column){
+      wrap.classList.add("is-problem");
+      input.setAttribute("aria-invalid","true");
+      const msg=document.createElement("strong");
+      msg.className="workbench-field-problem";
+      msg.textContent="Revisar: "+row.reason;
+      wrap.append(msg);
+    }
+    if(guide.options){
+      const suggestions=document.createElement("datalist");
+      suggestions.id="options-"+column;
+      input.setAttribute("list",suggestions.id);
+      for(const value of guide.options){
+        const option=document.createElement("option");
+        option.value=value;suggestions.append(option);
+      }
+      wrap.append(suggestions);
+    }
+    wrap.append(label,input,hint);
     parent.append(wrap);
   }
   setText("workbench-edit-title","Corregir registro "+row.id);
   setText("workflowEditHint",row.reason+". Revisa los valores y guarda para volver a procesar todas las filas.");
   $("workflowEditForm").hidden=false;
   $("workflowEditForm").scrollIntoView({behavior:"instant",block:"center"});
-  parent.querySelector("input")?.focus();
+  (parent.querySelector(".is-problem input")||parent.querySelector("input"))?.focus();
 }
 function commitEdit(event){
   event.preventDefault();
@@ -424,8 +520,8 @@ function commitEdit(event){
     errorText("");
     const result=runWorkflow(scenario,next);
     const before=analyzeWorkflow(latest),after=analyzeWorkflow(result);
-    undoSource=original;
-    $("undoCorrection").disabled=false;
+    undoSource=original;redoSource=null;
+    $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
     closeEditor();
     render(result);
     const compare=$("changeComparison");
@@ -467,12 +563,26 @@ document.querySelectorAll("[data-workflow-filter]").forEach(button=>button.addEv
 }));
 $("undoCorrection").addEventListener("click",()=>{
   if(undoSource===null)return;
-  $("workflowSource").value=undoSource;
+  const oldUndo=undoSource;
+  redoSource=$("workflowSource").value;
   undoSource=null;
-  $("undoCorrection").disabled=true;
+  $("undoCorrection").disabled=true;$("redoCorrection").disabled=false;
   closeEditor();
-  try{render(runWorkflow(scenario,$("workflowSource").value));$("changeComparison").hidden=true;}
+  $("workflowSource").value=oldUndo;
+  try{render(runWorkflow(scenario,oldUndo));$("changeComparison").hidden=true;}
   catch{invalidate("No se pudo restaurar el estado previo.");}
+});
+$("redoCorrection").addEventListener("click",()=>{
+  if(redoSource===null)return;
+  const next=redoSource;redoSource=null;
+  undoSource=$("workflowSource").value;
+  $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
+  $("workflowSource").value=next;
+  try{
+    render(runWorkflow(scenario,next));
+    $("changeComparison").hidden=true;
+    setText("workflowStatus","Corrección rehecha y resultados recalculados.");
+  }catch{invalidate("No se pudo rehacer la corrección.");}
 });
 $("importWorkflow").addEventListener("change",async event=>{
   const input=event.currentTarget;
@@ -499,8 +609,8 @@ $("importWorkflow").addEventListener("change",async event=>{
       const result=runWorkflow(scenario,text);
       $("workflowSource").value=text;
       closeColumnMapper();
-      undoSource=null;
-      $("undoCorrection").disabled=true;
+      undoSource=null;redoSource=null;
+      $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
       errorText("");
       render(result);
       setText("workflowStatus","Archivo leído localmente ("+result.counts.total+" filas). Revisa y corrige registros sin salir de esta pantalla.");
@@ -531,8 +641,8 @@ $("applyColumnMapping").addEventListener("click",()=>{
     const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
     const result=runWorkflow(scenario,converted);
     $("workflowSource").value=converted;
-    undoSource=null;
-    $("undoCorrection").disabled=true;
+    undoSource=null;redoSource=null;
+    $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
     closeColumnMapper();
     render(result);
     $("changeComparison").hidden=true;
@@ -547,6 +657,34 @@ $("columnMappingRows").addEventListener("change",event=>{
   if(event.target.matches("select"))renderMappingPreview();
 });
 
+$("workflowRecipe").addEventListener("change",()=>{
+  setText("recipeHint",RECIPE_LABELS[$("workflowRecipe").value]?.description||"");
+});
+$("loadWorkflowRecipe").addEventListener("click",loadWorkflowExample);
+$("downloadWorkflowTemplate").addEventListener("click",downloadWorkflowExample);
+$("copyScenarioLink").addEventListener("click",async()=>{
+  const link=location.origin+location.pathname+"?scenario="+encodeURIComponent(scenario);
+  try{
+    await navigator.clipboard.writeText(link);
+    setText("recipeHint","Enlace copiado. Solo incluye el escenario, nunca tus filas ni datos importados.");
+  }catch{
+    setText("recipeHint","El navegador no permite copiar automáticamente. Comparte solo la dirección de esta demo, nunca los datos.");
+  }
+});
+$("workflowSource").addEventListener("keydown",event=>{
+  if(event.key==="Enter"&&(event.ctrlKey||event.metaKey)){
+    event.preventDefault();$("runWorkflow").click();
+  }
+});
+document.addEventListener("keydown",event=>{
+  if(event.key!=="Escape")return;
+  if(!$("columnMapper").hidden){
+    closeColumnMapper();$("openColumnMapper").focus();
+  }else if(!$("workflowEditForm").hidden){
+    closeEditor();$("fixFirstIssue").focus();
+  }
+});
+$("workflowSort").addEventListener("change",()=>{sortResults();applyFilter();});
 $("resetWorkflow").addEventListener("click",()=>chooseScenario(scenario));
 $("exportWorkflow").addEventListener("click",()=>downloadCsv("full"));
 $("exportActionQueue").addEventListener("click",()=>downloadCsv("queue"));

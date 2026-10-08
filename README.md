@@ -68,6 +68,22 @@ La lógica de interpretación es independiente y determinista en `assets/js/work
 
 Referencias de diseño: [Nielsen Norman Group, cuatro tareas fundamentales en tablas de datos](https://www.nngroup.com/articles/data-tables/) y [NN/g, diseño de estados vacíos](https://www.nngroup.com/articles/empty-state-interface-design/). Las precauciones de exportación se contrastaron con [OWASP CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection). Ningún escape CSV se presenta como universalmente seguro para Excel u otras hojas de cálculo.
 
+### Refinamiento de producto: biblioteca de escenarios y guía de reparación
+
+Antes de construir reglas nuevas, la demo se ha convertido en una herramienta de exploración más útil.
+
+- **18 juegos de datos ficticios ejecutables**: 6 recetas por cada uno de los tres procesos (mixto, correctos, duplicados, vacíos, revisión humana y casos límite). Elegir una receta no modifica el trabajo actual hasta pulsar *Cargar ejemplo*.
+- **Plantilla CSV local**: descarga un fichero con las cabeceras correctas y una fila ficticia, sin reutilizar registros importados.
+- **Vista de integridad**: porcentaje de celdas con contenido y distribución por columna. No representa exactitud, productividad ni ahorro de dinero.
+- **Ordenación estable** de la tabla: origen, prioridad de bloqueos, identificador y estado. Editar después de ordenar sigue corrigiendo la fila original.
+- **Editor explicativo**: 13 campos con etiqueta en lenguaje de negocio, ejemplo, instrucciones y señalamiento del campo asociado al error.
+- **Deshacer y rehacer** una corrección reciente con el motor real y sin recargar.
+- **Filtros cuantificados**, atajo Ctrl/⌘ + Intro para procesar, Escape para cerrar paneles secundarios, foco en los errores de ejecución.
+- **Compartir demo sin compartir datos**: el enlace contiene solo el escenario, nunca el CSV importado.
+- **Límite de honestidad**: estos ejemplos son exclusivamente ficticios y no conectan aplicaciones empresariales reales.
+
+La documentación de alcance [190 mejoras verificables](docs/PRODUCTO-190-MEJORAS.md) distingue punto por punto lo implementado de lo pendiente; **no se presenta ese catálogo como 190 funciones entregadas**. Lo ya existente se identifica como tal y los nuevos cambios están sustentados por archivos de código y pruebas.
+
 ### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.

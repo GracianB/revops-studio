@@ -37,6 +37,25 @@
       <button type="button" class="workbench-scenario" data-scenario="support" aria-pressed="false"><span>02 / CLIENTES</span><strong>Soporte y escalado</strong><small>Prioridad · incidencias · revisión</small></button>
       <button type="button" class="workbench-scenario" data-scenario="data" aria-pressed="false"><span>03 / DATOS</span><strong>Calidad y conciliación</strong><small>Fechas · cifras · anomalías</small></button>
     </div>
+    <div class="workbench-recipes" aria-labelledby="recipe-title">
+      <div><span class="workbench-section-index">ENTRADAS DE EJEMPLO · 6 POR ESCENARIO</span>
+        <label for="workflowRecipe" id="recipe-title">¿Qué problema quieres explorar?</label>
+        <p>Elige un conjunto de datos ficticios: cada opción tiene fallos diferentes y puedes modificar sus filas.</p></div>
+      <div class="workbench-recipe-controls">
+        <select id="workflowRecipe" aria-describedby="recipeHint">
+          <option value="original">Demo original</option>
+          <option value="clear">Datos correctos</option>
+          <option value="duplicates">Duplicados</option>
+          <option value="missing">Campos vacíos</option>
+          <option value="review">Revisión humana</option>
+          <option value="limits">Casos límite</option>
+        </select>
+        <button type="button" id="loadWorkflowRecipe">Cargar ejemplo ↗</button>
+        <button type="button" id="downloadWorkflowTemplate">Descargar plantilla CSV</button>
+        <button type="button" id="copyScenarioLink">Copiar enlace de esta demo</button>
+      </div>
+      <p id="recipeHint" class="workbench-recipe-detail" role="status">Ejemplo original con situaciones mezcladas. Cambiar la opción no sustituirá tus datos hasta pulsar cargar.</p>
+    </div>
     <div class="workbench-quickstart" aria-label="Cómo probar esta herramienta">
       <div><span>01</span><p><strong>Elige un proceso</strong><small>Los ejemplos ya están listos.</small></p></div>
       <div><span>02</span><p><strong>Explora los resultados</strong><small>Comprueba los errores detectados.</small></p></div>
@@ -49,7 +68,7 @@
         <p id="scenarioDescription" class="workbench-instructions">Valida pedidos, evita duplicados y aparta excepciones.</p>
         <label class="workbench-editor-label" for="workflowSource">Datos delimitados por punto y coma o coma</label>
         <textarea id="workflowSource" spellcheck="false" rows="10" aria-describedby="sourceHelp" maxlength="12000"></textarea>
-        <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador. Puedes editar un registro desde la tabla sin reescribir el CSV.</p>
+        <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador. Puedes editar un registro desde la tabla sin reescribir el CSV. Atajo: Ctrl + Intro para ejecutar.</p>
         <div class="workbench-import">
           <label for="importWorkflow" class="workbench-import-label">Importar un CSV del equipo (local)</label>
           <input id="importWorkflow" type="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="importHelp">
@@ -74,8 +93,9 @@
           <button class="btn btn-primary" type="button" id="runWorkflow">Ejecutar proceso <span aria-hidden="true">↗</span></button>
           <button class="btn btn-secondary" type="button" id="resetWorkflow">Restaurar ejemplo</button>
           <button class="btn btn-secondary" type="button" id="undoCorrection" disabled>Deshacer corrección</button>
+          <button class="btn btn-secondary" type="button" id="redoCorrection" disabled>Rehacer corrección</button>
         </div>
-        <p id="workflowError" class="workbench-error" role="alert" hidden></p>
+        <p id="workflowError" class="workbench-error" tabindex="-1" role="alert" hidden></p>
       </section>
       <section class="workbench-panel workbench-output" aria-labelledby="workbench-output-title">
         <div class="workbench-panel-head"><div><span>03 / RESULTADO</span><h3 id="workbench-output-title">Trazabilidad en directo</h3></div><span class="workbench-local-label">SOLO SIMULACIÓN</span></div>
@@ -128,10 +148,23 @@
         <button type="button" class="workbench-filter" data-workflow-filter="revisar" aria-pressed="false">A revisar</button>
         <button type="button" class="workbench-filter" data-workflow-filter="listo" aria-pressed="false">Listos</button>
       </div>
+      <div class="workbench-quality" aria-labelledby="quality-title" id="dataQuality">
+        <div><span class="workbench-section-index">CALIDAD DE LAS ENTRADAS</span><h3 id="quality-title">Estado de los campos</h3>
+        <p>La integridad mide celdas rellenadas, no la calidad total ni la exactitud de la información.</p></div>
+        <div class="workbench-quality-meter"><strong id="qualityCompleteness">0 %</strong><span>Campos con algún valor</span></div>
+        <div class="workbench-quality-fields" id="qualityFields" aria-label="Campos incompletos"></div>
+      </div>
       <div class="workbench-search-row">
         <label for="workflowSearch">Buscar por registro, motivo o acción</label>
         <div class="workbench-search-input"><input type="search" id="workflowSearch" autocomplete="off" placeholder="Ej. PED-101, duplicado, email…" aria-controls="workflowRows"><button type="button" id="workflowSearchClear">Limpiar</button></div>
         <button type="button" class="workbench-first-issue" id="fixFirstIssue">Corregir primer bloqueo ↗</button>
+        <label class="workbench-sort-label" for="workflowSort">Ordenar por</label>
+        <select id="workflowSort" class="workbench-sort">
+          <option value="source">Orden de origen</option>
+          <option value="risk">Bloqueados primero</option>
+          <option value="identifier">Identificador</option>
+          <option value="status">Estado</option>
+        </select>
       </div>
       <p class="workbench-filter-status" id="workflowFilterStatus" role="status" aria-live="polite">Elige un escenario para ver los registros.</p>
       <div class="workbench-no-results" id="workflowNoResults" hidden role="status"><strong>No encontramos registros con ese filtro.</strong><span>Prueba otra búsqueda o vuelve a mostrar todos.</span><button type="button" id="resetResultsView">Mostrar todos los registros</button></div>
@@ -141,6 +174,7 @@
         <div class="workbench-edit-grid" id="workflowEditFields"></div>
         <div class="workbench-editor-actions"><button type="submit" class="btn btn-primary" id="saveWorkflowEdit">Guardar y volver a procesar</button><button type="button" class="btn btn-secondary" id="cancelWorkflowEditSecondary">Cancelar</button></div>
         <p class="workbench-edit-status" id="workflowEditStatus" role="status" aria-live="polite"></p>
+        <p class="workbench-edit-guide">Los campos marcados se relacionan con el motivo de bloqueo o revisión. Corrige y guarda para recalcular las reglas.</p>
       </form>
     </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
