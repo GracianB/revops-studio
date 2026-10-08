@@ -119,7 +119,7 @@ test("the prepared queue excludes historical items and unsafe states without run
   const output=exportActionQueueCsv(orders);
   const parsed=parseDelimited(output);
   assert.equal(parsed.rows.length,2,"two new orders, not three ready statuses");
-  assert.ok(parsed.rows.every(row=>row.estado==="Preparado, NO ejecutado"));
+  assert.ok(parsed.rows.every(row=>row.ejecución==="Preparado, NO ejecutado"));
   assert.ok(parsed.rows.every(row=>row.pedido!=="PED-105"),"closed historical order excluded");
   assert.ok(parsed.rows.every(row=>row.pedido!=="PED-103"),"blocked order excluded");
   assert.ok(parsed.rows.every(row=>row.pedido!=="PED-104"),"human review order excluded");
