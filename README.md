@@ -84,6 +84,16 @@ Antes de construir reglas nuevas, la demo se ha convertido en una herramienta de
 
 La documentación de alcance [190 mejoras verificables](docs/PRODUCTO-190-MEJORAS.md) distingue punto por punto lo implementado de lo pendiente; **no se presenta ese catálogo como 190 funciones entregadas**. Lo ya existente se identifica como tal y los nuevos cambios están sustentados por archivos de código y pruebas.
 
+### Seguridad de trabajo · CSV de hojas de cálculo y exportación visible
+
+- **Excel y Google Sheets:** el lector acepta separación mediante tabulaciones (TSV) además de coma y punto y coma. Los campos entrecomillados que contienen tabulaciones se respetan. Admite `.tsv`, `.csv` y `.txt`, con límites de tamaño y cantidad.
+- **Protección al cambiar de proceso:** tras modificar, corregir o importar datos, cambiar de escenario no los descarta silenciosamente. La interfaz pide confirmación y permite conservar el trabajo. Restaurar el ejemplo actual sigue siendo una acción explícita.
+- **Exportar exactamente la vista:** con filtros, búsqueda u ordenación, el nuevo botón descarga solo las filas visibles en ese orden, usando el mismo escape para hojas de cálculo. Si no hay coincidencias, queda deshabilitado.
+- **Buscar por datos de fila:** además de identificador, motivo y acción, la búsqueda local encuentra valores introducidos en columnas. No se transmite ni se incluye en URL.
+- **Tabla revisable:** encabezados fijos en tablas largas, filas legibles y aviso de privacidad en exportaciones con registros detallados.
+
+No se añade sincronización, persistencia ni ejecución real en CRM. Estas medidas no garantizan que un CSV sea seguro en todas las aplicaciones.
+
 ### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
