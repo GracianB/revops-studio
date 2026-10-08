@@ -30,6 +30,47 @@
       <div class="workbench-legend"><strong>Esto sí puedes probarlo.</strong><p>Corrige registros, compara resultados antes y después y descarga un informe con próximos pasos. No es una presentación decorativa.</p><small>Los sistemas CRM, ERP y soporte son ejemplos. Aquí no hay conexiones reales, acciones externas ni IA fingida.</small></div>
     </div>
   </section>
+  <div class="shell workbench-experience-switch">
+    <div><strong>¿Es tu primera visita?</strong><span>Empieza con una explicación sencilla o abre todas las herramientas.</span></div>
+    <button type="button" id="experienceToggle" aria-pressed="false" aria-controls="clientJourney" class="workbench-experience-button">Ver todas las herramientas ↗</button>
+  </div>
+  <section class="shell workbench-client" id="clientJourney" aria-labelledby="clientJourneyTitle">
+    <div class="workbench-client-header">
+      <span class="workbench-section-index">PRUEBA GUIADA · NO NECESITAS ARCHIVOS NI EXPERIENCIA TÉCNICA</span>
+      <h2 id="clientJourneyTitle">¿Esto ayudaría a mi equipo?</h2>
+      <p>Vamos a comprobarlo con información inventada. Elige una situación, descubre qué detecta el sistema y corrige un ejemplo. No tienes que subir nada ni crear una cuenta.</p>
+    </div>
+    <nav class="workbench-client-progress" aria-label="Recorrido de prueba">
+      <span data-client-step="problem" aria-current="step"><b>1</b> Mi problema</span>
+      <span data-client-step="result"><b>2</b> Qué encuentra</span>
+      <span data-client-step="fix"><b>3</b> Una corrección</span>
+      <span data-client-step="finished"><b>4</b> El resultado</span>
+    </nav>
+    <div class="workbench-client-problems" role="group" aria-label="Elige un problema cotidiano">
+      <button type="button" data-client-problem="orders" aria-pressed="true"><span class="client-problem-symbol">01</span><strong>Se nos duplican los pedidos</strong><small>Quiero saber qué está repetido antes de pasarlo a gestión.</small></button>
+      <button type="button" data-client-problem="support" aria-pressed="false"><span class="client-problem-symbol">02</span><strong>Las incidencias se acumulan</strong><small>Quiero detectar urgencias sin perder los casos pendientes.</small></button>
+      <button type="button" data-client-problem="data" aria-pressed="false"><span class="client-problem-symbol">03</span><strong>Los datos no cuadran</strong><small>Quiero encontrar registros que necesitarían una revisión.</small></button>
+    </div>
+    <div class="workbench-client-action">
+      <div>
+        <span class="workbench-client-kicker" id="clientStepLabel">PASO 1 DE 4 · ELIGE UN PROBLEMA</span>
+        <h3 id="clientStepTitle">Empecemos con algo que reconoces.</h3>
+        <p id="clientStepDescription">Hemos preparado seis pedidos de ejemplo. No necesitas hacer nada con archivos ni entender términos técnicos.</p>
+        <div class="workbench-client-evidence" id="clientEvidence" hidden aria-live="polite">
+          <div><strong id="clientDetected">0</strong><span>Registros que no pueden avanzar</span></div>
+          <div><strong id="clientAttention">0</strong><span>Que necesitan una persona</span></div>
+          <div><strong id="clientPrepared">0</strong><span>Acciones que podrían prepararse</span></div>
+        </div>
+        <p class="workbench-client-change" id="clientChange" hidden role="status" aria-live="polite"></p>
+      </div>
+      <div class="workbench-client-buttons">
+        <button type="button" id="clientPrimaryAction" class="btn btn-primary">Ver qué pasa con estos pedidos ↗</button>
+        <button type="button" id="clientSecondaryAction" class="workbench-client-secondary" hidden>Volver al principio</button>
+        <a href="./#diagnostico" class="workbench-client-quiet">No sé cuál es mi problema · Ayúdame a definirlo ↗</a>
+      </div>
+    </div>
+    <p class="workbench-client-disclaimer">Esta prueba usa datos ficticios. «Preparado» no significa que se haya enviado algo a un CRM ni que exista un ahorro demostrado.</p>
+  </section>
   <section class="shell workbench-studio" id="simulador" aria-labelledby="workbench-scenario-title">
     <div class="workbench-section-head"><div><span class="workbench-section-index">01 / ELIGE UN PROCESO</span><h2 id="workbench-scenario-title">Tres problemas, tres recorridos.</h2></div><p>Cada escenario utiliza sus propias columnas y reglas. Los datos iniciales son ficticios.</p></div>
     <div class="workbench-scenarios" role="group" aria-label="Escenarios disponibles">
