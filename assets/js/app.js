@@ -1,6 +1,7 @@
 import { parseCsv } from "./csv-utils.js";
 import {
   DEFAULT_WEIGHTS,
+  DEFAULT_THRESHOLDS,
   evaluateBatch,
   transition,
   auditEvent,
