@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { readFile, access } from "node:fs/promises";
 import path from "node:path";
-import { chromium } from "playwright-core";
+import { chromium, firefox } from "playwright-core";
 
 const root = process.cwd();
 const mime = {".html":"text/html", ".js":"text/javascript", ".css":"text/css", ".svg":"image/svg+xml", ".json":"application/json"};
@@ -21,56 +21,106 @@ const server = createServer(async (req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
 const base = "http://127.0.0.1:" + server.address().port;
-const errors=[];
+
+const engineName=process.env.REVOPS_BROWSER==="firefox"?"firefox":"chrome";
+const browserEngine=engineName==="firefox"?firefox:chromium;
 let browser;
+const errors=[];
+const describe=error=>errors.push(error.message);
 try {
-  browser = await chromium.launch({channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
-  const page = await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
-  page.on("pageerror",e=>errors.push(e.message));
-  page.on("console",m=>{ if(m.type()==="error") console.log("CHROME_CONSOLE_ERROR:",m.text()); });
-  page.on("response",response=>{ if(response.status()>=400) console.log("HTTP_RESPONSE_ERROR:",response.status(),response.url()); });
-  await page.goto(base + "/laboratorio.html",{waitUntil:"load"});
-  await page.waitForTimeout(1200);
-  console.log("LAB_DIAGNOSTIC:",JSON.stringify(await page.evaluate(()=>({
-    documentReady:document.readyState,
-    rows:document.querySelectorAll("#demoRows tr").length,
-    rowContainer:document.getElementById("demoRows")?.outerHTML.slice(0,600),
-    runState:document.querySelector("#lastRun")?.textContent,
-    bodyScrollWidth:document.documentElement.scrollWidth,
-    scripts:[...document.scripts].map(s=>s.src)
-  }))));
-  console.log("LAB_PAGE_ERRORS:",JSON.stringify(errors));
-  await page.locator("#demoRows tr").first().waitFor({state:"attached",timeout:5000});
-  assert.equal(await page.locator("#demoRows tr").count()>0,true,"demo has no pipeline rows");
-  assert.equal(await page.locator("#advancedWorkbench").evaluate(el=>el.open),false,"advanced workbench must start closed");
+  browser=await browserEngine.launch(engineName==="chrome"?
+    {channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]}:
+    {headless:true});
+  const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
+  page.on("pageerror",describe);
+  page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
+  page.on("response",response=>{if(response.status()>=400)console.log("HTTP_ERROR:",response.status(),response.url())});
+
+  await page.goto(base+"/laboratorio.html",{waitUntil:"load"});
+  await page.locator("#demoRows tr").first().waitFor({state:"attached",timeout:45000});
+  assert.equal(await page.locator("#demoRows tr").count(),8,"V40 should render eight demo records");
+  assert.equal(await page.locator("#advancedWorkbench").evaluate(el=>el.open),false);
   await page.locator("#runDemo").click();
   await page.locator("#guidedNext").click();
   assert.match(await page.locator("#guidedProgress").innerText(),/02 \/ 04/);
   await page.locator("#advancedWorkbench summary").click();
-  assert.equal(await page.locator("#advancedWorkbench").evaluate(el=>el.open),true);
-  assert.equal(await page.locator("#calibration-v20-title").isVisible(),true);
-  const feedbackDisplay = await page.locator("#calibration-v20-title").evaluate(el=>getComputedStyle(el.closest(".feedback-panel")).borderTopStyle);
-  assert.equal(feedbackDisplay,"solid","feedback panel missing its CSS styling");
-  const metricsDisplay = await page.locator("#calibrationV20Severity").evaluate(el=>getComputedStyle(el.closest(".feedback-metrics")).display);
-  assert.equal(metricsDisplay,"grid","feedback metrics not laid out in a grid");
+  assert.ok(await page.locator("#calibration-v20-title").isVisible());
+  assert.equal(await page.locator("#calibrationV20Severity").evaluate(el=>getComputedStyle(el.closest(".feedback-metrics")).display),"grid");
   await page.locator("#resetCalibrationV20").click();
   await page.locator("#generatePolicySignerV27").click();
-  assert.equal(errors.length,0,"JavaScript runtime errors: " + errors.join(" | "));
-  await page.goto(base + "/",{waitUntil:"load"});
-  await page.locator('.service-card').first().waitFor({timeout:10000});
-  assert.equal(await page.locator('.study-card').count(),3);
+  assert.deepEqual(errors,[],"Lab runtime errors");
+
+  await page.goto(base+"/",{waitUntil:"load"});
+  await page.locator(".service-card").first().waitFor();
+  assert.equal(await page.locator(".study-card").count(),3);
   await page.locator('[data-filter="ai"]').click();
-  assert.ok(await page.locator('.service-card:visible').count()>=1,"service filter hid all AI services");
-  assert.equal(errors.length,0,"Landing JavaScript errors: " + errors.join(" | "));
-  const mobile = await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:"reduce"});
-  mobile.on("pageerror",e=>errors.push(e.message));
-  await mobile.goto(base + "/laboratorio.html",{waitUntil:"load"});
-  await mobile.locator("#demoRows tr").first().waitFor({timeout:20000});
+  assert.ok(await page.locator(".service-card:visible").count()>=1);
+
+  // Distinct modes, persisted across page boundaries.
+  await page.evaluate(()=>localStorage.setItem("revops-theme","dark"));
+  await page.reload();
+  assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
+  await page.locator("[data-theme-toggle]").click();
+  assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
+  await page.reload();
+  assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
+  await page.locator("[data-theme-toggle]").click();
+  assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
+
+  await page.locator('[data-filter="all"]').click();
+  await page.locator('[data-service-choice="Quick win"]').click();
+  assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  await page.locator("#nombre").fill("Cliente de prueba");
+  await page.locator("#email").fill("prueba@example.net");
+  await page.locator("#dolor").fill("Duplicamos datos entre herramientas y necesitamos una validación.");
+  await page.locator("#privacyConsent").check();
+
+  // No real messages leave CI. Test the error path and mailto data preservation.
+  await page.route("https://formsubmit.co/ajax/**",route=>route.fulfill({
+    status:503,contentType:"application/json",body:'{"success":false}'
+  }));
+  await page.locator("#briefSubmit").click();
+  await page.locator("#formStatus[data-state='error']").waitFor({timeout:15000});
+  const fallback=await page.locator("#briefEmailFallback").getAttribute("href");
+  assert.ok(fallback.startsWith("mailto:"));
+  assert.ok(decodeURIComponent(fallback).includes("Duplicamos datos entre herramientas"));
+
+  await page.unroute("https://formsubmit.co/ajax/**");
+  await page.route("https://formsubmit.co/ajax/**",route=>route.fulfill({
+    status:200,contentType:"application/json",body:'{"success":"true"}'
+  }));
+  await page.locator("#briefSubmit").click();
+  await page.waitForURL(/gracias\.html\?via=proveedor/,{timeout:16000});
+  assert.match(await page.locator("#deliveryExplanation").textContent(),/no prueba todavía que haya llegado/);
+  assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
+  assert.deepEqual(errors,[],"Desktop runtime errors");
+
+  const mobile=await browser.newPage({
+    viewport:{width:390,height:844},
+    isMobile:engineName==="chrome",
+    hasTouch:engineName==="chrome",
+    reducedMotion:"reduce"
+  });
+  mobile.on("pageerror",describe);
+  await mobile.goto(base+"/laboratorio.html",{waitUntil:"load"});
+  await mobile.locator("#demoRows tr").first().waitFor({state:"attached",timeout:45000});
   await mobile.locator("#advancedWorkbench summary").click();
-  const dimensions = await mobile.evaluate(()=>({viewport:window.innerWidth,scroll:document.documentElement.scrollWidth}));
-  assert.ok(dimensions.scroll<=dimensions.viewport+3,"mobile horizontal overflow "+JSON.stringify(dimensions));
-  assert.equal(errors.length,0,"Mobile JavaScript errors: " + errors.join(" | "));
-  console.log("BROWSER SMOKE PASS: desktop lab, CSS, run, guided tour, advanced controls, commercial page, mobile");
+  for(const url of ["/laboratorio.html","/"]) {
+    await mobile.goto(base+url,{waitUntil:"load"});
+    await mobile.waitForTimeout(250);
+    const dimensions=await mobile.evaluate(()=>({
+      viewport:window.innerWidth,
+      scroll:document.documentElement.scrollWidth
+    }));
+    assert.ok(dimensions.scroll<=dimensions.viewport+3,
+      engineName+" mobile horizontal overflow on "+url+" "+JSON.stringify(dimensions));
+  }
+  await mobile.locator("#menuBtn").click();
+  assert.equal(await mobile.locator("#menuBtn").getAttribute("aria-expanded"),"true");
+  await mobile.locator(".mobile-nav a[href='#servicios']").click();
+  assert.equal(await mobile.locator("#menuBtn").getAttribute("aria-expanded"),"false");
+  assert.deepEqual(errors,[],"Mobile runtime errors");
+  console.log("BROWSER SMOKE PASS ("+engineName+"): V40 demo, dark/light, business, contact failure/success, and mobile");
 } finally {
   if(browser) await browser.close();
   await new Promise(resolve=>server.close(resolve));

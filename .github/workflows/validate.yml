@@ -35,3 +35,9 @@ jobs:
 
       - name: Real Chrome smoke (desktop and mobile)
         run: node scripts/browser-smoke.mjs
+
+      - name: Install Firefox for browser verification
+        run: npx playwright-core install firefox
+
+      - name: Real Firefox smoke (desktop and mobile layouts)
+        run: REVOPS_BROWSER=firefox node scripts/browser-smoke.mjs
