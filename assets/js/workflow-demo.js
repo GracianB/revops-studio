@@ -18,6 +18,7 @@ function errorText(message){
   if(!element)return;
   element.hidden=!message;
   element.textContent=message||"";
+  if(message)element.focus();
 }
 function invalidate(message){
   latest=null;
@@ -432,6 +433,13 @@ function syncFilterButtons(){
 }
 function applyFilter(){
   const all=latest?.rows.length||0;
+  const counts=latest?.counts;
+  const labels={all:"Todos",bloqueado:"Bloqueados",revisar:"A revisar",listo:"Listos"};
+  for(const button of document.querySelectorAll("[data-workflow-filter]")){
+    const status=button.dataset.workflowFilter;
+    const number=status==="all"?all:(counts?.[status]||0);
+    button.textContent=labels[status]+" ("+number+")";
+  }
   const search=normalizeSearch($("workflowSearch").value);
   let visible=0;
   $("workflowRows").querySelectorAll(".workbench-row").forEach(tr=>{
@@ -654,6 +662,28 @@ $("workflowRecipe").addEventListener("change",()=>{
 });
 $("loadWorkflowRecipe").addEventListener("click",loadWorkflowExample);
 $("downloadWorkflowTemplate").addEventListener("click",downloadWorkflowExample);
+$("copyScenarioLink").addEventListener("click",async()=>{
+  const link=location.origin+location.pathname+"?scenario="+encodeURIComponent(scenario);
+  try{
+    await navigator.clipboard.writeText(link);
+    setText("recipeHint","Enlace copiado. Solo incluye el escenario, nunca tus filas ni datos importados.");
+  }catch{
+    setText("recipeHint","El navegador no permite copiar automáticamente. Comparte solo la dirección de esta demo, nunca los datos.");
+  }
+});
+$("workflowSource").addEventListener("keydown",event=>{
+  if(event.key==="Enter"&&(event.ctrlKey||event.metaKey)){
+    event.preventDefault();$("runWorkflow").click();
+  }
+});
+document.addEventListener("keydown",event=>{
+  if(event.key!=="Escape")return;
+  if(!$("columnMapper").hidden){
+    closeColumnMapper();$("openColumnMapper").focus();
+  }else if(!$("workflowEditForm").hidden){
+    closeEditor();$("fixFirstIssue").focus();
+  }
+});
 $("workflowSort").addEventListener("change",()=>{sortResults();applyFilter();});
 $("resetWorkflow").addEventListener("click",()=>chooseScenario(scenario));
 $("exportWorkflow").addEventListener("click",()=>downloadCsv("full"));
