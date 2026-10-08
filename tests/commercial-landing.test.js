@@ -6,6 +6,7 @@ const index = file("index.html"), lab = file("laboratorio.html"), privacy=file("
 const site = file("assets/js/site.js"), theme=file("assets/js/theme.js");
 const thanks = file("gracias.html"), thanksJs = file("assets/js/thanks.js");
 const app = file("assets/js/app.js"), css=file("assets/css/main.css");
+const perf = file("scripts/performance-budget.mjs"), workflow = file(".github/workflows/validate.yml");
 const commercialCss=file("assets/css/commercial.css");
 
 test("commercial story: client problem, solutions, scope, proof, process and contact precede the lab",()=>{
@@ -63,6 +64,25 @@ test("V45 commercial stylesheet excludes the V40-only block without visual casca
  assert.match(lab,/assets\/css\/main\.css/);
  assert.doesNotMatch(lab,/assets\/css\/commercial\.css/);
  assert.match(index,/script async fetchpriority="low" data-domain="gracianb\.github\.io\/revops-studio"/);
+});
+
+test("V46 monitored cold-load scenarios enforce payload and rendering budgets",()=>{
+ assert.match(perf,/Network\.emulateNetworkConditions/);
+ assert.match(perf,/Emulation\.setCPUThrottlingRate/);
+ assert.match(perf,/Network\.setCacheDisabled/);
+ assert.match(perf,/first-contentful-paint/);
+ assert.match(perf,/largest-contentful-paint/);
+ assert.match(perf,/layout-shift/);
+ assert.match(perf,/desktop-4g/);
+ assert.match(perf,/mobile-3g/);
+ assert.match(perf,/maxFirstPartyBytes:130000/);
+ assert.match(perf,/maxFirstPartyRequests:9/);
+ assert.match(perf,/performance-v46\.json/);
+ for(const forbidden of ["/assets/css/main.css","/assets/js/app.js","/laboratorio.html"]){
+  assert.ok(perf.includes(forbidden));
+ }
+ assert.match(workflow,/node scripts\/performance-budget\.mjs/);
+ assert.match(workflow,/actions\/upload-artifact@v4/);
 });
 
 test("commercial pricing stays indicative, without invented savings",()=>{
