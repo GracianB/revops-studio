@@ -128,6 +128,7 @@ function collectBrief(form) {
     dolor: String(data.dolor || "").trim(),
     servicio: String(data.servicio || "").trim(),
     estimacion: String(data.estimacion || "").trim(),
+    caso_referencia: String(data.caso_referencia || "").trim(),
     createdAt: new Date().toISOString()
   };
 }
@@ -144,9 +145,43 @@ function mailtoForBrief(brief) {
     "Herramientas: " + (brief.herramientas || "Sin especificar"),
     "Horas/semana: " + (brief.horas || "Sin especificar"),
     "Necesidad: " + brief.dolor,
+    ...(brief.caso_referencia ? ["Caso de referencia: " + brief.caso_referencia] : []),
     ...(brief.estimacion ? ["Estimación orientativa: " + brief.estimacion] : []),
     "", "Gracias."].join("\n");
   return "mailto:" + CONTACT_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+}
+
+const CASE_REFERENCES = Object.freeze({
+  bodytone: { label: "Bodytone · sistema de soporte Zendesk", service: "Automatización" },
+  calculadora: { label: "Calculadora de gimnasios · motor de reglas y presupuestos", service: "Software a medida" },
+  outreach: { label: "Outreach GenAI · segmentación y revisión humana", service: "Automatización" }
+});
+
+function showCaseContext() {
+  const container = qs("#caseContext"), summary = qs("#caseContextSummary");
+  const reference = qs("#casoReferencia")?.value || "";
+  if (!container || !summary) return;
+  container.hidden = !reference;
+  summary.textContent = reference ? "Caso de referencia: " + reference + ". Puedes modificar el servicio, escribir tu necesidad y quitar la referencia cuando quieras." : "";
+}
+
+function initCaseChoice() {
+  const form = qs("#briefForm"), field = qs("#casoReferencia"), select = qs("#servicio");
+  if (!form || !field || !select) return;
+  qsa("[data-case-choice]").forEach(link => link.addEventListener("click", () => {
+    const selected = CASE_REFERENCES[link.dataset.caseChoice];
+    if (!selected) return;
+    field.value = selected.label;
+    // Never overwrite an explicit service selection or a visitor-written message.
+    if (!select.value) select.value = selected.service;
+    showCaseContext();
+    form.dispatchEvent(new Event("input", { bubbles: true }));
+  }));
+  qs("#caseContextClear")?.addEventListener("click", () => {
+    field.value = "";
+    showCaseContext();
+    form.dispatchEvent(new Event("input", { bubbles: true }));
+  });
 }
 
 function initBriefForm() {
@@ -164,7 +199,7 @@ function initBriefForm() {
     if (sessionStorage.getItem(PENDING_KEY) === "true") {
       const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
       if (saved && typeof saved === "object") {
-        for (const name of ["nombre", "email", "herramientas", "horas", "dolor", "servicio", "estimacion"]) {
+        for (const name of ["nombre", "email", "herramientas", "horas", "dolor", "servicio", "estimacion", "caso_referencia"]) {
           const field = form.elements.namedItem(name);
           if (field && !field.value && typeof saved[name] === "string") field.value = saved[name];
         }
@@ -185,6 +220,7 @@ function initBriefForm() {
   form.addEventListener("input", updateFallback);
   form.addEventListener("change", updateFallback);
   showCalcContext();
+  showCaseContext();
   updateFallback();
 
   form.addEventListener("submit", async (event) => {
@@ -224,7 +260,8 @@ function initBriefForm() {
           horas: brief.horas,
           mensaje: brief.dolor,
           consentimiento: "sí",
-          ...(brief.estimacion ? { estimacion: brief.estimacion } : {})
+          ...(brief.estimacion ? { estimacion: brief.estimacion } : {}),
+          ...(brief.caso_referencia ? { caso_referencia: brief.caso_referencia } : {})
         }),
         signal: controller.signal
       });
@@ -290,4 +327,5 @@ initFilters();
 initServiceChoice();
 initCalculator();
 initBriefForm();
+initCaseChoice();
 initTracking();
