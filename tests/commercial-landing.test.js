@@ -7,6 +7,7 @@ const site = file("assets/js/site.js"), theme=file("assets/js/theme.js");
 const thanks = file("gracias.html"), thanksJs = file("assets/js/thanks.js");
 const app = file("assets/js/app.js"), css=file("assets/css/main.css");
 const perf = file("scripts/performance-budget.mjs"), workflow = file(".github/workflows/validate.yml");
+const liveAudit=file("scripts/audit-live.mjs"),liveWorkflow=file(".github/workflows/live-audit.yml");
 const commercialCss=file("assets/css/commercial.css");
 
 test("commercial story: client problem, solutions, scope, proof, process and contact precede the lab",()=>{
@@ -83,6 +84,30 @@ test("V46 monitored cold-load scenarios enforce payload and rendering budgets",(
  }
  assert.match(workflow,/node scripts\/performance-budget\.mjs/);
  assert.match(workflow,/actions\/upload-artifact@v4/);
+});
+
+test("V47 live audit separates public HTTPS observations from synthetic and field data",()=>{
+ assert.match(liveAudit,/https:\/\/gracianb\.github\.io\/revops-studio\//);
+ assert.match(liveAudit,/Network\.setCacheDisabled/);
+ assert.match(liveAudit,/Network\.loadingFinished/);
+ assert.match(liveAudit,/first-contentful-paint/);
+ assert.match(liveAudit,/largest-contentful-paint/);
+ assert.match(liveAudit,/layout-shift/);
+ assert.match(liveAudit,/runsPerProfile=3/);
+ assert.match(liveAudit,/assets\/css\/commercial\.css/);
+ assert.match(liveAudit,/sha256\(received\)/);
+ assert.match(liveAudit,/fieldData:"unavailable/);
+ assert.match(liveAudit,/live-v47\.json/);
+ assert.match(liveAudit,/page\.screenshot/);
+ assert.match(liveAudit,/no FormSubmit submission or private data/);
+ assert.doesNotMatch(liveAudit,/form\.submit\(/);
+ assert.match(liveWorkflow,/workflow_dispatch/);
+ assert.match(liveWorkflow,/workflow_run/);
+ assert.match(liveWorkflow,/pages build and deployment/);
+ assert.match(liveWorkflow,/schedule/);
+ assert.match(liveWorkflow,/node scripts\/audit-live\.mjs/);
+ assert.match(liveWorkflow,/actions\/upload-artifact@v4/);
+ assert.match(liveWorkflow,/if: always\(\)/);
 });
 
 test("commercial pricing stays indicative, without invented savings",()=>{
