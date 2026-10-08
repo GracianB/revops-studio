@@ -1,6 +1,18 @@
-## RevOps Studio · Web comercial V47 (motor técnico V40)
+## RevOps Studio · Producto: diagnóstico guiado + web comercial (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
+
+### Evolución real del producto · diagnóstico guiado
+
+La web deja de ser solo una presentación: junto a los problemas principales incorpora una herramienta **utilizable por un visitante** en `#diagnostico`. El flujo funciona enteramente en el navegador, sin IA generativa, red, autenticación ni almacenamiento del diagnóstico hasta que el visitante decide adjuntarlo a una consulta.
+
+1. Selecciona qué le frena: tareas repetidas, datos sin cuadrar, conocimiento disperso o reglas de negocio complejas.
+2. Indica herramientas y alcance (una persona/proceso, equipo, varios departamentos).
+3. Obtiene un **mapa contextual**: especialidad recomendada, un primer paso verificable, entregable inicial y criterio para comprobarlo. Se sugiere *Quick win* o *Sistema a medida* como orientación, no presupuesto automático.
+4. Puede copiar el mapa, reiniciar o adjuntarlo a su consulta. La integración rellena únicamente campos vacíos y respeta servicio y descripción redactados. El contexto es visible y se puede quitar; cambiar el diagnóstico invalida el resumen previamente adjuntado.
+5. Si voluntariamente envía el formulario, el mapa se incluye en FormSubmit, la alternativa de correo y el resumen de confirmación. Las opciones no se envían automáticamente, no se almacenan como analítica y no se envía nada sin consentimiento.
+
+El motor de decisión es puro, inspeccionable y probado en `assets/js/diagnostic.js`. No se altera el laboratorio V40, ni se simulan métricas de clientes.
 
 ### Envío de consultas (activación verificada)
 

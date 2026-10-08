@@ -844,3 +844,44 @@ body{background:radial-gradient(ellipse 620px 460px at 78% 0%,rgba(222,109,101,.
   .study-card .study-proof p{font-size:12px}
   .case-credibility{padding:18px}
 }
+
+/* Product discovery: guided, actionable scope instead of another static sales card. */
+.diagnostic-section{padding:98px 0;background:linear-gradient(150deg,var(--bg-2),var(--bg) 65%);border-block:1px solid var(--line)}
+.diagnostic-layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(25px,4vw,58px);align-items:start}
+.diagnostic-intro{padding:13px 0}
+.diagnostic-intro h2{margin:13px 0 20px;font:750 clamp(34px,3.7vw,53px)/1.12 var(--display);letter-spacing:-.047em}
+.diagnostic-intro>p{color:var(--muted);line-height:1.8;font-size:15px;max-width:480px}
+.diagnostic-steps{display:grid;gap:0;max-width:390px;margin:28px 0;border-block:1px solid var(--line)}
+.diagnostic-steps div{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--line);color:var(--text);font-size:13px;font-weight:680}
+.diagnostic-steps div:last-child{border-bottom:0}
+.diagnostic-steps b{font:700 11px var(--mono);color:var(--accent)}
+.diagnostic-intro .diagnostic-disclaimer{font-size:12px;color:var(--dim);line-height:1.65}
+.diagnostic-surface{min-width:0;padding:clamp(17px,2.7vw,29px);border:1px solid var(--line-2);border-radius:24px;background:var(--panel);box-shadow:var(--shadow)}
+.diagnostic-controls{display:grid;gap:16px}
+.diagnostic-field{min-width:0;display:grid;gap:7px}
+.diagnostic-field label{font-size:12px;font-weight:750;color:var(--text)}
+.diagnostic-field select{width:100%;min-width:0;min-height:49px;padding:11px 36px 11px 13px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2);color:var(--text);font-size:13px}
+.diagnostic-field select:focus-visible,.diagnostic-actions :focus-visible,.diagnostic-reset:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.diagnostic-controls-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.diagnostic-output{margin-top:20px;padding:20px;border:1px solid var(--line-2);border-radius:16px;background:var(--bg-2)}
+.diagnostic-output-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.diagnostic-status-marker{font:700 9px var(--mono);letter-spacing:.035em;color:var(--muted)}
+.diagnostic-empty{padding:14px 0 0;color:var(--muted);font-size:13px;line-height:1.75;margin:0}
+.diagnostic-route{display:inline-block;margin-top:18px;padding:6px 10px;border:1px solid var(--line-2);border-radius:7px;color:var(--accent);font:750 11px/1.45 var(--mono)}
+.diagnostic-output h3{font:750 clamp(23px,2.2vw,29px)/1.2 var(--display);letter-spacing:-.04em;margin:14px 0 7px}
+.diagnostic-headline{margin:0 0 13px;color:var(--muted);font-size:13px}
+.diagnostic-result-grid{display:grid;gap:0}
+.diagnostic-result-grid>div{padding:13px 0;border-top:1px solid var(--line)}
+.diagnostic-result-grid span{color:var(--accent);font:750 10px/1.3 var(--mono);letter-spacing:.04em}
+.diagnostic-result-grid p{margin:6px 0 0;color:var(--text);font-size:13px;line-height:1.6}
+.diagnostic-package{margin:11px 0 0;padding:12px 14px;border-radius:10px;background:var(--panel-2);color:var(--muted);font-size:11px;line-height:1.65}
+.diagnostic-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:17px;align-items:center}
+.diagnostic-actions .btn{min-height:46px;font-size:12px}
+.diagnostic-reset{min-height:44px;border:0;background:transparent;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer}
+.diagnostic-feedback{min-height:18px;margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.diagnostic-context{padding:13px 16px;margin:0 0 14px;border:1px solid var(--line-2);border-radius:12px;background:var(--bg-2)}
+.diagnostic-context p{margin:0 0 6px;color:var(--text);font-size:12px;line-height:1.6}
+.diagnostic-context button{border:0;background:none;padding:4px 0;color:var(--accent);font-size:12px;font-weight:750;cursor:pointer}
+#diagnosticPlan[hidden],#diagnosticActions[hidden],#diagnosticEmpty[hidden],#diagnosticContext[hidden]{display:none!important}
+@media(max-width:900px){.diagnostic-layout{grid-template-columns:1fr}.diagnostic-intro h2{max-width:700px}.diagnostic-intro{padding:0}.diagnostic-steps{grid-template-columns:repeat(3,1fr);max-width:none}.diagnostic-steps div{flex-direction:column;align-items:flex-start;gap:6px;padding:13px 12px;border-right:1px solid var(--line);border-bottom:0}.diagnostic-steps div:last-child{border-right:0}}
+@media(max-width:520px){.diagnostic-section{padding:66px 0}.diagnostic-controls-row{grid-template-columns:1fr}.diagnostic-output{padding:16px}.diagnostic-actions .btn{width:100%;justify-content:center}.diagnostic-steps div{padding:12px 6px;font-size:11px}.diagnostic-surface{border-radius:18px}}

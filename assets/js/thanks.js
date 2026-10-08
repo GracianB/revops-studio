@@ -10,7 +10,7 @@
   let confirmedInSession = false;
   try { confirmedInSession = sessionStorage.getItem(ACCEPTED_KEY) === "true"; } catch { /* Browser storage may be disabled. */ }
   const acceptedByProvider = new URLSearchParams(location.search).get("via") === "proveedor" && confirmedInSession;
-  const empty = {nombre:"", email:"", servicio:"", herramientas:"", horas:"", dolor:"", estimacion:"", caso_referencia:""};
+  const empty = {nombre:"", email:"", servicio:"", herramientas:"", horas:"", dolor:"", estimacion:"", caso_referencia:"", diagnostico:""};
   let brief = empty;
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
@@ -29,6 +29,7 @@
     "Horas semanales: " + (brief.horas || "Sin especificar"),
     "Problema: " + brief.dolor,
     ...(brief.caso_referencia ? ["Caso de referencia: " + brief.caso_referencia] : []),
+    ...(brief.diagnostico ? ["Mapa inicial orientativo:\n" + brief.diagnostico] : []),
     ...(brief.estimacion ? ["Estimación orientativa: " + brief.estimacion] : []),
     "",
     "Gracias."
@@ -43,6 +44,7 @@
       "Herramientas: " + (brief.herramientas || "Sin indicar"),
       "Necesidad: " + brief.dolor,
       ...(brief.caso_referencia ? ["Caso de referencia: " + brief.caso_referencia] : []),
+      ...(brief.diagnostico ? ["Mapa inicial orientativo:\n" + brief.diagnostico] : []),
       ...(brief.estimacion ? ["Estimación orientativa: " + brief.estimacion] : [])
     ].join("\n") : "No hay datos guardados en esta pestaña. Puedes enviar un correo directo o reservar una llamada.";
   }
