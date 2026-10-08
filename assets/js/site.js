@@ -12,15 +12,28 @@ function track(eventName, props = {}) {
 function initMenu() {
   const button = qs("#menuBtn"), menu = qs("#mobileNav");
   if (!button || !menu) return;
+  const isOpen = () => button.getAttribute("aria-expanded") === "true";
   const setOpen = (open) => {
     button.setAttribute("aria-expanded", String(open));
     button.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
     menu.classList.toggle("is-open", open);
     document.body.classList.toggle("menu-open", open);
   };
-  button.addEventListener("click", () => setOpen(button.getAttribute("aria-expanded") !== "true"));
+  button.addEventListener("click", () => setOpen(!isOpen()));
   qsa("a", menu).forEach((link) => link.addEventListener("click", () => setOpen(false)));
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") setOpen(false); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !isOpen()) return;
+    setOpen(false);
+    button.focus();
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (isOpen() && !menu.contains(event.target) && !button.contains(event.target)) setOpen(false);
+  });
+  // Moving to the desktop layout must not leave the page scroll-locked.
+  const desktop = window.matchMedia("(min-width: 961px)");
+  const onDesktop = () => { if (desktop.matches && isOpen()) setOpen(false); };
+  if (typeof desktop.addEventListener === "function") desktop.addEventListener("change", onDesktop);
+  else if (typeof desktop.addListener === "function") desktop.addListener(onDesktop);
 }
 
 function initReveal() {
@@ -60,16 +73,25 @@ function initNavState() {
 }
 
 function initFilters() {
-  const buttons = qsa(".filter-btn"), cards = qsa(".service-card");
+  const buttons = qsa(".filter-btn"), cards = qsa(".service-card"), status = qs("#filterStatus");
   if (!buttons.length || !cards.length) return;
-  buttons.forEach((button) => button.addEventListener("click", () => {
+  const apply = (button) => {
     const filter = button.dataset.filter || "all";
     buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+    let visible = 0;
     cards.forEach((card) => {
       const services = (card.dataset.service || "").split(/\s+/);
       card.hidden = filter !== "all" && !services.includes(filter);
+      if (!card.hidden) visible++;
     });
-  }));
+    if (status) {
+      const noun = visible === 1 ? "solución" : "soluciones";
+      status.textContent = "Mostrando " + visible + " " + noun +
+        (filter === "all" ? "." : " de " + button.textContent.trim() + ".");
+    }
+  };
+  buttons.forEach((button) => button.addEventListener("click", () => apply(button)));
+  apply(buttons.find(button => button.getAttribute("aria-pressed") === "true") || buttons[0]);
 }
 
 function numberValue(selector, fallback) {
