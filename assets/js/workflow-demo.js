@@ -1,5 +1,6 @@
 import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActionQueueCsv } from "./workflow-engine.js";
 import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
+import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -22,6 +23,10 @@ function invalidate(message){
   $("exportWorkflow").disabled=true;
   $("copyWorkflow").disabled=true;
   $("exportActionQueue").disabled=true;
+  $("exportInsights").disabled=true;
+  $("changeComparison").hidden=true;
+  $("quickDemoAction").disabled=true;
+  resetInsights();
   closeEditor();
   $("demoContact").dataset.ready="false";
   setText("workflowStatus",message);
@@ -136,6 +141,7 @@ function chooseScenario(next){
   undoSource=null;
   $("undoCorrection").disabled=true;
   activeFilter="all";
+  $("workflowSearch").value="";
   syncFilterButtons();
   setText("scenarioDescription",data.intro);
   errorText("");
@@ -144,6 +150,75 @@ function chooseScenario(next){
   // The deep link has only a scenario id; never put row content in the URL.
   history.replaceState(null,"",location.pathname+"?scenario="+encodeURIComponent(next)+"#simulador");
 }
+function normalizeSearch(value){
+  return String(value||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+}
+function resetInsights(){
+  for(const id of ["insightsRatio","insightsActionable","insightsHistoric","insightsReview","insightsBlocked"])
+    setText(id,id==="insightsRatio"?"0 %":"0");
+  setText("insightsSummary","Ejecuta el proceso y descubre qué requiere atención y qué puede prepararse para el siguiente paso.");
+  for(const element of $("insightsDistribution").children)element.style.width="0%";
+  const container=$("insightsSteps");
+  container.replaceChildren();
+  const text=document.createElement("p");
+  text.className="workbench-empty-insight";
+  text.textContent="Los siguientes pasos aparecerán después de ejecutar el proceso.";
+  container.append(text);
+}
+function renderInsights(result){
+  const view=analyzeWorkflow(result);
+  setText("insightsSummary",view.summary);
+  setText("insightsRatio",view.ratio+" %");
+  setText("insightsActionable",view.actionable);
+  setText("insightsHistoric",view.historical);
+  setText("insightsReview",view.reviewCount);
+  setText("insightsBlocked",view.blockedCount);
+  // CSS percentage is derived from row counts, not from speculative ROI.
+  const share=count=>view.total?(count/view.total*100).toFixed(3)+"%":"0%";
+  for(const [index,count] of [
+    view.actionable,view.historical,view.reviewCount,view.blockedCount
+  ].entries())$("insightsDistribution").children[index].style.width=share(count);
+  const steps=$("insightsSteps"),fragment=document.createDocumentFragment();
+  view.steps.forEach((item,index)=>{
+    const article=document.createElement("article");
+    article.className="workbench-insight-item";
+    const number=document.createElement("span");
+    number.textContent=String(index+1).padStart(2,"0");
+    const content=document.createElement("div");
+    const title=document.createElement("h3");
+    title.textContent=item.title;
+    const description=document.createElement("p");
+    description.textContent=item.detail;
+    content.append(title,description);
+    const action=document.createElement("button");
+    action.type="button";
+    action.dataset.insightsFilter=item.type;
+    action.textContent=item.type==="bloqueado"?"Ir a bloqueados ↗":
+      item.type==="revisar"?"Ver casos a revisar ↗":
+        item.type==="listo"?"Ver registros listos ↗":"Ver todos ↗";
+    article.append(number,content,action);
+    fragment.append(article);
+  });
+  steps.replaceChildren(fragment);
+}
+function changeResultsFilter(next){
+  activeFilter=next;
+  $("workflowSearch").value="";
+  syncFilterButtons();
+  closeEditor();
+  applyFilter();
+  $("workflowRows").closest(".workbench-rows").scrollIntoView({behavior:"instant",block:"start"});
+}
+function firstBlocked(){
+  if(!latest)return;
+  const index=latest.rows.findIndex(row=>row.status==="bloqueado");
+  if(index<0)return;
+  activeFilter="bloqueado";
+  $("workflowSearch").value="";
+  syncFilterButtons();
+  applyFilter();
+  openEditor(index);
+}
 function renderEmpty(){
   for(const id of ["countTotal","countReady","countReview","countBlocked"])setText(id,"0");
   const rows=$("workflowRows");
@@ -151,6 +226,9 @@ function renderEmpty(){
   const tr=document.createElement("tr"),td=document.createElement("td");
   td.colSpan=5;td.textContent="Ejecuta el proceso para ver el detalle de cada registro.";
   setText("workflowFilterStatus","Ejecuta un escenario para filtrar y corregir los registros.");
+  $("workflowNoResults").hidden=true;
+  $("fixFirstIssue").disabled=true;
+  $("quickDemoAction").disabled=true;
   tr.append(td);rows.append(tr);
   [...$("workflowPipeline").querySelectorAll("li")].forEach(li=>{
     li.querySelector(".workbench-step-count")?.remove();
@@ -194,6 +272,7 @@ function render(result){
     cell(tr,row.action);
     tr.className="workbench-row";
     tr.dataset.status=row.status;
+    tr.dataset.search=normalizeSearch([row.id,row.reason,row.action].join(" "));
     const edit=cell(tr,"");
     const trigger=document.createElement("button");
     trigger.type="button";
@@ -205,6 +284,7 @@ function render(result){
     frag.append(tr);
   }
   body.replaceChildren(frag);
+  renderInsights(result);
   applyFilter();
   setText("workflowStatus",result.counts.total+" registros analizados. "+result.counts.listo+" listos, "+
     result.counts.revisar+" pendientes de revisión y "+result.counts.bloqueado+" bloqueados. "+
@@ -212,15 +292,19 @@ function render(result){
   $("exportWorkflow").disabled=false;
   $("copyWorkflow").disabled=false;
   $("exportActionQueue").disabled=!result.rows.some(row=>row.status==="listo" && !/histórico/i.test(row.action));
+  $("exportInsights").disabled=false;
+  $("fixFirstIssue").disabled=!result.rows.some(row=>row.status==="bloqueado");
+  $("quickDemoAction").disabled=$("fixFirstIssue").disabled;
   $("demoContact").dataset.ready="true";
 }
 function summary(){
   if(!latest)return "";
-  const data=SCENARIOS[scenario],counts=latest.counts;
+  const data=SCENARIOS[scenario],counts=latest.counts,insights=analyzeWorkflow(latest);
   return [
     "Escenario de simulación: "+data.title,
     "Registros analizados: "+counts.total,
-    "Preparados: "+counts.listo,
+    "Acciones preparadas (excluye históricos): "+insights.actionable,
+    "Históricos sin acciones nuevas: "+insights.historical,
     "Para revisión humana: "+counts.revisar,
     "Bloqueados: "+counts.bloqueado,
     "Es una simulación local con reglas deterministas: no existen conexiones al CRM/ERP ni envío de registros.",
@@ -264,6 +348,7 @@ $("runWorkflow").addEventListener("click",()=>{
     const result=runWorkflow(scenario,$("workflowSource").value);
     errorText("");
     render(result);
+    $("changeComparison").hidden=true;
   }catch(error){
     invalidate("Revisa el formato de entrada antes de ejecutar.");
     renderEmpty();
@@ -285,13 +370,19 @@ function syncFilterButtons(){
 }
 function applyFilter(){
   const all=latest?.rows.length||0;
+  const search=normalizeSearch($("workflowSearch").value);
   let visible=0;
   $("workflowRows").querySelectorAll(".workbench-row").forEach(tr=>{
-    const match=activeFilter==="all" || tr.dataset.status===activeFilter;
+    const match=(activeFilter==="all" || tr.dataset.status===activeFilter) &&
+      (!search || tr.dataset.search.includes(search));
     tr.hidden=!match;
     if(match)visible++;
   });
-  setText("workflowFilterStatus",visible+" de "+all+" registros visibles"+(activeFilter==="all"?"":", filtro: "+activeFilter)+". Puedes editar cualquiera de ellos.");
+  setText("workflowFilterStatus",visible+" de "+all+" registros visibles"+
+    (activeFilter==="all"?"":", estado: "+activeFilter)+
+    (search?", búsqueda: «"+$("workflowSearch").value.trim().slice(0,90)+"»":"")+".");
+  $("workflowNoResults").hidden=!latest || visible>0;
+  $("workflowSearchClear").disabled=!$("workflowSearch").value;
 }
 function openEditor(index){
   if(!latest?.rows[index])return;
@@ -332,10 +423,17 @@ function commitEdit(event){
     $("workflowSource").value=next;
     errorText("");
     const result=runWorkflow(scenario,next);
+    const before=analyzeWorkflow(latest),after=analyzeWorkflow(result);
     undoSource=original;
     $("undoCorrection").disabled=false;
     closeEditor();
     render(result);
+    const compare=$("changeComparison");
+    compare.textContent="CAMBIO COMPROBADO · Antes: "+before.actionable+" acciones preparadas, "+
+      before.blockedCount+" bloqueos, "+before.reviewCount+" revisiones. Después: "+
+      after.actionable+" acciones preparadas, "+after.blockedCount+" bloqueos, "+
+      after.reviewCount+" revisiones. La diferencia proviene de volver a ejecutar las reglas.";
+    compare.hidden=false;
     setText("workflowStatus","Corrección aplicada y proceso recalculado. Puedes deshacerla. "+result.counts.bloqueado+" registros siguen bloqueados.");
   }catch(error){
     setText("workflowEditStatus",error?.message||"No se ha podido guardar la corrección.");
@@ -346,6 +444,17 @@ $("workflowRows").addEventListener("click",event=>{
   if(!trigger)return;
   openEditor(Number(trigger.dataset.editIndex));
 });
+$("insightsSteps").addEventListener("click",event=>{
+  const button=event.target.closest("[data-insights-filter]");
+  if(button)changeResultsFilter(button.dataset.insightsFilter);
+});
+$("workflowSearch").addEventListener("input",()=>{closeEditor();applyFilter();});
+$("workflowSearchClear").addEventListener("click",()=>{
+  $("workflowSearch").value="";applyFilter();$("workflowSearch").focus();
+});
+$("resetResultsView").addEventListener("click",()=>changeResultsFilter("all"));
+$("fixFirstIssue").addEventListener("click",firstBlocked);
+$("quickDemoAction").addEventListener("click",firstBlocked);
 $("workflowEditForm").addEventListener("submit",commitEdit);
 for(const id of ["cancelWorkflowEdit","cancelWorkflowEditSecondary"]){
   $(id).addEventListener("click",closeEditor);
@@ -362,7 +471,7 @@ $("undoCorrection").addEventListener("click",()=>{
   undoSource=null;
   $("undoCorrection").disabled=true;
   closeEditor();
-  try{render(runWorkflow(scenario,$("workflowSource").value));}
+  try{render(runWorkflow(scenario,$("workflowSource").value));$("changeComparison").hidden=true;}
   catch{invalidate("No se pudo restaurar el estado previo.");}
 });
 $("importWorkflow").addEventListener("change",async event=>{
@@ -426,6 +535,7 @@ $("applyColumnMapping").addEventListener("click",()=>{
     $("undoCorrection").disabled=true;
     closeColumnMapper();
     render(result);
+    $("changeComparison").hidden=true;
     errorText("");
     setText("workflowStatus","Correspondencias confirmadas. "+result.counts.total+
       " registros analizados localmente. Edita errores en la tabla; no se ha enviado nada.");
@@ -440,6 +550,17 @@ $("columnMappingRows").addEventListener("change",event=>{
 $("resetWorkflow").addEventListener("click",()=>chooseScenario(scenario));
 $("exportWorkflow").addEventListener("click",()=>downloadCsv("full"));
 $("exportActionQueue").addEventListener("click",()=>downloadCsv("queue"));
+$("exportInsights").addEventListener("click",()=>{
+  if(!latest)return;
+  const report=insightsReport(latest,SCENARIOS[scenario].title);
+  const blob=new Blob([report],{type:"text/plain;charset=utf-8"});
+  const href=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=href;
+  link.download="revops-informe-orientativo-"+scenario+".txt";
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),1000);
+  setText("workflowStatus","Informe de simulación descargado. Solo incluye totales y motivos generales, no filas, emails ni clientes.");
+});
 $("copyWorkflow").addEventListener("click",copySummary);
 buttons.forEach(button=>button.addEventListener("click",()=>chooseScenario(button.dataset.scenario)));
 $("demoContact").addEventListener("click",event=>{

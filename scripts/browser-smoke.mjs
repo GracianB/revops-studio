@@ -145,7 +145,21 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#countReady").innerText(),"3");
     assert.equal(await page.locator("#countReview").innerText(),"1");
     assert.equal(await page.locator("#countBlocked").innerText(),"2");
+    assert.equal(await page.locator("#insightsActionable").innerText(),"2");
+    assert.equal(await page.locator("#insightsHistoric").innerText(),"1");
+    assert.equal(await page.locator("#insightsRatio").innerText(),"33 %");
+    assert.equal(await page.locator("#insightsDistribution span").count(),4);
     assert.equal(await page.locator("#workflowRows tr").count(),6);
+    await page.locator("#workflowSearch").fill("duplicado");
+    assert.equal(await page.locator(".workbench-row:visible").count(),1);
+    await page.locator("#workflowSearch").fill("sin coincidencias");
+    assert.equal(await page.locator("#workflowNoResults").isVisible(),true);
+    await page.locator("#resetResultsView").click();
+    assert.equal(await page.locator(".workbench-row:visible").count(),6);
+    assert.equal(await page.locator("#workflowNoResults").isHidden(),true);
+    await page.locator("#quickDemoAction").click();
+    assert.equal(await page.locator("#workflowEditForm").isVisible(),true);
+    await page.locator("#cancelWorkflowEdit").click();
     assert.equal(await page.locator("#exportWorkflow").isEnabled(),true);
     const initial=await page.locator("#workflowSource").inputValue();
     assert.match(initial,/PED-101/);
@@ -157,13 +171,25 @@ async function auditProductWorkbench(browser) {
     await page.locator('#workflowEditFields input[name="pedido"]').fill("PED-999");
     await page.locator("#saveWorkflowEdit").click();
     assert.equal(await page.locator("#countBlocked").innerText(),"1");
+    assert.equal(await page.locator("#insightsActionable").innerText(),"3");
+    assert.equal(await page.locator("#insightsHistoric").innerText(),"1");
+    assert.equal(await page.locator("#insightsRatio").innerText(),"50 %");
+    assert.match(await page.locator("#changeComparison").innerText(),/Antes: 2 acciones preparadas/);
+    assert.match(await page.locator("#changeComparison").innerText(),/Después: 3 acciones preparadas/);
     assert.equal(await page.locator(".workbench-row:visible").count(),1);
     assert.equal(await page.locator("#undoCorrection").isEnabled(),true);
     await page.locator("#undoCorrection").click();
     assert.equal(await page.locator("#countBlocked").innerText(),"2");
+    assert.equal(await page.locator("#changeComparison").isHidden(),true);
     assert.equal(await page.locator("#undoCorrection").isDisabled(),true);
     await page.locator('[data-workflow-filter="all"]').click();
-
+    const reportPromise=page.waitForEvent("download");
+    await page.locator("#exportInsights").click();
+    const report=await reportPromise;
+    assert.match(report.suggestedFilename(),/revops-informe-orientativo-orders\.txt/);
+    const reportText=await readFile(await report.path(),"utf8");
+    assert.match(reportText,/Acciones preparadas: 2/);
+    assert.doesNotMatch(reportText,/PED-101|norte@ejemplo\.test|Tienda Norte/);
     // Import a real local CSV, export actionable records only, and recover from a bad file.
     const ownCsv="pedido;cliente;email;total;estado\nNEW-1;Tienda;test@ejemplo.test;200;nuevo\nNEW-2;Tienda;;50;nuevo";
     await page.locator("#importWorkflow").setInputFiles({name:"datos-prueba.csv",mimeType:"text/csv",buffer:Buffer.from(ownCsv)});
@@ -246,7 +272,7 @@ async function auditProductWorkbench(browser) {
     const dims=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
     assert.ok(dims.scroll<=dims.viewport+3,"product demo mobile overflow "+JSON.stringify(dims));
     assert.deepEqual(failures,[],"demo script runtime errors");
-    console.log("PRODUCT WORKBENCH PASS ("+engineName+"): three real scenarios, editing, errors, export and private consultation handoff");
+    console.log("PRODUCT WORKBENCH PASS ("+engineName+"): guided triage, search, correction delta, private report, CSV mapping, export and contact");
   }finally{await page.close();}
 }
 
