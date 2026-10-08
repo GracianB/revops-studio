@@ -89,6 +89,7 @@ export function parseDelimited(source){
   if(inQuotes)throw Error("Hay una celda con comillas sin cerrar.");
   cells.push(cell);
   if(cells.some(c=>normalize(c)!==""))records.push(cells);
+  if(records.length>LINE_LIMIT+1)throw Error("Máximo 80 registros por ejecución.");
   if(records.length<2)throw Error("Es necesaria la cabecera y al menos un registro.");
   const headers=records[0].map(key);
   if(headers.length!==new Set(headers).size)throw Error("Hay nombres de columnas repetidos.");
