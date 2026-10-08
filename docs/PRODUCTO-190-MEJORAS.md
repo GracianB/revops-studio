@@ -2,7 +2,7 @@
 
 Cada entrada describe una conducta que puede observarse o verificarse; no se cuentan commits, retoques de padding o pruebas como nuevas funciones comerciales.
 
-**Corte de esta rama:** 74 comportamientos ya implementados/validados o existentes y relevantes; 116 pendientes en cartera. Solo los cambios de código y pruebas de esta PR cuentan como entrega nueva; parte de los implementados pertenecen a las versiones anteriores.
+**Corte de esta rama:** 77 comportamientos ya implementados/validados o existentes y relevantes; 113 pendientes en cartera. Solo los cambios de código y pruebas de esta PR cuentan como entrega nueva; parte de los implementados pertenecen a las versiones anteriores.
 
 **IMPLEMENTADO** = observable en el producto o cubierto por código de esta línea de desarrollo. **PENDIENTE** = no debe anunciarse como entregado. La lista total es un plan por prioridades, no una afirmación de que las 190 están terminadas.
 
@@ -71,7 +71,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P047** · Conservar archivo anterior cuando falla la carga · PENDIENTE
 - [   ] **P048** · Vigilancia de cambio de escenario durante lectura · PENDIENTE
 - [   ] **P049** · Resaltar encoding no UTF-8 antes de aceptar · PENDIENTE
-- [   ] **P050** · Compatibilidad controlada con TSV · PENDIENTE
+- [ x ] **P050** · Compatibilidad controlada con TSV · IMPLEMENTADO
 
 ## 06 · Mapeo de columnas
 
@@ -123,13 +123,13 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P087** · Restaurar el orden original · IMPLEMENTADO
 - [ x ] **P088** · Mostrar estado vacío al no encontrar resultados · IMPLEMENTADO
 - [   ] **P089** · Guardar vistas de filtros sin datos sensibles · PENDIENTE
-- [   ] **P090** · Exportar únicamente la vista filtrada · PENDIENTE
+- [ x ] **P090** · Exportar únicamente la vista filtrada · IMPLEMENTADO
 
 ## 10 · Tabla de auditoría
 
 - [ x ] **P091** · Conservar referencia al índice original al ordenar · IMPLEMENTADO
 - [ x ] **P092** · Editar la fila correcta tras ordenar · IMPLEMENTADO
-- [   ] **P093** · Mantener encabezados visibles al desplazarse · PENDIENTE
+- [ x ] **P093** · Mantener encabezados visibles al desplazarse · IMPLEMENTADO
 - [   ] **P094** · Mostrar densidad compacta u holgada · PENDIENTE
 - [   ] **P095** · Permitir personalizar columnas visibles · PENDIENTE
 - [   ] **P096** · Mostrar detalles completos de cada registro · PENDIENTE
