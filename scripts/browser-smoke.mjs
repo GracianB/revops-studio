@@ -55,10 +55,56 @@ async function captureVisual(page,name,locator=null) {
   console.log("V41IMG_END|"+name);
 }
 
+// Compare the commercial payload against the complete V40 stylesheet, not only a screenshot.
+// Same layout / computed styles across theme, page and mobile; no timing guesses in CI.
+async function auditCommercialCssParity(browser) {
+  const fullCss=await readFile(path.join(root,"assets/css/main.css"),"utf8");
+  const scenarios=[
+    {url:"/",width:1366,theme:"dark",selectors:["body",".nav-wrap",".hero-v41 h1",".studio-diagram",".service-card",".study-card","#contacto .contact-main"]},
+    {url:"/",width:390,theme:"light",selectors:["body",".nav-wrap",".hero-v41 h1",".studio-diagram",".service-card",".study-card","#contacto .contact-main"]},
+    {url:"/privacidad.html",width:390,theme:"dark",selectors:["body",".nav-wrap",".privacy-main",".privacy-main h1"]},
+    {url:"/gracias.html",width:390,theme:"light",selectors:["body",".nav-wrap",".thanks-heading",".contact-main"]}
+  ];
+  const snapshot=async (page,selectors)=>page.evaluate((list)=>Object.fromEntries(list.map(selector=>{
+    const element=document.querySelector(selector);
+    if(!element)return [selector,null];
+    const style=getComputedStyle(element),rect=element.getBoundingClientRect();
+    return [selector,{
+      display:style.display,color:style.color,background:style.backgroundColor,
+      fontSize:style.fontSize,lineHeight:style.lineHeight,grid:style.gridTemplateColumns,
+      padding:style.padding,margin:style.margin,border:style.borderTopColor,
+      width:Math.round(rect.width),height:Math.round(rect.height)
+    }];
+  })),selectors);
+  for(const scenario of scenarios){
+    const args={viewport:{width:scenario.width,height:844},reducedMotion:"reduce"};
+    const actual=await browser.newPage(args),original=await browser.newPage(args);
+    try{
+      await actual.addInitScript(theme=>localStorage.setItem("revops-theme",theme),scenario.theme);
+      await original.addInitScript(theme=>localStorage.setItem("revops-theme",theme),scenario.theme);
+      await original.route("**/assets/css/commercial.css",route=>route.fulfill({
+        status:200,contentType:"text/css",body:fullCss
+      }));
+      await Promise.all([
+        actual.goto(base+scenario.url,{waitUntil:"load"}),
+        original.goto(base+scenario.url,{waitUntil:"load"})
+      ]);
+      const a=await snapshot(actual,scenario.selectors);
+      const b=await snapshot(original,scenario.selectors);
+      assert.deepEqual(a,b,"V45 visual parity failed "+engineName+" "+scenario.url+" "+scenario.width+" "+scenario.theme);
+    }finally{
+      await actual.close();
+      await original.close();
+    }
+  }
+  console.log("V45 CSS VISUAL PARITY PASS ("+engineName+"): desktop, mobile, ES dark/light, contact and privacy");
+}
+
 try {
   browser=await browserEngine.launch(engineName==="chrome"?
     {channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]}:
     {headless:true});
+  await auditCommercialCssParity(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
