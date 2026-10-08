@@ -30,12 +30,18 @@
       <div class="workbench-legend"><strong>Esto sí puedes probarlo.</strong><p>Modifica registros, ejecuta las reglas y exporta los resultados. No es una presentación ni una animación decorativa.</p><small>Los sistemas CRM, ERP y soporte son ejemplos. Aquí no hay conexiones reales, acciones externas ni IA fingida.</small></div>
     </div>
   </section>
-  <section class="shell workbench-studio" aria-labelledby="workbench-scenario-title">
+  <section class="shell workbench-studio" id="simulador" aria-labelledby="workbench-scenario-title">
     <div class="workbench-section-head"><div><span class="workbench-section-index">01 / ELIGE UN PROCESO</span><h2 id="workbench-scenario-title">Tres problemas, tres recorridos.</h2></div><p>Cada escenario utiliza sus propias columnas y reglas. Los datos iniciales son ficticios.</p></div>
     <div class="workbench-scenarios" role="group" aria-label="Escenarios disponibles">
       <button type="button" class="workbench-scenario is-active" data-scenario="orders" aria-pressed="true"><span>01 / OPERACIONES</span><strong>Pedidos y CRM</strong><small>Validación · duplicados · cola</small></button>
       <button type="button" class="workbench-scenario" data-scenario="support" aria-pressed="false"><span>02 / CLIENTES</span><strong>Soporte y escalado</strong><small>Prioridad · incidencias · revisión</small></button>
       <button type="button" class="workbench-scenario" data-scenario="data" aria-pressed="false"><span>03 / DATOS</span><strong>Calidad y conciliación</strong><small>Fechas · cifras · anomalías</small></button>
+    </div>
+    <div class="workbench-quickstart" aria-label="Cómo probar esta herramienta">
+      <div><span>01</span><p><strong>Elige un proceso</strong><small>Los ejemplos ya están listos.</small></p></div>
+      <div><span>02</span><p><strong>Explora los resultados</strong><small>Comprueba los errores detectados.</small></p></div>
+      <div><span>03</span><p><strong>Corrige y compara</strong><small>Prueba una corrección y exporta.</small></p></div>
+      <button type="button" id="quickDemoAction" class="workbench-quickstart-action">Mostrarme un error ↗</button>
     </div>
     <div class="workbench-editor-grid">
       <section class="workbench-panel workbench-input" aria-labelledby="workbench-input-title">
@@ -89,10 +95,30 @@
         <div class="workbench-output-actions">
           <button class="btn btn-secondary" type="button" id="exportWorkflow" disabled>Exportar CSV ↗</button>
           <button class="btn btn-secondary" type="button" id="copyWorkflow" disabled>Copiar resumen</button>
+          <button class="btn btn-secondary" type="button" id="exportInsights" disabled>Descargar informe explicativo ↗</button>
           <button class="btn btn-secondary" type="button" id="exportActionQueue" disabled>Exportar cola lista (sin históricos)</button>
         </div>
       </section>
     </div>
+    <section class="workbench-insights" aria-labelledby="insights-title" id="lectura-resultados">
+      <div class="workbench-insights-head">
+        <div><span class="workbench-section-index">RESULTADOS EXPLICADOS · DATOS DEL EJEMPLO</span><h2 id="insights-title">Qué nos dicen estos registros.</h2><p id="insightsSummary">Ejecuta el proceso y descubre qué requiere atención y qué puede prepararse para el siguiente paso.</p></div>
+        <div class="workbench-insights-ratio"><strong id="insightsRatio">0 %</strong><span>Acciones preparadas respecto al total. No es ahorro ni rendimiento real.</span></div>
+      </div>
+      <div class="workbench-distribution" aria-label="Distribución de estados simulados" id="insightsDistribution">
+        <span class="workbench-distribution-ready" style="width:0%"></span><span class="workbench-distribution-review" style="width:0%"></span><span class="workbench-distribution-blocked" style="width:0%"></span>
+      </div>
+      <div class="workbench-insight-legend">
+        <span><i class="legend-ready"></i><b id="insightsActionable">0</b> acciones preparadas</span>
+        <span><i class="legend-history"></i><b id="insightsHistoric">0</b> históricos válidos sin acción</span>
+        <span><i class="legend-review"></i><b id="insightsReview">0</b> requieren revisión</span>
+        <span><i class="legend-blocked"></i><b id="insightsBlocked">0</b> bloqueados</span>
+      </div>
+      <div class="workbench-insight-steps" id="insightsSteps" aria-label="Siguientes pasos recomendados">
+        <p class="workbench-empty-insight">Los pasos recomendados aparecerán después de ejecutar el proceso.</p>
+      </div>
+      <div class="workbench-insight-note">Recomendaciones basadas en las reglas visibles de esta demo. No se comprueban fuentes externas ni se calculan ahorros.</div>
+    </section>
     <section class="workbench-rows" aria-labelledby="workbench-table-title">
       <div class="workbench-section-head"><div><span class="workbench-section-index">04 / AUDITORÍA DE REGISTROS</span><h2 id="workbench-table-title">Cada decisión tiene un motivo.</h2></div><p>Filtra errores, corrige cada registro directamente, compara los resultados y exporta solo las acciones preparadas. Ninguna se ejecuta en sistemas externos.</p></div>
       <div class="workbench-review-toolbar" role="group" aria-label="Filtrar registros según el resultado">
@@ -101,7 +127,13 @@
         <button type="button" class="workbench-filter" data-workflow-filter="revisar" aria-pressed="false">A revisar</button>
         <button type="button" class="workbench-filter" data-workflow-filter="listo" aria-pressed="false">Listos</button>
       </div>
+      <div class="workbench-search-row">
+        <label for="workflowSearch">Buscar por registro, motivo o acción</label>
+        <div class="workbench-search-input"><input type="search" id="workflowSearch" autocomplete="off" placeholder="Ej. PED-101, duplicado, email…" aria-controls="workflowRows"><button type="button" id="workflowSearchClear">Limpiar</button></div>
+        <button type="button" class="workbench-first-issue" id="fixFirstIssue">Corregir primer bloqueo ↗</button>
+      </div>
       <p class="workbench-filter-status" id="workflowFilterStatus" role="status" aria-live="polite">Elige un escenario para ver los registros.</p>
+      <div class="workbench-no-results" id="workflowNoResults" hidden role="status"><strong>No encontramos registros con ese filtro.</strong><span>Prueba otra búsqueda o vuelve a mostrar todos.</span><button type="button" id="resetResultsView">Mostrar todos los registros</button></div>
       <div class="workbench-table-scroll"><table class="workbench-table"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th><th scope="col">Corregir</th></tr></thead><tbody id="workflowRows"><tr><td colspan="5">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
       <form id="workflowEditForm" class="workbench-edit" hidden aria-labelledby="workbench-edit-title">
         <div class="workbench-edit-heading"><div><span class="workbench-section-index">CORRECCIÓN LOCAL · SIN ENVÍOS</span><h3 id="workbench-edit-title">Corregir registro</h3><p id="workflowEditHint">Los cambios solo afectan a los datos de esta pestaña. Se vuelve a ejecutar todo el proceso.</p></div><button type="button" class="workbench-edit-close" id="cancelWorkflowEdit">Cerrar ×</button></div>
@@ -110,6 +142,9 @@
         <p class="workbench-edit-status" id="workflowEditStatus" role="status" aria-live="polite"></p>
       </form>
     </section>
+    <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
+      <div><p><strong>Listo:</strong> pasa las reglas de esta demostración. Puede ser una acción propuesta o un registro histórico, que no debe volver a ejecutarse.</p><p><strong>Revisar:</strong> necesita una decisión humana, aunque algunos campos sean válidos.</p><p><strong>Bloqueado:</strong> no cumple alguna regla y no puede avanzar hasta corregirse.</p><p><strong>Importante:</strong> ningún registro se introduce en tu CRM ni en otra aplicación. Esta mesa de trabajo es una simulación local.</p></div>
+    </details>
     <aside class="workbench-next" aria-labelledby="workbench-next-title"><div><span class="workbench-section-index">05 / DE LA DEMO A TU PROCESO</span><h2 id="workbench-next-title">¿Y con tus herramientas reales?</h2><p>El siguiente paso sería analizar permisos, reglas, excepciones y un caso real, no conectar un CRM a ciegas. Llévate un resumen de esta simulación a tu consulta, sin enviar los registros.</p></div><a class="btn btn-primary" id="demoContact" href="./#contacto">Consultar un proceso parecido ↗</a></aside>
     <p class="workbench-privacy">Diseñado como demostración local, determinista y sin dependencias de IA. Los resultados no garantizan ahorros, no son datos de empresas y no constituyen un sistema de producción.</p>
   </section>
