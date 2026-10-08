@@ -40,7 +40,7 @@ body{
 }
 body.menu-open{overflow:hidden}
 a{color:inherit}
-button,input,textarea{font:inherit}
+button,input,textarea,select{font:inherit}
 button{color:inherit}
 ::selection{background:rgba(255,90,95,.35);color:#fff}
 
@@ -1312,3 +1312,41 @@ textarea.form-control{min-height:145px;resize:vertical}
 .ecosystem{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ecosystem .product-card.wide{grid-row:auto}
 @media(max-width:700px){.ecosystem{grid-template-columns:1fr}}
+
+/* Dedicated V40 proof workspace, separate from the commercial index. */
+.lab-teaser-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:28px;padding:clamp(24px,4vw,46px);border:1px solid var(--line-2);border-radius:22px;background:linear-gradient(120deg,rgba(255,90,95,.06),var(--panel) 65%)}
+.lab-teaser-panel h2{max-width:690px;margin:12px 0;font-size:clamp(30px,3.8vw,50px);line-height:1.04;letter-spacing:-.045em}
+.lab-teaser-panel p{max-width:720px;color:var(--muted);font-size:14px}
+.lab-teaser-actions{display:grid;gap:10px}
+.lab-page-intro{padding:56px 0 24px}
+.lab-page-intro h1{font-size:clamp(43px,7vw,77px)}
+.lab-page-intro .hero-accent{font-size:.72em}
+@media(max-width:900px){.lab-teaser-panel{grid-template-columns:1fr}.lab-teaser-actions{display:flex;flex-wrap:wrap}}
+@media(max-width:700px){.lab-teaser-actions{display:grid}.lab-page-intro{padding:32px 0 12px}.lab-page .nav-actions .btn{display:none}}
+
+/* Three grounded commercial case studies with explicit public/private proof. */
+.case-studies{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.study-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;padding:26px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}
+.study-top{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.study-label{border:1px solid rgba(129,230,163,.28);border-radius:999px;padding:5px 9px;color:var(--ok);font:700 9px var(--mono)}
+.study-label-private{border-color:var(--line-2);color:var(--muted)}
+.study-card h3{margin:27px 0 14px;font-size:clamp(21px,2.5vw,28px);line-height:1.1;letter-spacing:-.04em}
+.study-card p{margin:0 0 14px;color:var(--muted);font-size:13px}
+.study-card p strong{color:var(--text)}
+.study-card .study-problem{margin-bottom:12px}
+.study-scope{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 25px}
+.study-scope span{padding:5px 8px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font:600 10px var(--mono)}
+.study-link{display:inline-block;align-self:flex-start;margin-top:auto;border-bottom:1px solid var(--accent);padding:5px 0;color:var(--text);font-size:12px;font-weight:750;text-decoration:none}
+.study-secondary{margin-top:9px;color:var(--muted);font-size:11px;text-decoration:underline;text-underline-offset:3px}
+.study-note{margin-top:11px;color:var(--dim);font-size:11px}
+.case-credibility{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:23px;margin-top:14px;border:1px solid var(--line);border-radius:16px;background:var(--bg-2)}
+.case-credibility p{max-width:780px;margin:0;color:var(--muted);font-size:13px}
+.case-credibility p strong{color:var(--text)}
+.case-credibility .btn{flex-shrink:0}
+@media(max-width:1050px){.case-studies{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.case-studies{grid-template-columns:1fr}.study-card{padding:22px}.case-credibility{align-items:stretch;flex-direction:column}.case-credibility .btn{width:100%}}
+
+/* Keyboard visibility and comfortable contrast for commercial forms. */
+:root{--dim:#8795a8}
+:where(a,button,input,textarea,select,summary):focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.form-control:focus-visible{box-shadow:0 0 0 3px rgba(255,90,95,.13)}

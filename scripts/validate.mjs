@@ -4,6 +4,8 @@ import path from "node:path";
 const root = process.cwd();
 const required = [
   "index.html",
+  "laboratorio.html",
+  "assets/js/site.js",
   "gracias.html",
   "README.md",
   "assets/css/main.css",
@@ -54,22 +56,28 @@ for (const file of required) {
 }
 
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
-const appJs = fs.readFileSync(path.join(root, "assets/js/app.js"), "utf8");
-const domSelectors = [...appJs.matchAll(/qs\(\s*["']#([A-Za-z0-9_-]+)["']/g)].map((match) => match[1]);
-const missingDomIds = [...new Set(domSelectors)].filter((id) => !ids.includes(id));
-if (missingDomIds.length) fail("app.js references missing DOM ids: " + missingDomIds.join(", "));
-
-const guidedTargets = [...appJs.matchAll(/target:\s*"([A-Za-z0-9_-]+)"/g)].map((match) => match[1]);
-const missingGuidedTargets = [...new Set(guidedTargets)].filter((id) => !ids.includes(id));
-if (missingGuidedTargets.length) fail("guided proof references missing target ids: " + missingGuidedTargets.join(", "));
-
-const guidedSteps = [...html.matchAll(/data-guided-step="(\d+)"/g)].map((match) => Number(match[1]));
-const expectedGuidedSteps = [0, 1, 2, 3];
-if (guidedSteps.length !== expectedGuidedSteps.length || guidedSteps.some((value, index) => value !== expectedGuidedSteps[index])) {
-  fail("guided proof steps must expose 0,1,2,3 exactly once");
+const labHtml = fs.readFileSync(path.join(root, "laboratorio.html"), "utf8");
+const siteJs = fs.readFileSync(path.join(root, "assets/js/site.js"), "utf8");
+const pages = [["index.html", html], ["laboratorio.html", labHtml]];
+const ids = pages.flatMap(([, page]) => [...page.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
+for (const [filename,page] of pages) {
+  const pageIds = [...page.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
+  if (pageIds.length !== new Set(pageIds).size) fail(filename + " duplicate ids");
+  for (const match of page.matchAll(/href="#([^"]+)"/g)) {
+    if (!pageIds.includes(match[1])) fail(filename + " missing anchor: " + match[1]);
+  }
 }
-
+const appJs = fs.readFileSync(path.join(root, "assets/js/app.js"), "utf8");
+for (const [name,code] of [["app",appJs],["site",siteJs]]) {
+  const domSelectors = [...code.matchAll(/qs\(\s*["']#([A-Za-z0-9_-]+)["']/g)].map(m => m[1]);
+  const missing = [...new Set(domSelectors)].filter(id => !ids.includes(id));
+  if (missing.length) fail(name + " references missing DOM ids: " + missing.join(","));
+}
+const guidedTargets = [...appJs.matchAll(/target:\s*"([A-Za-z0-9_-]+)"/g)].map(m => m[1]);
+const missingGuidedTargets = guidedTargets.filter(id => !labHtml.includes('id="' + id + '"'));
+if (missingGuidedTargets.length) fail("lab guided targets missing: " + missingGuidedTargets.join(","));
+const guidedSteps = [...labHtml.matchAll(/data-guided-step="(\d+)"/g)].map(m => Number(m[1]));
+if (guidedSteps.join(",") !== "0,1,2,3") fail("lab guided steps missing");
 const requiredV18Ids = [
   "decision-trace-title", "decisionTraceEmpty", "decisionTraceContent",
   "traceState", "traceRunId", "traceInputs", "traceDecision", "traceCommercial",
@@ -118,24 +126,19 @@ const requiredV18Ids = [
   "feedbackStatus", "feedbackTotal", "feedbackPositiveRate", "feedbackWinRate",
   "feedbackVariance", "feedbackCalibration", "feedbackSla", "feedbackEffectiveness"
 ];
-const missingV18Ids = requiredV18Ids.filter((id) => !ids.includes(id));
+const missingV18Ids = requiredV18Ids.filter((id) => !labHtml.includes('id="' + id + '"'));
 if (missingV18Ids.length) fail("V18 surface missing DOM ids: " + missingV18Ids.join(", "));
-const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
-if (duplicates.length) fail("duplicate ids: " + [...new Set(duplicates)].join(", "));
-
-const localRefs = [...html.matchAll(/(?:href|src)="(\.{0,2}\/[^"]+)"/g)]
-  .map((match) => match[1].split("#")[0].split("?")[0])
-  .filter(Boolean);
-
-for (const ref of localRefs) {
-  if (!fs.existsSync(path.normalize(path.join(root, ref)))) fail("broken local reference: " + ref);
+const localRefs = pages.flatMap(([filename,page]) => [...page.matchAll(/(?:href|src)="(\.{0,2}\/[^"]+)"/g)]
+  .map(m => [filename, m[1].split("#")[0].split("?")[0]]).filter(([,ref]) => Boolean(ref)));
+for (const [filename,ref] of localRefs) {
+  if (!fs.existsSync(path.normalize(path.join(root,ref)))) fail(filename + " broken local reference: " + ref);
 }
-
-if (/href="javascript:/i.test(html)) fail("javascript: URL found");
-
-const blankUnsafe = [...html.matchAll(/<a\b[^>]*target="_blank"[^>]*>/gi)]
-  .some((match) => !/rel="[^"]*noopener/i.test(match[0]));
-if (blankUnsafe) fail('target="_blank" without noopener');
+for (const [filename,page] of pages) {
+  if (/href="javascript:/i.test(page)) fail(filename + " javascript: URL");
+  const unsafe = [...page.matchAll(/<a\b[^>]*target="_blank"[^>]*>/gi)]
+    .some(m => !/rel="[^"]*noopener/i.test(m[0]));
+  if (unsafe) fail(filename + ' target="_blank" without noopener');
+}
 
 const secretPatterns = [
   /ghp_[A-Za-z0-9_]{20,}/,
@@ -393,7 +396,7 @@ for (const expected of [
 }
 
 const sourceFiles = [
-  "index.html","gracias.html","assets/css/main.css","assets/js/app.js","assets/js/policy-transparency.js",
+  "index.html","laboratorio.html","gracias.html","assets/css/main.css","assets/js/site.js","assets/js/app.js","assets/js/policy-transparency.js",
   "assets/js/thanks.js","assets/js/revops-engine.js","assets/js/csv-utils.js",
   "assets/js/execution-adapter.js","assets/js/outcome-engine.js",
   "assets/js/calibration-engine.js","assets/js/adaptive-calibration-engine.js","assets/js/policy-engine.js","assets/js/policy-evidence.js","assets/js/policy-decision-certificate.js","assets/js/policy-evidence-signing.js","assets/js/policy-trust-registry.js","assets/js/policy-trust-root.js",
