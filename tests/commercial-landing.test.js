@@ -27,7 +27,7 @@ test("offer: three grounded service pillars and six filterable examples",()=>{
 test("commercial pricing stays indicative, without invented savings",()=>{
  for(const price of ["900 €","4.000 €","600 €"])assert.ok(index.includes(price));
  assert.match(index,/No se promete un porcentaje de ahorro/);
- assert.match(index,/Coste del tiempo, no ahorro prometido/);
+ assert.match(site,/Coste del tiempo, no ahorro prometido/);
 });
 
 test("public and private professional cases remain clearly distinguished",()=>{
