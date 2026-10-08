@@ -1595,3 +1595,13 @@ body{background:radial-gradient(ellipse 620px 460px at 78% 0%,rgba(222,109,101,.
   .hero-v41 .hero-actions{margin-top:21px}
   .hero-v41 .hero-trust{margin-top:24px}
 }
+
+/* Lab contrast adaptations for mineral-paper theme: status colors cannot be pale-on-white. */
+:root[data-theme="light"] .lab-page #forecastDownside{color:#8d3342}
+:root[data-theme="light"] .lab-page #forecastUpside{color:#1b6a4a}
+:root[data-theme="light"] .lab-page .demo-table td[data-state="nurture"]{color:#80521f}
+:root[data-theme="light"] .lab-page .demo-table td[data-state="qualified"]{color:#196649}
+:root[data-theme="light"] .lab-page .demo-table td[data-state="new"]{color:#345977}
+:root[data-theme="light"] .lab-page .demo-table td[data-state="blocked"]{color:#9c3343}
+:root[data-theme="light"] .lab-page .forecast-metric.downside strong{color:#8d3342}
+:root[data-theme="light"] .lab-page .forecast-metric.upside strong{color:#1b6a4a}
