@@ -82,16 +82,12 @@ function formatEuro(value) {
 function initCalculator() {
   const output = qs("#annualCost"), detail = qs("#annualDetail");
   if (!output || !detail) return;
-  const formatMoneyLocal = (value) => new Intl.NumberFormat("es-ES", {
-    style: "currency", currency: "EUR", maximumFractionDigits: 0
-  }).format(Number(value) || 0);
-
   const render = () => {
-    const hours = numberValue("#hoursWeek", 6);
-    const people = Math.max(1, numberValue("#people", 2));
-    const cost = numberValue("#hourCost", 25);
+    const hours = Math.min(80, numberValue("#hoursWeek", 6));
+    const people = Math.min(100, Math.max(1, numberValue("#people", 2)));
+    const cost = Math.min(500, numberValue("#hourCost", 25));
     output.textContent = formatEuro(hours * people * cost * 52);
-    detail.textContent = hours.toLocaleString("es-ES") + " h/semana × " + people.toLocaleString("es-ES") + " persona(s) × " + formatEuro(cost) + "/h × 52 semanas";
+    detail.textContent = hours.toLocaleString("es-ES") + " h/semana × " + people.toLocaleString("es-ES") + " personas × " + formatEuro(cost) + "/h × 52 semanas. Coste del tiempo, no ahorro prometido.";
   };
   ["#hoursWeek", "#people", "#hourCost"].forEach((selector) => qs(selector)?.addEventListener("input", render));
   render();
@@ -110,36 +106,87 @@ function collectBrief(form) {
   };
 }
 
+const FORM_ENDPOINT = "https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com";
+const CONTACT_TO = "gracianbaenagonzalez@gmail.com";
+
+function mailtoForBrief(brief) {
+  const subject = "RevOps Studio | Consulta | " + (brief.servicio || "Proyecto");
+  const body = ["Hola, quiero consultar un proyecto en RevOps Studio.", "",
+    "Nombre: " + brief.nombre,
+    "Email: " + brief.email,
+    "Servicio: " + (brief.servicio || "Sin especificar"),
+    "Herramientas: " + (brief.herramientas || "Sin especificar"),
+    "Horas/semana: " + (brief.horas || "Sin especificar"),
+    "Necesidad: " + brief.dolor,
+    "", "Gracias."].join("\n");
+  return "mailto:" + CONTACT_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+}
+
 function initBriefForm() {
   const form = qs("#briefForm"), status = qs("#formStatus");
-  if (!form || !status) return;
-  form.addEventListener("submit", (event) => {
+  const submit = qs("#briefSubmit"), fallback = qs("#briefEmailFallback");
+  if (!form || !status || !submit) return;
+  const saveBrief = (brief) => {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(brief)); } catch { /* storage is optional */ }
+  };
+  const updateFallback = () => {
+    if (fallback) fallback.href = mailtoForBrief(collectBrief(form));
+  };
+  form.addEventListener("input", updateFallback);
+  form.addEventListener("change", updateFallback);
+  updateFallback();
+
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!form.checkValidity()) { form.reportValidity(); return; }
-    const data = collectBrief(form);
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // Session storage can be disabled. Keep the brief available for review.
-      const message = [
-        "Hola,","", "Quiero consultar un proyecto en RevOps Studio.","",
-        "Nombre: " + data.nombre, "Email: " + data.email,
-        "Servicio: " + data.servicio,
-        "Herramientas actuales: " + data.herramientas,
-        "Horas/semana: " + data.horas, "Problema: " + data.dolor
-      ].join("\n");
-      const link = document.createElement("a");
-      link.href = "mailto:gracianbaenagonzalez@gmail.com?subject=" +
-        encodeURIComponent("RevOps Studio | Consulta") + "&body=" + encodeURIComponent(message);
-      link.textContent = "Revisar correo preparado ↗";
-      status.replaceChildren(document.createTextNode("El navegador no permite guardar el brief. "), link);
+    const brief = collectBrief(form);
+    if (qs("#websiteExtra")?.value.trim()) {
+      status.textContent = "No se ha enviado el formulario.";
       status.dataset.state = "error";
       return;
     }
-    track(ANALYTICS_EVENT, { place: "brief" });
-    status.dataset.state = "ok";
-    status.textContent = "Brief preparado en esta pestaña. Revisa el mensaje antes de enviarlo.";
-    window.location.assign("./gracias.html");
+    updateFallback();
+    saveBrief(brief);
+    submit.disabled = true;
+    submit.textContent = "Enviando consulta…";
+    status.dataset.state = "info";
+    status.textContent = "Enviando a través del proveedor del formulario. Tus datos no se guardan en el repositorio.";
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(FORM_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          _subject: "RevOps Studio | Nueva consulta",
+          _captcha: "true",
+          _honey: "",
+          nombre: brief.nombre,
+          email: brief.email,
+          servicio: brief.servicio,
+          herramientas: brief.herramientas,
+          horas: brief.horas,
+          mensaje: brief.dolor,
+          consentimiento: "sí"
+        }),
+        signal: controller.signal
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !(result.success === true || result.success === "true")) {
+        throw new Error("Provider rejected submission");
+      }
+      track("ContactSubmitted", { place: "landing" });
+      window.location.assign("./gracias.html?via=proveedor");
+    } catch {
+      status.dataset.state = "error";
+      status.textContent = "No se ha podido confirmar el envío. Tu mensaje sigue escrito. Usa «Prefiero escribir un correo» para enviarlo sin perderlo.";
+      if (fallback) fallback.focus();
+    } finally {
+      clearTimeout(timeout);
+      submit.disabled = false;
+      submit.textContent = "Enviar solicitud ↗";
+    }
   });
 }
 
