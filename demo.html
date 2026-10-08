@@ -26,8 +26,8 @@
 <main id="main">
   <section class="shell workbench-hero" aria-labelledby="workbench-title">
     <div class="workbench-eyebrow"><span class="workbench-live-dot" aria-hidden="true"></span> MESA DE PRUEBAS · DEMO INTERACTIVA · 100 % LOCAL</div>
-    <div class="workbench-hero-grid"><div><h1 id="workbench-title">De datos desordenados a <em>decisiones claras.</em></h1><p>Prueba el recorrido de un proceso: valida entradas, aparta duplicados, identifica excepciones y revisa qué quedaría preparado para una integración real.</p></div>
-      <div class="workbench-legend"><strong>Esto sí puedes probarlo.</strong><p>Modifica registros, ejecuta las reglas y exporta los resultados. No es una presentación ni una animación decorativa.</p><small>Los sistemas CRM, ERP y soporte son ejemplos. Aquí no hay conexiones reales, acciones externas ni IA fingida.</small></div>
+    <div class="workbench-hero-grid"><div><h1 id="workbench-title">De datos desordenados a <em>decisiones claras.</em></h1><p>Importa datos de ejemplo, detecta incidencias y entiende qué merece atención. Corrige una fila, comprueba qué ha cambiado y llévate un informe claro antes de plantear una integración real.</p></div>
+      <div class="workbench-legend"><strong>Esto sí puedes probarlo.</strong><p>Corrige registros, compara resultados antes y después y descarga un informe con próximos pasos. No es una presentación decorativa.</p><small>Los sistemas CRM, ERP y soporte son ejemplos. Aquí no hay conexiones reales, acciones externas ni IA fingida.</small></div>
     </div>
   </section>
   <section class="shell workbench-studio" id="simulador" aria-labelledby="workbench-scenario-title">
@@ -64,7 +64,7 @@
           <div id="columnMappingRows" class="workbench-mapping-list"></div>
           <p id="columnMappingIgnored" class="workbench-mapping-extras"></p>
           <div class="workbench-preview">
-            <h5>Vista previa de los datos de origen</h5>
+            <h5>Vista previa del resultado propuesto</h5>
             <div id="columnMappingPreview" class="workbench-preview-grid"></div>
           </div>
           <p class="workbench-map-status" id="columnMappingStatus" role="status" aria-live="polite"></p>
@@ -93,7 +93,7 @@
           <li><span>04</span><div><b>Salida</b><small>Preparados, no enviados</small></div></li>
         </ol>
         <div class="workbench-output-actions">
-          <button class="btn btn-secondary" type="button" id="exportWorkflow" disabled>Exportar CSV ↗</button>
+          <button class="btn btn-secondary" type="button" id="exportWorkflow" disabled title="Incluye los registros completos introducidos en la simulación">Exportar CSV completo ↗</button>
           <button class="btn btn-secondary" type="button" id="copyWorkflow" disabled>Copiar resumen</button>
           <button class="btn btn-secondary" type="button" id="exportInsights" disabled>Descargar informe explicativo ↗</button>
           <button class="btn btn-secondary" type="button" id="exportActionQueue" disabled>Exportar cola lista (sin históricos)</button>
