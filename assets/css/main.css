@@ -1605,3 +1605,7 @@ body{background:radial-gradient(ellipse 620px 460px at 78% 0%,rgba(222,109,101,.
 :root[data-theme="light"] .lab-page .demo-table td[data-state="blocked"]{color:#9c3343}
 :root[data-theme="light"] .lab-page .forecast-metric.downside strong{color:#8d3342}
 :root[data-theme="light"] .lab-page .forecast-metric.upside strong{color:#1b6a4a}
+
+:root[data-theme="light"] .lab-page .queue-priority[data-priority="medium"]{color:#85551f}
+:root[data-theme="light"] .lab-page .queue-priority[data-priority="high"]{color:#8c2f43}
+:root[data-theme="light"] .lab-page .queue-priority[data-priority="low"]{color:#245a73}
