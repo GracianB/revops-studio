@@ -174,13 +174,27 @@ function initBriefForm() {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !(result.success === true || result.success === "true")) {
-        throw new Error("Provider rejected submission");
+        const rejected = new Error("Provider rejected submission");
+        rejected.status = response.status;
+        rejected.providerMessage = typeof result.message === "string" ? result.message : "";
+        throw rejected;
       }
       track("ContactSubmitted", { place: "landing" });
       window.location.assign("./gracias.html?via=proveedor");
-    } catch {
+    } catch (error) {
       status.dataset.state = "error";
-      status.textContent = "No se ha podido confirmar el envío. Tu mensaje sigue escrito. Usa «Prefiero escribir un correo» para enviarlo sin perderlo.";
+      const providerSaidActivation = /activat|confirm.*email|verif.*email/i.test(
+        typeof error?.providerMessage === "string" ? error.providerMessage : ""
+      );
+      if (providerSaidActivation) {
+        status.textContent = "El proveedor requiere que el propietario active el formulario desde el correo de FormSubmit. No hay entrega confirmada. Puedes escribirnos directamente por email.";
+      } else if (error?.name === "AbortError") {
+        status.textContent = "La conexión ha tardado demasiado. No podemos confirmar si el proveedor procesó el mensaje. Evita enviarlo repetidamente y usa el correo directo si lo necesitas.";
+      } else if (error?.message === "Provider rejected submission") {
+        status.textContent = "El proveedor no ha aceptado la solicitud (HTTP " + error.status + "). Puede faltar la activación inicial del formulario. No hay envío confirmado; utiliza el correo directo.";
+      } else {
+        status.textContent = "No se ha podido comprobar el envío al proveedor. No se ha confirmado la entrega. Puedes usar «Prefiero escribir un correo» sin perder los datos.";
+      }
       if (fallback) fallback.focus();
     } finally {
       clearTimeout(timeout);
