@@ -231,6 +231,9 @@ function initDiagnostic() {
     if (plan) plan.hidden = !current;
     if (actions) actions.hidden = !current;
     if (feedback) feedback.textContent = "";
+    const example = qs("#diagTryDemo");
+    if (example) example.href = "./demo.html?scenario=" +
+      (problem.value === "reporting" ? "data" : problem.value === "knowledge" ? "support" : "orders");
     if (!current) return;
     const fields = {
       "#diagRoute": current.service + " · " + current.packageType,
@@ -292,6 +295,24 @@ function initDiagnostic() {
     notifyForm();
   });
   render();
+  // Receive only a user-approved scenario summary, never the input rows.
+  try {
+    const raw = sessionStorage.getItem("revops-studio:demo:handoff");
+    if (raw) {
+      sessionStorage.removeItem("revops-studio:demo:handoff");
+      const incoming = JSON.parse(raw);
+      if (incoming && typeof incoming.summary === "string" &&
+          incoming.summary.length <= 1000 && !field.value) {
+        field.value = incoming.summary;
+        const serviceField = qs("#servicio");
+        if (serviceField && !serviceField.value &&
+          Array.from(serviceField.options).some(option => option.value === incoming.service)) {
+          serviceField.value = incoming.service;
+        }
+        notifyForm();
+      }
+    }
+  } catch { /* Session storage and handoff are optional. */ }
   showDiagnosticContext();
 }
 

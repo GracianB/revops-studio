@@ -10,6 +10,7 @@ const perf = file("scripts/performance-budget.mjs"), workflow = file(".github/wo
 const liveAudit=file("scripts/audit-live.mjs"),liveWorkflow=file(".github/workflows/live-audit.yml");
 const commercialCss=file("assets/css/commercial.css");
 const diagnostic=file("assets/js/diagnostic.js");
+const demoHtml=file("demo.html"),workflowEngine=file("assets/js/workflow-engine.js"),workflowUi=file("assets/js/workflow-demo.js");
 
 test("commercial story: client problem, solutions, scope, proof, process and contact precede the lab",()=>{
  const names=["problemas","diagnostico","servicios","oferta","casos","proceso","contacto","playground"];
@@ -130,6 +131,29 @@ test("guided diagnostic is an actual customer-facing workflow, not a dead CTA",(
  assert.match(diagnostic,/export function buildDiagnostic/);
  assert.match(diagnostic,/Cómo validarlo/);
  assert.match(thanksJs,/Mapa inicial orientativo/);
+});
+
+test("working product: visitors can try 3 workflows and carry safe summaries to contact",()=>{
+ assert.match(index,/href="\.\/demo\.html"/);
+ assert.match(index,/id="diagTryDemo"/);
+ assert.match(demoHtml,/id="workflowSource"/);
+ assert.match(demoHtml,/id="runWorkflow"/);
+ assert.match(demoHtml,/id="workflowRows"/);
+ assert.match(demoHtml,/id="exportWorkflow"/);
+ assert.match(demoHtml,/id="demoContact"/);
+ for(const s of ["orders","support","data"]){
+   assert.match(demoHtml,new RegExp('data-scenario="'+s+'"'));
+ }
+ assert.match(workflowEngine,/function parseDelimited/);
+ assert.match(workflowEngine,/export function runWorkflow/);
+ assert.match(workflowEngine,/export function exportResultCsv/);
+ assert.match(workflowUi,/replaceChildren/);
+ assert.match(workflowUi,/textContent/);
+ assert.match(workflowUi,/createObjectURL/);
+ assert.match(workflowUi,/sessionStorage\.setItem\(storageKey/);
+ assert.doesNotMatch(workflowUi,/fetch\(/);
+ assert.match(site,/revops-studio:demo:handoff/);
+ assert.match(site,/incoming\.summary\.length <= 1000/);
 });
 
 test("commercial pricing stays indicative, without invented savings",()=>{

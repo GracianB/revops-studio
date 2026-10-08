@@ -135,12 +135,63 @@ async function auditCustomerDiagnostic(browser) {
   } finally { await page.close(); }
 }
 
+async function auditProductWorkbench(browser) {
+  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
+  const failures=[];
+  page.on("pageerror",error=>failures.push(error.message));
+  try {
+    await page.goto(base+"/demo.html?scenario=orders",{waitUntil:"load"});
+    await page.waitForFunction(()=>document.querySelector("#countTotal")?.textContent==="6");
+    assert.equal(await page.locator("#countReady").innerText(),"3");
+    assert.equal(await page.locator("#countReview").innerText(),"1");
+    assert.equal(await page.locator("#countBlocked").innerText(),"2");
+    assert.equal(await page.locator("#workflowRows tr").count(),6);
+    assert.equal(await page.locator("#exportWorkflow").isEnabled(),true);
+    const initial=await page.locator("#workflowSource").inputValue();
+    assert.match(initial,/PED-101/);
+    await page.locator("#workflowSource").fill("pedido;cliente;email;total;estado\nA-1;Tienda;a@ejemplo.test;200;nuevo\nA-2;Tienda;email-invalido;50;nuevo");
+    assert.equal(await page.locator("#exportWorkflow").isDisabled(),true);
+    await page.locator("#runWorkflow").click();
+    assert.equal(await page.locator("#countTotal").innerText(),"2");
+    assert.equal(await page.locator("#countBlocked").innerText(),"1");
+    const downloadPromise=page.waitForEvent("download");
+    await page.locator("#exportWorkflow").click();
+    const download=await downloadPromise;
+    assert.match(download.suggestedFilename(),/revops-simulacion-orders\.csv/);
+    await page.locator('[data-scenario="support"]').click();
+    await page.locator("#runWorkflow").click();
+    assert.match(await page.locator("#scenarioDescription").innerText(),/incidencias/);
+    assert.equal(await page.locator("#countReview").innerText(),"1");
+    await page.locator('[data-scenario="data"]').click();
+    await page.locator("#runWorkflow").click();
+    assert.equal(await page.locator("#countReady").innerText(),"3");
+    await page.locator("#workflowSource").fill("registro;fuente;valor;fecha\nA;CRM;10");
+    await page.locator("#runWorkflow").click();
+    assert.equal(await page.locator("#workflowError").isVisible(),true);
+    assert.equal(await page.locator("#exportWorkflow").isDisabled(),true);
+    await page.locator("#resetWorkflow").click();
+    await page.locator("#runWorkflow").click();
+    assert.equal(await page.locator("#workflowError").isHidden(),true);
+    await page.locator("#demoContact").click();
+    await page.waitForURL(/\/#contacto$/);
+    assert.match(await page.locator("#diagnosticoBrief").inputValue(),/Escenario de simulación: Datos/);
+    assert.doesNotMatch(await page.locator("#diagnosticoBrief").inputValue(),/REG-01/);
+    assert.equal(await page.locator("#diagnosticContext").isVisible(),true);
+    assert.equal(await page.locator("#servicio").inputValue(),"Datos y BI");
+    const dims=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
+    assert.ok(dims.scroll<=dims.viewport+3,"product demo mobile overflow "+JSON.stringify(dims));
+    assert.deepEqual(failures,[],"demo script runtime errors");
+    console.log("PRODUCT WORKBENCH PASS ("+engineName+"): three real scenarios, editing, errors, export and private consultation handoff");
+  }finally{await page.close();}
+}
+
 try {
   browser=await browserEngine.launch(engineName==="chrome"?
     {channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]}:
     {headless:true});
   await auditCommercialCssParity(browser);
   await auditCustomerDiagnostic(browser);
+  await auditProductWorkbench(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});

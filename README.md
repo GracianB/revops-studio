@@ -14,6 +14,22 @@ La web deja de ser solo una presentación: junto a los problemas principales inc
 
 El motor de decisión es puro, inspeccionable y probado en `assets/js/diagnostic.js`. No se altera el laboratorio V40, ni se simulan métricas de clientes.
 
+### Producto en acción · simulador de procesos
+
+[**Abrir la demo real**](https://gracianb.github.io/revops-studio/demo.html) | [Diagnóstico guiado](https://gracianb.github.io/revops-studio/#diagnostico)
+
+La web tiene ahora una mesa de trabajo **interactiva y ejecutable**, separada del laboratorio V40 y de la portada comercial. A diferencia de una animación, las entradas son editables y el navegador aplica reglas reales, calcula estados, presenta una cola de revisión y exporta el resultado.
+
+- **Pedidos → CRM:** validación de identificador, cliente, email, importe y estado; detección de pedidos repetidos; estados listos, bloqueados o para revisión humana.
+- **Soporte:** tickets duplicados, urgencias, clasificación básica por prioridad, cola e historial. No se asegura haber creado incidencias en Zendesk.
+- **Datos y reporting:** reconciliación de registros, importes negativos, fechas inválidas y duplicados antes de preparar un dataset.
+- **Entrada CSV local:** delimitador coma o punto y coma, comillas escapadas y 80 filas máximo. El usuario puede editar ejemplos y probar errores. Salida CSV con protección básica contra fórmulas de hojas de cálculo.
+- **Resultados explicables:** 4 contadores de flujo, auditoría individual de decisiones, exportación local y resumen copiable. No se usan promesas de ahorro ni llamadas reales a APIs/CRM/IA.
+- **Continuidad comercial:** al pulsar *Consultar un proceso parecido* se pasa **solo** el nombre de la simulación y sus contadores al formulario mediante sessionStorage de la misma pestaña. Nunca viajan las filas, y la consulta sigue requiriendo consentimiento y envío explícito.
+- **Diseño:** página `demo.html` con `assets/js/workflow-engine.js` (reglas puras), `workflow-demo.js` (interfaz segura mediante textContent) y `assets/css/workflow-demo.css`. No hay dependencias externas añadidas ni importación del motor V40.
+
+**Importante:** se trata de una demostración local de reglas, no de una integración en producción. No pegues datos personales ni confidenciales. Todos los registros introducidos permanecen en la pestaña; si exportas el CSV, se guarda en el dispositivo. Los detalles de una integración real requieren alcance, permisos y revisión humana.
+
 ### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
