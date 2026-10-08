@@ -82,6 +82,20 @@ try {
   await page.goto(base+"/",{waitUntil:"load"});
   await page.locator(".service-card").first().waitFor();
   assert.equal(await page.locator(".study-card").count(),3);
+  // Case study evidence uses native disclosure and avoids made-up performance claims.
+  await page.locator('[data-case-id="bodytone"] .study-decisions summary').click();
+  assert.equal(await page.locator('[data-case-id="bodytone"] .study-decisions').evaluate(el=>el.open),true);
+  await page.locator('[data-case-choice="bodytone"]').click();
+  assert.match(await page.locator("#caseContextSummary").innerText(),/Bodytone/);
+  assert.equal(await page.locator("#servicio").inputValue(),"Automatización");
+  await page.locator("#dolor").fill("Mi necesidad redactada por mí, no por la web.");
+  await page.locator('[data-case-choice="calculadora"]').click();
+  assert.equal(await page.locator("#dolor").inputValue(),"Mi necesidad redactada por mí, no por la web.");
+  assert.match(await page.locator("#caseContextSummary").innerText(),/Calculadora de gimnasios/);
+  assert.match(decodeURIComponent(await page.locator("#briefEmailFallback").getAttribute("href")),/Calculadora de gimnasios/);
+  await page.locator("#caseContextClear").click();
+  assert.equal(await page.locator("#casoReferencia").inputValue(),"");
+  assert.equal(await page.locator("#caseContext").isHidden(),true);
   await page.locator('[data-filter="ai"]').click();
   assert.ok(await page.locator(".service-card:visible").count()>=1);
 
@@ -126,6 +140,9 @@ try {
   await page.locator('[data-filter="all"]').click();
   await page.locator('[data-service-choice="Quick win"]').click();
   assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  await page.locator('[data-case-choice="outreach"]').click();
+  assert.match(await page.locator("#caseContextSummary").innerText(),/Outreach GenAI/);
+  assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
   await page.locator("#hoursWeek").fill("4");
   await page.locator("#people").fill("3");
   await page.locator("#hourCost").fill("30");
@@ -151,6 +168,7 @@ try {
   await page.reload();
   assert.equal(await page.locator("#nombre").inputValue(),"Cliente de prueba");
   assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  assert.match(await page.locator("#caseContextSummary").innerText(),/Outreach GenAI/);
   assert.match(await page.locator("#calcContextSummary").innerText(),/18\.720/);
   assert.match(await page.locator("#formStatus").innerText(),/recuperado tu consulta pendiente/);
   assert.equal(await page.locator("#privacyConsent").isChecked(),false);
@@ -177,6 +195,7 @@ try {
   assert.equal(await page.evaluate(()=>sessionStorage.getItem("revops-studio:brief:pending")),null);
   assert.equal(await page.evaluate(()=>sessionStorage.getItem("revops-studio:contact:accepted")),"true");
   assert.match(await page.locator("#briefSummary").innerText(),/18\.720/);
+  assert.match(await page.locator("#briefSummary").innerText(),/Outreach GenAI/);
   assert.deepEqual(errors,[],"Desktop runtime errors");
 
   // A shared or bookmarked thanks URL must never masquerade as a successful send.
