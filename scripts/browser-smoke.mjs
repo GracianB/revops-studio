@@ -69,11 +69,15 @@ try {
   await page.evaluate(()=>localStorage.setItem("revops-theme","dark"));
   await page.reload();
   assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
+  await page.evaluate(() => { window.scrollTo({top:0,behavior:"instant"}); document.activeElement?.blur(); });
+  await page.waitForTimeout(180);
   await captureVisual(page,"dark-hero");
   await captureVisual(page,"dark-cases",page.locator("#casos"));
   await captureVisual(page,"dark-contact",page.locator("#contacto"));
   await page.locator("[data-theme-toggle]").click();
   assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
+  await page.evaluate(() => { window.scrollTo({top:0,behavior:"instant"}); document.activeElement?.blur(); });
+  await page.waitForTimeout(180);
   await captureVisual(page,"light-hero");
   await page.reload();
   assert.equal(await page.locator("html").getAttribute("data-theme"),"light");

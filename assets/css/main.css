@@ -1579,3 +1579,8 @@ body{background:radial-gradient(ellipse 620px 460px at 78% 0%,rgba(222,109,101,.
 .privacy-main p,.privacy-main li{color:var(--muted);line-height:1.8;font-size:15px}
 .privacy-main ul{padding-left:23px}
 .privacy-main a{color:var(--accent)}
+
+/* V41 visual review: genuinely hide the skip-link until keyboard focus. */
+.skip-link{top:-100px;transform:none}
+.skip-link:focus{top:14px;transform:none}
+.form-grid textarea.form-control{min-height:156px}
