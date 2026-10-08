@@ -1,13 +1,16 @@
 (() => {
   "use strict";
   const STORAGE_KEY = "revops-studio:brief:v2";
+  const ACCEPTED_KEY = "revops-studio:contact:accepted";
   const TO = "gracianbaenagonzalez@gmail.com";
   const $ = id => document.getElementById(id);
   const summary = $("briefSummary"), status = $("thanksStatus");
   const send = $("sendBrief"), copy = $("copyBrief");
   const title = $("thanks-title"), explanation = $("deliveryExplanation");
-  const acceptedByProvider = new URLSearchParams(location.search).get("via") === "proveedor";
-  const empty = {nombre:"", email:"", servicio:"", herramientas:"", horas:"", dolor:""};
+  let confirmedInSession = false;
+  try { confirmedInSession = sessionStorage.getItem(ACCEPTED_KEY) === "true"; } catch { /* Browser storage may be disabled. */ }
+  const acceptedByProvider = new URLSearchParams(location.search).get("via") === "proveedor" && confirmedInSession;
+  const empty = {nombre:"", email:"", servicio:"", herramientas:"", horas:"", dolor:"", estimacion:""};
   let brief = empty;
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
@@ -25,6 +28,7 @@
     "Herramientas actuales: " + (brief.herramientas || "Sin especificar"),
     "Horas semanales: " + (brief.horas || "Sin especificar"),
     "Problema: " + brief.dolor,
+    ...(brief.estimacion ? ["Estimación orientativa: " + brief.estimacion] : []),
     "",
     "Gracias."
   ].join("\n");
@@ -36,18 +40,21 @@
       "Nombre: " + (brief.nombre || "No indicado"),
       "Servicio: " + (brief.servicio || "Por definir"),
       "Herramientas: " + (brief.herramientas || "Sin indicar"),
-      "Necesidad: " + brief.dolor
+      "Necesidad: " + brief.dolor,
+      ...(brief.estimacion ? ["Estimación orientativa: " + brief.estimacion] : [])
     ].join("\n") : "No hay datos guardados en esta pestaña. Puedes enviar un correo directo o reservar una llamada.";
   }
   if (acceptedByProvider) {
     title.textContent = "Tu consulta está en camino.";
-    explanation.textContent = "FormSubmit ha aceptado tu consulta para enviarla a mi correo. La respuesta llegará a la dirección que has indicado. Si necesitas añadir algo, puedes escribirme directamente.";
+    explanation.textContent = "FormSubmit ha aceptado tu consulta para enviarla a mi correo. Revisaré las solicitudes recibidas y responderé a la dirección indicada. Si necesitas añadir algo, puedes escribirme directamente.";
     send.textContent = "Añadir información por correo ↗";
     status.dataset.state = "info";
     status.textContent = "Este aviso confirma la aceptación del envío por FormSubmit, no la entrega al buzón ni la lectura del mensaje.";
   } else {
     title.textContent = "Tu mensaje está preparado.";
-    explanation.textContent = "La solicitud todavía no se ha enviado si has abierto esta página directamente. Usa el botón de correo o vuelve al formulario.";
+    explanation.textContent = "No se puede verificar un envío por abrir esta página directamente. Si ya has enviado tu consulta, evita duplicarla. Si no lo has hecho, usa el correo directo o vuelve al formulario.";
+    status.dataset.state = "info";
+    status.textContent = "Esta página no confirma un envío sin una aceptación previa de FormSubmit en esta pestaña.";
   }
 
   copy?.addEventListener("click", async () => {
