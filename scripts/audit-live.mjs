@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 
 const SITE="https://gracianb.github.io/revops-studio/";
 const ORIGIN=new URL(SITE).origin;
@@ -42,17 +43,42 @@ try{
   browser=await chromium.launch({channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
   const request=await browser.newContext({ignoreHTTPSErrors:false});
   try{
-    // Compare the *deployed* CSS/JS to checkout. A successful Pages job does not imply the CDN has the right revision.
-    for(const asset of assetPaths){
-      const expected=await readFile(path.join(root,asset));
-      const response=await request.request.get(new URL(asset,SITE).href,{timeout:30000});
-      assert.equal(response.status(),200,"deployed resource HTTP status "+asset);
-      const received=await response.body();
-      const actualHash=sha256(received),expectedHash=sha256(expected);
-      report.assets.push({path:asset,httpStatus:response.status(),bytes:received.length,
-        matchesMain:actualHash===expectedHash,sha256:actualHash});
-      assert.equal(actualHash,expectedHash,"deployed asset differs from checked-out main: "+asset);
+    // Pages deploy is asynchronous after a push; wait until its CDN serves the checked-out assets.
+    // No fixed sleep and no comparison against an older version of the site.
+    const expected=await Promise.all(assetPaths.map(async asset=>({
+      path:asset,hash:sha256(await readFile(path.join(root,asset)))
+    })));
+    const started=Date.now();
+    let verified=false,lastMismatches=[];
+    for(let attempt=1;attempt<=30;attempt++){
+      const current=[],mismatches=[];
+      for(const asset of expected){
+        try{
+          const response=await request.request.get(new URL(asset.path,SITE).href,
+            {timeout:15000,headers:{"Cache-Control":"no-cache"}});
+          if(response.status()!==200){
+            mismatches.push(asset.path+" status "+response.status());
+            continue;
+          }
+          const received=await response.body(),hash=sha256(received);
+          current.push({path:asset.path,httpStatus:response.status(),bytes:received.length,
+            matchesMain:hash===asset.hash,sha256:hash});
+          if(hash!==asset.hash)mismatches.push(asset.path+" hash mismatch");
+        }catch(error){mismatches.push(asset.path+" "+String(error.message).slice(0,140));}
+      }
+      if(!mismatches.length){
+        report.assets.push(...current);
+        report.publicationReadyInMs=Date.now()-started;
+        verified=true;
+        break;
+      }
+      lastMismatches=mismatches;
+      if(attempt<30){
+        console.log("LIVE_DEPLOY_WAIT attempt="+attempt+" mismatches="+mismatches.join("; "));
+        await sleep(8000);
+      }
     }
+    assert.equal(verified,true,"public CDN did not synchronize with main: "+lastMismatches.join("; "));
   }finally{await request.close();}
 
   for(const profile of profiles){
