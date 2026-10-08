@@ -160,6 +160,11 @@ function initServiceChoice() {
   }));
 }
 
+// Keep configuration links shared before the lab was moved.
+if (window.location.hash.startsWith("#config=") && window.location.hash.length < 4096) {
+  window.location.replace("./laboratorio.html" + window.location.hash);
+}
+
 initMenu();
 initReveal();
 initNavState();
