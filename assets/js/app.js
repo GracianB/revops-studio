@@ -4058,41 +4058,12 @@ function initPlayground() {
   persistAndRender(true);
 }
 
-function initLabDisclosure() {
-  const disclosure = qs("#labDisclosure");
-  if (!disclosure) {
-    initPlayground();
-    return;
-  }
-
-  // The commercial page should not calculate V40 on every visit.
-  // Initialise the complete simulator only when someone opens the lab.
-  let initialized = false;
-  const activate = () => {
-    if (!disclosure.open || initialized) return;
-    initialized = true;
-    initPlayground();
-  };
-  const openDeepLink = () => {
-    const hash = window.location.hash.slice(1);
-    if (!hash) return;
-    let id;
-    try { id = decodeURIComponent(hash); } catch { return; }
-    const target = document.getElementById(id);
-    if (target && disclosure.contains(target)) disclosure.open = true;
-    activate();
-  };
-  disclosure.addEventListener("toggle", activate);
-  window.addEventListener("hashchange", openDeepLink);
-  openDeepLink();
-  activate();
-}
-
+// The V40 engine is loaded only by laboratorio.html.
 initMenu();
-initLabDisclosure();
 initReveal();
 initNavState();
 initFilters();
 initCalculator();
 initBriefForm();
 initTracking();
+initPlayground();
