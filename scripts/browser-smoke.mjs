@@ -163,6 +163,28 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#exportWorkflow").isEnabled(),true);
     const initial=await page.locator("#workflowSource").inputValue();
     assert.match(initial,/PED-101/);
+    assert.equal(await page.locator("#qualityCompleteness").innerText(),"97 %");
+    assert.match(await page.locator("#qualityFields").innerText(),/email: 1 sin dato/);
+    await page.locator("#workflowSort").selectOption("risk");
+    assert.match(await page.locator(".workbench-row:visible").first().innerText(),/bloqueado/);
+    await page.locator("#workflowSort").selectOption("source");
+    await page.locator("#workflowRecipe").selectOption("duplicates");
+    assert.match(await page.locator("#recipeHint").innerText(),/IDs repetidos/);
+    assert.match(await page.locator("#workflowSource").inputValue(),/PED-101/,"selection must not overwrite text");
+    await page.locator("#loadWorkflowRecipe").click();
+    assert.equal(await page.locator("#countTotal").innerText(),"4");
+    assert.equal(await page.locator("#countBlocked").innerText(),"2");
+    assert.equal(await page.locator("#qualityCompleteness").innerText(),"100 %");
+    const templatePromise=page.waitForEvent("download");
+    await page.locator("#downloadWorkflowTemplate").click();
+    const templateFile=await templatePromise;
+    assert.match(templateFile.suggestedFilename(),/revops-plantilla-orders\.csv/);
+    assert.match(await readFile(await templateFile.path(),"utf8"),/ORD-201/);
+    await page.locator("#workflowRecipe").selectOption("original");
+    await page.locator("#loadWorkflowRecipe").click();
+    assert.equal(await page.locator("#countTotal").innerText(),"6");
+    assert.equal(await page.locator("#countBlocked").innerText(),"2");
+
     // Product value: repair an actual duplicate via the interface, not textarea edits.
     await page.locator('[data-workflow-filter="bloqueado"]').click();
     assert.equal(await page.locator(".workbench-row:visible").count(),2);
@@ -182,6 +204,11 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#countBlocked").innerText(),"2");
     assert.equal(await page.locator("#changeComparison").isHidden(),true);
     assert.equal(await page.locator("#undoCorrection").isDisabled(),true);
+    assert.equal(await page.locator("#redoCorrection").isEnabled(),true);
+    await page.locator("#redoCorrection").click();
+    assert.equal(await page.locator("#countBlocked").innerText(),"1");
+    await page.locator("#undoCorrection").click();
+    assert.equal(await page.locator("#countBlocked").innerText(),"2");
     await page.locator('[data-workflow-filter="all"]').click();
     const reportPromise=page.waitForEvent("download");
     await page.locator("#exportInsights").click();
