@@ -44,7 +44,7 @@ async function auditAccessibility(page, label) {
   });
   console.log("AXE_AUDIT "+label+" "+JSON.stringify(violations));
   const blockers = violations.filter(v => v.impact==="serious" || v.impact==="critical");
-  if (process.env.REVOPS_AXE_DIAGNOSTIC !== "1") assert.deepEqual(blockers,[],label+" has serious or critical accessibility failures");
+  assert.deepEqual(blockers,[],label+" has serious or critical accessibility failures");
 }
 async function captureVisual(page,name,locator=null) {
   if (process.env.REVOPS_VISUAL_AUDIT !== "1" || engineName !== "chrome") return;

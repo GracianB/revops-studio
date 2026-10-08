@@ -34,7 +34,7 @@ jobs:
         run: node scripts/lint-globals.mjs
 
       - name: Real Chrome smoke (desktop and mobile)
-        run: REVOPS_VISUAL_AUDIT=1 REVOPS_AXE_DIAGNOSTIC=1 node scripts/browser-smoke.mjs
+        run: node scripts/browser-smoke.mjs
 
       - name: Install Firefox for browser verification
         run: npx playwright-core install firefox

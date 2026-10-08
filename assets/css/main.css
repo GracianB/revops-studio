@@ -1415,7 +1415,7 @@ textarea.form-control{min-height:145px;resize:vertical}
 :root[data-theme="light"]{
   color-scheme:light;
   --bg:#f6f4ef;--bg-2:#eeede8;--panel:#ffffff;--panel-2:#f8f8f5;
-  --text:#1b2934;--muted:#51616e;--dim:#647582;
+  --text:#1b2934;--muted:#51616e;--dim:#51616e;
   --line:rgba(33,53,65,.14);--line-2:rgba(33,53,65,.23);
   --accent:#ad4149;--accent-2:#87654c;--ok:#18734c;
   --shadow:0 24px 75px rgba(40,57,65,.08);
@@ -1584,3 +1584,14 @@ body{background:radial-gradient(ellipse 620px 460px at 78% 0%,rgba(222,109,101,.
 .skip-link{top:-100px;transform:none}
 .skip-link:focus{top:14px;transform:none}
 .form-grid textarea.form-control{min-height:156px}
+
+/* V41 final contrast and first-screen hierarchy audit */
+:root[data-theme="dark"] .diagram-output .diagram-numeral{color:#ffc1b7}
+:root[data-theme="light"] .diagram-output .diagram-numeral{color:#8a2836}
+@media(min-width:961px){
+  .hero-v41{padding-top:67px;padding-bottom:72px}
+  .hero-v41 h1{font-size:clamp(44px,4.5vw,63px);line-height:1.01}
+  .hero-v41 .hero-copy{font-size:16px;line-height:1.55;margin-top:19px}
+  .hero-v41 .hero-actions{margin-top:21px}
+  .hero-v41 .hero-trust{margin-top:24px}
+}
