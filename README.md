@@ -1,4 +1,4 @@
-## RevOps Studio · Web comercial V46 (motor técnico V40)
+## RevOps Studio · Web comercial V47 (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
 
@@ -50,6 +50,19 @@ El CI mide la portada en **Chrome real con caché deshabilitada y red/CPU simula
 - **Informe:** `scripts/performance-budget.mjs` crea `.ci-artifacts/performance-v46.json`. El workflow de validación lo adjunta como artefacto descargable durante 30 días, con bytes, solicitudes, perfiles y valores capturados.
 - **Reproducción:** `npm run perf:check` después de instalar `playwright-core@1.58.2` y tener Chrome disponible. `npm run verify` conserva las pruebas de unidad, el chequeo CSS y el motor V40.
 - **Límite de evidencia:** la simulación mide una página servida localmente, sin CDN externo, latencia de Internet real, ni condiciones de hardware auténticas. Para comparar el rendimiento experimentado por usuarios reales hacen falta métricas de campo como CrUX / RUM.
+
+### V47 · Auditoría HTTPS de la web publicada
+
+El informe de V46 era sintético y de red local, por lo que no se puede llamar «rendimiento de la web real». V47 incorpora `scripts/audit-live.mjs` y `.github/workflows/live-audit.yml` para analizar la URL publicada `https://gracianb.github.io/revops-studio/` **desde Chrome en un runner de GitHub**, sin convertir esa visita en una métrica de usuarios reales.
+
+- Se comprueba por SHA-256 que los archivos **CSS y JS publicados** coinciden con `main`, y que la página devuelve HTTP 200, presenta el contenido comercial y no carga el motor V40.
+- Hay **tres navegaciones en frío** por tamaño (1366 px y 390 px), con caché desactivada, sin alterar el ancho de banda ni la CPU del runner. Se miden TTFB, FCP, LCP y CLS cuando están disponibles, más bytes de red transferidos y solicitudes propias o de terceros, separadas.
+- El informe JSON guarda los valores individuales y su **mediana**, además de avisos de terceros o saltos de diseño. Las capturas de escritorio y móvil se adjuntan como evidencia visual.
+- La auditoría se puede lanzar manualmente desde Actions y se repite semanalmente los lunes. Los informes permanecen 30 días como artefactos de Actions.
+- **Política de CI:** la falta de CSS/JS publicado, una respuesta rota, un error JS propio o la ausencia de contenido comercial son fallos. Los **tiempos** y el comportamiento de proveedores externos son observaciones, no motivos para bloquear un despliegue por fluctuaciones de Internet.
+- No se envía ningún formulario, no se prueban datos personales y no se envían datos de empresas. Las cifras de Chrome en CI **no son datos de CrUX, RUM, Lighthouse ni usuarios reales**. Sin cobertura de campo, no se afirma que cumpla CWV reales.
+
+Para repetir: `npm run perf:live` tras instalar `playwright-core@1.58.2` y disponer de Chrome. Para simulaciones locales reproducibles continúa `npm run perf:check` (V46).
 
 ### Diseño y QA
 - Tema claro y oscuro con preferencia del sistema, botón accesible y persistencia opcional.
