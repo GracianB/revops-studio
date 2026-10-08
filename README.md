@@ -1,4 +1,4 @@
-## RevOps Studio · Web comercial V44 (motor técnico V40)
+## RevOps Studio · Web comercial V45 (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
 
@@ -32,6 +32,14 @@ Las tres tarjetas ofrecen una vía `Tengo un problema parecido` hacia el formula
 - El menú móvil vuelve a enfocar el botón al cerrarse con Escape; se cierra al pulsar fuera o al ampliar la ventana, evitando scroll bloqueado. La lista permanece desplazable en pantallas de poca altura.
 - En tablet, el caso público Bodytone ocupa el ancho completo y los dos casos privados se presentan en la segunda fila. En móvil se apilan, se afinan márgenes y botones, y los enlaces se pueden leer sin scroll horizontal.
 - Smoke de Chrome y Firefox comprueba filtros 6/3/2/3/1, Escape/foco, responsive a 320, 390 y 850 px, y transición a 1024 px. Los formularios usan respuestas simuladas: las pruebas no envían mensajes reales.
+
+### V45 · Reducción de carga comercial sin modificar el laboratorio
+
+- La hoja original `assets/css/main.css` (~98,9 KB sin comprimir) se mantiene intacta y continúa sirviendo el laboratorio V40.
+- La portada, `privacidad.html` y `gracias.html` cargan `assets/css/commercial.css` (~52,7 KB sin comprimir): se excluyen exclusivamente ~46,3 KB del bloque de estilos antiguos y exclusivos del laboratorio. Reducción de ~47 % de bytes CSS de origen en estas páginas; no equivale a un porcentaje medido de mejora en tiempo de carga.
+- `node scripts/build-commercial-css.mjs` regenera el fichero desde `main.css`; `npm run css:check` impide publicar si la versión derivada está desincronizada. `npm run verify` incluye ese control.
+- El script externo opcional de analítica utiliza `async` y `fetchpriority="low"`, sin bloquear `DOMContentLoaded` como un script diferido. La recepción de contactos y el motor técnico no cambian.
+- El smoke de Chrome y Firefox compara estilo computado y dimensiones de la hoja antigua versus la nueva en portada de escritorio/móvil, página de privacidad y confirmación, modos claro/oscuro. El test de Node impone presupuestos de 55 KB para CSS comercial y 18,5 KB para JavaScript comercial. Los presupuestos son de *payload local sin comprimir*, no métricas de red del visitante.
 
 ### Diseño y QA
 - Tema claro y oscuro con preferencia del sistema, botón accesible y persistencia opcional.
