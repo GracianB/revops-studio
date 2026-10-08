@@ -54,6 +54,20 @@ La demo acepta ahora importaciones locales aunque los encabezados de la hoja no 
 
 Patrones consultados para esta mejora: [CSV import column mapping UI](https://appmaster.io/blog/csv-import-column-mapping-ui), [guías de mensajes de error de Nielsen Norman Group](https://www.nngroup.com/articles/errors-forms-design-guidelines/) y [riesgos de CSV según OWASP](https://owasp.org/www-community/attacks/CSV_Injection). La neutralización de fórmulas del CSV se trata como mitigación parcial; no se promete seguridad universal en todas las aplicaciones de hojas de cálculo.
 
+### Mesa de decisiones · leer, encontrar, corregir y demostrar un cambio
+
+Antes de añadir reglas personalizadas, la demostración comercial mejora su utilidad en cuatro situaciones fundamentales de un equipo de operaciones:
+
+1. **Empezar sin conocer la herramienta:** una guía breve propone elegir un proceso, revisar resultados y corregir una incidencia. El botón de ejemplo abre directamente el primer registro bloqueado.
+2. **Entender el resultado:** el panel «Qué nos dicen estos registros» diferencia las acciones que sí se podrían preparar, los históricos que nunca deben reabrirse, los casos para revisión humana y los bloqueos. Incluye proporción de registros accionables, distribución visual y próximos pasos clicables. Esta cifra **no representa ahorro ni rendimiento**.
+3. **Localizar problemas rápidamente:** búsqueda por identificador, motivo o acción, combinable con filtros de estado. Si no hay coincidencias, la interfaz lo explica y permite restablecer filtros.
+4. **Verificar el efecto de una corrección:** tras editar una fila aparece una comparación explícita de los contadores antes/después; deshacer recupera el estado anterior. Las cifras se recalculan con el motor real, nunca son una animación inventada.
+5. **Llevarse un resultado útil:** descarga un informe `.txt` con totales, tipos de bloqueo/revisión y recomendaciones. **No incluye filas de origen, identificadores, emails o nombres de clientes**. Los CSV detallados existentes siguen disponibles por separado, sin ejecutarse sobre CRM/ERP.
+
+La lógica de interpretación es independiente y determinista en `assets/js/workflow-insights.js`. Los textos son orientaciones de demostración, no un diagnóstico privado ni una auditoría de una empresa.
+
+Referencias de diseño: [Nielsen Norman Group, cuatro tareas fundamentales en tablas de datos](https://www.nngroup.com/articles/data-tables/) y [NN/g, diseño de estados vacíos](https://www.nngroup.com/articles/empty-state-interface-design/). Las precauciones de exportación se contrastaron con [OWASP CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection). Ningún escape CSV se presenta como universalmente seguro para Excel u otras hojas de cálculo.
+
 ### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
