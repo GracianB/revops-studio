@@ -102,6 +102,8 @@ test("V47 live audit separates public HTTPS observations from synthetic and fiel
  assert.match(liveAudit,/no FormSubmit submission or private data/);
  assert.doesNotMatch(liveAudit,/form\.submit\(/);
  assert.match(liveWorkflow,/workflow_dispatch/);
+ assert.match(liveWorkflow,/workflow_run/);
+ assert.match(liveWorkflow,/pages build and deployment/);
  assert.match(liveWorkflow,/schedule/);
  assert.match(liveWorkflow,/node scripts\/audit-live\.mjs/);
  assert.match(liveWorkflow,/actions\/upload-artifact@v4/);
