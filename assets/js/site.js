@@ -1,5 +1,6 @@
 // Lightweight RevOps Studio commercial interactions (no V40 engine imports).
 import { submissionState } from "./contact-response.js";
+import { buildDiagnostic } from "./diagnostic.js";
 const STORAGE_KEY = "revops-studio:brief:v2";
 const PENDING_KEY = "revops-studio:brief:pending";
 const ACCEPTED_KEY = "revops-studio:contact:accepted";
@@ -151,6 +152,7 @@ function collectBrief(form) {
     servicio: String(data.servicio || "").trim(),
     estimacion: String(data.estimacion || "").trim(),
     caso_referencia: String(data.caso_referencia || "").trim(),
+    diagnostico: String(data.diagnostico || "").trim(),
     createdAt: new Date().toISOString()
   };
 }
@@ -168,6 +170,7 @@ function mailtoForBrief(brief) {
     "Horas/semana: " + (brief.horas || "Sin especificar"),
     "Necesidad: " + brief.dolor,
     ...(brief.caso_referencia ? ["Caso de referencia: " + brief.caso_referencia] : []),
+    ...(brief.diagnostico ? ["Mapa inicial orientativo:\n" + brief.diagnostico] : []),
     ...(brief.estimacion ? ["Estimación orientativa: " + brief.estimacion] : []),
     "", "Gracias."].join("\n");
   return "mailto:" + CONTACT_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
@@ -206,6 +209,92 @@ function initCaseChoice() {
   });
 }
 
+function showDiagnosticContext() {
+  const container = qs("#diagnosticContext"), summary = qs("#diagnosticContextSummary");
+  const text = qs("#diagnosticoBrief")?.value || "";
+  if (!container || !summary) return;
+  container.hidden = !text;
+  summary.textContent = text ? "Mapa de trabajo añadido a la consulta. Puedes quitarlo; no se envía nada hasta que envíes el formulario con consentimiento." : "";
+}
+
+function initDiagnostic() {
+  const problem = qs("#diagProblem"), tools = qs("#diagTools"), scope = qs("#diagScope");
+  const empty = qs("#diagnosticEmpty"), plan = qs("#diagnosticPlan"), actions = qs("#diagnosticActions");
+  const feedback = qs("#diagnosticStatus"), attach = qs("#diagToContact"), copy = qs("#diagCopy");
+  const field = qs("#diagnosticoBrief"), form = qs("#briefForm");
+  if (!problem || !tools || !scope || !field || !form) return;
+  let current = null;
+  const notifyForm = () => form.dispatchEvent(new Event("input", { bubbles: true }));
+  const render = () => {
+    current = buildDiagnostic(problem.value, tools.value, scope.value);
+    if (empty) empty.hidden = Boolean(current);
+    if (plan) plan.hidden = !current;
+    if (actions) actions.hidden = !current;
+    if (feedback) feedback.textContent = "";
+    if (!current) return;
+    const fields = {
+      "#diagRoute": current.service + " · " + current.packageType,
+      "#diagHeadline": current.headline,
+      "#diagFirst": current.firstStep,
+      "#diagDeliverable": current.deliverable,
+      "#diagVerification": current.verification,
+      "#diagPackage": current.packageNote
+    };
+    for (const [selector, value] of Object.entries(fields)) {
+      const element = qs(selector);
+      if (element) element.textContent = value;
+    }
+    // A previous snapshot must not be submitted after changing the diagnosis.
+    if (field.value && field.value !== current.summary) {
+      field.value = "";
+      showDiagnosticContext();
+      notifyForm();
+    }
+  };
+  for (const select of [problem, tools, scope]) select.addEventListener("change", render);
+  attach?.addEventListener("click", (event) => {
+    if (!current) { event.preventDefault(); return; }
+    field.value = current.summary;
+    const service = qs("#servicio"), systems = qs("#herramientas"), message = qs("#dolor");
+    // Preserve all user-authored choices and text.
+    if (service && !service.value) service.value = current.service;
+    if (systems && !systems.value && tools.value !== "unknown") systems.value = current.tools;
+    if (message && !message.value.trim()) {
+      message.value = "Quiero explorar cómo resolver: " + current.problem.toLowerCase() +
+        ". Me gustaría valorar el primer entregable propuesto y los requisitos reales.";
+    }
+    showDiagnosticContext();
+    notifyForm();
+    if (feedback) feedback.textContent = "Mapa añadido a tu consulta. Revisa y edita el texto antes de enviar.";
+  });
+  copy?.addEventListener("click", async () => {
+    if (!current) return;
+    try {
+      await navigator.clipboard.writeText(current.summary);
+      if (feedback) feedback.textContent = "Mapa copiado. Puedes compartirlo con tu equipo.";
+    } catch {
+      if (feedback) feedback.textContent = "No se ha podido copiar. Puedes incluir el mapa en tu consulta.";
+    }
+  });
+  qs("#diagReset")?.addEventListener("click", () => {
+    problem.value = "";
+    tools.value = "unknown";
+    scope.value = "team";
+    field.value = "";
+    showDiagnosticContext();
+    notifyForm();
+    render();
+    problem.focus();
+  });
+  qs("#diagnosticContextClear")?.addEventListener("click", () => {
+    field.value = "";
+    showDiagnosticContext();
+    notifyForm();
+  });
+  render();
+  showDiagnosticContext();
+}
+
 function initBriefForm() {
   const form = qs("#briefForm"), status = qs("#formStatus");
   const submit = qs("#briefSubmit"), fallback = qs("#briefEmailFallback");
@@ -221,7 +310,7 @@ function initBriefForm() {
     if (sessionStorage.getItem(PENDING_KEY) === "true") {
       const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
       if (saved && typeof saved === "object") {
-        for (const name of ["nombre", "email", "herramientas", "horas", "dolor", "servicio", "estimacion", "caso_referencia"]) {
+        for (const name of ["nombre", "email", "herramientas", "horas", "dolor", "servicio", "estimacion", "caso_referencia", "diagnostico"]) {
           const field = form.elements.namedItem(name);
           if (field && !field.value && typeof saved[name] === "string") field.value = saved[name];
         }
@@ -243,6 +332,7 @@ function initBriefForm() {
   form.addEventListener("change", updateFallback);
   showCalcContext();
   showCaseContext();
+  showDiagnosticContext();
   updateFallback();
 
   form.addEventListener("submit", async (event) => {
@@ -283,7 +373,8 @@ function initBriefForm() {
           mensaje: brief.dolor,
           consentimiento: "sí",
           ...(brief.estimacion ? { estimacion: brief.estimacion } : {}),
-          ...(brief.caso_referencia ? { caso_referencia: brief.caso_referencia } : {})
+          ...(brief.caso_referencia ? { caso_referencia: brief.caso_referencia } : {}),
+          ...(brief.diagnostico ? { diagnostico: brief.diagnostico } : {})
         }),
         signal: controller.signal
       });
@@ -349,5 +440,6 @@ initFilters();
 initServiceChoice();
 initCalculator();
 initBriefForm();
+initDiagnostic();
 initCaseChoice();
 initTracking();
