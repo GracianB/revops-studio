@@ -2,12 +2,18 @@ import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActi
 import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
 import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
 import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} from "./workflow-product-kit.js";
+import {createClientJourney} from "./client-journey.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
 const storageKey="revops-studio:demo:handoff";
 const allowed=Object.keys(SCENARIOS);
-const query=new URLSearchParams(location.search).get("scenario");
+const urlParams=new URLSearchParams(location.search);
+const query=urlParams.get("scenario");
+const initialMode=urlParams.get("view")==="simple"?"simple":
+  urlParams.get("view")==="advanced"?"advanced":
+  urlParams.has("scenario")?"advanced":"simple";
+let guide=null;
 let scenario=allowed.includes(query)?query:"orders";
 let latest=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
@@ -165,7 +171,10 @@ function chooseScenario(next,force=false){
   invalidate("Ejemplo cargado. Ejecuta el proceso para revisar cada registro.");
   renderEmpty();
   // The deep link has only a scenario id; never put row content in the URL.
-  history.replaceState(null,"",location.pathname+"?scenario="+encodeURIComponent(next)+"#simulador");
+  const selectedMode=guide?.state().mode||initialMode;
+  history.replaceState(null,"",location.pathname+"?scenario="+encodeURIComponent(next)+
+    (selectedMode==="simple"?"&view=simple":"")+"#simulador");
+  guide?.setScenario(next,null);
 }
 function normalizeSearch(value){
   return String(value||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
@@ -358,6 +367,7 @@ function render(result){
     frag.append(tr);
   }
   body.replaceChildren(frag);
+  guide?.sync(result);
   sortResults();
   renderQuality();
   renderInsights(result);
@@ -535,7 +545,8 @@ function commitEdit(event){
     modifiedSource=true;
     errorText("");
     const result=runWorkflow(scenario,next);
-    const before=analyzeWorkflow(latest),after=analyzeWorkflow(result);
+    const originalResult=latest;
+    const before=analyzeWorkflow(originalResult),after=analyzeWorkflow(result);
     undoSource=original;redoSource=null;
     $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
     closeEditor();
@@ -546,6 +557,7 @@ function commitEdit(event){
       after.actionable+" acciones preparadas, "+after.blockedCount+" bloqueos, "+
       after.reviewCount+" revisiones. La diferencia proviene de volver a ejecutar las reglas.";
     compare.hidden=false;
+    guide?.complete(originalResult,result);
     setText("workflowStatus","Corrección aplicada y proceso recalculado. Puedes deshacerla. "+result.counts.bloqueado+" registros siguen bloqueados.");
   }catch(error){
     setText("workflowEditStatus",error?.message||"No se ha podido guardar la corrección.");
@@ -586,7 +598,8 @@ $("undoCorrection").addEventListener("click",()=>{
   closeEditor();
   $("workflowSource").value=oldUndo;
   modifiedSource=true;
-  try{render(runWorkflow(scenario,oldUndo));$("changeComparison").hidden=true;}
+  try{render(runWorkflow(scenario,oldUndo));$("changeComparison").hidden=true;
+    if(guide?.state().mode==="simple")guide.transition("result",false);}
   catch{invalidate("No se pudo restaurar el estado previo.");}
 });
 $("redoCorrection").addEventListener("click",()=>{
@@ -599,6 +612,7 @@ $("redoCorrection").addEventListener("click",()=>{
   try{
     render(runWorkflow(scenario,next));
     $("changeComparison").hidden=true;
+    if(guide?.state().mode==="simple")guide.transition("result",false);
     setText("workflowStatus","Corrección rehecha y resultados recalculados.");
   }catch{invalidate("No se pudo rehacer la corrección.");}
 });
@@ -755,5 +769,28 @@ $("demoContact").addEventListener("click",event=>{
   }
 });
 chooseScenario(scenario);
-// Show actual results from example records on first view, not a static decorative mockup.
+// Run the real engine once; guided and advanced views share one result, not two demos.
 $("runWorkflow").click();
+guide=createClientJourney({
+  mode:initialMode,
+  onMode(next){
+    const params=new URLSearchParams();
+    params.set("scenario",scenario);
+    if(next==="simple")params.set("view","simple");
+    history.replaceState(null,"",location.pathname+"?"+params.toString()+"#simulador");
+  },
+  onChoose(next){
+    if(next!==scenario)chooseScenario(next);
+    if(scenario!==next){
+      $("scenarioDiscard").scrollIntoView({block:"center",behavior:"instant"});
+      return false;
+    }
+    if(!latest)$("runWorkflow").click();
+    return true;
+  },
+  onFix(){firstBlocked();},
+  onDownload(){$("exportInsights").click();},
+  onContact(){$("demoContact").click();}
+});
+guide.setScenario(scenario,latest);
+
