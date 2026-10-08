@@ -1,4 +1,4 @@
-## RevOps Studio · Web comercial V43 (motor técnico V40)
+## RevOps Studio · Web comercial V44 (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
 
@@ -25,6 +25,13 @@ Los tres casos comerciales se contrastaron con la documentación de `GracianB/pr
 - **Outreach GenAI**: segmentación, borradores, revisión humana y seguimiento; no se muestran contactos ni métricas inventadas.
 
 Las tres tarjetas ofrecen una vía `Tengo un problema parecido` hacia el formulario: adjunta una *referencia opcional*, visible y eliminable, sin modificar el texto del visitante ni su elección de servicio. La referencia acompaña al correo alternativo, a la consulta consentida y a la recuperación de un envío fallido. No se envían consultas reales desde CI.
+
+### V44 · Cierre de navegación, filtros y responsive
+
+- Los cinco filtros de soluciones muestran únicamente las tarjetas correctas. El atributo `hidden` se respeta en CSS incluso con tarjetas `display:flex`, y el resultado anuncia el número visible mediante una región de estado accesible.
+- El menú móvil vuelve a enfocar el botón al cerrarse con Escape; se cierra al pulsar fuera o al ampliar la ventana, evitando scroll bloqueado. La lista permanece desplazable en pantallas de poca altura.
+- En tablet, el caso público Bodytone ocupa el ancho completo y los dos casos privados se presentan en la segunda fila. En móvil se apilan, se afinan márgenes y botones, y los enlaces se pueden leer sin scroll horizontal.
+- Smoke de Chrome y Firefox comprueba filtros 6/3/2/3/1, Escape/foco, responsive a 320, 390 y 850 px, y transición a 1024 px. Los formularios usan respuestas simuladas: las pruebas no envían mensajes reales.
 
 ### Diseño y QA
 - Tema claro y oscuro con preferencia del sistema, botón accesible y persistencia opcional.

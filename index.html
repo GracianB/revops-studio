@@ -85,7 +85,7 @@
     </div>
   </nav>
 
-  <div class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav" id="mobileNav" aria-label="Navegación móvil">
     <a href="#problemas">Qué resuelvo</a>
     <a href="#servicios">Servicios</a>
     <a href="#oferta">Precios</a>
@@ -144,13 +144,14 @@
         <article class="service-pillar reveal"><span class="service-pillar-num">03</span><h3>Software a medida</h3><p>Construyo herramientas internas donde un Excel o el software actual ya no alcanza.</p><span>Entregable: herramienta usable + código y traspaso acordados.</span></article>
       </div>
       <div class="service-toolbar" role="group" aria-label="Filtrar soluciones">
-        <button class="filter-btn" type="button" data-filter="all" aria-pressed="true">Todas</button>
-        <button class="filter-btn" type="button" data-filter="automation" aria-pressed="false">Automatización</button>
-        <button class="filter-btn" type="button" data-filter="data" aria-pressed="false">Datos</button>
-        <button class="filter-btn" type="button" data-filter="apps" aria-pressed="false">Software</button>
-        <button class="filter-btn" type="button" data-filter="ai" aria-pressed="false">IA aplicada</button>
+        <button class="filter-btn" type="button" data-filter="all" aria-controls="serviceResults" aria-pressed="true">Todas</button>
+        <button class="filter-btn" type="button" data-filter="automation" aria-controls="serviceResults" aria-pressed="false">Automatización</button>
+        <button class="filter-btn" type="button" data-filter="data" aria-controls="serviceResults" aria-pressed="false">Datos</button>
+        <button class="filter-btn" type="button" data-filter="apps" aria-controls="serviceResults" aria-pressed="false">Software</button>
+        <button class="filter-btn" type="button" data-filter="ai" aria-controls="serviceResults" aria-pressed="false">IA aplicada</button>
       </div>
-      <div class="services-grid">
+      <p id="filterStatus" class="filter-status" role="status" aria-live="polite">Mostrando las 6 soluciones.</p>
+      <div class="services-grid" id="serviceResults" aria-label="Soluciones filtradas">
         <article class="service-card reveal" data-service="automation"><div class="service-top"><span class="service-index">01</span><span class="kicker">OPERACIONES</span></div><h3>Automatizar tareas repetitivas</h3><p>Actualizaciones, avisos, conciliaciones y seguimiento sin copiar y pegar entre ventanas.</p><div class="service-meta">Ejemplo · Formulario → validación → CRM → aviso</div></article>
         <article class="service-card reveal" data-service="automation apps"><div class="service-top"><span class="service-index">02</span><span class="kicker">INTEGRACIÓN</span></div><h3>Conectar tus herramientas</h3><p>Vincular APIs, hojas, CRM y herramientas internas con reglas y manejo de errores.</p><div class="service-meta">Ejemplo · Sincronización controlada de registros</div></article>
         <article class="service-card reveal" data-service="data"><div class="service-top"><span class="service-index">03</span><span class="kicker">BUSINESS INTELLIGENCE</span></div><h3>Dashboards para tomar decisiones</h3><p>KPIs de ventas, clientes u operaciones en un lugar que el equipo pueda consultar.</p><div class="service-meta">Ejemplo · Panel de pipeline y seguimiento</div></article>

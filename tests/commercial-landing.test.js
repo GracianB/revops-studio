@@ -24,6 +24,26 @@ test("offer: three grounded service pillars and six filterable examples",()=>{
  assert.match(site,/initFilters/);
 });
 
+test("V44 service filters truly hide nonmatching cards and report result counts",()=>{
+ assert.match(css,/\.service-card\[hidden\]\{display:none!important\}/);
+ assert.match(index,/id="filterStatus"[^>]*role="status"/);
+ assert.match(index,/id="serviceResults"/);
+ assert.equal((index.match(/aria-controls="serviceResults"/g)||[]).length,5);
+ assert.match(site,/if \(!card\.hidden\) visible\+\+/);
+ assert.match(site,/status\.textContent = "Mostrando "/);
+ assert.match(css,/\.filter-btn\{min-height:44px\}/);
+});
+
+test("V44 mobile menu closes accessibly and compact cases have intentional grid hierarchy",()=>{
+ assert.match(site,/button\.focus\(\)/);
+ assert.match(site,/event\.key !== "Escape"/);
+ assert.match(site,/menu\.contains\(event\.target\)/);
+ assert.match(site,/\(min-width: 961px\)/);
+ assert.match(css,/\.mobile-nav\.is-open\{max-height:calc\(100dvh - 82px\)/);
+ assert.match(css,/\.case-studies \.study-card:first-child\{grid-column:1\/-1\}/);
+ assert.match(css,/\.notice-inner\{overflow:visible;white-space:normal/);
+});
+
 test("commercial pricing stays indicative, without invented savings",()=>{
  for(const price of ["900 €","4.000 €","600 €"])assert.ok(index.includes(price));
  assert.match(index,/No se promete un porcentaje de ahorro/);
