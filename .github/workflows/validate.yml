@@ -26,3 +26,9 @@ jobs:
 
       - name: Run full verification gate
         run: npm run verify
+
+      - name: Install lightweight browser smoke dependency
+        run: npm install --no-save --package-lock=false playwright-core@1.58.2
+
+      - name: Real Chrome smoke (desktop and mobile)
+        run: node scripts/browser-smoke.mjs
