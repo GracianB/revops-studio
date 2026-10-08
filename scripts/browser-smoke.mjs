@@ -27,8 +27,20 @@ try {
   browser = await chromium.launch({channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
   const page = await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",e=>errors.push(e.message));
+  page.on("console",m=>{ if(m.type()==="error") console.log("CHROME_CONSOLE_ERROR:",m.text()); });
+  page.on("response",response=>{ if(response.status()>=400) console.log("HTTP_RESPONSE_ERROR:",response.status(),response.url()); });
   await page.goto(base + "/laboratorio.html",{waitUntil:"load"});
-  await page.locator("#demoRows tr").first().waitFor({timeout:20000});
+  await page.waitForTimeout(1200);
+  console.log("LAB_DIAGNOSTIC:",JSON.stringify(await page.evaluate(()=>({
+    documentReady:document.readyState,
+    rows:document.querySelectorAll("#demoRows tr").length,
+    rowContainer:document.getElementById("demoRows")?.outerHTML.slice(0,600),
+    runState:document.querySelector("#lastRun")?.textContent,
+    bodyScrollWidth:document.documentElement.scrollWidth,
+    scripts:[...document.scripts].map(s=>s.src)
+  }))));
+  console.log("LAB_PAGE_ERRORS:",JSON.stringify(errors));
+  await page.locator("#demoRows tr").first().waitFor({state:"attached",timeout:5000});
   assert.equal(await page.locator("#demoRows tr").count()>0,true,"demo has no pipeline rows");
   assert.equal(await page.locator("#advancedWorkbench").evaluate(el=>el.open),false,"advanced workbench must start closed");
   await page.locator("#runDemo").click();
