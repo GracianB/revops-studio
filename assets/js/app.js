@@ -806,13 +806,15 @@ function initPlayground() {
       feedback.v20Previous.textContent = String(lastAdaptiveCalibrationReportV20.previousWindow.records);
     }
     if (feedback.v20CalibrationDelta) {
-      const delta = lastAdaptiveCalibrationReportV20.global.signals.calibrationError.delta;
+      const delta = lastAdaptiveCalibrationReportV20.global.sampleSufficient
+        ? lastAdaptiveCalibrationReportV20.global.signals.calibrationError.delta : null;
       feedback.v20CalibrationDelta.textContent = delta === null
         ? "—"
         : (delta > 0 ? "+" : "") + Math.round(delta * 100) + "pp";
     }
     if (feedback.v20BrierDelta) {
-      const delta = lastAdaptiveCalibrationReportV20.global.signals.brierScore.delta;
+      const delta = lastAdaptiveCalibrationReportV20.global.sampleSufficient
+        ? lastAdaptiveCalibrationReportV20.global.signals.brierScore.delta : null;
       feedback.v20BrierDelta.textContent = delta === null
         ? "—"
         : (delta > 0 ? "+" : "") + delta.toFixed(3);

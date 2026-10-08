@@ -529,3 +529,14 @@ test("V20 history does not grow on an identical snapshot", () => {
 
   assert.equal(report.nextHistory.length, 1);
 });
+
+test("V20 report exposes signal deltas to the user interface", () => {
+  const report = buildAdaptiveCalibrationReport({
+    forecastRows:[{ leadId:"L1", probability:0.8 }],
+    outcomes:[], now:"2026-10-08T12:00:00.000Z"
+  });
+  assert.ok(report.global.signals);
+  assert.equal(report.global.signals.calibrationError.delta, 0);
+  assert.equal(report.global.signals.brierScore.delta, 0);
+  assert.equal(report.global.sampleSufficient, false);
+});
