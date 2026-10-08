@@ -149,7 +149,7 @@ try {
   }));
   await page.locator("#briefSubmit").click();
   await page.waitForURL(/gracias\.html\?via=proveedor/,{timeout:16000});
-  assert.match(await page.locator("#deliveryExplanation").textContent(),/no prueba todavía que haya llegado/);
+  assert.match(await page.locator("#deliveryExplanation").textContent(),/FormSubmit ha aceptado tu consulta/);
   assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
   assert.equal(await page.evaluate(()=>sessionStorage.getItem("revops-studio:brief:pending")),null);
   assert.deepEqual(errors,[],"Desktop runtime errors");

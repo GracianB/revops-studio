@@ -40,11 +40,11 @@
     ].join("\n") : "No hay datos guardados en esta pestaña. Puedes enviar un correo directo o reservar una llamada.";
   }
   if (acceptedByProvider) {
-    title.textContent = "Formulario tramitado por el proveedor.";
-    explanation.textContent = "El servicio de formularios ha indicado que acepta la solicitud. Eso no prueba todavía que haya llegado al buzón: la recepción requiere la activación inicial por su propietario. Puedes enviar también un correo directo.";
-    send.textContent = "Enviar también por correo ↗";
+    title.textContent = "Tu consulta está en camino.";
+    explanation.textContent = "FormSubmit ha aceptado tu consulta para enviarla a mi correo. La respuesta llegará a la dirección que has indicado. Si necesitas añadir algo, puedes escribirme directamente.";
+    send.textContent = "Añadir información por correo ↗";
     status.dataset.state = "info";
-    status.textContent = "No se ha confirmado la entrega final al destinatario.";
+    status.textContent = "Este aviso confirma la aceptación del envío por FormSubmit, no la entrega al buzón ni la lectura del mensaje.";
   } else {
     title.textContent = "Tu mensaje está preparado.";
     explanation.textContent = "La solicitud todavía no se ha enviado si has abierto esta página directamente. Usa el botón de correo o vuelve al formulario.";

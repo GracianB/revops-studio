@@ -6,7 +6,7 @@ La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema 
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
 
-**Paso externo pendiente:** FormSubmit exige que el propietario confirme una vez el correo de activación tras el primer envío. Una respuesta HTTP de aceptación no demuestra recepción en la bandeja de entrada. No anunciar como entrega 100 % verificada hasta completar esa activación y una prueba extremo a extremo con correo recibido.
+**Recepción verificada el 8 de octubre de 2026:** FormSubmit activado y prueba enviada desde la web publicada recibida en el Gmail del propietario. Referencia de prueba: `REVOPS-CONTACT-49-20261008`, recibida a las 08:03 UTC. Esta prueba verifica ese envío; no garantiza la entrega de todos los mensajes futuros. Una respuesta HTTP acredita aceptación por el proveedor, no entrega individual al buzón.
 
 Una respuesta que solicita activación se trata como pendiente incluso si incluye `success: true`: no abre la página de confirmación. Si el envío falla, la consulta se recupera al recargar la misma pestaña cuando el almacenamiento de sesión está disponible; el consentimiento debe marcarse de nuevo. El correo alternativo conserva los datos introducidos. Las pruebas de navegador simulan el proveedor y no envían consultas reales.
 
