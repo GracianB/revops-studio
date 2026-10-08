@@ -152,8 +152,17 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#workflowRows tr").count(),6);
     await page.locator("#workflowSearch").fill("duplicado");
     assert.equal(await page.locator(".workbench-row:visible").count(),1);
+    assert.equal(await page.locator("#exportVisible").isEnabled(),true);
+    const visibleDownloadPromise=page.waitForEvent("download");
+    await page.locator("#exportVisible").click();
+    const visibleDownload=await visibleDownloadPromise;
+    assert.match(visibleDownload.suggestedFilename(),/revops-vista-orders\.csv/);
+    const visibleText=await readFile(await visibleDownload.path(),"utf8");
+    assert.match(visibleText,/PED-101/);
+    assert.doesNotMatch(visibleText,/PED-102|PED-103/);
     await page.locator("#workflowSearch").fill("sin coincidencias");
     assert.equal(await page.locator("#workflowNoResults").isVisible(),true);
+    assert.equal(await page.locator("#exportVisible").isDisabled(),true);
     await page.locator("#resetResultsView").click();
     assert.equal(await page.locator(".workbench-row:visible").count(),6);
     assert.equal(await page.locator("#workflowNoResults").isHidden(),true);
@@ -276,13 +285,29 @@ async function auditProductWorkbench(browser) {
     await page.locator("#exportWorkflow").click();
     const download=await downloadPromise;
     assert.match(download.suggestedFilename(),/revops-simulacion-orders\.csv/);
+    const oldInputs=await page.locator("#workflowSource").inputValue();
     await page.locator('[data-scenario="support"]').click();
+    assert.equal(await page.locator("#scenarioDiscard").isVisible(),true);
+    assert.equal(await page.locator("#workflowSource").inputValue(),oldInputs,"user modifications survive an unconfirmed switch");
+    await page.locator("#cancelScenarioDiscard").click();
+    assert.equal(await page.locator("#scenarioDiscard").isHidden(),true);
+    assert.equal(await page.locator("#workflowSource").inputValue(),oldInputs);
+    await page.locator('[data-scenario="support"]').click();
+    await page.locator("#confirmScenarioDiscard").click();
+    assert.equal(await page.locator("#scenarioDiscard").isHidden(),true);
     await page.locator("#runWorkflow").click();
     assert.match(await page.locator("#scenarioDescription").innerText(),/incidencias/);
     assert.equal(await page.locator("#countReview").innerText(),"1");
     await page.locator('[data-scenario="data"]').click();
     await page.locator("#runWorkflow").click();
     assert.equal(await page.locator("#countReady").innerText(),"3");
+    const tsvSample="registro\tfuente\tvalor\tfecha\nTSV-001\tCRM\t24,50\t2026-10-08";
+    await page.locator("#importWorkflow").setInputFiles({
+      name:"exportacion.tsv",mimeType:"text/tab-separated-values",buffer:Buffer.from(tsvSample)
+    });
+    await page.waitForFunction(()=>document.querySelector("#countTotal")?.textContent==="1");
+    assert.equal(await page.locator("#countReady").innerText(),"1");
+    assert.match(await page.locator("#workflowSource").inputValue(),/TSV-001/);
     await page.locator("#workflowSource").fill("registro;fuente;valor;fecha\nA;CRM;10");
     await page.locator("#runWorkflow").click();
     assert.equal(await page.locator("#workflowError").isVisible(),true);
