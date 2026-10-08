@@ -1323,3 +1323,25 @@ textarea.form-control{min-height:145px;resize:vertical}
 .lab-page-intro .hero-accent{font-size:.72em}
 @media(max-width:900px){.lab-teaser-panel{grid-template-columns:1fr}.lab-teaser-actions{display:flex;flex-wrap:wrap}}
 @media(max-width:700px){.lab-teaser-actions{display:grid}.lab-page-intro{padding:32px 0 12px}.lab-page .nav-actions .btn{display:none}}
+
+/* Three grounded commercial case studies with explicit public/private proof. */
+.case-studies{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.study-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;padding:26px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}
+.study-top{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.study-label{border:1px solid rgba(129,230,163,.28);border-radius:999px;padding:5px 9px;color:var(--ok);font:700 9px var(--mono)}
+.study-label-private{border-color:var(--line-2);color:var(--muted)}
+.study-card h3{margin:27px 0 14px;font-size:clamp(21px,2.5vw,28px);line-height:1.1;letter-spacing:-.04em}
+.study-card p{margin:0 0 14px;color:var(--muted);font-size:13px}
+.study-card p strong{color:var(--text)}
+.study-card .study-problem{margin-bottom:12px}
+.study-scope{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 25px}
+.study-scope span{padding:5px 8px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font:600 10px var(--mono)}
+.study-link{display:inline-block;align-self:flex-start;margin-top:auto;border-bottom:1px solid var(--accent);padding:5px 0;color:var(--text);font-size:12px;font-weight:750;text-decoration:none}
+.study-secondary{margin-top:9px;color:var(--muted);font-size:11px;text-decoration:underline;text-underline-offset:3px}
+.study-note{margin-top:11px;color:var(--dim);font-size:11px}
+.case-credibility{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:23px;margin-top:14px;border:1px solid var(--line);border-radius:16px;background:var(--bg-2)}
+.case-credibility p{max-width:780px;margin:0;color:var(--muted);font-size:13px}
+.case-credibility p strong{color:var(--text)}
+.case-credibility .btn{flex-shrink:0}
+@media(max-width:1050px){.case-studies{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.case-studies{grid-template-columns:1fr}.study-card{padding:22px}.case-credibility{align-items:stretch;flex-direction:column}.case-credibility .btn{width:100%}}

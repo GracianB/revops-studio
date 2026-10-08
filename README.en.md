@@ -7,6 +7,10 @@ RevOps Studio is the public services showcase and technical laboratory of **Grac
 Live: **https://gracianb.github.io/revops-studio/**  
 Source: **https://github.com/GracianB/revops-studio**
 
+## Public proof versus private projects
+
+The commercial site links three documented works: Bodytone Support OS (public Help Center), a 200+ rules quoting system (private core) and a context-aware outbound automation case (private core). Technical scope is evidenced; revenue impact or customer savings are not claimed. The V40 demo lives on a distinct page and uses synthetic data.
+
 ## Commercial entry points
 
 1. Identify the problem: repeated manual work, unreliable reporting or scattered knowledge.

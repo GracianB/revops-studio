@@ -15,7 +15,8 @@
     email: "",
     herramientas: "",
     horas: "",
-    dolor: ""
+    dolor: "",
+    servicio: ""
   };
 
   let data = fallback;
@@ -33,6 +34,7 @@
     "Te envío el brief de RevOps Studio.",
     "",
     "Nombre: " + data.nombre,
+    "Servicio: " + (data.servicio || "Sin especificar"),
     "Email: " + data.email,
     "Herramientas actuales: " + data.herramientas,
     "Horas / semana: " + data.horas,
@@ -52,6 +54,7 @@
 
   summary.textContent = [
     data.nombre ? "Persona: " + data.nombre : "Persona: no indicada",
+    data.servicio ? "Servicio: " + data.servicio : "Servicio: sin especificar",
     data.herramientas ? "Herramientas: " + data.herramientas : "Herramientas: no indicadas",
     data.horas ? "Horas / semana: " + data.horas : "Horas / semana: no indicadas",
     data.dolor ? "Fricción: " + data.dolor : "Fricción: no indicada"

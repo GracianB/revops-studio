@@ -105,6 +105,7 @@ function collectBrief(form) {
     herramientas: String(data.herramientas || "").trim(),
     horas: String(data.horas || "").trim(),
     dolor: String(data.dolor || "").trim(),
+    servicio: String(data.servicio || "").trim(),
     createdAt: new Date().toISOString()
   };
 }
@@ -116,14 +117,29 @@ function initBriefForm() {
     event.preventDefault();
     if (!form.checkValidity()) { form.reportValidity(); return; }
     const data = collectBrief(form);
-    let stored = true;
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { stored = false; }
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {
+      // Session storage can be disabled. Keep the brief available for review.
+      const message = [
+        "Hola,","", "Quiero consultar un proyecto en RevOps Studio.","",
+        "Nombre: " + data.nombre, "Email: " + data.email,
+        "Servicio: " + data.servicio,
+        "Herramientas actuales: " + data.herramientas,
+        "Horas/semana: " + data.horas, "Problema: " + data.dolor
+      ].join("\n");
+      const link = document.createElement("a");
+      link.href = "mailto:gracianbaenagonzalez@gmail.com?subject=" +
+        encodeURIComponent("RevOps Studio | Consulta") + "&body=" + encodeURIComponent(message);
+      link.textContent = "Revisar correo preparado ↗";
+      status.replaceChildren(document.createTextNode("El navegador no permite guardar el brief. "), link);
+      status.dataset.state = "error";
+      return;
+    }
     track(ANALYTICS_EVENT, { place: "brief" });
-    status.dataset.state = stored ? "ok" : "error";
-    status.textContent = stored
-      ? "Brief preparado en esta pestaña. La siguiente pantalla te deja revisar el correo."
-      : "No se pudo guardar el brief localmente. Continúa sin cerrar esta pestaña.";
-    setTimeout(() => { window.location.href = "./gracias.html"; }, 180);
+    status.dataset.state = "ok";
+    status.textContent = "Brief preparado en esta pestaña. Revisa el mensaje antes de enviarlo.";
+    window.location.assign("./gracias.html");
   });
 }
 
@@ -135,10 +151,20 @@ function initTracking() {
 }
 
 
+function initServiceChoice() {
+  const select = qs("#servicio");
+  if (!select) return;
+  qsa("[data-service-choice]").forEach(link => link.addEventListener("click", () => {
+    const value = link.dataset.serviceChoice || "";
+    if (Array.from(select.options).some(option => option.value === value)) select.value = value;
+  }));
+}
+
 initMenu();
 initReveal();
 initNavState();
 initFilters();
+initServiceChoice();
 initCalculator();
 initBriefForm();
 initTracking();

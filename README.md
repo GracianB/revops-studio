@@ -6,6 +6,14 @@
 [![Tests](https://img.shields.io/badge/TESTS-300%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
 [![JavaScript](https://img.shields.io/badge/JavaScript-181717?style=for-the-badge&logo=javascript)](https://github.com/GracianB/revops-studio)
 
+## Qué se contrata y qué se demuestra
+
+La home está dedicada a los servicios. `laboratorio.html` aloja el motor V40 completo sin obligar a los clientes a cargarlo. `site.js` controla únicamente navegación, filtros, calculadora orientativa y preparación local del brief.
+
+**Casos enlazados y alcance de la evidencia:** Bodytone Support OS es un caso público, con Help Center consultable. La calculadora comercial de 200+ reglas y Outreach GenAI son casos documentados cuyo núcleo privado y métricas internas no se publican. No son productos SaaS de RevOps Studio ni testimonios de clientes externos del estudio.
+
+**Conversión:** desde los paquetes se puede elegir tipo de servicio para rellenar el brief. Si sessionStorage está bloqueado, el formulario ofrece un correo preparado sin perder el texto en una navegación fallida. Ningún formulario envía un email automáticamente.
+
 ## Servicios para empresas
 
 RevOps Studio es el escaparate de servicios de Gracián Baena: **automatización de procesos, BI/datos y aplicaciones internas a medida** para pymes y equipos operativos.
