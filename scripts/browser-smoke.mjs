@@ -36,12 +36,15 @@ async function auditAccessibility(page, label) {
     });
     return result.violations.map(v => ({
       id:v.id, impact:v.impact, count:v.nodes.length,
-      targets:v.nodes.slice(0,3).map(n => n.target.join(" "))
+      targets:v.nodes.slice(0,6).map(n => ({
+        selector:n.target.join(" "),data:n.any?.[0]?.data,
+        text:n.html?.slice(0,190),summary:n.failureSummary?.slice(0,130)
+      }))
     }));
   });
   console.log("AXE_AUDIT "+label+" "+JSON.stringify(violations));
   const blockers = violations.filter(v => v.impact==="serious" || v.impact==="critical");
-  assert.deepEqual(blockers,[],label+" has serious or critical accessibility failures");
+  if (process.env.REVOPS_AXE_DIAGNOSTIC !== "1") assert.deepEqual(blockers,[],label+" has serious or critical accessibility failures");
 }
 async function captureVisual(page,name,locator=null) {
   if (process.env.REVOPS_VISUAL_AUDIT !== "1" || engineName !== "chrome") return;
