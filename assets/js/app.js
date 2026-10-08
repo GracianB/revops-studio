@@ -4058,7 +4058,23 @@ function initPlayground() {
   persistAndRender(true);
 }
 
+function initLabDisclosure() {
+  const disclosure = qs("#labDisclosure");
+  if (!disclosure) return;
+  const openDeepLink = () => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    let id;
+    try { id = decodeURIComponent(hash); } catch { return; }
+    const target = document.getElementById(id);
+    if (target && disclosure.contains(target)) disclosure.open = true;
+  };
+  window.addEventListener("hashchange", openDeepLink);
+  openDeepLink();
+}
+
 initMenu();
+initLabDisclosure();
 initReveal();
 initNavState();
 initFilters();

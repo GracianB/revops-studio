@@ -2,10 +2,19 @@
 
 **Customer Success × Data × Operations × AI × Systems**
 
-RevOps Studio is the public lab of **Gracián Baena González**: a small, real project used to demonstrate how customer understanding, operations, data and technical execution can become one system.
+RevOps Studio is the public services showcase and technical laboratory of **Gracián Baena González**. The commercial offer is process automation, operational dashboards and custom internal tools for SMEs and operational teams. The V40 Control Room is a secondary, simulation-only proof of technical execution, not the product being sold.
 
 Live: **https://gracianb.github.io/revops-studio/**  
 Source: **https://github.com/GracianB/revops-studio**
+
+## Commercial entry points
+
+1. Identify the problem: repeated manual work, unreliable reporting or scattered knowledge.
+2. Choose a service: automation, data/BI or custom software with appropriately scoped AI.
+3. Review indicative engagement models (from €900 project, €4,000 system, €600/month continuity).
+4. Prepare a local brief, review the email and send it yourself. The form does not submit to a server.
+
+Do not mistake the technical laboratory for a production SaaS or an integrated CRM. Customer results and savings are never invented.
 
 ## Architecture
 

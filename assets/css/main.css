@@ -1260,3 +1260,49 @@ textarea.form-control{min-height:145px;resize:vertical}
 @media (max-width:480px){
   .feedback-form,.feedback-metrics{grid-template-columns:1fr}
 }
+
+
+/* Commercial-first presentation, without changing the V40 decision engine. */
+.term-intro{margin-bottom:18px;color:var(--muted);font-size:13px}
+.term-outcome{margin:10px 0 0;padding:14px;border-left:2px solid var(--accent);background:rgba(255,90,95,.055);color:var(--text);font-size:13px}
+.problem-grid,.service-pillars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.problem-card,.service-pillar{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:20px;padding:26px;background:var(--panel)}
+.problem-card h3{margin:22px 0 10px;font-size:clamp(21px,2.4vw,29px);line-height:1.17;letter-spacing:-.04em}
+.problem-card p,.service-pillar p{margin:0;color:var(--muted);font-size:14px}
+.problem-outcome{display:grid;gap:8px;margin-top:auto;padding-top:28px}
+.problem-outcome strong{border-top:1px solid var(--line);padding-top:17px;color:var(--accent);font:700 10px var(--mono);text-transform:uppercase;letter-spacing:.09em}
+.problem-outcome span{font-size:13px;color:var(--text)}
+.problem-foot,.offer-disclaimer{max-width:830px;margin:22px 0 0;color:var(--muted);font-size:13px}
+.service-pillars{margin-bottom:26px}
+.service-pillar{background:linear-gradient(155deg,rgba(255,90,95,.045),var(--panel) 55%)}
+.service-pillar-num{color:var(--accent);font:700 12px var(--mono)}
+.service-pillar h3{margin:18px 0 12px;font-size:26px;line-height:1.1;letter-spacing:-.045em}
+.service-pillar>span:last-child{margin-top:auto;padding-top:22px;color:var(--text);font-size:12px}
+.service-cta{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:23px;padding:20px 23px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.service-cta p{max-width:670px;margin:0;color:var(--muted);font-size:14px}
+.service-cta .btn{flex-shrink:0}
+.offer{display:flex;flex-direction:column}
+.offer ul{margin-bottom:24px}
+.offer-link{display:inline-block;align-self:flex-start;margin-top:auto;padding:10px 0;border-bottom:1px solid var(--accent);color:var(--text);font-size:12px;font-weight:750;text-decoration:none}
+.offer-link:hover{color:var(--accent)}
+.proof-section .proof-grid{grid-template-columns:1.25fr 1fr 1fr}
+.proof-section .proof-card{min-height:280px}
+.proof-section .proof-card h3{margin-top:18px}
+.lab-disclosure{border:1px solid var(--line-2);border-radius:20px;background:var(--panel);overflow:clip}
+.lab-disclosure>summary{list-style:none;display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:128px;padding:28px;cursor:pointer}
+.lab-disclosure>summary::-webkit-details-marker{display:none}
+.lab-disclosure>summary:hover{background:rgba(255,255,255,.035)}
+.lab-disclosure>summary:focus-visible{outline:3px solid var(--accent);outline-offset:-4px}
+.lab-summary-title{font:700 clamp(19px,2.3vw,28px)/1.2 var(--display);letter-spacing:-.03em;color:var(--text)}
+.lab-summary-title span{color:var(--accent)}
+.lab-summary-copy{color:var(--muted);font-size:13px}
+.lab-disclosure[open]>summary{border-bottom:1px solid var(--line)}
+.lab-disclosure[open]>.control-room{padding:14px}
+.lab-disclosure .control-room{grid-template-columns:minmax(0,1fr) 295px}
+.hero-grid{align-items:center}
+.terminal{min-width:0}
+.term-row{grid-template-columns:18px 86px 16px minmax(0,1fr)}
+.term-white{min-width:0;overflow-wrap:anywhere}
+@media(max-width:1100px){.nav-links{gap:11px}.nav-links a{font-size:12px}.lab-disclosure .control-room{grid-template-columns:1fr}}
+@media(max-width:960px){.problem-grid,.service-pillars,.proof-section .proof-grid{grid-template-columns:1fr 1fr}.proof-section .proof-card-primary{grid-column:1/-1}}
+@media(max-width:700px){.problem-grid,.service-pillars,.proof-section .proof-grid{grid-template-columns:1fr}.proof-section .proof-card-primary{grid-column:auto}.problem-card,.service-pillar{padding:22px}.service-cta{flex-direction:column;align-items:flex-start}.service-cta .btn{width:100%}.lab-disclosure>summary{padding:20px}.lab-disclosure[open]>.control-room{padding:8px}.hero-grid{gap:24px}.term-row{font-size:11px}}
