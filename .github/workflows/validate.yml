@@ -28,7 +28,7 @@ jobs:
         run: npm run verify
 
       - name: Install lightweight browser smoke dependency
-        run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0
+        run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0 axe-core@4.10.3
 
       - name: Detect undeclared browser variables
         run: node scripts/lint-globals.mjs
