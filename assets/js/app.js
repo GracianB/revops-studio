@@ -152,6 +152,7 @@ function writeCalibrationBaselineV19(rows = [], datasetFingerprint = null) {
       JSON.stringify(Array.isArray(rows) ? rows : [])
     );
   } catch {}
+}
 
 const CALIBRATION_V20_STORAGE_KEY = "revops-studio:calibration:v20";
 const CALIBRATION_V20_CONFIG_KEY = "revops-studio:calibration:v20:config";
@@ -304,9 +305,6 @@ function writeTransparencyLogV31(log) {
     localStorage.setItem(POLICY_TRANSPARENCY_V31_STORAGE_KEY, JSON.stringify(log));
   } catch {}
 }
-
-}
-
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
