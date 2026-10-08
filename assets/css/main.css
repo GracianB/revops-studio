@@ -1170,7 +1170,7 @@ textarea.form-control{min-height:145px;resize:vertical}
 @media (max-width:760px){
   .execution-ledger-head{flex-direction:column}
   .execution-ledger-head .btn{width:100%;justify-content:center}
-  .execution-ledger-metrics{grid-template-columns:repeat(3,1fr)
+  .execution-ledger-metrics{grid-template-columns:repeat(3,1fr)}
   .ledger-events{grid-template-columns:1fr 1fr}
 }
 @media (max-width:480px){
