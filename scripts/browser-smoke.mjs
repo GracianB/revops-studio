@@ -126,6 +126,11 @@ try {
   await page.locator('[data-filter="all"]').click();
   await page.locator('[data-service-choice="Quick win"]').click();
   assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  await page.locator("#hoursWeek").fill("4");
+  await page.locator("#people").fill("3");
+  await page.locator("#hourCost").fill("30");
+  await page.locator("#calcToContact").click();
+  assert.match(await page.locator("#calcContextSummary").innerText(),/18\.720/);
   await page.locator("#nombre").fill("Cliente de prueba");
   await page.locator("#email").fill("prueba@example.net");
   await page.locator("#dolor").fill("Duplicamos datos entre herramientas y necesitamos una validación.");
@@ -146,6 +151,7 @@ try {
   await page.reload();
   assert.equal(await page.locator("#nombre").inputValue(),"Cliente de prueba");
   assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  assert.match(await page.locator("#calcContextSummary").innerText(),/18\.720/);
   assert.match(await page.locator("#formStatus").innerText(),/recuperado tu consulta pendiente/);
   assert.equal(await page.locator("#privacyConsent").isChecked(),false);
   await page.locator("#privacyConsent").check();
