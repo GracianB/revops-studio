@@ -253,6 +253,7 @@
             <div class="result-label">coste anual del tiempo invertido</div>
             <div class="result-foot" id="annualDetail">Calculando…</div>
           </div>
+          <div class="calc-next"><a class="btn btn-primary" id="calcToContact" href="#contacto">Consultar este proceso ↗</a><p>Traslada esta estimación al formulario para revisarla. No se enviará nada sin tu consentimiento.</p></div>
         </div>
       </div>
     </div>
@@ -298,6 +299,8 @@
           <input type="hidden" name="_subject" value="Nueva consulta · RevOps Studio">
           <input type="hidden" name="_captcha" value="true">
           <input type="hidden" name="_next" value="https://gracianb.github.io/revops-studio/gracias.html?via=proveedor">
+          <input type="hidden" name="estimacion" id="estimacion" value="">
+          <div class="calc-context" id="calcContext" hidden><p id="calcContextSummary" role="status"></p><button type="button" id="calcContextClear" class="text-link">Quitar estimación</button></div>
           <div class="form-honeypot" aria-hidden="true"><label for="websiteExtra">Deja este campo vacío</label><input name="_honey" id="websiteExtra" tabindex="-1" autocomplete="off"></div>
           <div class="form-grid">
             <div class="full">
