@@ -1286,6 +1286,7 @@ textarea.form-control{min-height:145px;resize:vertical}
 .offer-link{display:inline-block;align-self:flex-start;margin-top:auto;padding:10px 0;border-bottom:1px solid var(--accent);color:var(--text);font-size:12px;font-weight:750;text-decoration:none}
 .offer-link:hover{color:var(--accent)}
 .proof-section .proof-grid{grid-template-columns:1.25fr 1fr 1fr}
+.proof-section .proof-card-primary{grid-column:auto}
 .proof-section .proof-card{min-height:280px}
 .proof-section .proof-card h3{margin-top:18px}
 .lab-disclosure{border:1px solid var(--line-2);border-radius:20px;background:var(--panel);overflow:clip}
@@ -1306,3 +1307,8 @@ textarea.form-control{min-height:145px;resize:vertical}
 @media(max-width:1100px){.nav-links{gap:11px}.nav-links a{font-size:12px}.lab-disclosure .control-room{grid-template-columns:1fr}}
 @media(max-width:960px){.problem-grid,.service-pillars,.proof-section .proof-grid{grid-template-columns:1fr 1fr}.proof-section .proof-card-primary{grid-column:1/-1}}
 @media(max-width:700px){.problem-grid,.service-pillars,.proof-section .proof-grid{grid-template-columns:1fr}.proof-section .proof-card-primary{grid-column:auto}.problem-card,.service-pillar{padding:22px}.service-cta{flex-direction:column;align-items:flex-start}.service-cta .btn{width:100%}.lab-disclosure>summary{padding:20px}.lab-disclosure[open]>.control-room{padding:8px}.hero-grid{gap:24px}.term-row{font-size:11px}}
+
+/* A portfolio grid should not leave a vacant third row. */
+.ecosystem{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ecosystem .product-card.wide{grid-row:auto}
+@media(max-width:700px){.ecosystem{grid-template-columns:1fr}}

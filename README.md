@@ -1,10 +1,27 @@
 # RevOps Studio
 
-**A deterministic Revenue Operations decision system built around data quality, explainability, human approval and replay-verifiable policy lineage.**
+**Servicios de automatización, datos y software a medida · con un laboratorio técnico abierto para demostrar cómo se construyen los sistemas.**
 
 [![Live](https://img.shields.io/badge/LIVE-DAA428?style=for-the-badge)](https://gracianb.github.io/revops-studio/)
-[![Tests](https://img.shields.io/badge/TESTS-170%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
+[![Tests](https://img.shields.io/badge/TESTS-300%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
 [![JavaScript](https://img.shields.io/badge/JavaScript-181717?style=for-the-badge&logo=javascript)](https://github.com/GracianB/revops-studio)
+
+## Servicios para empresas
+
+RevOps Studio es el escaparate de servicios de Gracián Baena: **automatización de procesos, BI/datos y aplicaciones internas a medida** para pymes y equipos operativos.
+
+La conversación comercial comienza con un problema, no con una tecnología:
+- Trabajo manual duplicado entre CRM, hojas y correo → automatización o integración con control de errores.
+- Informes dispersos o incoherentes → orden de datos, definiciones y dashboard útil.
+- Conocimiento y procesos dependientes de personas → herramienta interna, documentación y asistentes acotados.
+
+**Modalidades orientativas:** Quick win desde 900 €, sistema desde 4.000 € y continuidad opcional desde 600 €/mes. Alcance y precio se confirman tras diagnóstico. El formulario prepara un correo local que el visitante revisa y envía manualmente; no hay un backend que reciba el brief.
+
+**El laboratorio V40 no es el producto que se comercializa.** Es una demo local con datos sintéticos, scoring, previsión y política de aprobación. No ejecuta acciones sobre CRM ni demuestra ahorros económicos reales. Se ha trasladado al final de la página y se inicializa solo cuando el visitante lo abre para priorizar el rendimiento de la landing comercial.
+
+---
+
+## Laboratorio técnico y arquitectura
 
 RevOps Studio is the public technical proof behind a broader operating idea:
 
