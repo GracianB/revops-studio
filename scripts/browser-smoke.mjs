@@ -185,6 +185,35 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#workflowSource").inputValue(),savedSource);
     await page.locator("#runWorkflow").click();
     assert.equal(await page.locator("#workflowError").isHidden(),true);
+    const previousCsv=await page.locator("#workflowSource").inputValue();
+    const externalCsv="Order ID;Company;Correo;Amount;Status;Nota privada\n0007;Almacén Norte;test@ejemplo.test;44;nuevo;solo prueba";
+    await page.locator("#importWorkflow").setInputFiles({
+      name:"exportacion-crm.csv",mimeType:"text/csv",buffer:Buffer.from(externalCsv)
+    });
+    await page.locator("#columnMapper").waitFor({state:"visible",timeout:10000});
+    assert.equal(await page.locator("#workflowSource").inputValue(),previousCsv,"no replacement before confirmation");
+    assert.equal(await page.locator("#columnMappingRows select").count(),5);
+    assert.equal(await page.locator("#mapping-pedido").inputValue(),"order id");
+    assert.equal(await page.locator("#mapping-cliente").inputValue(),"company");
+    assert.match(await page.locator("#columnMappingIgnored").innerText(),/nota privada/);
+    await page.locator("#mapping-cliente").selectOption("order id");
+    await page.locator("#applyColumnMapping").click();
+    assert.match(await page.locator("#columnMappingStatus").innerText(),/más de un campo/);
+    await page.locator("#mapping-cliente").selectOption("company");
+    await page.locator("#applyColumnMapping").click();
+    assert.equal(await page.locator("#columnMapper").isHidden(),true);
+    assert.equal(await page.locator("#countTotal").innerText(),"1");
+    assert.equal(await page.locator("#countReady").innerText(),"1");
+    assert.match(await page.locator("#workflowSource").inputValue(),/0007/);
+    assert.doesNotMatch(await page.locator("#workflowSource").inputValue(),/solo prueba/);
+    await page.locator("#workflowSource").fill("id;empresa;email;total;estado\n0008;Tienda;test2@ejemplo.test;12;nuevo");
+    await page.locator("#openColumnMapper").click();
+    assert.equal(await page.locator("#columnMapper").isVisible(),true);
+    await page.locator("#mapping-cliente").selectOption("empresa");
+    await page.locator("#mapping-pedido").selectOption("id");
+    await page.locator("#applyColumnMapping").click();
+    assert.equal(await page.locator("#countReady").innerText(),"1");
+    assert.match(await page.locator("#workflowSource").inputValue(),/0008/);
     await page.locator("#workflowSource").fill("pedido;cliente;email;total;estado\nA-1;Tienda;a@ejemplo.test;200;nuevo\nA-2;Tienda;email-invalido;50;nuevo");
     assert.equal(await page.locator("#exportWorkflow").isDisabled(),true);
     await page.locator("#runWorkflow").click();

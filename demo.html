@@ -47,8 +47,23 @@
         <div class="workbench-import">
           <label for="importWorkflow" class="workbench-import-label">Importar un CSV del equipo (local)</label>
           <input id="importWorkflow" type="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="importHelp">
-          <p class="workbench-hint" id="importHelp">Se lee en esta pestaña, no se sube. Solo para datos de prueba o anonimizados. Cabeceras según el escenario seleccionado.</p>
+          <p class="workbench-hint" id="importHelp">Se lee en esta pestaña, no se sube. Solo para datos de prueba o anonimizados. Puedes relacionar columnas con nombres diferentes antes de ejecutar.</p>
+          <button class="workbench-map-open" id="openColumnMapper" type="button">Relacionar columnas de los datos pegados ↗</button>
         </div>
+        <section class="workbench-mapper" id="columnMapper" aria-labelledby="columnMapperTitle" hidden>
+          <div class="workbench-mapper-header">
+            <div><span class="workbench-section-index">IMPORTACIÓN GUIADA · PASO PREVIO</span><h4 id="columnMapperTitle">¿Qué columna representa cada campo?</h4><p>Compara tus nombres con los campos del proceso. Las coincidencias son sugerencias que puedes cambiar. Todavía no se han reemplazado los datos.</p></div>
+            <button type="button" class="workbench-edit-close" id="cancelColumnMapper">Cerrar ×</button>
+          </div>
+          <div id="columnMappingRows" class="workbench-mapping-list"></div>
+          <p id="columnMappingIgnored" class="workbench-mapping-extras"></p>
+          <div class="workbench-preview">
+            <h5>Vista previa de los datos de origen</h5>
+            <div id="columnMappingPreview" class="workbench-preview-grid"></div>
+          </div>
+          <p class="workbench-map-status" id="columnMappingStatus" role="status" aria-live="polite"></p>
+          <div class="workbench-editor-actions"><button type="button" class="btn btn-primary" id="applyColumnMapping">Aplicar correspondencias y ejecutar ↗</button><button type="button" class="btn btn-secondary" id="cancelColumnMapping">Conservar mis datos anteriores</button></div>
+        </section>
         <div class="workbench-editor-actions">
           <button class="btn btn-primary" type="button" id="runWorkflow">Ejecutar proceso <span aria-hidden="true">↗</span></button>
           <button class="btn btn-secondary" type="button" id="resetWorkflow">Restaurar ejemplo</button>

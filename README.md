@@ -42,6 +42,18 @@ La mesa de procesos `demo.html` ahora permite trabajar con **CSV propios, siempr
 
 El motor puro `assets/js/workflow-engine.js` centraliza los cambios de fila y la separación de la cola. `workflow-demo.js` usa `textContent` y elementos DOM para mostrar los datos, sin interpretarlos como HTML. El laboratorio V40 no se modifica.
 
+### Producto · mapeo guiado de columnas CSV
+
+La demo acepta ahora importaciones locales aunque los encabezados de la hoja no coincidan con los nombres internos del escenario. En vez de rechazar sin contexto un archivo `Order ID;Company;Correo;Amount;Status`, muestra una **relación editable origen → destino**. No hay IA que adivine datos: las sugerencias se basan solo en nombres conocidos y son siempre revisables.
+
+- Una importación con nombres originales exactos conserva el acceso rápido. Las cabeceras diferentes, columnas extra o propuestas semánticas abren un panel de correspondencias antes de sustituir los datos.
+- El panel enseña hasta tres registros del archivo original, el total de filas, qué columnas sobrantes se ignorarán y qué campos faltan. Nunca transforma importes, identificadores con ceros a la izquierda ni datos no seleccionados sin consentimiento.
+- El visitante puede cambiar las sugerencias mediante controles accesibles. La adaptación queda **bloqueada** cuando falta una columna obligatoria o dos campos intentan usar la misma columna de origen. Cerrar el panel conserva intacto el CSV anterior.
+- También se puede abrir la función con **Relacionar columnas de los datos pegados**. Después de confirmar, se ejecutan las mismas reglas de validación, edición individual, deshacer, filtros y exportación de cola que existían.
+- No hay upload real, cookies adicionales, seguimiento de los nombres de columnas ni almacenamiento de filas en la URL. Sigue siendo una demo local con máximo 80 registros y 12.000 caracteres.
+
+Patrones consultados para esta mejora: [CSV import column mapping UI](https://appmaster.io/blog/csv-import-column-mapping-ui), [guías de mensajes de error de Nielsen Norman Group](https://www.nngroup.com/articles/errors-forms-design-guidelines/) y [riesgos de CSV según OWASP](https://owasp.org/www-community/attacks/CSV_Injection). La neutralización de fórmulas del CSV se trata como mitigación parcial; no se promete seguridad universal en todas las aplicaciones de hojas de cálculo.
+
 ### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
