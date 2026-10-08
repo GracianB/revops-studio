@@ -2,7 +2,7 @@
 
 The public website now focuses on operational problems, defined deliverables, documented experience, indicative pricing and contact. Theme choices persist where browser storage permits. The technical Control Room remains isolated in `laboratorio.html`.
 
-Contact uses FormSubmit AJAX on a static GitHub Pages site. **The recipient must complete FormSubmit's one-time activation email before delivery can be considered verified.** Errors reveal a populated mailto fallback, and the existing booking calendar remains available. The contact form explains third-party processing and requires the visitor's consent. See `privacidad.html`.
+Contact uses FormSubmit AJAX on a static GitHub Pages site. **Activated and verified on 8 October 2026:** a test submitted through the published website reached the owner’s Gmail inbox at 08:03 UTC (`REVOPS-CONTACT-49-20261008`). This verifies that test, not every future delivery. Errors reveal a populated mailto fallback, and the existing booking calendar remains available. The contact form explains third-party processing and requires the visitor's consent. See `privacidad.html`.
 
 ---
 

@@ -57,8 +57,8 @@ test("contact: real provider endpoint, required consent, explained processing an
 });
 
 test("contact confirmation never misrepresents provider acceptance as mailbox delivery",()=>{
- assert.match(thanksJs,/no prueba todavía que haya llegado al buzón/);
- assert.match(thanksJs,/recepción requiere la activación inicial/);
+ assert.match(thanksJs,/no la entrega al buzón ni la lectura del mensaje/);
+ assert.doesNotMatch(thanksJs,/recepción requiere la activación inicial/);
  assert.match(thanks,/La solicitud todavía no se ha enviado/);
  assert.match(thanks,/id="sendBrief"/);
  assert.match(thanks,/assets\/js\/theme\.js/);
