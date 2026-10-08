@@ -40,7 +40,7 @@ body{
 }
 body.menu-open{overflow:hidden}
 a{color:inherit}
-button,input,textarea{font:inherit}
+button,input,textarea,select{font:inherit}
 button{color:inherit}
 ::selection{background:rgba(255,90,95,.35);color:#fff}
 
@@ -1345,3 +1345,8 @@ textarea.form-control{min-height:145px;resize:vertical}
 .case-credibility .btn{flex-shrink:0}
 @media(max-width:1050px){.case-studies{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.case-studies{grid-template-columns:1fr}.study-card{padding:22px}.case-credibility{align-items:stretch;flex-direction:column}.case-credibility .btn{width:100%}}
+
+/* Keyboard visibility and comfortable contrast for commercial forms. */
+:root{--dim:#8795a8}
+:where(a,button,input,textarea,select,summary):focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.form-control:focus-visible{box-shadow:0 0 0 3px rgba(255,90,95,.13)}
