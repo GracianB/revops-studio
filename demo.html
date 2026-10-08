@@ -52,6 +52,7 @@
         </select>
         <button type="button" id="loadWorkflowRecipe">Cargar ejemplo ↗</button>
         <button type="button" id="downloadWorkflowTemplate">Descargar plantilla CSV</button>
+        <button type="button" id="copyScenarioLink">Copiar enlace de esta demo</button>
       </div>
       <p id="recipeHint" class="workbench-recipe-detail" role="status">Ejemplo original con situaciones mezcladas. Cambiar la opción no sustituirá tus datos hasta pulsar cargar.</p>
     </div>
@@ -67,7 +68,7 @@
         <p id="scenarioDescription" class="workbench-instructions">Valida pedidos, evita duplicados y aparta excepciones.</p>
         <label class="workbench-editor-label" for="workflowSource">Datos delimitados por punto y coma o coma</label>
         <textarea id="workflowSource" spellcheck="false" rows="10" aria-describedby="sourceHelp" maxlength="12000"></textarea>
-        <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador. Puedes editar un registro desde la tabla sin reescribir el CSV.</p>
+        <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador. Puedes editar un registro desde la tabla sin reescribir el CSV. Atajo: Ctrl + Intro para ejecutar.</p>
         <div class="workbench-import">
           <label for="importWorkflow" class="workbench-import-label">Importar un CSV del equipo (local)</label>
           <input id="importWorkflow" type="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="importHelp">
@@ -94,7 +95,7 @@
           <button class="btn btn-secondary" type="button" id="undoCorrection" disabled>Deshacer corrección</button>
           <button class="btn btn-secondary" type="button" id="redoCorrection" disabled>Rehacer corrección</button>
         </div>
-        <p id="workflowError" class="workbench-error" role="alert" hidden></p>
+        <p id="workflowError" class="workbench-error" tabindex="-1" role="alert" hidden></p>
       </section>
       <section class="workbench-panel workbench-output" aria-labelledby="workbench-output-title">
         <div class="workbench-panel-head"><div><span>03 / RESULTADO</span><h3 id="workbench-output-title">Trazabilidad en directo</h3></div><span class="workbench-local-label">SOLO SIMULACIÓN</span></div>
