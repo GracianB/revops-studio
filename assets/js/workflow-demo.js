@@ -24,6 +24,7 @@ function invalidate(message){
   $("copyWorkflow").disabled=true;
   $("exportActionQueue").disabled=true;
   $("exportInsights").disabled=true;
+  $("quickDemoAction").disabled=true;
   resetInsights();
   closeEditor();
   $("demoContact").dataset.ready="false";
@@ -172,9 +173,10 @@ function renderInsights(result){
   setText("insightsReview",view.reviewCount);
   setText("insightsBlocked",view.blockedCount);
   // CSS percentage is derived from row counts, not from speculative ROI.
-  for(const [index,item] of view.distribution.entries())
-    $("insightsDistribution").children[index].style.width=
-      (view.total?(item.count/view.total*100):0).toFixed(3)+"%";
+  const share=count=>view.total?(count/view.total*100).toFixed(3)+"%":"0%";
+  for(const [index,count] of [
+    view.actionable,view.historical,view.reviewCount,view.blockedCount
+  ].entries())$("insightsDistribution").children[index].style.width=share(count);
   const steps=$("insightsSteps"),fragment=document.createDocumentFragment();
   view.steps.forEach((item,index)=>{
     const article=document.createElement("article");
@@ -200,10 +202,10 @@ function renderInsights(result){
 }
 function changeResultsFilter(next){
   activeFilter=next;
+  $("workflowSearch").value="";
   syncFilterButtons();
   closeEditor();
   applyFilter();
-  $("workflowSearch").focus();
   $("workflowRows").closest(".workbench-rows").scrollIntoView({behavior:"instant",block:"start"});
 }
 function firstBlocked(){
@@ -225,6 +227,7 @@ function renderEmpty(){
   setText("workflowFilterStatus","Ejecuta un escenario para filtrar y corregir los registros.");
   $("workflowNoResults").hidden=true;
   $("fixFirstIssue").disabled=true;
+  $("quickDemoAction").disabled=true;
   tr.append(td);rows.append(tr);
   [...$("workflowPipeline").querySelectorAll("li")].forEach(li=>{
     li.querySelector(".workbench-step-count")?.remove();
@@ -290,6 +293,7 @@ function render(result){
   $("exportActionQueue").disabled=!result.rows.some(row=>row.status==="listo" && !/histórico/i.test(row.action));
   $("exportInsights").disabled=false;
   $("fixFirstIssue").disabled=!result.rows.some(row=>row.status==="bloqueado");
+  $("quickDemoAction").disabled=$("fixFirstIssue").disabled;
   $("demoContact").dataset.ready="true";
 }
 function summary(){
