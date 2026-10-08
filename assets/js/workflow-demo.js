@@ -1,4 +1,4 @@
-import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActionQueueCsv } from "./workflow-engine.js";
+import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActionQueueCsv, exportVisibleRowsCsv } from "./workflow-engine.js";
 import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
 import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
 import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} from "./workflow-product-kit.js";
@@ -12,6 +12,7 @@ let scenario=allowed.includes(query)?query:"orders";
 let latest=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let mappingSource=null,mappingScenario=null;
+let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
 function errorText(message){
   const element=$("workflowError");
@@ -25,6 +26,7 @@ function invalidate(message){
   $("exportWorkflow").disabled=true;
   $("copyWorkflow").disabled=true;
   $("exportActionQueue").disabled=true;
+  $("exportVisible").disabled=true;
   $("exportInsights").disabled=true;
   $("changeComparison").hidden=true;
   $("quickDemoAction").disabled=true;
@@ -128,8 +130,18 @@ function openColumnMapper(text){
   renderMappingPreview();
   $("columnMapper").scrollIntoView({block:"nearest",behavior:"instant"});
 }
-function chooseScenario(next){
+function chooseScenario(next,force=false){
   if(!SCENARIOS[next])return;
+  if(!force && modifiedSource && next!==scenario){
+    pendingScenario=next;
+    setText("scenarioDiscardDescription","Vas a pasar a «"+SCENARIOS[next].title+"». Tus datos actuales, incluso los editados, se perderán de esta pestaña.");
+    $("scenarioDiscard").hidden=false;
+    $("confirmScenarioDiscard").focus();
+    return;
+  }
+  if(!force && modifiedSource && next===scenario)return;
+  modifiedSource=false;pendingScenario=null;
+  $("scenarioDiscard").hidden=true;
   scenario=next;
   const data=SCENARIOS[next];
   buttons.forEach(button=>{
@@ -266,6 +278,7 @@ function loadWorkflowExample(){
     const name=$("workflowRecipe").value,txt=recipe(scenario,name);
     const parsed=runWorkflow(scenario,txt);
     $("workflowSource").value=txt;
+    modifiedSource=false;
     undoSource=null;redoSource=null;
     $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
     closeColumnMapper();errorText("");
@@ -333,7 +346,7 @@ function render(result){
     tr.className="workbench-row";
     tr.dataset.status=row.status;
     tr.dataset.editIndex=String(index);
-    tr.dataset.search=normalizeSearch([row.id,row.reason,row.action].join(" "));
+    tr.dataset.search=normalizeSearch([row.id,...Object.values(row.values),row.reason,row.action].join(" "));
     const edit=cell(tr,"");
     const trigger=document.createElement("button");
     trigger.type="button";
@@ -400,6 +413,7 @@ async function copySummary(){
 $("workflowSource").addEventListener("input",()=>{
   errorText("");
   closeColumnMapper();
+  modifiedSource=true;
   undoSource=null;redoSource=null;
   $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
   invalidate("Has modificado las entradas. Ejecuta el proceso para actualizar los resultados.");
@@ -452,6 +466,7 @@ function applyFilter(){
     (activeFilter==="all"?"":", estado: "+activeFilter)+
     (search?", búsqueda: «"+$("workflowSearch").value.trim().slice(0,90)+"»":"")+".");
   $("workflowNoResults").hidden=!latest || visible>0;
+  $("exportVisible").disabled=!latest||visible===0;
   $("workflowSearchClear").disabled=!$("workflowSearch").value;
 }
 function openEditor(index){
@@ -517,6 +532,7 @@ function commitEdit(event){
   try{
     const next=editWorkflowRecord(scenario,original,editIndex,changes);
     $("workflowSource").value=next;
+    modifiedSource=true;
     errorText("");
     const result=runWorkflow(scenario,next);
     const before=analyzeWorkflow(latest),after=analyzeWorkflow(result);
@@ -569,6 +585,7 @@ $("undoCorrection").addEventListener("click",()=>{
   $("undoCorrection").disabled=true;$("redoCorrection").disabled=false;
   closeEditor();
   $("workflowSource").value=oldUndo;
+  modifiedSource=true;
   try{render(runWorkflow(scenario,oldUndo));$("changeComparison").hidden=true;}
   catch{invalidate("No se pudo restaurar el estado previo.");}
 });
@@ -578,6 +595,7 @@ $("redoCorrection").addEventListener("click",()=>{
   undoSource=$("workflowSource").value;
   $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
   $("workflowSource").value=next;
+  modifiedSource=true;
   try{
     render(runWorkflow(scenario,next));
     $("changeComparison").hidden=true;
@@ -592,7 +610,7 @@ $("importWorkflow").addEventListener("change",async event=>{
   const previous=$("workflowSource").value;
   closeColumnMapper();
   try{
-    if(!/\.(csv|txt)$/i.test(file.name))throw Error("Selecciona un archivo CSV o TXT.");
+    if(!/\.(csv|tsv|txt)$/i.test(file.name))throw Error("Selecciona un archivo CSV, TSV o TXT.");
     if(file.size>32000)throw Error("Archivo demasiado grande. Límite de 32 KB.");
     const text=await file.text();
     if(selectedScenario!==scenario)throw Error("El escenario cambió durante la lectura. Selecciona el archivo de nuevo.");
@@ -608,6 +626,7 @@ $("importWorkflow").addEventListener("change",async event=>{
     }else{
       const result=runWorkflow(scenario,text);
       $("workflowSource").value=text;
+      modifiedSource=true;
       closeColumnMapper();
       undoSource=null;redoSource=null;
       $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
@@ -641,6 +660,7 @@ $("applyColumnMapping").addEventListener("click",()=>{
     const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
     const result=runWorkflow(scenario,converted);
     $("workflowSource").value=converted;
+    modifiedSource=true;
     undoSource=null;redoSource=null;
     $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
     closeColumnMapper();
@@ -685,9 +705,29 @@ document.addEventListener("keydown",event=>{
   }
 });
 $("workflowSort").addEventListener("change",()=>{sortResults();applyFilter();});
-$("resetWorkflow").addEventListener("click",()=>chooseScenario(scenario));
+$("cancelScenarioDiscard").addEventListener("click",()=>{
+  pendingScenario=null;
+  $("scenarioDiscard").hidden=true;
+  document.querySelector('[data-scenario="'+scenario+'"]')?.focus();
+});
+$("confirmScenarioDiscard").addEventListener("click",()=>{
+  if(pendingScenario){const destination=pendingScenario;chooseScenario(destination,true);}
+});
+$("resetWorkflow").addEventListener("click",()=>chooseScenario(scenario,true));
 $("exportWorkflow").addEventListener("click",()=>downloadCsv("full"));
 $("exportActionQueue").addEventListener("click",()=>downloadCsv("queue"));
+$("exportVisible").addEventListener("click",()=>{
+  if(!latest)return;
+  const indices=[...$("workflowRows").querySelectorAll(".workbench-row:not([hidden])")].map(tr=>Number(tr.dataset.editIndex));
+  if(!indices.length)return;
+  const csv=exportVisibleRowsCsv(latest,indices);
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const href=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=href;link.download="revops-vista-"+scenario+".csv";
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),1000);
+  setText("workflowStatus","Exportadas "+indices.length+" filas visibles en su orden actual. Incluye valores de esas filas; no se han enviado.");
+});
 $("exportInsights").addEventListener("click",()=>{
   if(!latest)return;
   const report=insightsReport(latest,SCENARIOS[scenario].title);
