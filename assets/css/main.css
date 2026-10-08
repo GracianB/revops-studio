@@ -1567,3 +1567,15 @@ body{background:radial-gradient(ellipse 620px 460px at 78% 0%,rgba(222,109,101,.
 @media(max-width:700px){:root{--shell:min(100% - 32px,1230px)}.hero-v41{padding:60px 0 65px}.hero-v41 h1{font-size:clamp(43px,10.3vw,59px)}.hero-v41 .hero-copy{font-size:16px}.hero-trust{grid-template-columns:1fr 1fr}.diagram-pills,.diagram-outcomes{gap:5px}.diagram-head{font-size:9px}.problem-grid,.service-pillars,.offer-grid,.case-studies{grid-template-columns:1fr}.faq-items details{padding:0 15px}.faq-items summary{font-size:14px}.about-actions{flex-direction:row;flex-wrap:wrap}.contact-main h2{font-size:clamp(37px,8vw,52px)}.brief-flow{grid-template-columns:1fr}.form-foot .btn{width:100%}.notice-inner{flex-wrap:wrap}.theme-toggle{padding:8px;min-width:43px;justify-content:center}.theme-label{display:none}}
 @media(max-width:430px){.hero-trust{grid-template-columns:1fr}.studio-diagram{padding:13px}.diagram-input,.diagram-output{padding:17px}.diagram-output strong,.diagram-input strong{font-size:20px}.case-visual b{font-size:10px}.contact-main,.contact-aside{padding:20px}.form-grid{grid-template-columns:1fr}.form-grid>.full{grid-column:auto}}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none!important}.problem-card,.service-card,.study-card{transition:none!important}}
+
+/* V41 privacy and delivery status */
+.thanks-layout{max-width:940px;margin-inline:auto}
+.thanks-heading{font-size:clamp(39px,5.5vw,70px);margin:15px 0 23px;line-height:1.07;letter-spacing:-.06em}
+.thanks-summary{margin-top:17px;color:var(--muted);font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+.thanks-note{margin:20px 0;line-height:1.65}
+.privacy-main{max-width:840px;margin-inline:auto}
+.privacy-main h1{font-size:clamp(41px,5.5vw,65px);margin:15px 0;letter-spacing:-.05em}
+.privacy-main h2{font-size:23px;letter-spacing:-.03em;margin:32px 0 12px}
+.privacy-main p,.privacy-main li{color:var(--muted);line-height:1.8;font-size:15px}
+.privacy-main ul{padding-left:23px}
+.privacy-main a{color:var(--accent)}

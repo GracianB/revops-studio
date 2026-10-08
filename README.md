@@ -1,3 +1,26 @@
+## RevOps Studio · Web comercial V41 (motor técnico V40)
+
+La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
+
+### Envío de consultas (activación obligatoria)
+
+La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
+
+**Paso externo pendiente:** FormSubmit exige que el propietario confirme una vez el correo de activación tras el primer envío. Una respuesta HTTP de aceptación no demuestra recepción en la bandeja de entrada. No anunciar como entrega 100 % verificada hasta completar esa activación y una prueba extremo a extremo con correo recibido.
+
+Si el proveedor falla, el formulario no borra los datos: muestra una vía alternativa de correo `mailto:` precargada. También hay reserva de conversación a través del calendario existente. No se simulan contactos recibidos.
+
+La privacidad se explica en `privacidad.html`. Revisar cumplimiento final antes de ofrecer el servicio públicamente a terceros: alojamiento externo, tratamiento por FormSubmit y plazos de conservación.
+
+### Diseño y QA
+- Tema claro y oscuro con preferencia del sistema, botón accesible y persistencia opcional.
+- Tres ámbitos de servicio; seis ejemplos reales de entregables; tres proyectos documentados como experiencia profesional, no testimonios inventados.
+- Precios desde 900 €, 4.000 € y 600 €/mes, orientativos y sujetos a presupuesto.
+- CI valida estructura, CSS, JS, navegación, formularios sin envío externo y laboratorio.
+- El motor V40 y sus contratos internos no se versionan de nuevo solo por actualizar la landing comercial.
+
+---
+
 # RevOps Studio
 
 **Servicios de automatización, datos y software a medida · con un laboratorio técnico abierto para demostrar cómo se construyen los sistemas.**

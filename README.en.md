@@ -1,3 +1,11 @@
+## V41 public services website / V40 technical engine
+
+The public website now focuses on operational problems, defined deliverables, documented experience, indicative pricing and contact. Theme choices persist where browser storage permits. The technical Control Room remains isolated in `laboratorio.html`.
+
+Contact uses FormSubmit AJAX on a static GitHub Pages site. **The recipient must complete FormSubmit's one-time activation email before delivery can be considered verified.** Errors reveal a populated mailto fallback, and the existing booking calendar remains available. The contact form explains third-party processing and requires the visitor's consent. See `privacidad.html`.
+
+---
+
 # RevOps Studio
 
 **Customer Success × Data × Operations × AI × Systems**
