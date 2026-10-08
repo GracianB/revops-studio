@@ -1,6 +1,7 @@
 import { parseCsv } from "./csv-utils.js";
 import {
   DEFAULT_WEIGHTS,
+  DEFAULT_THRESHOLDS,
   evaluateBatch,
   transition,
   auditEvent,
@@ -152,6 +153,7 @@ function writeCalibrationBaselineV19(rows = [], datasetFingerprint = null) {
       JSON.stringify(Array.isArray(rows) ? rows : [])
     );
   } catch {}
+}
 
 const CALIBRATION_V20_STORAGE_KEY = "revops-studio:calibration:v20";
 const CALIBRATION_V20_CONFIG_KEY = "revops-studio:calibration:v20:config";
@@ -304,9 +306,6 @@ function writeTransparencyLogV31(log) {
     localStorage.setItem(POLICY_TRANSPARENCY_V31_STORAGE_KEY, JSON.stringify(log));
   } catch {}
 }
-
-}
-
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -808,13 +807,15 @@ function initPlayground() {
       feedback.v20Previous.textContent = String(lastAdaptiveCalibrationReportV20.previousWindow.records);
     }
     if (feedback.v20CalibrationDelta) {
-      const delta = lastAdaptiveCalibrationReportV20.global.signals.calibrationError.delta;
+      const delta = lastAdaptiveCalibrationReportV20.global.sampleSufficient
+        ? lastAdaptiveCalibrationReportV20.global.signals.calibrationError.delta : null;
       feedback.v20CalibrationDelta.textContent = delta === null
         ? "—"
         : (delta > 0 ? "+" : "") + Math.round(delta * 100) + "pp";
     }
     if (feedback.v20BrierDelta) {
-      const delta = lastAdaptiveCalibrationReportV20.global.signals.brierScore.delta;
+      const delta = lastAdaptiveCalibrationReportV20.global.sampleSufficient
+        ? lastAdaptiveCalibrationReportV20.global.signals.brierScore.delta : null;
       feedback.v20BrierDelta.textContent = delta === null
         ? "—"
         : (delta > 0 ? "+" : "") + delta.toFixed(3);
@@ -2784,7 +2785,7 @@ function initPlayground() {
     }
     try {
       const pinValues = (feedback.v30Pins?.value || "")
-        .split(/[,s]+/)
+        .split(/[,\s]+/)
         .map((value) => value.trim())
         .filter(Boolean);
       const threshold = Number(feedback.v30Threshold?.value);
@@ -2827,7 +2828,7 @@ function initPlayground() {
           )
         : null;
       const pinValues = (feedback.v30Pins?.value || "")
-        .split(/[,s]+/)
+        .split(/[,\s]+/)
         .map((value) => value.trim())
         .filter(Boolean);
       const threshold = Number(feedback.v30Threshold?.value);
@@ -4058,7 +4059,23 @@ function initPlayground() {
   persistAndRender(true);
 }
 
+function initAdvancedWorkbench() {
+  const panel = qs("#advancedWorkbench");
+  if (!panel) return;
+  const openForHash = () => {
+    const fragment = window.location.hash.slice(1);
+    if (!fragment || fragment.startsWith("config=")) return;
+    let id = "";
+    try { id = decodeURIComponent(fragment); } catch { return; }
+    const target = document.getElementById(id);
+    if (target && (target === panel || panel.contains(target))) panel.open = true;
+  };
+  window.addEventListener("hashchange", openForHash);
+  openForHash();
+}
+
 // The V40 engine is loaded only by laboratorio.html.
+initAdvancedWorkbench();
 initMenu();
 initReveal();
 initNavState();

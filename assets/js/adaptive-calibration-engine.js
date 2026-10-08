@@ -322,6 +322,7 @@ function compareWindows(currentRows, previousRows, config) {
     sampleSufficient: sufficient,
     severity: classifySeverity(maxDelta, config, sufficient),
     drift: sufficient && maxDelta >= config.watchDelta,
+    signals,
     maxDelta: round(maxDelta)
   };
 }
@@ -382,6 +383,7 @@ function compareGroups(currentRows, previousRows, key, config) {
       sampleSufficient: sufficient,
       severity: classifySeverity(maxDelta, config, sufficient),
       drift: sufficient && maxDelta >= config.watchDelta,
+      signals,
       maxDelta: round(maxDelta)
     };
   });

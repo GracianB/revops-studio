@@ -1170,7 +1170,7 @@ textarea.form-control{min-height:145px;resize:vertical}
 @media (max-width:760px){
   .execution-ledger-head{flex-direction:column}
   .execution-ledger-head .btn{width:100%;justify-content:center}
-  .execution-ledger-metrics{grid-template-columns:repeat(3,1fr)
+  .execution-ledger-metrics{grid-template-columns:repeat(3,1fr)}
   .ledger-events{grid-template-columns:1fr 1fr}
 }
 @media (max-width:480px){
@@ -1350,3 +1350,54 @@ textarea.form-control{min-height:145px;resize:vertical}
 :root{--dim:#8795a8}
 :where(a,button,input,textarea,select,summary):focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .form-control:focus-visible{box-shadow:0 0 0 3px rgba(255,90,95,.13)}
+
+/* RevOps Lab presentation and operational clarity, V40.1 UX correction. */
+.lab-page .lab-guide{padding:clamp(18px,2.8vw,30px);margin:0 0 25px;border:1px solid var(--line-2);border-radius:20px;background:linear-gradient(125deg,rgba(255,90,95,.07),var(--panel-2) 60%);}
+.lab-guide-intro h3{margin:10px 0;font-size:clamp(21px,2.5vw,32px);letter-spacing:-.04em;line-height:1.15}
+.lab-guide-intro p{color:var(--muted);font-size:14px;line-height:1.65;max-width:960px}
+.lab-guide-intro strong{color:var(--text)}
+.lab-guide-steps{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:22px 0 0;padding:0}
+.lab-guide-steps li{padding:16px;border:1px solid var(--line);border-radius:13px;background:var(--bg-2);min-width:0}
+.lab-guide-steps strong,.lab-guide-steps span{display:block}
+.lab-guide-steps strong{font-size:12px;color:var(--text)}
+.lab-guide-steps span{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.55}
+.lab-guide-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.lab-page .advanced-workbench{margin-top:16px;border:1px solid var(--line-2);border-radius:18px;background:var(--panel);min-width:0}
+.lab-page .advanced-workbench>summary{list-style:none;display:flex;flex-direction:column;gap:10px;cursor:pointer;padding:clamp(20px,2.5vw,30px)}
+.lab-page .advanced-workbench>summary::-webkit-details-marker{display:none}
+.lab-page .advanced-workbench>summary:hover{background:rgba(255,255,255,.03)}
+.lab-page .advanced-identity{display:grid;gap:9px}
+.lab-page .advanced-identity strong{font:700 clamp(20px,2.5vw,27px)/1.2 var(--display)}
+.lab-page .advanced-summary-copy{color:var(--muted);font-size:13px;max-width:850px}
+.lab-page .advanced-expand{color:var(--accent);font-size:12px;font-weight:700}
+.lab-page .advanced-workbench[open]>summary{border-bottom:1px solid var(--line)}
+.lab-page .advanced-workbench-body{padding:14px}
+.lab-page .lab-dependencies{padding:18px 22px;margin-bottom:14px;border-left:3px solid var(--accent);border-radius:12px;background:var(--bg-2)}
+.lab-dependencies h3{font-size:22px;line-height:1.25;letter-spacing:-.03em;margin:0 0 14px}
+.lab-dependencies p{font-size:13px;line-height:1.7;color:var(--muted);margin:9px 0}
+.lab-dependencies strong{color:var(--text)}
+.lab-dependencies code{color:var(--text);font-size:12px}
+.lab-page :where(.feedback-panel,.execution-ledger-panel,.workflow-control-panel,.workflow-impact-panel,.history-panel){min-width:0;overflow-wrap:anywhere}
+.lab-page .feedback-head{flex-wrap:wrap}
+.lab-page .feedback-head h3{font-size:clamp(20px,2.1vw,26px);line-height:1.25}
+.lab-page .feedback-panel>p{font-size:13px;line-height:1.65}
+.lab-page .feedback-boundary{font-size:10px;line-height:1.35}
+.lab-page .feedback-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:10px;margin:14px 0}
+.lab-page .feedback-metric{min-width:0;min-height:95px;padding:15px;display:flex;flex-direction:column;align-items:flex-start}
+.lab-page .feedback-metric span{display:block;color:var(--muted);font:600 11px/1.3 var(--mono);letter-spacing:.04em}
+.lab-page .feedback-metric strong{display:block;font:750 clamp(15px,1.5vw,19px)/1.3 var(--display);margin:9px 0;overflow-wrap:anywhere}
+.lab-page .feedback-metric small{display:block;margin-top:auto;font-size:11px;line-height:1.45;color:var(--muted)}
+.lab-page .feedback-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin-top:16px;align-items:end}
+.lab-page .feedback-form label{min-width:0;display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:11px;line-height:1.4}
+.lab-page .feedback-form :where(input,select,textarea){width:100%;max-width:100%;min-height:42px;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2);color:var(--text);font-size:13px;line-height:1.4;resize:vertical}
+.lab-page .feedback-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.lab-page .feedback-actions .btn{max-width:100%;white-space:normal;text-align:center;min-height:44px}
+.lab-page .feedback-status,.lab-page .form-status{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.lab-page .feedback-panel .kicker{font-size:10px;line-height:1.35}
+.lab-page .control-main{min-width:0}
+.lab-page .control-main>.feedback-panel,.lab-page .advanced-workbench-body>.feedback-panel{margin-top:14px}
+.lab-page .feedback-effectiveness{min-width:0}
+.lab-page .feedback-effectiveness .kicker{line-height:1.5}
+@media(max-width:1100px){.lab-guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.lab-guide-steps{grid-template-columns:1fr}.lab-page .advanced-workbench-body{padding:8px}.lab-page .lab-dependencies{padding:17px}.lab-page .feedback-form{grid-template-columns:1fr}.lab-page .feedback-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.lab-page .feedback-metric{padding:12px}.lab-guide-actions .btn{width:100%}}
+@media(max-width:430px){.lab-page .feedback-metrics{grid-template-columns:1fr}}

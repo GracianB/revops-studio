@@ -27,6 +27,21 @@
       <p>Esta sección es una demostración técnica con datos sintéticos. No es un producto SaaS, no está conectado a ningún CRM y no ejecuta acciones externas. Puedes explorarla si quieres ver cómo construyo.</p>
     </div>
 
+    <div class="lab-guide" aria-label="Cómo utilizar la demostración">
+      <div class="lab-guide-intro">
+        <span class="eyebrow">Antes de tocar nada</span>
+        <h3>Una simulación que puedes comprobar, no una conexión real a tu empresa.</h3>
+        <p><strong>Funciona en el navegador:</strong> importar un CSV local, calcular scoring, comparar escenarios, inspeccionar registros, simular acciones y exportar resultados. <strong>No hace:</strong> enviar registros a un CRM, contactar clientes, generar ingresos ni ejecutar cambios externos.</p>
+      </div>
+      <ol class="lab-guide-steps">
+        <li><strong>01 · Ejecuta</strong><span>Usa los 8 registros ficticios o carga un CSV con el formato indicado.</span></li>
+        <li><strong>02 · Compara</strong><span>Elige Growth, Retention o Speed y comprueba qué cambia.</span></li>
+        <li><strong>03 · Investiga</strong><span>Selecciona un registro de la tabla para entender su puntuación y la acción propuesta.</span></li>
+        <li><strong>04 · Experimenta</strong><span>Registra outcomes ficticios y abre el taller avanzado solo si quieres explorar políticas o firmas.</span></li>
+      </ol>
+      <div class="lab-guide-actions"><a class="btn btn-primary" href="#guided-title">Empezar recorrido ↘</a><a class="btn btn-secondary" href="#advancedWorkbench">Requisitos del modo avanzado ↘</a></div>
+    </div>
+
     <div class="control-room">
       <div class="control-main">
         <div class="control-bar">
@@ -576,11 +591,25 @@
           </div>
         </section>
 
+        <details class="advanced-workbench" id="advancedWorkbench">
+          <summary>
+            <span class="advanced-identity"><span class="kicker">Taller avanzado · V20–V32 · experimental</span><strong>Calibración, políticas y certificados verificables</strong></span>
+            <span class="advanced-summary-copy">Solo para inspeccionar el mecanismo. Muchas operaciones requieren datos previos, aprobaciones y claves creadas dentro de la propia simulación.</span>
+            <span class="advanced-expand" aria-hidden="true">Abrir / cerrar ↕</span>
+          </summary>
+          <div class="advanced-workbench-body">
+            <div class="lab-dependencies" role="note">
+              <h3>Antes de usar estas funciones</h3>
+              <p><strong>Calibración V20:</strong> necesita resultados finales observados y suficientes muestras de al menos dos ventanas temporales. Con una demo recién abierta, <code>INSUFFICIENT</code> significa que faltan evidencias, no que haya habido un error de cálculo.</p>
+              <p><strong>Políticas V25:</strong> necesitan una propuesta elegible, un replay que demuestre mejora y una aprobación humana. Si aparece <code>ABSENT</code>, todavía no existe una propuesta válida.</p>
+              <p><strong>Firmas y confianza V27–V32:</strong> requieren generar claves, firmar evidencia, registrar firmantes y completar los controles previos. No representan una identidad corporativa, un HSM ni una infraestructura externa de confianza.</p>
+              <p><strong>Importante:</strong> los resultados aquí son locales y demostrativos. Los botones de «aprobar», «firmar» y «verificar» no ejecutan acciones empresariales ni otorgan confianza externa.</p>
+            </div>
         <section class="feedback-panel" aria-labelledby="calibration-v20-title">
           <div class="feedback-head">
             <div>
               <span class="kicker">Adaptive Calibration · V20</span>
-              <h3 id="calibration-v20-title">El forecast ahora aprende del comportamiento observado.</h3>
+              <h3 id="calibration-v20-title">El forecast solo puede calibrarse cuando dispone de resultados observados.</h3>
             </div>
             <span class="feedback-boundary">LOCAL · NO AUTO-RECALIBRATION</span>
           </div>
@@ -615,7 +644,7 @@
           <div class="feedback-head">
             <div>
               <span class="kicker">Controlled Policy · V25</span>
-              <h3 id="calibration-v25-title">El recálculo se aplica solo si el replay mejora, se reconstruye contra los outcomes observados y un operador lo aprueba.</h3>
+              <h3 id="calibration-v25-title">El recálculo exige resultados previos, una mejora verificable y aprobación. No se ejecuta automáticamente.</h3>
             </div>
             <span class="feedback-boundary">LOCAL · APPROVAL REQUIRED</span>
           </div>
@@ -942,6 +971,9 @@
             V32 requiere evidencia firmada V27, checkpoint V30, transparencia V31 y al menos un witness del head actual.
           </p>
         </section>
+
+          </div>
+        </details>
 
         <section class="history-panel" aria-labelledby="history-title">
           <div class="history-head">
