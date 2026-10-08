@@ -85,6 +85,23 @@ try {
   await page.locator('[data-filter="ai"]').click();
   assert.ok(await page.locator(".service-card:visible").count()>=1);
 
+  // A calculator scenario can travel to the brief, but is never sent automatically.
+  await page.locator("#hoursWeek").fill("4");
+  await page.locator("#people").fill("3");
+  await page.locator("#hourCost").fill("30");
+  assert.match(await page.locator("#annualCost").innerText(),/18\.720/);
+  await page.locator("#calcToContact").click();
+  assert.equal(await page.locator("#horas").inputValue(),"4");
+  assert.match(await page.locator("#calcContextSummary").innerText(),/18\.720/);
+  assert.match(decodeURIComponent(await page.locator("#briefEmailFallback").getAttribute("href")),/18\.720/);
+  assert.equal(await page.locator("#privacyConsent").isChecked(),false);
+  await page.locator("#horas").fill("5");
+  assert.equal(await page.locator("#estimacion").inputValue(),"");
+  await page.locator("#calcToContact").click();
+  await page.locator("#calcContextClear").click();
+  assert.equal(await page.locator("#estimacion").inputValue(),"");
+  await page.locator("#calcToContact").click();
+
   // Distinct modes, persisted across page boundaries.
   await page.evaluate(()=>localStorage.setItem("revops-theme","dark"));
   await page.reload();
@@ -109,6 +126,11 @@ try {
   await page.locator('[data-filter="all"]').click();
   await page.locator('[data-service-choice="Quick win"]').click();
   assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  await page.locator("#hoursWeek").fill("4");
+  await page.locator("#people").fill("3");
+  await page.locator("#hourCost").fill("30");
+  await page.locator("#calcToContact").click();
+  assert.match(await page.locator("#calcContextSummary").innerText(),/18\.720/);
   await page.locator("#nombre").fill("Cliente de prueba");
   await page.locator("#email").fill("prueba@example.net");
   await page.locator("#dolor").fill("Duplicamos datos entre herramientas y necesitamos una validación.");
@@ -129,6 +151,7 @@ try {
   await page.reload();
   assert.equal(await page.locator("#nombre").inputValue(),"Cliente de prueba");
   assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  assert.match(await page.locator("#calcContextSummary").innerText(),/18\.720/);
   assert.match(await page.locator("#formStatus").innerText(),/recuperado tu consulta pendiente/);
   assert.equal(await page.locator("#privacyConsent").isChecked(),false);
   await page.locator("#privacyConsent").check();
@@ -152,7 +175,16 @@ try {
   assert.match(await page.locator("#deliveryExplanation").textContent(),/FormSubmit ha aceptado tu consulta/);
   assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
   assert.equal(await page.evaluate(()=>sessionStorage.getItem("revops-studio:brief:pending")),null);
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem("revops-studio:contact:accepted")),"true");
+  assert.match(await page.locator("#briefSummary").innerText(),/18\.720/);
   assert.deepEqual(errors,[],"Desktop runtime errors");
+
+  // A shared or bookmarked thanks URL must never masquerade as a successful send.
+  const freshTab=await browser.newPage();
+  await freshTab.goto(base+"/gracias.html?via=proveedor",{waitUntil:"load"});
+  assert.match(await freshTab.locator("#deliveryExplanation").innerText(),/No se puede verificar un envío/);
+  assert.match(await freshTab.locator("#thanksStatus").innerText(),/no confirma un envío/);
+  await freshTab.close();
 
   const mobile=await browser.newPage({
     viewport:{width:390,height:844},

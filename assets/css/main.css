@@ -245,6 +245,9 @@ h1{
 .result-value{font:800 clamp(35px,4vw,55px)/.95 var(--display);letter-spacing:-.06em}
 .result-label{margin-top:6px;color:var(--muted);font-size:12px}
 .result-foot{margin-top:14px;color:var(--dim);font-size:11px}
+.calc-next{margin-top:14px;display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.calc-next .btn{flex-shrink:0}
+.calc-next p{flex:1 1 180px;margin:0;color:var(--muted);font-size:12px;line-height:1.5}
 
 .offer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .offer{
@@ -356,6 +359,10 @@ h1{
 .flow-item b{display:block;font:700 10px/1 var(--mono);color:var(--accent)}
 .flow-item span{display:block;margin-top:7px;font-size:12px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.calc-context{margin:0 0 18px;padding:14px 16px;border:1px solid var(--line-2);border-radius:12px;background:var(--bg-2)}
+.calc-context[hidden]{display:none}
+.calc-context p{margin:0;color:var(--text);font-size:12px;line-height:1.6}
+.calc-context button{margin-top:9px;border:0;background:transparent;padding:3px 0;color:var(--accent);cursor:pointer;font-weight:700}
 .form-grid .full{grid-column:1/-1}
 .form-label{display:block;color:var(--dim);font:600 10px/1.2 var(--mono);letter-spacing:.09em;text-transform:uppercase}
 .form-control{

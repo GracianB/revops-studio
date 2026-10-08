@@ -1,8 +1,8 @@
-## RevOps Studio · Web comercial V41 (motor técnico V40)
+## RevOps Studio · Web comercial V42 (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
 
-### Envío de consultas (activación obligatoria)
+### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
 
@@ -11,6 +11,8 @@ La web está alojada en GitHub Pages y no tiene servidor de formularios propio. 
 Una respuesta que solicita activación se trata como pendiente incluso si incluye `success: true`: no abre la página de confirmación. Si el envío falla, la consulta se recupera al recargar la misma pestaña cuando el almacenamiento de sesión está disponible; el consentimiento debe marcarse de nuevo. El correo alternativo conserva los datos introducidos. Las pruebas de navegador simulan el proveedor y no envían consultas reales.
 
 Si el proveedor falla, el formulario no borra los datos: muestra una vía alternativa de correo `mailto:` precargada. También hay reserva de conversación a través del calendario existente. No se simulan contactos recibidos.
+
+**V42 · Del coste estimado a una consulta real:** la calculadora permite trasladar las horas por persona, el número de personas, el coste horario y el cálculo orientativo de 52 semanas al formulario, sin enviarlo automáticamente. El contexto es visible y se puede quitar; si cambian las horas del formulario, la estimación anterior se elimina para no enviarla desactualizada. Una confirmación de FormSubmit solo se muestra si la sesión actual registró previamente una respuesta de aceptación. Una URL de gracias compartida no certifica el envío.
 
 La privacidad se explica en `privacidad.html`. Revisar cumplimiento final antes de ofrecer el servicio públicamente a terceros: alojamiento externo, tratamiento por FormSubmit y plazos de conservación.
 

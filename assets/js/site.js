@@ -2,6 +2,7 @@
 import { submissionState } from "./contact-response.js";
 const STORAGE_KEY = "revops-studio:brief:v2";
 const PENDING_KEY = "revops-studio:brief:pending";
+const ACCEPTED_KEY = "revops-studio:contact:accepted";
 const ANALYTICS_EVENT = "Reservar";
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -81,17 +82,39 @@ function formatEuro(value) {
 }
 
 
+function calculatorScenario() {
+  const hours = Math.min(80, numberValue("#hoursWeek", 6));
+  const people = Math.min(100, Math.max(1, numberValue("#people", 2)));
+  const cost = Math.min(500, numberValue("#hourCost", 25));
+  return { hours, people, cost, annual: hours * people * cost * 52 };
+}
+
+function showCalcContext() {
+  const container = qs("#calcContext"), summary = qs("#calcContextSummary");
+  const estimate = qs("#estimacion")?.value.trim() || "";
+  if (!container || !summary) return;
+  container.hidden = !estimate;
+  summary.textContent = estimate ? "Se incluirá en tu consulta: " + estimate : "";
+}
+
 function initCalculator() {
   const output = qs("#annualCost"), detail = qs("#annualDetail");
   if (!output || !detail) return;
   const render = () => {
-    const hours = Math.min(80, numberValue("#hoursWeek", 6));
-    const people = Math.min(100, Math.max(1, numberValue("#people", 2)));
-    const cost = Math.min(500, numberValue("#hourCost", 25));
-    output.textContent = formatEuro(hours * people * cost * 52);
+    const { hours, people, cost, annual } = calculatorScenario();
+    output.textContent = formatEuro(annual);
     detail.textContent = hours.toLocaleString("es-ES") + " h/semana × " + people.toLocaleString("es-ES") + " personas × " + formatEuro(cost) + "/h × 52 semanas. Coste del tiempo, no ahorro prometido.";
   };
   ["#hoursWeek", "#people", "#hourCost"].forEach((selector) => qs(selector)?.addEventListener("input", render));
+  qs("#calcToContact")?.addEventListener("click", () => {
+    const hoursField = qs("#horas"), estimateField = qs("#estimacion"), form = qs("#briefForm");
+    if (!hoursField || !estimateField || !form) return;
+    const { hours, people, cost, annual } = calculatorScenario();
+    hoursField.value = String(hours);
+    estimateField.value = hours.toLocaleString("es-ES") + " h/semana por persona × " + people.toLocaleString("es-ES") + " personas × " + formatEuro(cost) + "/h × 52 semanas = " + formatEuro(annual) + "/año. Coste teórico del tiempo, no ahorro prometido.";
+    showCalcContext();
+    form.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   render();
 }
 
@@ -104,6 +127,7 @@ function collectBrief(form) {
     horas: String(data.horas || "").trim(),
     dolor: String(data.dolor || "").trim(),
     servicio: String(data.servicio || "").trim(),
+    estimacion: String(data.estimacion || "").trim(),
     createdAt: new Date().toISOString()
   };
 }
@@ -120,6 +144,7 @@ function mailtoForBrief(brief) {
     "Herramientas: " + (brief.herramientas || "Sin especificar"),
     "Horas/semana: " + (brief.horas || "Sin especificar"),
     "Necesidad: " + brief.dolor,
+    ...(brief.estimacion ? ["Estimación orientativa: " + brief.estimacion] : []),
     "", "Gracias."].join("\n");
   return "mailto:" + CONTACT_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
 }
@@ -139,7 +164,7 @@ function initBriefForm() {
     if (sessionStorage.getItem(PENDING_KEY) === "true") {
       const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
       if (saved && typeof saved === "object") {
-        for (const name of ["nombre", "email", "herramientas", "horas", "dolor", "servicio"]) {
+        for (const name of ["nombre", "email", "herramientas", "horas", "dolor", "servicio", "estimacion"]) {
           const field = form.elements.namedItem(name);
           if (field && !field.value && typeof saved[name] === "string") field.value = saved[name];
         }
@@ -148,8 +173,18 @@ function initBriefForm() {
       }
     }
   } catch { /* Storage may be unavailable or contain an invalid draft. */ }
+  const hoursField = qs("#horas"), estimateField = qs("#estimacion");
+  hoursField?.addEventListener("input", () => {
+    if (estimateField?.value) { estimateField.value = ""; showCalcContext(); }
+  });
+  qs("#calcContextClear")?.addEventListener("click", () => {
+    if (estimateField) estimateField.value = "";
+    showCalcContext();
+    updateFallback();
+  });
   form.addEventListener("input", updateFallback);
   form.addEventListener("change", updateFallback);
+  showCalcContext();
   updateFallback();
 
   form.addEventListener("submit", async (event) => {
@@ -164,6 +199,7 @@ function initBriefForm() {
     }
     updateFallback();
     saveBrief(brief);
+    try { sessionStorage.removeItem(ACCEPTED_KEY); } catch { /* optional */ }
     try { sessionStorage.setItem(PENDING_KEY, "true"); } catch { /* optional */ }
     submit.disabled = true;
     form.setAttribute("aria-busy", "true");
@@ -187,7 +223,8 @@ function initBriefForm() {
           herramientas: brief.herramientas,
           horas: brief.horas,
           mensaje: brief.dolor,
-          consentimiento: "sí"
+          consentimiento: "sí",
+          ...(brief.estimacion ? { estimacion: brief.estimacion } : {})
         }),
         signal: controller.signal
       });
@@ -199,7 +236,7 @@ function initBriefForm() {
         rejected.activationRequired = outcome === "activation";
         throw rejected;
       }
-      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* optional */ }
+      try { sessionStorage.removeItem(PENDING_KEY); sessionStorage.setItem(ACCEPTED_KEY, "true"); } catch { /* optional */ }
       track("ContactSubmitted", { place: "landing" });
       window.location.assign("./gracias.html?via=proveedor");
     } catch (error) {
