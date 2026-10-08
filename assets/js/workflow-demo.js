@@ -39,6 +39,47 @@ function mappingStatus(message,isError=false){
   element.textContent=message;
   element.dataset.error=String(isError);
 }
+function renderMappingPreview(){
+  if(mappingSource===null || mappingScenario!==scenario)return;
+  const selects=[...$("columnMappingRows").querySelectorAll("select")];
+  const mapping=Object.fromEntries(selects.map(select=>[select.dataset.target,select.value]));
+  const preview=$("columnMappingPreview");
+  preview.replaceChildren();
+  const heading=document.createElement("p");
+  preview.append(heading);
+  try{
+    const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
+    const result=runWorkflow(scenario,converted);
+    heading.textContent="VISTA PREVIA DE DESTINO · "+result.counts.total+" filas. "+
+      result.counts.listo+" listas, "+result.counts.revisar+" a revisar y "+result.counts.bloqueado+" bloqueadas.";
+    for(const row of result.rows.slice(0,3)){
+      const line=document.createElement("div");
+      line.className="workbench-preview-row";
+      const id=document.createElement("strong");
+      id.textContent="Fila "+row.line+" · "+row.status;
+      const details=document.createElement("span");
+      details.textContent=result.columns.map(col=>col+": "+row.values[col]).join(" · ");
+      line.append(id,details);preview.append(line);
+    }
+    const note=document.createElement("p");
+    note.textContent="Solo es una simulación previa. Pulsa aplicar para sustituir los datos y ver toda la tabla.";
+    preview.append(note);
+    mappingStatus("Correspondencias válidas. Revisa los campos de destino y confirma cuando estén bien.");
+  }catch(error){
+    heading.textContent="Vista previa de destino pendiente. Aún puedes ver tres filas de origen:";
+    const original=suggestMapping(scenario,mappingSource);
+    for(const sample of original.samples){
+      const line=document.createElement("div");
+      line.className="workbench-preview-row";
+      const name=document.createElement("strong");
+      name.textContent="Fila "+sample.line;
+      const details=document.createElement("span");
+      details.textContent=original.sourceHeaders.slice(0,4).map(h=>h+": "+sample.values[h]).join(" · ");
+      line.append(name,details);preview.append(line);
+    }
+    mappingStatus(error?.message||"Faltan correspondencias para poder simular.",true);
+  }
+}
 function openColumnMapper(text){
   const guess=suggestMapping(scenario,text);
   mappingSource=text;
@@ -76,26 +117,8 @@ function openColumnMapper(text){
   }
   const other=guess.ignored.length?guess.ignored.join(", "):"ninguna";
   setText("columnMappingIgnored","Columnas adicionales que no se usarán: "+other+". Las originales se conservarán hasta confirmar.");
-  const preview=$("columnMappingPreview");
-  preview.replaceChildren();
-  const title=document.createElement("p");
-  title.textContent=guess.rowCount+" filas detectadas. Primeros valores del archivo original:";
-  preview.append(title);
-  for(const sample of guess.samples){
-    const row=document.createElement("div");
-    row.className="workbench-preview-row";
-    const identifier=document.createElement("strong");
-    identifier.textContent="Fila "+sample.line;
-    row.append(identifier);
-    const details=document.createElement("span");
-    details.textContent=guess.sourceHeaders.slice(0,4).map(h=>h+": "+sample.values[h]).join(" · ");
-    row.append(details);
-    preview.append(row);
-  }
   $("columnMapper").hidden=false;
-  mappingStatus(guess.unassigned.length?
-    "Faltan correspondencias para: "+guess.unassigned.join(", ")+". Revisa las sugerencias antes de aplicar.":
-    "Todas las columnas obligatorias tienen una propuesta. Confírmalas antes de procesar.",Boolean(guess.unassigned.length));
+  renderMappingPreview();
   $("columnMapper").scrollIntoView({block:"nearest",behavior:"instant"});
 }
 function chooseScenario(next){
@@ -411,7 +434,7 @@ $("applyColumnMapping").addEventListener("click",()=>{
   }
 });
 $("columnMappingRows").addEventListener("change",event=>{
-  if(event.target.matches("select"))mappingStatus("Correspondencias modificadas. Comprueba que cada campo utiliza una columna distinta.");
+  if(event.target.matches("select"))renderMappingPreview();
 });
 
 $("resetWorkflow").addEventListener("click",()=>chooseScenario(scenario));
