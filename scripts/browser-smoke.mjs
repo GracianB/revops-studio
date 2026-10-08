@@ -27,6 +27,15 @@ const browserEngine=engineName==="firefox"?firefox:chromium;
 let browser;
 const errors=[];
 const describe=error=>errors.push(error.message);
+async function captureVisual(page,name,locator=null) {
+  if (process.env.REVOPS_VISUAL_AUDIT !== "1" || engineName !== "chrome") return;
+  const bytes = await (locator || page).screenshot({type:"jpeg",quality:48,animations:"disabled"});
+  const encoded = bytes.toString("base64");
+  console.log("V41IMG_BEGIN|"+name);
+  for(let i=0;i<encoded.length;i+=6500) console.log("V41IMG_CHUNK|"+encoded.slice(i,i+6500));
+  console.log("V41IMG_END|"+name);
+}
+
 try {
   browser=await browserEngine.launch(engineName==="chrome"?
     {channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]}:
@@ -60,8 +69,12 @@ try {
   await page.evaluate(()=>localStorage.setItem("revops-theme","dark"));
   await page.reload();
   assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
+  await captureVisual(page,"dark-hero");
+  await captureVisual(page,"dark-cases",page.locator("#casos"));
+  await captureVisual(page,"dark-contact",page.locator("#contacto"));
   await page.locator("[data-theme-toggle]").click();
   assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
+  await captureVisual(page,"light-hero");
   await page.reload();
   assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
   await page.locator("[data-theme-toggle]").click();
@@ -115,6 +128,7 @@ try {
     assert.ok(dimensions.scroll<=dimensions.viewport+3,
       engineName+" mobile horizontal overflow on "+url+" "+JSON.stringify(dimensions));
   }
+  await captureVisual(mobile,"mobile-hero");
   await mobile.locator("#menuBtn").click();
   assert.equal(await mobile.locator("#menuBtn").getAttribute("aria-expanded"),"true");
   await mobile.locator(".mobile-nav a[href='#servicios']").click();
