@@ -166,7 +166,7 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#qualityCompleteness").innerText(),"97 %");
     assert.match(await page.locator("#qualityFields").innerText(),/email: 1 sin dato/);
     await page.locator("#workflowSort").selectOption("risk");
-    assert.match(await page.locator(".workbench-row:visible").first().innerText(),/bloqueado/);
+    assert.match(await page.locator(".workbench-row:visible").first().innerText(),/bloqueado/i);
     await page.locator("#workflowSort").selectOption("source");
     await page.locator("#workflowRecipe").selectOption("duplicates");
     assert.match(await page.locator("#recipeHint").innerText(),/IDs repetidos/);
