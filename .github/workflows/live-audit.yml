@@ -1,0 +1,44 @@
+name: live production audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 7 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revops-live-site-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout production contract
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install minimal browser audit dependency
+        run: npm install --no-save --package-lock=false playwright-core@1.58.2
+
+      - name: Audit published website over HTTPS
+        run: node scripts/audit-live.mjs
+
+      - name: Save report and visual samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-live-v47-${{ github.run_id }}
+          path: |
+            .ci-artifacts/live-v47.json
+            .ci-artifacts/live-v47-desktop.png
+            .ci-artifacts/live-v47-mobile.png
+          if-no-files-found: ignore
+          retention-days: 30
