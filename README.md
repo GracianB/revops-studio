@@ -1,4 +1,4 @@
-## RevOps Studio · Web comercial V42 (motor técnico V40)
+## RevOps Studio · Web comercial V43 (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
 
@@ -15,6 +15,16 @@ Si el proveedor falla, el formulario no borra los datos: muestra una vía altern
 **V42 · Del coste estimado a una consulta real:** la calculadora permite trasladar las horas por persona, el número de personas, el coste horario y el cálculo orientativo de 52 semanas al formulario, sin enviarlo automáticamente. El contexto es visible y se puede quitar; si cambian las horas del formulario, la estimación anterior se elimina para no enviarla desactualizada. Una confirmación de FormSubmit solo se muestra si la sesión actual registró previamente una respuesta de aceptación. Una URL de gracias compartida no certifica el envío.
 
 La privacidad se explica en `privacidad.html`. Revisar cumplimiento final antes de ofrecer el servicio públicamente a terceros: alojamiento externo, tratamiento por FormSubmit y plazos de conservación.
+
+### V43 · Evidencia profesional conectada con el contacto
+
+Los tres casos comerciales se contrastaron con la documentación de `GracianB/professional-deck` en `case.js`. Cada tarjeta explica reto, solución, evidencia accesible y límites; el desglose de decisiones se consulta con un `<details>` nativo accesible.
+
+- **Bodytone**: Help Center público verificable; la operación interna y los informes no se publican.
+- **Calculadora de gimnasios**: 200+ reglas coordinan modelos, espacio, transporte y propuesta; las tarifas, fórmulas y datos siguen privados.
+- **Outreach GenAI**: segmentación, borradores, revisión humana y seguimiento; no se muestran contactos ni métricas inventadas.
+
+Las tres tarjetas ofrecen una vía `Tengo un problema parecido` hacia el formulario: adjunta una *referencia opcional*, visible y eliminable, sin modificar el texto del visitante ni su elección de servicio. La referencia acompaña al correo alternativo, a la consulta consentida y a la recuperación de un envío fallido. No se envían consultas reales desde CI.
 
 ### Diseño y QA
 - Tema claro y oscuro con preferencia del sistema, botón accesible y persistencia opcional.
