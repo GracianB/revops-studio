@@ -22,8 +22,8 @@ test("each of the three operations produces an actionable, honest prioritized pl
   for(const type of ["orders","support","data"]){
     const summary=analyzeWorkflow(runWorkflow(type,SCENARIOS[type].sample));
     assert.ok(summary.steps.length>=3,type);
-    assert.equal(summary.actionable,2);
-    assert.equal(summary.historical,1,type+" includes one historical state");
+    assert.equal(summary.actionable,type==="data"?3:2);
+    assert.equal(summary.historical,type==="data"?0:1,"only closed orders/tickets are historical");
     assert.ok(summary.blocked.length>=1);
     assert.ok(summary.review.length>=1);
   }
