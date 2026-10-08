@@ -24,6 +24,7 @@ function invalidate(message){
   $("copyWorkflow").disabled=true;
   $("exportActionQueue").disabled=true;
   $("exportInsights").disabled=true;
+  $("changeComparison").hidden=true;
   $("quickDemoAction").disabled=true;
   resetInsights();
   closeEditor();
@@ -347,6 +348,7 @@ $("runWorkflow").addEventListener("click",()=>{
     const result=runWorkflow(scenario,$("workflowSource").value);
     errorText("");
     render(result);
+    $("changeComparison").hidden=true;
   }catch(error){
     invalidate("Revisa el formato de entrada antes de ejecutar.");
     renderEmpty();
@@ -421,10 +423,17 @@ function commitEdit(event){
     $("workflowSource").value=next;
     errorText("");
     const result=runWorkflow(scenario,next);
+    const before=analyzeWorkflow(latest),after=analyzeWorkflow(result);
     undoSource=original;
     $("undoCorrection").disabled=false;
     closeEditor();
     render(result);
+    const compare=$("changeComparison");
+    compare.textContent="CAMBIO COMPROBADO · Antes: "+before.actionable+" acciones preparadas, "+
+      before.blockedCount+" bloqueos, "+before.reviewCount+" revisiones. Después: "+
+      after.actionable+" acciones preparadas, "+after.blockedCount+" bloqueos, "+
+      after.reviewCount+" revisiones. La diferencia proviene de volver a ejecutar las reglas.";
+    compare.hidden=false;
     setText("workflowStatus","Corrección aplicada y proceso recalculado. Puedes deshacerla. "+result.counts.bloqueado+" registros siguen bloqueados.");
   }catch(error){
     setText("workflowEditStatus",error?.message||"No se ha podido guardar la corrección.");
@@ -462,7 +471,7 @@ $("undoCorrection").addEventListener("click",()=>{
   undoSource=null;
   $("undoCorrection").disabled=true;
   closeEditor();
-  try{render(runWorkflow(scenario,$("workflowSource").value));}
+  try{render(runWorkflow(scenario,$("workflowSource").value));$("changeComparison").hidden=true;}
   catch{invalidate("No se pudo restaurar el estado previo.");}
 });
 $("importWorkflow").addEventListener("change",async event=>{
@@ -526,6 +535,7 @@ $("applyColumnMapping").addEventListener("click",()=>{
     $("undoCorrection").disabled=true;
     closeColumnMapper();
     render(result);
+    $("changeComparison").hidden=true;
     errorText("");
     setText("workflowStatus","Correspondencias confirmadas. "+result.counts.total+
       " registros analizados localmente. Edita errores en la tabla; no se ha enviado nada.");
