@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Prueba un proceso real de RevOps Studio: valida registros, detecta duplicados, gestiona excepciones y exporta resultados. Todo en tu navegador.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://gracianb.github.io/revops-studio/demo.html">
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <script>try{const t=localStorage.getItem("revops-theme");document.documentElement.dataset.theme=t==="dark"||t==="light"?t:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch{document.documentElement.dataset.theme="dark"}</script>
+  <link rel="stylesheet" href="./assets/css/commercial.css">
+  <link rel="stylesheet" href="./assets/css/workflow-demo.css">
+  <script defer src="./assets/js/theme.js"></script>
+  <script type="module" src="./assets/js/workflow-demo.js"></script>
+  <title>Prueba un proceso real | RevOps Studio</title>
+</head>
+<body class="workbench-page">
+<a class="skip-link" href="#main">Saltar a la demostración</a>
+<header class="workbench-header">
+  <nav class="shell workbench-nav" aria-label="Navegación de demostración">
+    <a class="brand" href="./" aria-label="RevOps Studio, portada"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">REVOPS<span>STUDIO</span></span></a>
+    <div class="workbench-nav-actions"><a class="workbench-back" href="./#diagnostico">← Volver al diagnóstico</a><button type="button" class="theme-toggle" data-theme-toggle aria-label="Cambiar a modo claro" aria-pressed="false"><span data-theme-icon aria-hidden="true">◐</span><span data-theme-label>Modo claro</span></button></div>
+  </nav>
+</header>
+<main id="main">
+  <section class="shell workbench-hero" aria-labelledby="workbench-title">
+    <div class="workbench-eyebrow"><span class="workbench-live-dot" aria-hidden="true"></span> MESA DE PRUEBAS · DEMO INTERACTIVA · 100 % LOCAL</div>
+    <div class="workbench-hero-grid"><div><h1 id="workbench-title">De datos desordenados a <em>decisiones claras.</em></h1><p>Prueba el recorrido de un proceso: valida entradas, aparta duplicados, identifica excepciones y revisa qué quedaría preparado para una integración real.</p></div>
+      <div class="workbench-legend"><strong>Esto sí puedes probarlo.</strong><p>Modifica registros, ejecuta las reglas y exporta los resultados. No es una presentación ni una animación decorativa.</p><small>Los sistemas CRM, ERP y soporte son ejemplos. Aquí no hay conexiones reales, acciones externas ni IA fingida.</small></div>
+    </div>
+  </section>
+  <section class="shell workbench-studio" aria-labelledby="workbench-scenario-title">
+    <div class="workbench-section-head"><div><span class="workbench-section-index">01 / ELIGE UN PROCESO</span><h2 id="workbench-scenario-title">Tres problemas, tres recorridos.</h2></div><p>Cada escenario utiliza sus propias columnas y reglas. Los datos iniciales son ficticios.</p></div>
+    <div class="workbench-scenarios" role="group" aria-label="Escenarios disponibles">
+      <button type="button" class="workbench-scenario is-active" data-scenario="orders" aria-pressed="true"><span>01 / OPERACIONES</span><strong>Pedidos y CRM</strong><small>Validación · duplicados · cola</small></button>
+      <button type="button" class="workbench-scenario" data-scenario="support" aria-pressed="false"><span>02 / CLIENTES</span><strong>Soporte y escalado</strong><small>Prioridad · incidencias · revisión</small></button>
+      <button type="button" class="workbench-scenario" data-scenario="data" aria-pressed="false"><span>03 / DATOS</span><strong>Calidad y conciliación</strong><small>Fechas · cifras · anomalías</small></button>
+    </div>
+    <div class="workbench-editor-grid">
+      <section class="workbench-panel workbench-input" aria-labelledby="workbench-input-title">
+        <div class="workbench-panel-head"><div><span>02 / ENTRADA</span><h3 id="workbench-input-title">Tus registros de prueba</h3></div><span class="workbench-local-label">SIN SUBIR ARCHIVOS</span></div>
+        <p id="scenarioDescription" class="workbench-instructions">Valida pedidos, evita duplicados y aparta excepciones.</p>
+        <label class="workbench-editor-label" for="workflowSource">Datos delimitados por punto y coma o coma</label>
+        <textarea id="workflowSource" spellcheck="false" rows="10" aria-describedby="sourceHelp" maxlength="12000"></textarea>
+        <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador.</p>
+        <div class="workbench-editor-actions">
+          <button class="btn btn-primary" type="button" id="runWorkflow">Ejecutar proceso <span aria-hidden="true">↗</span></button>
+          <button class="btn btn-secondary" type="button" id="resetWorkflow">Restaurar ejemplo</button>
+        </div>
+        <p id="workflowError" class="workbench-error" role="alert" hidden></p>
+      </section>
+      <section class="workbench-panel workbench-output" aria-labelledby="workbench-output-title">
+        <div class="workbench-panel-head"><div><span>03 / RESULTADO</span><h3 id="workbench-output-title">Trazabilidad en directo</h3></div><span class="workbench-local-label">SOLO SIMULACIÓN</span></div>
+        <p class="workbench-results-note" id="workflowStatus" role="status" aria-live="polite">Ejecuta un escenario para ver los resultados.</p>
+        <div class="workbench-kpis" aria-label="Resumen de registros procesados">
+          <div><small>Analizados</small><strong id="countTotal">0</strong></div>
+          <div><small>Listos</small><strong id="countReady">0</strong></div>
+          <div><small>Para revisar</small><strong id="countReview">0</strong></div>
+          <div><small>Bloqueados</small><strong id="countBlocked">0</strong></div>
+        </div>
+        <ol class="workbench-pipeline" id="workflowPipeline" aria-label="Fases del proceso">
+          <li><span>01</span><div><b>Entrada</b><small>Registros recibidos</small></div></li>
+          <li><span>02</span><div><b>Validación</b><small>Reglas y duplicados</small></div></li>
+          <li><span>03</span><div><b>Revisión</b><small>Casos que requieren criterio</small></div></li>
+          <li><span>04</span><div><b>Salida</b><small>Preparados, no enviados</small></div></li>
+        </ol>
+        <div class="workbench-output-actions">
+          <button class="btn btn-secondary" type="button" id="exportWorkflow" disabled>Exportar CSV ↗</button>
+          <button class="btn btn-secondary" type="button" id="copyWorkflow" disabled>Copiar resumen</button>
+        </div>
+      </section>
+    </div>
+    <section class="workbench-rows" aria-labelledby="workbench-table-title">
+      <div class="workbench-section-head"><div><span class="workbench-section-index">04 / AUDITORÍA DE REGISTROS</span><h2 id="workbench-table-title">Cada decisión tiene un motivo.</h2></div><p>La cola de salida nunca se ejecuta sobre sistemas externos. Puedes detectar y corregir incidencias editando el CSV.</p></div>
+      <div class="workbench-table-scroll"><table class="workbench-table"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th></tr></thead><tbody id="workflowRows"><tr><td colspan="4">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
+    </section>
+    <aside class="workbench-next" aria-labelledby="workbench-next-title"><div><span class="workbench-section-index">05 / DE LA DEMO A TU PROCESO</span><h2 id="workbench-next-title">¿Y con tus herramientas reales?</h2><p>El siguiente paso sería analizar permisos, reglas, excepciones y un caso real, no conectar un CRM a ciegas. Llévate un resumen de esta simulación a tu consulta, sin enviar los registros.</p></div><a class="btn btn-primary" id="demoContact" href="./#contacto">Consultar un proceso parecido ↗</a></aside>
+    <p class="workbench-privacy">Diseñado como demostración local, determinista y sin dependencias de IA. Los resultados no garantizan ahorros, no son datos de empresas y no constituyen un sistema de producción.</p>
+  </section>
+</main>
+<footer class="workbench-footer"><div class="shell"><span>REVOPS STUDIO · PRODUCTO EN ACCIÓN</span><a href="./">Volver a la web principal ↗</a></div></footer>
+</body>
+</html>
