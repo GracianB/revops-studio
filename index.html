@@ -87,6 +87,7 @@
 
   <div class="mobile-nav" id="mobileNav" aria-label="Navegación móvil">
     <a href="#problemas">Qué resuelvo</a>
+    <a href="#diagnostico">Diagnóstico</a>
     <a href="#servicios">Servicios</a>
     <a href="#oferta">Precios</a>
     <a href="#casos">Casos</a>
@@ -105,7 +106,7 @@
       <span class="hero-kicker"><span class="signal-dot" aria-hidden="true"></span> OPERACIONES + DATOS + DESARROLLO</span>
       <h1 id="hero-title">Tu negocio no necesita <em>más tareas.</em><span class="hero-accent">Necesita mejores sistemas.</span></h1>
       <p class="hero-copy">Ayudo a equipos y pymes a <strong>automatizar trabajo repetitivo, ordenar sus datos y construir herramientas internas</strong> que de verdad usan. Partimos del problema, no de una plataforma que alguien intenta venderte.</p>
-      <div class="hero-actions"><a class="btn btn-primary" href="#contacto">Cuéntame qué necesitas ↗</a><a class="btn btn-secondary" href="#casos">Ver trabajos reales ↘</a></div>
+      <div class="hero-actions"><a class="btn btn-primary" href="#diagnostico">Encontrar mi solución ↗</a><a class="btn btn-secondary" href="#casos">Ver trabajos reales ↘</a></div>
       <div class="hero-trust"><span><b>01</b> Diagnóstico antes de desarrollar</span><span><b>02</b> Precio y alcance acordados</span><span><b>03</b> Entrega que puedes mantener</span></div>
     </div>
     <div class="studio-diagram reveal" aria-label="Ejemplo ilustrativo de transformación de un proceso manual en una operación controlada">
@@ -129,6 +130,76 @@
         <article class="problem-card reveal"><span class="kicker">03 / EQUIPOS</span><h3>El proceso depende demasiado de personas concretas.</h3><p>Soporte, seguimiento y conocimiento viven en correos, conversaciones y memoria.</p><div class="problem-outcome"><strong>Podemos construir</strong><span>Un flujo de trabajo, base de conocimiento o herramienta interna.</span></div></article>
       </div>
       <p class="problem-foot">No hace falta cambiar de CRM ni contratar una plataforma nueva por defecto. Primero evaluamos qué se puede mejorar con tus herramientas actuales.</p>
+    </div>
+  </section>
+
+  <section class="section diagnostic-section" id="diagnostico" aria-labelledby="diagnostic-title">
+    <div class="shell diagnostic-layout">
+      <div class="diagnostic-intro">
+        <span class="eyebrow">Diagnóstico guiado · herramienta gratuita</span>
+        <h2 id="diagnostic-title">Del problema a un primer plan de trabajo.</h2>
+        <p>Tres decisiones y una respuesta concreta: por dónde empezar, qué construir primero y cómo sabremos si funciona. Sin registro, sin compartir datos y sin promesas de ahorro inventadas.</p>
+        <div class="diagnostic-steps" aria-label="Pasos del diagnóstico">
+          <div><b>01</b><span>Define la fricción</span></div>
+          <div><b>02</b><span>Elige tu contexto</span></div>
+          <div><b>03</b><span>Llévate un mapa útil</span></div>
+        </div>
+        <p class="diagnostic-disclaimer">Orientación inicial basada en reglas transparentes. No sustituye el análisis de un proceso real ni constituye una oferta vinculante.</p>
+      </div>
+      <div class="diagnostic-surface">
+        <div class="diagnostic-controls">
+          <div class="diagnostic-field">
+            <label for="diagProblem">¿Qué te está frenando?</label>
+            <select id="diagProblem">
+              <option value="">Selecciona el problema principal</option>
+              <option value="repetitive">Repetimos tareas entre herramientas</option>
+              <option value="reporting">Los datos o informes no cuadran</option>
+              <option value="knowledge">El conocimiento o seguimiento se pierde</option>
+              <option value="rules">Decidimos con Excel y reglas complejas</option>
+            </select>
+          </div>
+          <div class="diagnostic-controls-row">
+            <div class="diagnostic-field">
+              <label for="diagTools">¿Qué utilizáis hoy?</label>
+              <select id="diagTools">
+                <option value="unknown">Aún no lo tengo claro</option>
+                <option value="sheets">Excel o Google Sheets</option>
+                <option value="crm">CRM, soporte o gestión</option>
+                <option value="mixed">Varios sistemas distintos</option>
+              </select>
+            </div>
+            <div class="diagnostic-field">
+              <label for="diagScope">¿A quién afecta?</label>
+              <select id="diagScope">
+                <option value="single">Un proceso o una persona</option>
+                <option value="team" selected>Un equipo</option>
+                <option value="cross">Varios equipos o departamentos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="diagnostic-output" id="diagnosticOutput" aria-labelledby="diagnostic-result-title">
+          <div class="diagnostic-output-head"><span class="kicker">TU MAPA DE PARTIDA</span><span class="diagnostic-status-marker" aria-hidden="true">● LOCAL / SIN ENVÍOS</span></div>
+          <p id="diagnosticEmpty" class="diagnostic-empty">Elige qué problema necesitas resolver. Aquí aparecerá un primer camino de trabajo con entregables comprobables.</p>
+          <div id="diagnosticPlan" hidden>
+            <span class="diagnostic-route" id="diagRoute"></span>
+            <h3 id="diagnostic-result-title">Tu primera ruta de trabajo</h3>
+            <p class="diagnostic-headline" id="diagHeadline"></p>
+            <div class="diagnostic-result-grid">
+              <div><span>01 · Empezar por</span><p id="diagFirst"></p></div>
+              <div><span>02 · Primer entregable</span><p id="diagDeliverable"></p></div>
+              <div><span>03 · Cómo comprobarlo</span><p id="diagVerification"></p></div>
+            </div>
+            <p class="diagnostic-package" id="diagPackage"></p>
+          </div>
+        </div>
+        <div class="diagnostic-actions" id="diagnosticActions" hidden>
+          <a class="btn btn-primary" id="diagToContact" href="#contacto">Añadir este mapa a mi consulta ↗</a>
+          <button class="btn btn-secondary" type="button" id="diagCopy">Copiar mi mapa</button>
+          <button class="diagnostic-reset" type="button" id="diagReset">Empezar de nuevo</button>
+        </div>
+        <p class="diagnostic-feedback" id="diagnosticStatus" role="status" aria-live="polite"></p>
+      </div>
     </div>
   </section>
 
@@ -338,6 +409,8 @@
           <input type="hidden" name="_next" value="https://gracianb.github.io/revops-studio/gracias.html?via=proveedor">
           <input type="hidden" name="estimacion" id="estimacion" value="">
           <input type="hidden" name="caso_referencia" id="casoReferencia" value="">
+          <input type="hidden" name="diagnostico" id="diagnosticoBrief" value="">
+          <div class="diagnostic-context" id="diagnosticContext" hidden><p id="diagnosticContextSummary" role="status"></p><button type="button" class="text-link" id="diagnosticContextClear">Quitar diagnóstico</button></div>
           <div class="case-context" id="caseContext" hidden><p id="caseContextSummary" role="status"></p><button type="button" class="text-link" id="caseContextClear">Quitar referencia</button></div>
           <div class="calc-context" id="calcContext" hidden><p id="calcContextSummary" role="status"></p><button type="button" id="calcContextClear" class="text-link">Quitar estimación</button></div>
           <div class="form-honeypot" aria-hidden="true"><label for="websiteExtra">Deja este campo vacío</label><input name="_honey" id="websiteExtra" tabindex="-1" autocomplete="off"></div>
