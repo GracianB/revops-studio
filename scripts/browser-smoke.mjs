@@ -96,8 +96,15 @@ try {
   await page.locator("#caseContextClear").click();
   assert.equal(await page.locator("#casoReferencia").inputValue(),"");
   assert.equal(await page.locator("#caseContext").isHidden(),true);
-  await page.locator('[data-filter="ai"]').click();
-  assert.ok(await page.locator(".service-card:visible").count()>=1);
+  // V44 filters must actually remove hidden cards, not merely set a hidden attribute.
+  for (const [key, expected] of [["ai",1],["data",2],["automation",3],["apps",3],["all",6]]) {
+    const button=page.locator('[data-filter="'+key+'"]');
+    await button.click();
+    assert.equal(await page.locator(".service-card:visible").count(),expected,key+" visible cards");
+    assert.equal(await page.locator(".service-card[hidden]").count(),6-expected,key+" hidden cards");
+    assert.equal(await button.getAttribute("aria-pressed"),"true");
+    assert.match(await page.locator("#filterStatus").innerText(),new RegExp("Mostrando "+expected+" "));
+  }
 
   // A calculator scenario can travel to the brief, but is never sent automatically.
   await page.locator("#hoursWeek").fill("4");
@@ -226,10 +233,34 @@ try {
       engineName+" mobile horizontal overflow on "+url+" "+JSON.stringify(dimensions));
   }
   await captureVisual(mobile,"mobile-hero");
+  // Keyboard Escape closes the mobile menu and returns focus to its trigger.
+  await mobile.locator("#menuBtn").click();
+  assert.equal(await mobile.locator("#menuBtn").getAttribute("aria-expanded"),"true");
+  await mobile.keyboard.press("Escape");
+  assert.equal(await mobile.locator("#menuBtn").getAttribute("aria-expanded"),"false");
+  assert.equal(await mobile.evaluate(()=>document.activeElement?.id),"menuBtn");
+  assert.equal(await mobile.evaluate(()=>document.body.classList.contains("menu-open")),false);
   await mobile.locator("#menuBtn").click();
   assert.equal(await mobile.locator("#menuBtn").getAttribute("aria-expanded"),"true");
   await mobile.locator(".mobile-nav a[href='#servicios']").click();
   assert.equal(await mobile.locator("#menuBtn").getAttribute("aria-expanded"),"false");
+  for(const width of [320,390]) {
+    await mobile.setViewportSize({width,height:844});
+    const dimensions=await mobile.evaluate(()=>({viewport:window.innerWidth,scroll:document.documentElement.scrollWidth}));
+    assert.ok(dimensions.scroll<=dimensions.viewport+3,
+      engineName+" narrow overflow at "+width+"px "+JSON.stringify(dimensions));
+  }
+  const tablet=await browser.newPage({viewport:{width:850,height:850},reducedMotion:"reduce"});
+  tablet.on("pageerror",describe);
+  await tablet.goto(base+"/",{waitUntil:"load"});
+  assert.equal(await tablet.locator(".study-card").count(),3);
+  assert.equal(await tablet.locator('[data-case-id="bodytone"]').evaluate(el=>getComputedStyle(el).gridColumnEnd),"-1");
+  await tablet.locator("#menuBtn").click();
+  assert.equal(await tablet.locator("#menuBtn").getAttribute("aria-expanded"),"true");
+  await tablet.setViewportSize({width:1024,height:850});
+  assert.equal(await tablet.locator("#menuBtn").getAttribute("aria-expanded"),"false");
+  assert.equal(await tablet.evaluate(()=>document.body.classList.contains("menu-open")),false);
+  await tablet.close();
   assert.deepEqual(errors,[],"Mobile runtime errors");
   console.log("BROWSER SMOKE PASS ("+engineName+"): V40 demo, dark/light, business, contact failure/success, and mobile");
 } finally {
