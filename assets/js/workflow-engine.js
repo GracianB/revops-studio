@@ -59,15 +59,15 @@ export function parseDelimited(source){
   if(!text)throw Error("Pega una cabecera y al menos una fila.");
   // Detect semicolon vs comma in header, respecting quoted values.
   const headerLine=text.split(/\r?\n/)[0];
-  let commas=0,semicolons=0,quoted=false;
+  let commas=0,semicolons=0,tabs=0,quoted=false;
   for(let i=0;i<headerLine.length;i++){
     const char=headerLine[i];
     if(char==='"'){
       if(quoted && headerLine[i+1]==='"')i++;
       else quoted=!quoted;
-    }else if(!quoted){if(char===",")commas++;if(char===";")semicolons++;}
+    }else if(!quoted){if(char===",")commas++;if(char===";")semicolons++;if(char==="\t")tabs++;}
   }
-  const delimiter=semicolons>commas?";":",";
+  const delimiter=tabs>Math.max(commas,semicolons)?"\t":(semicolons>commas?";":",");
   const records=[];let cells=[],cell="",inQuotes=false;
   for(let i=0;i<text.length;i++){
     const char=text[i];
@@ -223,5 +223,25 @@ export function exportActionQueueCsv(result){
     lines.push([...result.columns.map(column=>row.values[column]),row.action,
       "Preparado, NO ejecutado"].map(csvCell).join(";"));
   }
+  return "\uFEFF"+lines.join("\r\n")+"\r\n";
+}
+
+
+// Export only the rows visible in the user's current view, preserving visual order.
+// Avoids silently including hidden or excluded records when reviewing externally.
+export function exportVisibleRowsCsv(result,indices){
+  if(!result?.rows || !Array.isArray(indices))throw Error("Ejecuta el proceso y elige una vista.");
+  const visited=new Set();
+  const rows=[];
+  for(const index of indices){
+    if(!Number.isInteger(index)||index<0||index>=result.rows.length || visited.has(index))
+      throw Error("La selección de filas no es válida.");
+    visited.add(index);
+    rows.push(result.rows[index]);
+  }
+  const columns=["fila",...result.columns,"resultado","motivo","acción"];
+  const lines=[columns.map(csvCell).join(";")];
+  for(const row of rows)lines.push([row.line,...result.columns.map(col=>row.values[col]),
+    row.status,row.reason,row.action].map(csvCell).join(";"));
   return "\uFEFF"+lines.join("\r\n")+"\r\n";
 }
