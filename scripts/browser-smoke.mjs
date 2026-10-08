@@ -27,6 +27,22 @@ const browserEngine=engineName==="firefox"?firefox:chromium;
 let browser;
 const errors=[];
 const describe=error=>errors.push(error.message);
+async function auditAccessibility(page, label) {
+  if (engineName !== "chrome") return;
+  await page.addScriptTag({ path: path.join(root, "node_modules/axe-core/axe.min.js") });
+  const violations = await page.evaluate(async () => {
+    const result = await window.axe.run(document, {
+      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] }
+    });
+    return result.violations.map(v => ({
+      id:v.id, impact:v.impact, count:v.nodes.length,
+      targets:v.nodes.slice(0,3).map(n => n.target.join(" "))
+    }));
+  });
+  console.log("AXE_AUDIT "+label+" "+JSON.stringify(violations));
+  const blockers = violations.filter(v => v.impact==="serious" || v.impact==="critical");
+  assert.deepEqual(blockers,[],label+" has serious or critical accessibility failures");
+}
 async function captureVisual(page,name,locator=null) {
   if (process.env.REVOPS_VISUAL_AUDIT !== "1" || engineName !== "chrome") return;
   const bytes = await (locator || page).screenshot({type:"jpeg",quality:48,animations:"disabled"});
@@ -57,6 +73,7 @@ try {
   assert.equal(await page.locator("#calibrationV20Severity").evaluate(el=>getComputedStyle(el.closest(".feedback-metrics")).display),"grid");
   await page.locator("#resetCalibrationV20").click();
   await page.locator("#generatePolicySignerV27").click();
+  await auditAccessibility(page,"lab-expanded");
   assert.deepEqual(errors,[],"Lab runtime errors");
 
   await page.goto(base+"/",{waitUntil:"load"});
@@ -71,6 +88,7 @@ try {
   assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
   await page.evaluate(() => { window.scrollTo({top:0,behavior:"instant"}); document.activeElement?.blur(); });
   await page.waitForTimeout(180);
+  await auditAccessibility(page,"home-dark");
   await captureVisual(page,"dark-hero");
   await captureVisual(page,"dark-cases",page.locator("#casos"));
   await captureVisual(page,"dark-contact",page.locator("#contacto"));
@@ -78,6 +96,7 @@ try {
   assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
   await page.evaluate(() => { window.scrollTo({top:0,behavior:"instant"}); document.activeElement?.blur(); });
   await page.waitForTimeout(180);
+  await auditAccessibility(page,"home-light");
   await captureVisual(page,"light-hero");
   await page.reload();
   assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
