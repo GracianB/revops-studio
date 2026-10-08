@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#05070b">
-  <meta name="description" content="Automatización, dashboards y software a medida para pymes y equipos de operaciones. RevOps Studio convierte procesos manuales en sistemas útiles. Murcia y remoto.">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0d141d">
+  <meta name="description" content="Automatizo procesos, ordeno datos y construyo herramientas a medida para pymes y equipos. Servicios, casos documentados y contacto directo. Murcia y remoto.">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://gracianb.github.io/revops-studio/">
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="RevOps Studio | Automatización, datos y software a medida">
+  <meta property="og:title" content="RevOps Studio | Tu negocio necesita mejores sistemas">
   <meta property="og:description" content="Menos tareas manuales, datos más claros y herramientas hechas para tu equipo. Diagnóstico, desarrollo y evolución de sistemas.">
   <meta property="og:url" content="https://gracianb.github.io/revops-studio/">
   <meta property="og:site_name" content="RevOps Studio">
@@ -19,7 +19,7 @@
   <meta name="twitter:image" content="https://gracianb.github.io/revops-studio/assets/og.svg">
 
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="RevOps Studio | Soluciones a medida para tu operación">
+  <meta name="twitter:title" content="RevOps Studio | Soluciones operativas a medida">
   <meta name="twitter:description" content="Automatización, datos e IA cuando aportan valor real. Murcia y remoto.">
 
   <script type="application/ld+json">
@@ -51,10 +51,12 @@
   }
   </script>
 
+  <script>try{const t=localStorage.getItem("revops-theme");document.documentElement.dataset.theme=t==="dark"||t==="light"?t:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch{document.documentElement.dataset.theme="dark"}</script>
   <link rel="stylesheet" href="./assets/css/main.css">
   <script defer data-domain="gracianb.github.io/revops-studio" src="https://plausible.io/js/script.tagged-events.js"></script>
+  <script defer src="./assets/js/theme.js"></script>
   <script type="module" src="./assets/js/site.js" defer></script>
-  <title>RevOps Studio | Automatización, datos y software a medida</title>
+  <title>RevOps Studio | Automatización, datos y software que simplifican el trabajo</title>
 </head>
 
 <body>
@@ -77,7 +79,8 @@
     </ul>
 
     <div class="nav-actions">
-      <a class="nav-cta" href="#contacto">Cuéntame tu caso ↗</a>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Cambiar a modo claro" aria-pressed="false"><span aria-hidden="true" data-theme-icon>◐</span><span class="theme-label">Tema</span></button>
+      <a class="nav-cta" href="#contacto">Hablemos ↗</a>
       <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Abrir menú">☰</button>
     </div>
   </nav>
@@ -93,60 +96,28 @@
   </div>
 </header>
 
-<div class="notice">
-  <div class="notice-inner">
-    <span><strong>RevOps Studio</strong> · Automatización, datos y software a medida · Murcia y remoto</span>
-    <a class="text-link" href="#contacto">Hablar de mi proyecto ↗</a>
-  </div>
-</div>
-
+<div class="notice"><div class="notice-inner"><span>ESTUDIO INDEPENDIENTE · MURCIA + REMOTO</span><a class="text-link" href="#contacto">¿Tienes un proceso que mejorar? <span aria-hidden="true">↗</span></a></div></div>
 <main id="main">
 
-  <section class="hero" aria-labelledby="hero-title">
-    <div class="shell hero-grid">
-      <div class="reveal">
-        <div class="signal-line"><span class="signal-dot" aria-hidden="true"></span> OPERACIONES / AUTOMATIZACIÓN / DATOS / SOFTWARE</div>
-        <p class="hero-position">Estudio independiente · Estrategia operativa y desarrollo a medida</p>
-        <h1 id="hero-title">Menos trabajo manual.<span class="hero-accent">Más control sobre tu negocio.</span></h1>
-        <p class="hero-copy">Ayudo a pymes y equipos de operaciones a <strong>conectar herramientas, automatizar procesos y entender mejor sus datos</strong>. Desde una hoja que necesita orden hasta una aplicación interna. Sin imponer un software enorme para resolver un problema pequeño.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#contacto">Cuéntame qué necesitas ↗</a>
-          <a class="btn btn-secondary" href="#servicios">Ver soluciones ↓</a>
-        </div>
-        <p class="hero-note"><strong>Murcia · España</strong> · Proyectos remotos · Diagnóstico inicial de 30–45 minutos</p>
-        <div class="proof-row" aria-label="Forma de trabajar">
-          <span class="proof">Problema primero, tecnología después</span>
-          <span class="proof">Aprovechamos lo que ya usas</span>
-          <span class="proof">Entregas documentadas</span>
-          <span class="proof">Control humano cuando importa</span>
-        </div>
-      </div>
-
-      <div class="terminal reveal" aria-label="Ejemplo de un encargo de automatización">
-        <div class="terminal-top">
-          <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span>DE PROBLEMA A SOLUCIÓN</span>
-          <span>EJEMPLO</span>
-        </div>
-        <div class="terminal-body">
-          <div class="term-intro">Una operación cotidiana, explicada sin jerga.</div>
-          <div class="term-row"><span class="term-red">›</span><span class="term-key">problema</span><span class="term-dim">=</span><span class="term-white">copiar datos entre CRM y hojas</span></div>
-          <div class="term-row"><span class="term-red">›</span><span class="term-key">solución</span><span class="term-dim">=</span><span class="term-white">conectar y validar información</span></div>
-          <div class="term-row"><span class="term-red">›</span><span class="term-key">entrega</span><span class="term-dim">=</span><span class="term-white">flujo automático + alertas</span></div>
-          <div class="term-row"><span class="term-red">›</span><span class="term-key">control</span><span class="term-dim">=</span><span class="term-white">registro + responsable</span></div>
-          <div class="term-divider"></div>
-          <p class="term-outcome">La meta no es acumular pantallas: es que tu equipo deje de repetir pasos y pueda ver qué ocurre.</p>
-          <div class="terminal-footer">
-            <div class="mini"><b>01</b><span>Diagnóstico</span></div>
-            <div class="mini"><b>02</b><span>Entrega útil</span></div>
-            <div class="mini"><b>03</b><span>Seguimiento</span></div>
-          </div>
-        </div>
-      </div>
+  <section class="hero hero-v41" aria-labelledby="hero-title">
+  <div class="shell hero-grid">
+    <div class="hero-content reveal">
+      <span class="hero-kicker"><span class="signal-dot" aria-hidden="true"></span> OPERACIONES + DATOS + DESARROLLO</span>
+      <h1 id="hero-title">Tu negocio no necesita <em>más tareas.</em><span class="hero-accent">Necesita mejores sistemas.</span></h1>
+      <p class="hero-copy">Ayudo a equipos y pymes a <strong>automatizar trabajo repetitivo, ordenar sus datos y construir herramientas internas</strong> que de verdad usan. Partimos del problema, no de una plataforma que alguien intenta venderte.</p>
+      <div class="hero-actions"><a class="btn btn-primary" href="#contacto">Cuéntame qué necesitas ↗</a><a class="btn btn-secondary" href="#casos">Ver trabajos reales ↘</a></div>
+      <div class="hero-trust"><span><b>01</b> Diagnóstico antes de desarrollar</span><span><b>02</b> Precio y alcance acordados</span><span><b>03</b> Entrega que puedes mantener</span></div>
     </div>
-  </section>
-
-  <section class="section-tight problem-section" id="problemas" aria-labelledby="problems-title">
+    <div class="studio-diagram reveal" aria-label="Ejemplo ilustrativo de transformación de un proceso manual en una operación controlada">
+      <div class="diagram-head"><span>UNA OPERACIÓN MEJOR DISEÑADA</span><span class="diagram-indicator"><i aria-hidden="true"></i> EJEMPLO</span></div>
+      <div class="diagram-input"><span class="diagram-numeral">01 / AHORA</span><strong>Correos, hojas y CRM por separado</strong><p>Repetición · información duplicada · visibilidad limitada</p><div class="diagram-pills"><span>Excel</span><span>Correo</span><span>CRM</span></div></div>
+      <div class="diagram-pipeline" aria-hidden="true"><span></span><i>DISEÑAMOS EL FLUJO</i><span></span></div>
+      <div class="diagram-output"><span class="diagram-numeral">02 / DESPUÉS</span><strong>Un proceso conectado y supervisable</strong><p>Una fuente clara, menos pasos manuales y excepciones visibles.</p><div class="diagram-outcomes"><span>Validación <b>✓</b></span><span>Seguimiento <b>✓</b></span><span>Control humano <b>✓</b></span></div></div>
+      <div class="diagram-foot">Esquema conceptual. No representa métricas ni resultados de un cliente.</div>
+    </div>
+  </div>
+</section>
+<section class="section-tight problem-section" id="problemas" aria-labelledby="problems-title">
     <div class="shell">
       <div class="section-head">
         <div><span class="eyebrow">Empieza por el problema</span><h2 id="problems-title">¿Te pasa alguna de estas cosas?</h2></div>
@@ -164,13 +135,13 @@
   <section class="section" id="servicios" aria-labelledby="services-title">
     <div class="shell">
       <div class="section-head">
-        <div><span class="eyebrow">Qué puedes contratar</span><h2 id="services-title">Tres áreas. Soluciones concretas.</h2></div>
-        <p>El servicio no es «IA» ni «programación» por sí solas. Es una mejora definida en tu operación, entregada con documentación y límites claros.</p>
+        <div><span class="eyebrow">Qué puedes contratar</span><h2 id="services-title">Tres formas de quitar fricción a tu operación.</h2></div>
+        <p>Cada encargo termina en algo concreto: un flujo automatizado, un informe fiable o una herramienta lista para usar. La tecnología viene después.</p>
       </div>
       <div class="service-pillars" aria-label="Áreas de servicio">
-        <article class="service-pillar reveal"><span class="service-pillar-num">01</span><h3>Automatización</h3><p>Que los sistemas hagan el trabajo repetitivo y las personas supervisen las excepciones.</p><span>Entregable: flujo funcionando + alertas + documentación.</span></article>
-        <article class="service-pillar reveal"><span class="service-pillar-num">02</span><h3>Datos y decisiones</h3><p>Unificar información dispersa y verla en indicadores que realmente sirvan.</p><span>Entregable: datos organizados + panel + definiciones claras.</span></article>
-        <article class="service-pillar reveal"><span class="service-pillar-num">03</span><h3>Software a medida</h3><p>Pequeñas aplicaciones, integraciones y asistentes cuando la herramienta actual no basta.</p><span>Entregable: herramienta usable + código y traspaso acordados.</span></article>
+        <article class="service-pillar reveal"><span class="service-pillar-num">01</span><h3>Automatización</h3><p>Conecto aplicaciones y elimino tareas repetidas, con alertas cuando algo necesita atención.</p><span>Entregable: flujo funcionando + alertas + documentación.</span></article>
+        <article class="service-pillar reveal"><span class="service-pillar-num">02</span><h3>Datos y decisiones</h3><p>Unifico fuentes y convierto informes dispersos en decisiones comprensibles.</p><span>Entregable: datos organizados + panel + definiciones claras.</span></article>
+        <article class="service-pillar reveal"><span class="service-pillar-num">03</span><h3>Software a medida</h3><p>Construyo herramientas internas donde un Excel o el software actual ya no alcanza.</p><span>Entregable: herramienta usable + código y traspaso acordados.</span></article>
       </div>
       <div class="service-toolbar" role="group" aria-label="Filtrar soluciones">
         <button class="filter-btn" type="button" data-filter="all" aria-pressed="true">Todas</button>
@@ -187,29 +158,29 @@
         <article class="service-card reveal" data-service="apps ai"><div class="service-top"><span class="service-index">05</span><span class="kicker">SOFTWARE + IA</span></div><h3>Herramientas internas y asistentes</h3><p>Interfaces y asistentes acotados para localizar información o acelerar flujos con revisión humana.</p><div class="service-meta">Ejemplo · Buscador de conocimiento para soporte</div></article>
         <article class="service-card reveal" data-service="apps"><div class="service-top"><span class="service-index">06</span><span class="kicker">DESARROLLO</span></div><h3>Crear, reparar o mejorar aplicaciones</h3><p>Prototipos, herramientas web y mejoras de código existente con un alcance acordado.</p><div class="service-meta">Ejemplo · Panel operativo a medida</div></article>
       </div>
-      <div class="service-cta"><p>¿No sabes en qué categoría encaja tu necesidad? No pasa nada. Empezamos por el proceso, no por el catálogo.</p><a class="btn btn-primary" href="#contacto">Explicar mi problema ↗</a></div>
+      <div class="service-cta"><p>No tienes que saber qué tecnología necesitas. Basta con explicar qué trabajo se repite o dónde se atasca tu equipo.</p><a class="btn btn-primary" href="#contacto">Explicar mi problema ↗</a></div>
     </div>
   </section>
 
   <section class="section" id="oferta" aria-labelledby="offer-title">
     <div class="shell">
       <div class="section-head">
-        <div><span class="eyebrow">Formas de colaborar</span><h2 id="offer-title">Empezar pequeño. Escalar cuando tenga sentido.</h2></div>
-        <p>Precios de partida orientativos, no presupuestos cerrados. El alcance, las integraciones y el mantenimiento se definen tras conocer el caso.</p>
+        <div><span class="eyebrow">Formas de colaborar</span><h2 id="offer-title">Un alcance claro antes de gastar un euro.</h2></div>
+        <p>Tres formas de empezar. Son referencias, no presupuestos automáticos: cada proyecto se define después de entender el proceso.</p>
       </div>
       <div class="offer-grid">
         <article class="offer reveal">
           <span class="offer-badge">Problema puntual</span><h3>Quick win</h3>
           <div class="price">900 € <small>desde · proyecto</small></div>
           <p>Para resolver una tarea repetitiva o un cuello de botella concreto.</p>
-          <ul><li>Diagnóstico y alcance acotado</li><li>Automatización, integración o panel sencillo</li><li>Entrega y guía de uso</li><li>Plazo orientativo: 1–2 semanas</li></ul>
-          <a class="offer-link" href="#contacto" data-service-choice="Quick win">Consultar este servicio ↗</a>
+          <ul><li>Diagnóstico y alcance acotado</li><li>Automatización, integración o panel sencillo</li><li>Entrega y guía de uso</li><li>Calendario acordado según alcance</li></ul>
+          <a class="offer-link" href="#contacto" data-service-choice="Quick win">Hablar de este servicio ↗</a>
         </article>
         <article class="offer featured reveal">
           <span class="offer-badge">Varios pasos conectados</span><h3>Sistema a medida</h3>
           <div class="price">4.000 € <small>desde · proyecto</small></div>
           <p>Para cuando el problema atraviesa herramientas y equipos.</p>
-          <ul><li>Mapa del proceso y arquitectura</li><li>Desarrollo e integraciones acordadas</li><li>Pruebas, documentación y traspaso</li><li>Plazo orientativo: 3–6 semanas</li></ul>
+          <ul><li>Mapa del proceso y arquitectura</li><li>Desarrollo e integraciones acordadas</li><li>Pruebas, documentación y traspaso</li><li>Hitos y fechas por presupuesto</li></ul>
           <a class="offer-link" href="#contacto" data-service-choice="Sistema a medida">Consultar este servicio ↗</a>
         </article>
         <article class="offer reveal">
@@ -227,13 +198,13 @@
   <section class="section" id="casos" aria-labelledby="case-title">
     <div class="shell">
       <div class="section-head">
-        <div><span class="eyebrow">Experiencia aplicada</span><h2 id="case-title">Problemas reales. Sistemas concretos.</h2></div>
-        <p>Tres trabajos documentados que muestran diferentes maneras de abordar operaciones. Un caso es público; los otros dos muestran el enfoque sin exponer datos ni reglas de negocio privadas.</p>
+        <div><span class="eyebrow">Experiencia aplicada</span><h2 id="case-title">Trabajo aplicado, no promesas vacías.</h2></div>
+        <p>Tres experiencias documentadas. Puedes ver el trabajo y entender las decisiones; los sistemas internos conservan su información privada.</p>
       </div>
       <div class="case-studies">
         <article class="study-card reveal">
           <div class="study-top"><span class="kicker">01 · CUSTOMER OPERATIONS</span><span class="study-label">Caso público</span></div>
-          <h3>Bodytone · Soporte conectado de principio a fin.</h3>
+          <div class="case-visual case-visual-support" aria-hidden="true"><span>CONSULTA ENTRA</span><div><b>Centro de ayuda</b><i>↓</i><b>Clasificación</b><i>↓</i><b>Seguimiento</b></div><small>CLIENTE → EQUIPO → RESOLUCIÓN</small></div><h3>Bodytone · Soporte conectado de principio a fin.</h3>
           <p class="study-problem"><strong>Necesidad:</strong> clientes con consultas distintas y equipos que requieren información y seguimiento claros.</p>
           <p><strong>Enfoque:</strong> Help Center, formularios estructurados, clasificación, enrutado en Zendesk y reporting operativo.</p>
           <div class="study-scope"><span>Zendesk</span><span>Customer Success</span><span>Workflows</span></div>
@@ -242,7 +213,7 @@
         </article>
         <article class="study-card reveal">
           <div class="study-top"><span class="kicker">02 · PRICING / OPERACIONES</span><span class="study-label study-label-private">Lógica privada</span></div>
-          <h3>Calculadora de gimnasios · De variables a presupuesto.</h3>
+          <div class="case-visual case-visual-pricing" aria-hidden="true"><span>REGLAS DE NEGOCIO</span><div class="case-eq"><b>Datos</b><i>+</i><b>200+ reglas</b><i>→</i><b>Propuesta</b></div><small>FLUJO GUIADO · CONTROL DE EXCEPCIONES</small></div><h3>Calculadora de gimnasios · De variables a presupuesto.</h3>
           <p class="study-problem"><strong>Necesidad:</strong> presupuestos que dependen de equipamiento, plano, tarifas, transporte y excepciones.</p>
           <p><strong>Enfoque:</strong> motor de más de 200 reglas documentadas, flujo guiado y propuesta estructurada para revisión.</p>
           <div class="study-scope"><span>Reglas</span><span>Pricing</span><span>Apps Script</span></div>
@@ -251,7 +222,7 @@
         </article>
         <article class="study-card reveal">
           <div class="study-top"><span class="kicker">03 · SALES OPERATIONS</span><span class="study-label study-label-private">Sistema privado</span></div>
-          <h3>Outreach GenAI · Prospección con criterio y control.</h3>
+          <div class="case-visual case-visual-sales" aria-hidden="true"><span>OPERACIONES COMERCIALES</span><div><b>Contexto</b><i>→</i><b>Personalización</b><i>→</i><b>Revisión humana</b></div><small>SECUENCIA CONTROLADA · NÚCLEO PRIVADO</small></div><h3>Outreach GenAI · Prospección con criterio y control.</h3>
           <p class="study-problem"><strong>Necesidad:</strong> estructurar prospección, contexto comercial y seguimiento sin depender de tareas manuales dispersas.</p>
           <p><strong>Enfoque:</strong> automatización de estados y personalización asistida, con reglas y supervisión humana.</p>
           <div class="study-scope"><span>Sales Ops</span><span>Automatización</span><span>IA asistida</span></div>
@@ -268,8 +239,8 @@
       <div class="calculator reveal">
         <div class="calc-copy">
           <span class="eyebrow">Calculadora</span>
-          <h2 id="calc-title">¿Cuánto te cuesta seguir haciéndolo a mano?</h2>
-          <p>Calcula el coste aproximado del tiempo invertido en un proceso. Es un punto de partida para conversar, no una promesa de ahorro ni un presupuesto.</p>
+          <h2 id="calc-title">Ponle una cifra al trabajo repetido.</h2>
+          <p>Calcula cuánto tiempo dedica hoy el equipo a una tarea. No todo es automatizable: esto es coste de tiempo, no ahorro garantizado.</p>
         </div>
         <div class="calc-panel">
           <div class="fields">
@@ -279,7 +250,7 @@
           </div>
           <div class="calc-result" aria-live="polite">
             <div class="result-value" id="annualCost">0 €</div>
-            <div class="result-label">fricción anual estimada</div>
+            <div class="result-label">coste anual del tiempo invertido</div>
             <div class="result-foot" id="annualDetail">Calculando…</div>
           </div>
         </div>
@@ -290,32 +261,44 @@
   <section class="section" id="proceso" aria-labelledby="process-title">
     <div class="shell">
       <div class="section-head">
-        <div><span class="eyebrow">Proceso</span><h2 id="process-title">Primero entendemos el sistema. Luego lo programamos.</h2></div>
+        <div><span class="eyebrow">Proceso</span><h2 id="process-title">De una conversación a una entrega usable.</h2></div>
         <p>Una colaboración empieza con el proceso que falla y termina con una entrega entendible, una persona responsable y criterios de revisión.</p>
       </div>
       <div class="process-grid">
-        <article class="process-step reveal"><span class="num">01</span><h3>Mapear</h3><p>Quién hace qué, con qué datos, en qué herramientas y dónde aparece la fricción.</p></article>
-        <article class="process-step reveal"><span class="num">02</span><h3>Arquitectura</h3><p>Definir reglas, límites, integraciones, ownership y qué no debe automatizarse.</p></article>
-        <article class="process-step reveal"><span class="num">03</span><h3>Construir</h3><p>Resolver con la pieza mínima que haga el trabajo: fórmula, script, app, API o sistema.</p></article>
-        <article class="process-step reveal"><span class="num">04</span><h3>Operar</h3><p>Medir, documentar y dejar el sistema preparado para seguir evolucionando.</p></article>
+        <article class="process-step reveal"><span class="num">01</span><h3>Entender</h3><p>Quién hace qué, con qué datos, en qué herramientas y dónde aparece la fricción.</p></article>
+        <article class="process-step reveal"><span class="num">02</span><h3>Delimitar</h3><p>Definir reglas, límites, integraciones, ownership y qué no debe automatizarse.</p></article>
+        <article class="process-step reveal"><span class="num">03</span><h3>Resolver</h3><p>Resolver con la pieza mínima que haga el trabajo: fórmula, script, app, API o sistema.</p></article>
+        <article class="process-step reveal"><span class="num">04</span><h3>Entregar</h3><p>Medir, documentar y dejar el sistema preparado para seguir evolucionando.</p></article>
       </div>
     </div>
   </section>
 
-  <section class="section" id="contacto" aria-labelledby="contact-title">
+  <section class="section-tight faq-section" id="preguntas" aria-labelledby="faq-title">
+  <div class="shell faq-layout"><div><span class="eyebrow">Preguntas habituales</span><h2 id="faq-title">Sin letra pequeña técnica.</h2><p>La mejor automatización es la que resuelve un problema sin convertirse en otro.</p></div>
+  <div class="faq-items">
+    <details><summary>¿Tengo que cambiar las herramientas que ya uso?<span aria-hidden="true">+</span></summary><p>No necesariamente. Primero revisamos el CRM, las hojas y las aplicaciones actuales. Cambiar una herramienta solo tiene sentido cuando la alternativa compensa.</p></details>
+    <details><summary>¿Trabajas con negocios pequeños?<span aria-hidden="true">+</span></summary><p>Sí. Podemos comenzar por un único proceso de alcance pequeño y evolucionarlo después. No hace falta contratar un desarrollo completo de entrada.</p></details>
+    <details><summary>¿Usas inteligencia artificial para todo?<span aria-hidden="true">+</span></summary><p>No. Cuando bastan reglas claras, usamos reglas claras. La IA se incorpora solo si mejora el proceso y existen controles sobre sus resultados.</p></details>
+    <details><summary>¿Qué pasa con los datos y el mantenimiento?<span aria-hidden="true">+</span></summary><p>Antes de construir se acuerdan acceso, privacidad, documentación, responsables y necesidades de mantenimiento. Ningún dato de clientes se introduce en la demo pública del laboratorio.</p></details>
+  </div></div>
+</section><section class="section" id="contacto" aria-labelledby="contact-title">
     <div class="shell contact">
       <div class="contact-main reveal">
         <span class="eyebrow">Contacto</span>
-        <h2 id="contact-title">Cuéntame qué te está haciendo perder tiempo.</h2>
-        <p class="contact-lead">Describe el problema en tus palabras. Revisaremos qué herramientas usas, qué se puede simplificar y si tiene sentido construir algo. Este formulario <strong>no envía nada automáticamente</strong>: prepara un correo que tú decides enviar.</p>
+        <h2 id="contact-title">Cuéntame el problema. Empecemos por ahí.</h2>
+        <p class="contact-lead">Describe qué tarea os hace perder tiempo, qué herramientas usáis y qué cambiarías. Puedes pedir una conversación inicial sin comprometerte con un desarrollo.</p>
 
         <div class="brief-flow" aria-label="Flujo de contacto">
-          <div class="flow-item"><b>01</b><span>Completa el brief</span></div>
-          <div class="flow-item"><b>02</b><span>Revisa el correo</span></div>
-          <div class="flow-item"><b>03</b><span>Envía y acuerda una llamada</span></div>
+          <div class="flow-item"><b>01</b><span>Describe tu proceso</span></div>
+          <div class="flow-item"><b>02</b><span>Envía tu consulta</span></div>
+          <div class="flow-item"><b>03</b><span>Hablamos del siguiente paso</span></div>
         </div>
 
-        <form class="form" id="briefForm">
+        <form class="form" id="briefForm" action="https://formsubmit.co/gracianbaenagonzalez@gmail.com" method="POST">
+          <input type="hidden" name="_subject" value="Nueva consulta · RevOps Studio">
+          <input type="hidden" name="_captcha" value="true">
+          <input type="hidden" name="_next" value="https://gracianb.github.io/revops-studio/gracias.html?via=proveedor">
+          <div class="form-honeypot" aria-hidden="true"><label for="websiteExtra">Deja este campo vacío</label><input name="_honey" id="websiteExtra" tabindex="-1" autocomplete="off"></div>
           <div class="form-grid">
             <div class="full">
               <label class="form-label" for="servicio">¿Qué tipo de ayuda buscas? (opcional)</label>
@@ -345,29 +328,29 @@
               <label class="form-label" for="horas">Horas aproximadas por semana (opcional)</label>
               <input class="form-control" id="horas" name="horas" type="number" min="0" max="80" step="0.5" placeholder="4">
             </div>
-            <div>
+            <div class="full">
               <label class="form-label" for="dolor">¿Qué está pasando?</label>
               <textarea class="form-control" id="dolor" name="dolor" maxlength="600" placeholder="Por ejemplo: copiamos pedidos de una hoja al CRM cada mañana." required></textarea>
             </div>
           </div>
-          <div class="form-foot">
-            <button class="btn btn-primary" type="submit">Preparar mi correo →</button>
-            <p class="legal">Sin envío automático. La siguiente pantalla permite revisar y copiar el mensaje. No pegues contraseñas ni datos personales de terceros.</p>
+          <div class="full form-consent"><label><input type="checkbox" id="privacyConsent" name="consentimiento" value="sí" required> He leído la <a href="./privacidad.html" target="_blank" rel="noopener">información de privacidad</a> y autorizo el envío de esta consulta para recibir una respuesta.</label></div><div class="form-foot">
+            <button class="btn btn-primary" id="briefSubmit" type="submit">Enviar solicitud ↗</button><a class="btn btn-secondary" id="briefEmailFallback" href="mailto:gracianbaenagonzalez@gmail.com?subject=Consulta%20RevOps%20Studio">Prefiero escribir un correo</a>
+            <p class="legal">Al enviar, tus datos se transmiten a FormSubmit para remitir la consulta a mi correo. Requiere que la recepción esté activada. Puedes usar el correo directo en cualquier momento. Lee la <a href="./privacidad.html">información de privacidad</a>. No incluyas contraseñas ni datos sensibles.</p>
           </div>
           <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
         </form>
       </div>
 
       <aside class="contact-aside reveal">
-        <div class="aside-title">Qué pasa después</div>
+        <div class="aside-title">Una primera conversación, sin teatro comercial</div>
         <ul>
-          <li><strong>01 · Revisamos</strong> el problema y el entorno actual.</li>
-          <li><strong>02 · Delimitamos</strong> la mejora y qué no incluye.</li>
-          <li><strong>03 · Proponemos</strong> un alcance y presupuesto.</li>
-          <li><strong>04 · Construimos</strong> solo cuando tiene sentido.</li>
+          <li><strong>01 · Contexto</strong> sobre el problema y herramientas actuales.</li>
+          <li><strong>02 · Viabilidad</strong> de una solución razonable.</li>
+          <li><strong>03 · Propuesta</strong> con entregables y coste orientativo.</li>
+          <li><strong>04 · Entrega</strong> probada y documentada si avanzamos.</li>
         </ul>
 
-        <div class="contact-links">
+        <a class="contact-booking" href="https://calendar.app.google/n99psBFktwYyoAWi9" target="_blank" rel="noopener" data-track="calendar" data-place="contact">Prefiero una llamada inicial <span aria-hidden="true">↗</span><small>Consulta la disponibilidad en el calendario.</small></a><div class="contact-links">
           <a class="contact-link" href="mailto:gracianbaenagonzalez@gmail.com?subject=RevOps%20Studio%20%7C%20Proyecto"><span><small>Email</small><strong>gracianbaenagonzalez@gmail.com</strong></span><span aria-hidden="true">↗</span></a>
           <a class="contact-link" href="https://www.linkedin.com/in/gracianbaena/" target="_blank" rel="noopener"><span><small>LinkedIn</small><strong>Perfil profesional</strong></span><span aria-hidden="true">↗</span></a>
           <a class="contact-link" href="https://gracianb.github.io/GracianB/" target="_blank" rel="noopener"><span><small>Hub</small><strong>Portfolio central</strong></span><span aria-hidden="true">↗</span></a>
@@ -377,136 +360,10 @@
     </div>
   </section>
 
-  <section class="section-tight proof-section" id="prueba" aria-labelledby="proof-title">
-    <div class="shell">
-      <div class="section-head">
-        <div><span class="eyebrow">Quién construye las soluciones</span><h2 id="proof-title">Entender el negocio y saber ejecutar.</h2></div>
-        <p>Soy Gracián Baena. Mi experiencia conecta Customer Success, operaciones, datos y desarrollo. Este estudio reúne esa perspectiva en proyectos concretos.</p>
-      </div>
-      <div class="proof-grid">
-        <article class="proof-card proof-card-primary reveal"><span class="kicker">Experiencia</span><h3>16+ años entre cliente, operaciones y tecnología.</h3><p>Mi punto de partida son los problemas de los equipos. Después elijo herramientas y construyo solo lo necesario.</p><div class="proof-tags"><span>Customer Success</span><span>Data</span><span>Operations</span><span>Automation</span></div></article>
-        <article class="proof-card reveal"><span class="kicker">Prueba verificable</span><h3>Hay código, demos y decisiones visibles.</h3><p>El laboratorio RevOps incluye un motor de decisión simulado y pruebas automáticas. No se presenta como integración real con un CRM.</p><div class="proof-meta"><b>V40</b><span>300+ pruebas en el repositorio</span><span>demo local</span></div></article>
-        <article class="proof-card proof-card-cta reveal"><span class="kicker">Explorar trayectoria</span><h3>Más contexto, sin mezclarlo con la oferta.</h3><p>Mi portfolio profesional y GitHub contienen los proyectos y la profundidad técnica para quien quiera revisarlos.</p><div class="proof-actions"><a class="btn btn-secondary" href="https://gracianb.github.io/professional-deck/" target="_blank" rel="noopener" data-track="proof-deck" data-place="proof">Portfolio ↗</a><a class="text-link" href="https://www.linkedin.com/in/gracianbaena/" target="_blank" rel="noopener" data-track="proof-linkedin" data-place="proof">LinkedIn ↗</a></div></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="ecosistema" aria-labelledby="eco-title">
-    <div class="shell">
-      <div class="section-head">
-        <div><span class="eyebrow">Portfolio ampliado</span><h2 id="eco-title">Otros proyectos que demuestran capacidad de ejecución.</h2></div>
-        <p>No son servicios empaquetados ni casos con resultados comerciales inventados. Son pruebas de diseño, desarrollo e integración de diferentes tecnologías.</p>
-      </div>
-
-      <div class="ecosystem">
-        <article class="product-card wide reveal">
-          <div class="product-top"><span class="product-icon" aria-hidden="true">⌁</span><span class="badge live">Live</span></div>
-          <h3>Vortex App</h3>
-          <p>Pieza WebGL. El cursor mueve los puntos. Prueba de interfaz, motion y ejecución frontend.</p>
-          <div class="product-tags"><span class="product-tag">WebGL</span><span class="product-tag">Vercel</span><span class="product-tag">Interface</span></div>
-          <a class="product-link" href="https://vortex-gilt-xi.vercel.app/" target="_blank" rel="noopener">Abrir →</a>
-        </article>
-
-        <article class="product-card reveal">
-          <div class="product-top"><span class="product-icon" aria-hidden="true">◒</span><span class="badge live">Live</span></div>
-          <h3>Project Ohana</h3>
-          <p>Platformer Canvas 2D. Isla Hoku, 10 salas, 10 personajes. Producto interactivo construido desde cero.</p>
-          <div class="product-tags"><span class="product-tag">Canvas 2D</span><span class="product-tag">JavaScript</span><span class="product-tag">GitHub Pages</span></div>
-          <a class="product-link" href="https://gracianb.github.io/project-ohana/" target="_blank" rel="noopener">Explorar →</a>
-        </article>
-
-        <article class="product-card reveal">
-          <div class="product-top"><span class="product-icon" aria-hidden="true">◌</span><span class="badge repo">Repo</span></div>
-          <h3>AiGoritmo Lab</h3>
-          <p>Laboratorio Python + FastAPI para backends e integración de LLMs.</p>
-          <div class="product-tags"><span class="product-tag">Python</span><span class="product-tag">FastAPI</span><span class="product-tag">LLMs</span></div>
-          <a class="product-link" href="https://github.com/GracianB/aigoritmo" target="_blank" rel="noopener">Repositorio →</a>
-        </article>
-
-        <article class="product-card reveal">
-          <div class="product-top"><span class="product-icon" aria-hidden="true">◍</span><span class="badge live">Live</span></div>
-          <h3>Yoga Instructor</h3>
-          <p>Portal de práctica ES/EN. Prueba de producto, contenido, responsive y cuidado de interfaz.</p>
-          <div class="product-tags"><span class="product-tag">ES/EN</span><span class="product-tag">Responsive</span></div>
-          <a class="product-link" href="https://gracianb.github.io/yoga-instructor/" target="_blank" rel="noopener">Ver portal →</a>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section-tight" aria-labelledby="flagship-title">
-    <div class="shell">
-      <div class="section-head">
-        <div><span class="eyebrow">Core system</span><h2 id="flagship-title">La arquitectura que no se enseña completa.</h2></div>
-        <p>Una parte del ecosistema existe como infraestructura privada. Se demuestra la capacidad sin publicar el núcleo propietario.</p>
-      </div>
-
-      <div class="case-grid">
-        <article class="case-card reveal">
-          <span class="kicker">Private / B2B</span>
-          <h3>Navarmedia Outreach</h3>
-          <p>Motor propietario de prospección B2B y operaciones comerciales: CRM, automatización, IA y control de estados en procesos reales.</p>
-          <div class="case-tags"><span class="tag">Google Apps Script</span><span class="tag">JavaScript</span><span class="tag">Multi-LLM</span><span class="tag">CRM</span><span class="tag">Traceability</span></div>
-        </article>
-        <aside class="surface reveal">
-          <div class="surface-head"><span class="kicker">System surface</span><span class="status">private core</span></div>
-          <div class="surface-list">
-            <div class="surface-row"><span>Contact data</span><b>STRUCTURED</b></div>
-            <div class="surface-row"><span>Scoring / rules</span><b>CONTROLLED</b></div>
-            <div class="surface-row"><span>AI layer</span><b>MULTI-LLM</b></div>
-            <div class="surface-row"><span>Execution</span><b>GATED</b></div>
-            <div class="surface-row"><span>Traceability</span><b>LOGGED</b></div>
-          </div>
-        </aside>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="stack" aria-labelledby="stack-title">
-    <div class="shell">
-      <div class="section-head">
-        <div><span class="eyebrow">Stack</span><h2 id="stack-title">La herramienta importa. El criterio importa más.</h2></div>
-        <p>Elijo herramientas que encajan en el entorno existente. No hace falta adoptar una tecnología nueva si una solución más simple resuelve el problema.</p>
-      </div>
-      <div class="stack-grid">
-        <article class="stack-card reveal"><h3>Frontend & Interfaces</h3><p>HTML, CSS, JavaScript, Canvas, WebGL, responsive UX, accesibilidad.</p></article>
-        <article class="stack-card reveal"><h3>Backend & Automation</h3><p>Python, FastAPI, Apps Script, integraciones, webhooks, reglas y workflows.</p></article>
-        <article class="stack-card reveal"><h3>Data & AI</h3><p>SQL, Pandas, Power BI, DAX, Power Query, LLMs, automatización asistida.</p></article>
-        <article class="stack-card reveal"><h3>Delivery & DevOps</h3><p>GitHub, GitHub Pages, Vercel, validaciones, documentación y control de cambios.</p></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section-tight" id="sistema" aria-labelledby="system-title">
-    <div class="shell">
-      <div class="metrics reveal" aria-label="Prueba rápida">
-        <div class="metric"><b>16+</b><span>años conectando negocio, cliente y tecnología</span></div>
-        <div class="metric"><b>300+</b><span>pruebas automáticas del laboratorio público</span></div>
-        <div class="metric"><b>0</b><span>backend necesario para la demo</span></div>
-        <div class="metric"><b>1</b><span>decisión visible de principio a fin</span></div>
-      </div>
-
-      <div class="section-head" style="margin-top:46px">
-        <div>
-          <span class="eyebrow">Sistema</span>
-          <h2 id="system-title">Del caos operativo a un sistema.</h2>
-        </div>
-        <p>Primero se entiende el flujo. Después se decide qué automatizar, qué medir y qué debe seguir bajo control humano.</p>
-      </div>
-
-      <div class="system-grid">
-        <article class="system-card reveal"><span class="num">01</span><h3>Fuentes</h3><p>CRM, hojas, correo, formularios, documentación y señales operativas.</p><div class="arrow">INPUT →</div></article>
-        <article class="system-card reveal"><span class="num">02</span><h3>Orquestación</h3><p>Reglas, estados, integraciones y automatizaciones que eliminan trabajo repetido.</p><div class="arrow">FLOW →</div></article>
-        <article class="system-card reveal"><span class="num">03</span><h3>Inteligencia</h3><p>Datos, IA y contexto cuando realmente reducen fricción o mejoran decisiones.</p><div class="arrow">SIGNAL →</div></article>
-        <article class="system-card reveal"><span class="num">04</span><h3>Decisión</h3><p>Salidas observables, responsables claros y control sobre lo que el sistema ejecuta.</p><div class="arrow">ACTION →</div></article>
-      </div>
-    </div>
-  </section>
-
-<section class="section-tight lab-teaser" id="playground" aria-labelledby="playground-title">
+  <section class="section-tight about-strip" id="quien" aria-labelledby="who-title"><div class="shell about-inner"><div><span class="eyebrow">Quién hay detrás</span><h2 id="who-title">Negocio primero. Código cuando hace falta.</h2><p>Soy Gracián Baena. Llevo más de 16 años entre atención al cliente, operaciones, datos y desarrollo. El valor está en entender cómo trabaja tu equipo antes de proponer una solución.</p></div><div class="about-actions"><a href="https://gracianb.github.io/professional-deck/" class="btn btn-secondary" target="_blank" rel="noopener" data-track="proof-deck">Mi trayectoria ↗</a><a href="https://www.linkedin.com/in/gracianbaena/" class="text-link" target="_blank" rel="noopener">LinkedIn ↗</a></div></div></section><section class="section-tight lab-teaser" id="playground" aria-labelledby="playground-title">
 <div class="shell"><div class="lab-teaser-panel">
-<div><span class="eyebrow">Prueba técnica opcional</span><h2 id="playground-title">¿Quieres comprobar cómo construyo?</h2>
-<p>El motor V40 permite explorar scoring, pipeline, riesgos y decisiones sobre datos sintéticos. Es una demo del criterio técnico, no el servicio que se contrata ni un SaaS conectado a tu negocio.</p></div>
+<div><span class="eyebrow">Prueba técnica opcional</span><h2 id="playground-title">¿Quieres comprobar el motor por dentro?</h2>
+<p>El Control Room V40 es una simulación local con datos ficticios, scoring y decisiones supervisadas. Está separado de los servicios: no es un CRM conectado ni un producto que se contrata.</p></div>
 <div class="lab-teaser-actions"><a class="btn btn-primary" href="./laboratorio.html">Abrir Control Room ↗</a>
 <a class="btn btn-secondary" href="https://github.com/GracianB/revops-studio" target="_blank" rel="noopener">Ver código ↗</a></div>
 </div></div></section>
@@ -519,11 +376,11 @@
       <small>Gracián Baena González · Murcia, España. Diagnóstico de proceso, sistemas operativos y ejecución técnica. Sin promesas de ahorro no medidas.</small>
     </div>
     <div class="footer-links">
-      <a href="./README.md">README</a>
+      <a href="./privacidad.html">Privacidad</a>
       <a href="https://github.com/GracianB/revops-studio" target="_blank" rel="noopener">Source</a>
       <a href="https://github.com/GracianB" target="_blank" rel="noopener">GitHub</a>
       <a href="https://www.linkedin.com/in/gracianbaena/" target="_blank" rel="noopener">LinkedIn</a>
-      <a href="./gracias.html">Flujo del brief</a>
+      <a href="./laboratorio.html">Laboratorio V40</a>
     </div>
   </div>
 </footer>

@@ -1,18 +1,20 @@
 <!doctype html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark"><meta name="theme-color" content="#05070b">
+<meta name="color-scheme" content="dark light"><meta name="theme-color" content="#0d141d">
 <meta name="robots" content="noindex,follow">
 <meta name="description" content="Laboratorio interactivo de RevOps Studio: scoring, forecast, decisiones y trazabilidad sobre datos sintéticos, sin CRM ni ejecución externa.">
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<script>try{const t=localStorage.getItem("revops-theme");document.documentElement.dataset.theme=t==="dark"||t==="light"?t:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch{document.documentElement.dataset.theme="dark"}</script>
 <link rel="stylesheet" href="./assets/css/main.css">
+<script src="./assets/js/theme.js" defer></script>
 <script type="module" src="./assets/js/app.js" defer></script>
 <title>Control Room | Laboratorio técnico RevOps Studio</title></head>
 <body class="lab-page">
 <a class="skip-link" href="#lab-main">Saltar al contenido</a>
 <header class="nav-wrap"><nav class="nav" aria-label="Navegación del laboratorio">
 <a class="brand" href="./" aria-label="RevOps Studio, volver a servicios"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">REVOPS<span>STUDIO</span></span></a>
-<div class="nav-actions" style="margin-left:auto"><a class="btn btn-secondary" href="./#servicios">Ver servicios</a><a class="nav-cta" href="./#contacto">Plantear proyecto ↗</a></div>
+<div class="nav-actions" style="margin-left:auto"><button type="button" class="theme-toggle" data-theme-toggle aria-label="Cambiar a modo claro" aria-pressed="false"><span data-theme-icon aria-hidden="true">◐</span><span class="theme-label">Tema</span></button><a class="btn btn-secondary" href="./#servicios">Ver servicios</a><a class="nav-cta" href="./#contacto">Plantear proyecto ↗</a></div>
 </nav></header>
 <main id="lab-main">
 <div class="shell lab-page-intro"><span class="eyebrow">Laboratorio técnico / V40</span>
@@ -1019,7 +1021,7 @@
 
         <div class="side-block">
           <span class="kicker">Audit log</span>
-          <div id="auditLog" class="audit-log" aria-live="polite"></div>
+          <div id="auditLog" tabindex="0" aria-label="Registro de auditoría desplazable" class="audit-log" aria-live="polite"></div>
         </div>
       </aside>
     </div>

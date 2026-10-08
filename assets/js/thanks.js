@@ -1,79 +1,63 @@
 (() => {
   "use strict";
-
   const STORAGE_KEY = "revops-studio:brief:v2";
   const TO = "gracianbaenagonzalez@gmail.com";
-
-  const $ = (id) => document.getElementById(id);
-  const summary = $("briefSummary");
-  const status = $("thanksStatus");
-  const send = $("sendBrief");
-  const copy = $("copyBrief");
-
-  const fallback = {
-    nombre: "Hola",
-    email: "",
-    herramientas: "",
-    horas: "",
-    dolor: "",
-    servicio: ""
-  };
-
-  let data = fallback;
-
+  const $ = id => document.getElementById(id);
+  const summary = $("briefSummary"), status = $("thanksStatus");
+  const send = $("sendBrief"), copy = $("copyBrief");
+  const title = $("thanks-title"), explanation = $("deliveryExplanation");
+  const acceptedByProvider = new URLSearchParams(location.search).get("via") === "proveedor";
+  const empty = {nombre:"", email:"", servicio:"", herramientas:"", horas:"", dolor:""};
+  let brief = empty;
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
-    data = stored ? { ...fallback, ...JSON.parse(stored) } : fallback;
-  } catch {
-    data = fallback;
-  }
+    if (stored) brief = {...empty,...JSON.parse(stored)};
+  } catch { /* A visit without session storage must still work. */ }
 
-  const mailBody = [
+  const body = [
     "Hola Gracián,",
     "",
-    "Te envío el brief de RevOps Studio.",
+    "Te escribo sobre un posible proyecto de RevOps Studio.",
     "",
-    "Nombre: " + data.nombre,
-    "Servicio: " + (data.servicio || "Sin especificar"),
-    "Email: " + data.email,
-    "Herramientas actuales: " + data.herramientas,
-    "Horas / semana: " + data.horas,
-    "Qué duele: " + data.dolor,
-    "",
-    "Quiero revisar el proceso en una sesión de diagnóstico de 30–45 min.",
+    "Nombre: " + brief.nombre,
+    "Email: " + brief.email,
+    "Servicio: " + (brief.servicio || "Por definir"),
+    "Herramientas actuales: " + (brief.herramientas || "Sin especificar"),
+    "Horas semanales: " + (brief.horas || "Sin especificar"),
+    "Problema: " + brief.dolor,
     "",
     "Gracias."
   ].join("\n");
+  send.href = "mailto:" + TO + "?subject=" + encodeURIComponent("RevOps Studio | Consulta") +
+    "&body=" + encodeURIComponent(body);
 
-  const subject = "RevOps Studio | Diagnóstico | " + (data.nombre || "Brief");
-  const mailto = "mailto:" + TO +
-    "?subject=" + encodeURIComponent(subject) +
-    "&body=" + encodeURIComponent(mailBody);
-
-  send.href = mailto;
-
-  summary.textContent = [
-    data.nombre ? "Persona: " + data.nombre : "Persona: no indicada",
-    data.servicio ? "Servicio: " + data.servicio : "Servicio: sin especificar",
-    data.herramientas ? "Herramientas: " + data.herramientas : "Herramientas: no indicadas",
-    data.horas ? "Horas / semana: " + data.horas : "Horas / semana: no indicadas",
-    data.dolor ? "Fricción: " + data.dolor : "Fricción: no indicada"
-  ].join(" · ");
-
-  send.addEventListener("click", () => {
-    if (typeof window.plausible === "function") {
-      window.plausible("Brief email", { props: { place: "gracias" } });
-    }
-  });
+  if (summary) {
+    summary.textContent = brief.dolor ? [
+      "Nombre: " + (brief.nombre || "No indicado"),
+      "Servicio: " + (brief.servicio || "Por definir"),
+      "Herramientas: " + (brief.herramientas || "Sin indicar"),
+      "Necesidad: " + brief.dolor
+    ].join("\n") : "No hay datos guardados en esta pestaña. Puedes enviar un correo directo o reservar una llamada.";
+  }
+  if (acceptedByProvider) {
+    title.textContent = "Formulario tramitado por el proveedor.";
+    explanation.textContent = "El servicio de formularios ha indicado que acepta la solicitud. Eso no prueba todavía que haya llegado al buzón: la recepción requiere la activación inicial por su propietario. Puedes enviar también un correo directo.";
+    send.textContent = "Enviar también por correo ↗";
+    status.dataset.state = "info";
+    status.textContent = "No se ha confirmado la entrega final al destinatario.";
+  } else {
+    title.textContent = "Tu mensaje está preparado.";
+    explanation.textContent = "La solicitud todavía no se ha enviado si has abierto esta página directamente. Usa el botón de correo o vuelve al formulario.";
+  }
 
   copy?.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(mailBody);
+      await navigator.clipboard.writeText(body);
       status.dataset.state = "ok";
-      status.textContent = "Brief copiado al portapapeles.";
+      status.textContent = "Texto copiado. Puedes pegarlo en tu aplicación de correo.";
     } catch {
       status.dataset.state = "error";
-      status.textContent = "El navegador no permitió copiarlo. Usa el botón de email.";
+      status.textContent = "No fue posible copiar. Utiliza el botón de correo.";
     }
   });
 })();

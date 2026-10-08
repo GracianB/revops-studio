@@ -5,6 +5,8 @@ const root = process.cwd();
 const required = [
   "index.html",
   "laboratorio.html",
+  "privacidad.html",
+  "assets/js/theme.js",
   "assets/js/site.js",
   "gracias.html",
   "README.md",
