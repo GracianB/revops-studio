@@ -1,5 +1,7 @@
 // Lightweight RevOps Studio commercial interactions (no V40 engine imports).
+import { submissionState } from "./contact-response.js";
 const STORAGE_KEY = "revops-studio:brief:v2";
+const PENDING_KEY = "revops-studio:brief:pending";
 const ANALYTICS_EVENT = "Reservar";
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -132,12 +134,27 @@ function initBriefForm() {
   const updateFallback = () => {
     if (fallback) fallback.href = mailtoForBrief(collectBrief(form));
   };
+  // Restore only a failed attempt, never the consent or a successfully sent form.
+  try {
+    if (sessionStorage.getItem(PENDING_KEY) === "true") {
+      const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+      if (saved && typeof saved === "object") {
+        for (const name of ["nombre", "email", "herramientas", "horas", "dolor", "servicio"]) {
+          const field = form.elements.namedItem(name);
+          if (field && !field.value && typeof saved[name] === "string") field.value = saved[name];
+        }
+        status.dataset.state = "info";
+        status.textContent = "Hemos recuperado tu consulta pendiente en esta pestaña. El envío anterior no está confirmado. Revisa los datos antes de volver a enviarla.";
+      }
+    }
+  } catch { /* Storage may be unavailable or contain an invalid draft. */ }
   form.addEventListener("input", updateFallback);
   form.addEventListener("change", updateFallback);
   updateFallback();
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (submit.disabled) return;
     if (!form.checkValidity()) { form.reportValidity(); return; }
     const brief = collectBrief(form);
     if (qs("#websiteExtra")?.value.trim()) {
@@ -147,7 +164,9 @@ function initBriefForm() {
     }
     updateFallback();
     saveBrief(brief);
+    try { sessionStorage.setItem(PENDING_KEY, "true"); } catch { /* optional */ }
     submit.disabled = true;
+    form.setAttribute("aria-busy", "true");
     submit.textContent = "Enviando consulta…";
     status.dataset.state = "info";
     status.textContent = "Enviando a través del proveedor del formulario. Tus datos no se guardan en el repositorio.";
@@ -173,19 +192,19 @@ function initBriefForm() {
         signal: controller.signal
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || !(result.success === true || result.success === "true")) {
+      const outcome = submissionState(response.ok, result);
+      if (outcome !== "accepted") {
         const rejected = new Error("Provider rejected submission");
         rejected.status = response.status;
-        rejected.providerMessage = typeof result.message === "string" ? result.message : "";
+        rejected.activationRequired = outcome === "activation";
         throw rejected;
       }
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* optional */ }
       track("ContactSubmitted", { place: "landing" });
       window.location.assign("./gracias.html?via=proveedor");
     } catch (error) {
       status.dataset.state = "error";
-      const providerSaidActivation = /activat|confirm.*email|verif.*email/i.test(
-        typeof error?.providerMessage === "string" ? error.providerMessage : ""
-      );
+      const providerSaidActivation = error?.activationRequired === true;
       if (providerSaidActivation) {
         status.textContent = "El proveedor requiere que el propietario active el formulario desde el correo de FormSubmit. No hay entrega confirmada. Puedes escribirnos directamente por email.";
       } else if (error?.name === "AbortError") {
@@ -199,6 +218,7 @@ function initBriefForm() {
     } finally {
       clearTimeout(timeout);
       submit.disabled = false;
+      form.removeAttribute("aria-busy");
       submit.textContent = "Enviar solicitud ↗";
     }
   });
