@@ -157,6 +157,7 @@ $("workflowSource").addEventListener("input",()=>{
   undoSource=null;
   $("undoCorrection").disabled=true;
   invalidate("Has modificado las entradas. Ejecuta el proceso para actualizar los resultados.");
+  renderEmpty();
 });
 $("runWorkflow").addEventListener("click",()=>{
   try{
