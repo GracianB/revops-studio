@@ -4,7 +4,7 @@ import globals from "globals";
 const eslint = new ESLint({
   overrideConfigFile: true,
   overrideConfig: [{
-    files: ["assets/js/app.js","assets/js/site.js","assets/js/thanks.js"],
+    files: ["assets/js/app.js","assets/js/site.js","assets/js/thanks.js","assets/js/contact-response.js"],
     languageOptions: {
       ecmaVersion:"latest", sourceType:"module",
       globals: { ...globals.browser, ...globals.es2024 }
@@ -12,7 +12,7 @@ const eslint = new ESLint({
     rules: { "no-undef": "error" }
   }]
 });
-const results = await eslint.lintFiles(["assets/js/app.js","assets/js/site.js","assets/js/thanks.js"]);
+const results = await eslint.lintFiles(["assets/js/app.js","assets/js/site.js","assets/js/thanks.js","assets/js/contact-response.js"]);
 const messages = results.flatMap(result=>result.messages.map(m=>
   result.filePath + ":" + m.line + ":" + m.column + " " + m.message
 ));

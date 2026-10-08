@@ -114,6 +114,25 @@ try {
   await page.locator("#dolor").fill("Duplicamos datos entre herramientas y necesitamos una validación.");
   await page.locator("#privacyConsent").check();
 
+  // FormSubmit can request activation in an HTTP 200 success envelope.
+  await page.route("https://formsubmit.co/ajax/**", route=>route.fulfill({
+    status:200,contentType:"application/json",
+    body:JSON.stringify({success:true,message:"Please activate your form. Check your email."})
+  }));
+  await page.locator("#briefSubmit").click();
+  await page.locator("#formStatus[data-state='error']").waitFor();
+  assert.match(await page.locator("#formStatus").innerText(),/propietario active el formulario/);
+  assert.equal(new URL(page.url()).pathname,"/");
+  assert.equal(await page.locator("#briefSubmit").isEnabled(),true);
+  assert.equal(await page.locator("#briefForm").getAttribute("aria-busy"),null);
+  await page.unroute("https://formsubmit.co/ajax/**");
+  await page.reload();
+  assert.equal(await page.locator("#nombre").inputValue(),"Cliente de prueba");
+  assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  assert.match(await page.locator("#formStatus").innerText(),/recuperado tu consulta pendiente/);
+  assert.equal(await page.locator("#privacyConsent").isChecked(),false);
+  await page.locator("#privacyConsent").check();
+
   // No real messages leave CI. Test the error path and mailto data preservation.
   await page.route("https://formsubmit.co/ajax/**",route=>route.fulfill({
     status:503,contentType:"application/json",body:'{"success":false}'
@@ -132,6 +151,7 @@ try {
   await page.waitForURL(/gracias\.html\?via=proveedor/,{timeout:16000});
   assert.match(await page.locator("#deliveryExplanation").textContent(),/no prueba todavía que haya llegado/);
   assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem("revops-studio:brief:pending")),null);
   assert.deepEqual(errors,[],"Desktop runtime errors");
 
   const mobile=await browser.newPage({

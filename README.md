@@ -8,6 +8,8 @@ La web está alojada en GitHub Pages y no tiene servidor de formularios propio. 
 
 **Paso externo pendiente:** FormSubmit exige que el propietario confirme una vez el correo de activación tras el primer envío. Una respuesta HTTP de aceptación no demuestra recepción en la bandeja de entrada. No anunciar como entrega 100 % verificada hasta completar esa activación y una prueba extremo a extremo con correo recibido.
 
+Una respuesta que solicita activación se trata como pendiente incluso si incluye `success: true`: no abre la página de confirmación. Si el envío falla, la consulta se recupera al recargar la misma pestaña cuando el almacenamiento de sesión está disponible; el consentimiento debe marcarse de nuevo. El correo alternativo conserva los datos introducidos. Las pruebas de navegador simulan el proveedor y no envían consultas reales.
+
 Si el proveedor falla, el formulario no borra los datos: muestra una vía alternativa de correo `mailto:` precargada. También hay reserva de conversación a través del calendario existente. No se simulan contactos recibidos.
 
 La privacidad se explica en `privacidad.html`. Revisar cumplimiento final antes de ofrecer el servicio públicamente a terceros: alojamiento externo, tratamiento por FormSubmit y plazos de conservación.
