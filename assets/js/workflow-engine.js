@@ -177,3 +177,51 @@ export function exportResultCsv(result){
   }
   return "\uFEFF"+lines.join("\r\n")+"\r\n";
 }
+
+
+// Client-side amendments: always rebuild from the parsed CSV, not text substitution.
+// Record index is positional so even duplicate / empty IDs can be repaired safely.
+export function editWorkflowRecord(type,source,index,changes){
+  const config=SCENARIOS[type];
+  if(!config)throw Error("Escenario no reconocido.");
+  const parsed=parseDelimited(source);
+  if(parsed.headers.length!==config.columns.length ||
+     config.columns.some(column=>!parsed.headers.includes(column))){
+    throw Error("Cabeceras requeridas: "+config.columns.join("; ")+".");
+  }
+  if(!Number.isInteger(index) || index<0 || index>=parsed.rows.length){
+    throw Error("Selecciona una fila existente.");
+  }
+  if(!changes || typeof changes!=="object" || Array.isArray(changes)){
+    throw Error("Corrección no válida.");
+  }
+  for(const [column,value] of Object.entries(changes)){
+    if(!config.columns.includes(column))throw Error("Campo no permitido: "+column);
+    if(typeof value!=="string" || value.length>400)throw Error("Los campos deben tener 400 caracteres o menos.");
+  }
+  const fields=(values)=>values.map(value=>'"'+String(value??"").replace(/"/g,'""')+'"').join(";");
+  const lines=[fields(config.columns)];
+  parsed.rows.forEach((row,i)=>{
+    const values=config.columns.map(column=>i===index&&Object.hasOwn(changes,column)?changes[column]:row[column]);
+    lines.push(fields(values));
+  });
+  const edited=lines.join("\n");
+  // Check the same size, row and column contracts as a normal run.
+  runWorkflow(type,edited);
+  return edited;
+}
+
+// Only actionable records can enter the proposed queue. Closed/historical rows
+// are "listo" for bookkeeping but must NOT turn into new CRM/support actions.
+export function exportActionQueueCsv(result){
+  if(!result?.rows || !SCENARIOS[result.scenario])throw Error("Ejecuta el proceso primero.");
+  const eligible=result.rows.filter(row=>row.status==="listo" &&
+    !/histórico/i.test(row.action));
+  const names=[...result.columns,"acción propuesta","ejecución"];
+  const lines=[names.map(csvCell).join(";")];
+  for(const row of eligible){
+    lines.push([...result.columns.map(column=>row.values[column]),row.action,
+      "Preparado, NO ejecutado"].map(csvCell).join(";"));
+  }
+  return "\uFEFF"+lines.join("\r\n")+"\r\n";
+}

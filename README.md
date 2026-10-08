@@ -30,6 +30,18 @@ La web tiene ahora una mesa de trabajo **interactiva y ejecutable**, separada de
 
 **Importante:** se trata de una demostración local de reglas, no de una integración en producción. No pegues datos personales ni confidenciales. Todos los registros introducidos permanecen en la pestaña; si exportas el CSV, se guarda en el dispositivo. Los detalles de una integración real requieren alcance, permisos y revisión humana.
 
+### Producto útil · importación, corrección y revisión local
+
+La mesa de procesos `demo.html` ahora permite trabajar con **CSV propios, siempre anonimizados**; ya no exige corregir los registros editando todo el texto.
+
+- El botón **Importar CSV** lee archivos `.csv` o `.txt` localmente en el navegador (máx. 32 KB de archivo y 12.000 caracteres de contenido); valida las cabeceras del escenario antes de reemplazar los datos actuales. No hay peticiones para cargar archivos, ni almacenamiento persistente.
+- La tabla ofrece **Editar** en cada fila, incluso en duplicados. El formulario identifica los campos correspondientes, permite corregir ID, email, importe, fechas o estados, y ejecuta de nuevo todas las reglas tras guardar. El botón **Deshacer corrección** recupera los datos anteriores de esa edición sin persistirlos.
+- Filtros interactivos muestran **todos, bloqueados, a revisar o listos**. El filtro se mantiene al corregir y actualizar.
+- **Exportar cola lista** genera otro CSV, distinto del informe completo. Solo incluye las acciones listas para proponer, **excluye los históricos y cualquier registro bloqueado o pendiente de decisión**. La columna “ejecución” indica expresamente que está *preparado, NO ejecutado*. No se conecta con CRM, ERP ni Zendesk.
+- Los CSV exportados neutralizan los prefijos habituales de fórmulas de hojas de cálculo, incluidos los valores introducidos por el visitante. Se recomienda seguir importando únicamente conjuntos anonimizados.
+
+El motor puro `assets/js/workflow-engine.js` centraliza los cambios de fila y la separación de la cola. `workflow-demo.js` usa `textContent` y elementos DOM para mostrar los datos, sin interpretarlos como HTML. El laboratorio V40 no se modifica.
+
 ### Envío de consultas (activación verificada)
 
 La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.

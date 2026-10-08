@@ -149,6 +149,42 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#exportWorkflow").isEnabled(),true);
     const initial=await page.locator("#workflowSource").inputValue();
     assert.match(initial,/PED-101/);
+    // Product value: repair an actual duplicate via the interface, not textarea edits.
+    await page.locator('[data-workflow-filter="bloqueado"]').click();
+    assert.equal(await page.locator(".workbench-row:visible").count(),2);
+    await page.locator(".workbench-row:visible .workbench-row-edit").first().click();
+    assert.equal(await page.locator("#workflowEditForm").isVisible(),true);
+    await page.locator('#workflowEditFields input[name="pedido"]').fill("PED-999");
+    await page.locator("#saveWorkflowEdit").click();
+    assert.equal(await page.locator("#countBlocked").innerText(),"1");
+    assert.equal(await page.locator(".workbench-row:visible").count(),1);
+    assert.equal(await page.locator("#undoCorrection").isEnabled(),true);
+    await page.locator("#undoCorrection").click();
+    assert.equal(await page.locator("#countBlocked").innerText(),"2");
+    assert.equal(await page.locator("#undoCorrection").isDisabled(),true);
+    await page.locator('[data-workflow-filter="all"]').click();
+
+    // Import a real local CSV, export actionable records only, and recover from a bad file.
+    const ownCsv="pedido;cliente;email;total;estado\nNEW-1;Tienda;test@ejemplo.test;200;nuevo\nNEW-2;Tienda;;50;nuevo";
+    await page.locator("#importWorkflow").setInputFiles({name:"datos-prueba.csv",mimeType:"text/csv",buffer:Buffer.from(ownCsv)});
+    await page.waitForFunction(()=>document.querySelector("#countTotal")?.textContent==="2");
+    assert.equal(await page.locator("#countBlocked").innerText(),"1");
+    assert.equal(await page.locator("#exportActionQueue").isEnabled(),true);
+    const readyDownload=page.waitForEvent("download");
+    await page.locator("#exportActionQueue").click();
+    const readyFile=await readyDownload;
+    assert.match(readyFile.suggestedFilename(),/revops-cola-preparada-orders\.csv/);
+    const queueContent=await readFile(await readyFile.path(),"utf8");
+    assert.match(queueContent,/NEW-1/);
+    assert.doesNotMatch(queueContent,/NEW-2/);
+    const savedSource=await page.locator("#workflowSource").inputValue();
+    await page.locator("#importWorkflow").setInputFiles({
+      name:"invalid.csv",mimeType:"text/csv",buffer:Buffer.from("foo;bar\n1;2")
+    });
+    await page.locator("#workflowError").waitFor({state:"visible"});
+    assert.equal(await page.locator("#workflowSource").inputValue(),savedSource);
+    await page.locator("#runWorkflow").click();
+    assert.equal(await page.locator("#workflowError").isHidden(),true);
     await page.locator("#workflowSource").fill("pedido;cliente;email;total;estado\nA-1;Tienda;a@ejemplo.test;200;nuevo\nA-2;Tienda;email-invalido;50;nuevo");
     assert.equal(await page.locator("#exportWorkflow").isDisabled(),true);
     await page.locator("#runWorkflow").click();
