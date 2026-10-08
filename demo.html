@@ -37,6 +37,10 @@
       <button type="button" class="workbench-scenario" data-scenario="support" aria-pressed="false"><span>02 / CLIENTES</span><strong>Soporte y escalado</strong><small>Prioridad · incidencias · revisión</small></button>
       <button type="button" class="workbench-scenario" data-scenario="data" aria-pressed="false"><span>03 / DATOS</span><strong>Calidad y conciliación</strong><small>Fechas · cifras · anomalías</small></button>
     </div>
+    <section id="scenarioDiscard" class="workbench-discard" hidden aria-labelledby="scenarioDiscardTitle" role="group">
+      <div><h3 id="scenarioDiscardTitle">Tienes datos modificados en este proceso</h3><p id="scenarioDiscardDescription">Si cambias de proceso, perderás los cambios que has introducido en esta pestaña. Nada se ha guardado en un servidor.</p></div>
+      <div class="workbench-discard-actions"><button type="button" id="cancelScenarioDiscard">Seguir con mis datos</button><button type="button" id="confirmScenarioDiscard">Descartar y cambiar de proceso</button></div>
+    </section>
     <div class="workbench-recipes" aria-labelledby="recipe-title">
       <div><span class="workbench-section-index">ENTRADAS DE EJEMPLO · 6 POR ESCENARIO</span>
         <label for="workflowRecipe" id="recipe-title">¿Qué problema quieres explorar?</label>
@@ -66,12 +70,12 @@
       <section class="workbench-panel workbench-input" aria-labelledby="workbench-input-title">
         <div class="workbench-panel-head"><div><span>02 / ENTRADA</span><h3 id="workbench-input-title">Tus registros de prueba</h3></div><span class="workbench-local-label">SIN SUBIR ARCHIVOS</span></div>
         <p id="scenarioDescription" class="workbench-instructions">Valida pedidos, evita duplicados y aparta excepciones.</p>
-        <label class="workbench-editor-label" for="workflowSource">Datos delimitados por punto y coma o coma</label>
+        <label class="workbench-editor-label" for="workflowSource">Datos separados por punto y coma, coma o tabulación</label>
         <textarea id="workflowSource" spellcheck="false" rows="10" aria-describedby="sourceHelp" maxlength="12000"></textarea>
         <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador. Puedes editar un registro desde la tabla sin reescribir el CSV. Atajo: Ctrl + Intro para ejecutar.</p>
         <div class="workbench-import">
           <label for="importWorkflow" class="workbench-import-label">Importar un CSV del equipo (local)</label>
-          <input id="importWorkflow" type="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="importHelp">
+          <input id="importWorkflow" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" aria-describedby="importHelp">
           <p class="workbench-hint" id="importHelp">Se lee en esta pestaña, no se sube. Solo para datos de prueba o anonimizados. Puedes relacionar columnas con nombres diferentes antes de ejecutar.</p>
           <button class="workbench-map-open" id="openColumnMapper" type="button">Relacionar columnas de los datos pegados ↗</button>
         </div>
@@ -116,7 +120,9 @@
           <button class="btn btn-secondary" type="button" id="exportWorkflow" disabled title="Incluye los registros completos introducidos en la simulación">Exportar CSV completo ↗</button>
           <button class="btn btn-secondary" type="button" id="copyWorkflow" disabled>Copiar resumen</button>
           <button class="btn btn-secondary" type="button" id="exportInsights" disabled>Descargar informe explicativo ↗</button>
+          <button class="btn btn-secondary" type="button" id="exportVisible" disabled>Exportar solo filas visibles ↗</button>
           <button class="btn btn-secondary" type="button" id="exportActionQueue" disabled>Exportar cola lista (sin históricos)</button>
+          <p class="workbench-export-warning">Los CSV detallados incluyen valores de las filas mostradas, aunque sean ficticios o anonimizados. El informe explicativo no incluye esas filas.</p>
         </div>
       </section>
     </div>

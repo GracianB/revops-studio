@@ -278,3 +278,19 @@
 .workbench-recipe-controls select:focus-visible,.workbench-recipe-controls button:focus-visible,.workbench-sort:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 @media(max-width:900px){.workbench-recipes{grid-template-columns:1fr;gap:12px}.workbench-recipe-detail{grid-column:1}}
 @media(max-width:640px){.workbench-recipes{padding:17px}.workbench-recipe-controls{display:grid;grid-template-columns:1fr}.workbench-recipe-controls select,.workbench-recipe-controls button{width:100%;min-height:47px}.workbench-quality{padding:17px}.workbench-sort-label{margin-left:0;padding-bottom:0}.workbench-sort{width:100%;max-width:none}.workbench-quality-meter strong{font-size:25px}}
+
+/* Unsaved-data safeguarding, export transparency and spreadsheet paste improvements. */
+.workbench-discard{display:flex;align-items:center;justify-content:space-between;gap:19px;margin:14px 0;padding:18px 21px;border:1px solid var(--accent);border-radius:13px;background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
+.workbench-discard[hidden]{display:none!important}
+.workbench-discard h3{margin:0 0 7px;font:750 17px/1.35 var(--display)}
+.workbench-discard p{margin:0;color:var(--muted);font-size:12px;line-height:1.6;max-width:690px}
+.workbench-discard-actions{display:flex;flex-wrap:wrap;gap:8px}
+.workbench-discard-actions button{padding:11px 14px;min-height:45px;font:750 12px/1.4 var(--sans);cursor:pointer;border-radius:9px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);white-space:normal}
+.workbench-discard-actions #confirmScenarioDiscard{background:var(--accent);border-color:var(--accent);color:#fff}
+.workbench-export-warning{flex-basis:100%;font-size:11px;line-height:1.55;color:var(--muted);margin:3px 0 0}
+.workbench-discard-actions button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.workbench-table-scroll{max-height:min(70vh,630px);overflow:auto}
+.workbench-table thead th{position:sticky;top:0;z-index:2;border-bottom:1px solid var(--line-2)}
+.workbench-table tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg-2) 40%,var(--panel))}
+.workbench-table tbody tr:hover{background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+@media(max-width:780px){.workbench-discard{display:block}.workbench-discard-actions{margin-top:14px}.workbench-discard-actions button{flex:1 1 170px}}
