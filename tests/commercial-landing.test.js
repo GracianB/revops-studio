@@ -30,6 +30,24 @@ test("commercial pricing stays indicative, without invented savings",()=>{
  assert.match(site,/Coste del tiempo, no ahorro prometido/);
 });
 
+test("calculator-to-contact handoff is optional, removable and not a savings claim",()=>{
+ assert.match(index,/id="calcToContact"[^>]+href="#contacto"/);
+ assert.match(index,/id="estimacion"[^>]*value=""/);
+ assert.match(index,/id="calcContextClear"/);
+ assert.match(site,/calculatorScenario/);
+ assert.match(site,/form\.dispatchEvent\(new Event\("input"/);
+ assert.match(site,/estimateField\.value = ""/);
+ assert.match(site,/\.\.\.\(brief\.estimacion \? \{ estimacion: brief\.estimacion \} : \{\}\)/);
+ assert.match(site,/Coste teórico del tiempo, no ahorro prometido/);
+});
+
+test("confirmation requires accepted provider response in the current tab",()=>{
+ assert.match(site,/sessionStorage\.setItem\(ACCEPTED_KEY, "true"\)/);
+ assert.match(site,/sessionStorage\.removeItem\(ACCEPTED_KEY\)/);
+ assert.match(thanksJs,/&& confirmedInSession/);
+ assert.match(thanksJs,/no confirma un envío sin una aceptación previa/);
+});
+
 test("public and private professional cases remain clearly distinguished",()=>{
  for(const slug of ["proyecto-bodytone.html","proyecto-calculadora.html","proyecto-outreach.html"])
   assert.ok(index.includes(slug));
