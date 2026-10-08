@@ -107,7 +107,7 @@ test("FormSubmit activation: explain rejected delivery without claiming success"
  assert.match(site,/providerSaidActivation/);
  assert.match(site,/propietario active el formulario/);
  assert.match(site,/Puede faltar la activación inicial del formulario/);
- assert.match(site,/error\\?\\.name === "AbortError"/);
+ assert.match(site,/error\?\.name === "AbortError"/);
  assert.match(site,/No hay entrega confirmada/);
  assert.match(site,/if \(fallback\) fallback\.focus\(\)/);
 });
