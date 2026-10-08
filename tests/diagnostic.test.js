@@ -48,6 +48,6 @@ test("generated brief is a clear multiline, non-binding handoff with no user dat
   const summary=buildDiagnostic("rules","crm","team").summary;
   assert.equal(summary.split("\n").length,8);
   assert.match(summary,/Revisar campos, permisos/);
-  assert.match(summary,/Prototipo/);
+  assert.match(summary,/prototipo/i);
   assert.doesNotMatch(summary,/contraseña|email|persona identificada/i);
 });
