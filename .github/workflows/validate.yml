@@ -36,6 +36,18 @@ jobs:
       - name: Real Chrome smoke (desktop and mobile)
         run: node scripts/browser-smoke.mjs
 
+      - name: Synthetic network and CPU performance budgets
+        run: node scripts/performance-budget.mjs
+
+      - name: Attach synthetic performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-v46-performance-${{ github.run_id }}
+          path: .ci-artifacts/performance-v46.json
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Install Firefox for browser verification
         run: npx playwright-core install firefox
 
