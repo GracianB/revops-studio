@@ -560,7 +560,8 @@ $("undoCorrection").addEventListener("click",()=>{
   undoSource=null;
   $("undoCorrection").disabled=true;$("redoCorrection").disabled=false;
   closeEditor();
-  try{render(runWorkflow(scenario,$("workflowSource").value=oldUndo));$("changeComparison").hidden=true;}
+  $("workflowSource").value=oldUndo;
+  try{render(runWorkflow(scenario,oldUndo));$("changeComparison").hidden=true;}
   catch{invalidate("No se pudo restaurar el estado previo.");}
 });
 $("redoCorrection").addEventListener("click",()=>{
@@ -600,8 +601,8 @@ $("importWorkflow").addEventListener("change",async event=>{
       const result=runWorkflow(scenario,text);
       $("workflowSource").value=text;
       closeColumnMapper();
-      undoSource=null;
-      $("undoCorrection").disabled=true;
+      undoSource=null;redoSource=null;
+      $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
       errorText("");
       render(result);
       setText("workflowStatus","Archivo leído localmente ("+result.counts.total+" filas). Revisa y corrige registros sin salir de esta pantalla.");
