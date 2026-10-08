@@ -217,7 +217,7 @@ export function exportActionQueueCsv(result){
   if(!result?.rows || !SCENARIOS[result.scenario])throw Error("Ejecuta el proceso primero.");
   const eligible=result.rows.filter(row=>row.status==="listo" &&
     !/histórico/i.test(row.action));
-  const names=[...result.columns,"acción propuesta","estado"];
+  const names=[...result.columns,"acción propuesta","ejecución"];
   const lines=[names.map(csvCell).join(";")];
   for(const row of eligible){
     lines.push([...result.columns.map(column=>row.values[column]),row.action,
