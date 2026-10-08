@@ -191,7 +191,7 @@ test("V43 case choice is removable, never overwrites visitor prose or sends with
  assert.match(site,/\.\.\.\(brief\.caso_referencia \? \{ caso_referencia: brief\.caso_referencia \} : \{\}\)/);
  assert.match(site,/Caso de referencia: /);
  assert.match(thanksJs,/Caso de referencia: /);
- assert.match(site,/initBriefForm\(\);\s*initCaseChoice\(\);/);
+ assert.match(site,/initBriefForm\(\);\s*initDiagnostic\(\);\s*initCaseChoice\(\);/);
 });
 
 test("contact: real provider endpoint, required consent, explained processing and email fallback",()=>{
