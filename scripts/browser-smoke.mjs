@@ -135,6 +135,70 @@ async function auditCustomerDiagnostic(browser) {
   } finally { await page.close(); }
 }
 
+async function auditClientFirstVisit(browser){
+  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
+  const errors=[];
+  page.on("pageerror",error=>errors.push(error.message));
+  try{
+    await page.goto(base+"/demo.html",{waitUntil:"load"});
+    await page.waitForFunction(()=>document.body.dataset.experience==="simple");
+    assert.equal(await page.locator("#clientJourney").isVisible(),true,"first visit should start with plain-language guide");
+    assert.equal(await page.locator(".workbench-recipes").isVisible(),false,"a novice should not see 18 raw datasets");
+    assert.equal(await page.locator(".workbench-editor-grid").isVisible(),false,"CSV editing is optional, not compulsory");
+    assert.equal(await page.locator("#clientStepTitle").innerText(),"Empecemos con un problema de tu día a día.");
+    assert.equal(await page.locator('[data-client-problem="orders"]').getAttribute("aria-pressed"),"true");
+    // Business problem, not a file type, is the first action.
+    await page.locator('[data-client-problem="support"]').click();
+    assert.equal(await page.locator('[data-client-problem="support"]').getAttribute("aria-pressed"),"true");
+    assert.match(await page.locator("#clientStepDescription").innerText(),/tickets ficticios/);
+    await page.locator('[data-client-problem="orders"]').click();
+    await page.locator("#clientPrimaryAction").click();
+    assert.equal(await page.locator("#clientJourney").getAttribute("hidden"),null);
+    assert.equal(await page.locator("#clientEvidence").isVisible(),true);
+    assert.equal(await page.locator("#clientDetected").innerText(),"2");
+    assert.equal(await page.locator("#clientAttention").innerText(),"1");
+    assert.equal(await page.locator("#clientPrepared").innerText(),"2");
+    assert.equal(await page.locator(".workbench-insights").isVisible(),true);
+    assert.equal(await page.locator(".workbench-table-scroll").isVisible(),false);
+    await page.locator("#clientPrimaryAction").click();
+    assert.equal(await page.locator("#workflowEditForm").isVisible(),true);
+    assert.equal(await page.locator("#workflowEditFields .is-problem").count(),1);
+    assert.equal(await page.locator("#workflowEditFields input[name='pedido']").getAttribute("aria-invalid"),"true");
+    assert.match(await page.locator("#clientStepDescription").innerText(),/marcado/);
+    await page.locator("#workflowEditFields input[name='pedido']").fill("PED-999");
+    await page.locator("#saveWorkflowEdit").click();
+    assert.equal(await page.locator('body').getAttribute("data-guide-stage"),"finished");
+    assert.equal(await page.locator("#clientPrepared").innerText(),"3");
+    assert.equal(await page.locator("#clientDetected").innerText(),"1");
+    assert.match(await page.locator("#clientStepDescription").innerText(),/Antes había 2 bloqueos/);
+    assert.equal(await page.locator("#clientContactAction").isVisible(),true);
+    assert.equal(await page.locator("#workflowEditForm").isVisible(),false);
+    const d=page.waitForEvent("download");
+    await page.locator("#clientPrimaryAction").click();
+    const report=await d;
+    assert.match(report.suggestedFilename(),/revops-informe-orientativo-orders\.txt/);
+    const textReport=await readFile(await report.path(),"utf8");
+    assert.match(textReport,/Acciones preparadas: 3/);
+    assert.doesNotMatch(textReport,/PED-999|norte@ejemplo\.test/);
+    await page.locator("#experienceToggle").click();
+    assert.equal(await page.locator(".workbench-editor-grid").isVisible(),true);
+    assert.equal(await page.locator("#clientJourney").isVisible(),false);
+    await page.locator("#experienceToggle").click();
+    assert.equal(await page.locator("#clientJourney").isVisible(),true);
+    assert.equal(await page.locator("#clientPrepared").innerText(),"3");
+    assert.match(page.url(),/view=simple/);
+    const dims=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+    assert.ok(dims.scroll<=dims.width+3,"guided mode overflows mobile "+JSON.stringify(dims));
+    assert.deepEqual(errors,[],"guided visit runtime errors");
+    // The consultation link must use the same privacy-safe aggregated handoff.
+    await page.locator("#clientContactAction").click();
+    await page.waitForURL(/\/#contacto$/);
+    assert.match(await page.locator("#diagnosticoBrief").inputValue(),/Escenario de simulación: Pedidos/);
+    assert.doesNotMatch(await page.locator("#diagnosticoBrief").inputValue(),/PED-999/);
+    console.log("CLIENT FIRST-VISIT PASS ("+engineName+"): problem, findings, one correction, actual outcome, report, consultation and mobile");
+  }finally{await page.close();}
+}
+
 async function auditProductWorkbench(browser) {
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const failures=[];
@@ -334,6 +398,7 @@ try {
     {headless:true});
   await auditCommercialCssParity(browser);
   await auditCustomerDiagnostic(browser);
+  await auditClientFirstVisit(browser);
   await auditProductWorkbench(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
