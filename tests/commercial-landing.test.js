@@ -58,6 +58,34 @@ test("public and private professional cases remain clearly distinguished",()=>{
  assert.equal((index.match(/class="case-visual /g)||[]).length,3);
 });
 
+test("V43 case evidence is specific, public/private boundaries stay honest",()=>{
+ const cards=[...index.matchAll(/<article class="study-card reveal" data-case-id="([^"]+)">/g)].map(m=>m[1]);
+ assert.deepEqual(cards,["bodytone","calculadora","outreach"]);
+ assert.equal((index.match(/class="study-proof"/g)||[]).length,3);
+ assert.equal((index.match(/class="study-decisions"/g)||[]).length,3);
+ assert.equal((index.match(/class="study-discuss"/g)||[]).length,3);
+ for(const id of cards) assert.match(index,new RegExp('data-case-choice="'+id+'"'));
+ assert.match(index,/Centro de ayuda real, público y navegable/);
+ assert.match(index,/Tarifas, fórmulas y datos de clientes permanecen privados/);
+ assert.match(index,/No se publican bases reales, contactos, credenciales ni tasas de conversión/);
+ assert.match(index,/id="caseContextClear"/);
+ assert.match(css,/study-decisions summary:focus-visible/);
+});
+
+test("V43 case choice is removable, never overwrites visitor prose or sends without consent",()=>{
+ assert.match(site,/const CASE_REFERENCES = Object\.freeze/);
+ assert.match(site,/if \(!select\.value\) select\.value = selected\.service/);
+ assert.match(site,/function initCaseChoice/);
+ assert.match(site,/function showCaseContext/);
+ assert.match(site,/\[data-case-choice\]/);
+ assert.match(site,/caseContextClear/);
+ assert.match(site,/caso_referencia: String\(data\.caso_referencia/);
+ assert.match(site,/\.\.\.\(brief\.caso_referencia \? \{ caso_referencia: brief\.caso_referencia \} : \{\}\)/);
+ assert.match(site,/Caso de referencia: /);
+ assert.match(thanksJs,/Caso de referencia: /);
+ assert.match(site,/initBriefForm\(\);\s*initCaseChoice\(\);/);
+});
+
 test("contact: real provider endpoint, required consent, explained processing and email fallback",()=>{
  assert.match(index,/id="briefForm"[^>]+method="POST"/);
  assert.match(index,/action="https:\/\/formsubmit\.co\/gracianbaenagonzalez@gmail\.com"/);

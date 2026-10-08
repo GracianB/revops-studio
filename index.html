@@ -199,35 +199,71 @@
     <div class="shell">
       <div class="section-head">
         <div><span class="eyebrow">Experiencia aplicada</span><h2 id="case-title">Trabajo aplicado, no promesas vacías.</h2></div>
-        <p>Tres experiencias documentadas. Puedes ver el trabajo y entender las decisiones; los sistemas internos conservan su información privada.</p>
+        <p>Tres casos contrastados con Professional Deck. Uno permite navegar un sistema público; los otros explican decisiones y alcance sin divulgar propiedad intelectual.</p>
       </div>
       <div class="case-studies">
-        <article class="study-card reveal">
+        <article class="study-card reveal" data-case-id="bodytone">
           <div class="study-top"><span class="kicker">01 · CUSTOMER OPERATIONS</span><span class="study-label">Caso público</span></div>
-          <div class="case-visual case-visual-support" aria-hidden="true"><span>CONSULTA ENTRA</span><div><b>Centro de ayuda</b><i>↓</i><b>Clasificación</b><i>↓</i><b>Seguimiento</b></div><small>CLIENTE → EQUIPO → RESOLUCIÓN</small></div><h3>Bodytone · Soporte conectado de principio a fin.</h3>
-          <p class="study-problem"><strong>Necesidad:</strong> clientes con consultas distintas y equipos que requieren información y seguimiento claros.</p>
-          <p><strong>Enfoque:</strong> Help Center, formularios estructurados, clasificación, enrutado en Zendesk y reporting operativo.</p>
-          <div class="study-scope"><span>Zendesk</span><span>Customer Success</span><span>Workflows</span></div>
-          <a class="study-link" href="https://gracianb.github.io/professional-deck/proyecto-bodytone.html" target="_blank" rel="noopener">Examinar el caso documentado ↗</a>
-          <a class="study-secondary" href="https://bodytonehelp.zendesk.com/hc/es" target="_blank" rel="noopener">Ver Help Center público ↗</a>
+          <div class="case-visual case-visual-support" aria-hidden="true"><span>CONSULTA ENTRA</span><div><b>Centro de ayuda</b><i>↓</i><b>Clasificación</b><i>↓</i><b>Seguimiento</b></div><small>CLIENTE → EQUIPO → RESOLUCIÓN</small></div>
+          <h3>Bodytone · Soporte conectado de principio a fin.</h3>
+          <p class="study-problem"><strong>El reto:</strong> compras, devoluciones, mantenimiento e incidencias necesitan recorridos diferentes sin fragmentar la atención.</p>
+          <p><strong>La solución:</strong> Help Center, formularios estructurados, enrutado de solicitudes y seguimiento operativo sobre Zendesk.</p>
+          <div class="study-proof" aria-label="Alcance de la evidencia Bodytone">
+            <span class="study-proof-label">Prueba disponible</span>
+            <p>Centro de ayuda real, público y navegable. Los dashboards y procesos internos se describen, pero no se exponen.</p>
+          </div>
+          <details class="study-decisions">
+            <summary>Cómo se diseñó el sistema <span aria-hidden="true">+</span></summary>
+            <ol><li>Separar las solicitudes por intención del cliente.</li><li>Recoger el contexto necesario antes del enrutado.</li><li>Conservar estados y trazabilidad para el seguimiento.</li></ol>
+          </details>
+          <div class="study-scope"><span>Zendesk</span><span>CX Ops</span><span>Workflows</span></div>
+          <div class="study-actions">
+            <a class="study-link" href="https://gracianb.github.io/professional-deck/proyecto-bodytone.html" target="_blank" rel="noopener">Examinar el caso documentado ↗</a>
+            <a class="study-secondary" href="https://bodytonehelp.zendesk.com/hc/es" target="_blank" rel="noopener">Ver Help Center público ↗</a>
+            <a class="study-discuss" href="#contacto" data-case-choice="bodytone">Tengo un problema parecido ↗</a>
+          </div>
         </article>
-        <article class="study-card reveal">
+        <article class="study-card reveal" data-case-id="calculadora">
           <div class="study-top"><span class="kicker">02 · PRICING / OPERACIONES</span><span class="study-label study-label-private">Lógica privada</span></div>
-          <div class="case-visual case-visual-pricing" aria-hidden="true"><span>REGLAS DE NEGOCIO</span><div class="case-eq"><b>Datos</b><i>+</i><b>200+ reglas</b><i>→</i><b>Propuesta</b></div><small>FLUJO GUIADO · CONTROL DE EXCEPCIONES</small></div><h3>Calculadora de gimnasios · De variables a presupuesto.</h3>
-          <p class="study-problem"><strong>Necesidad:</strong> presupuestos que dependen de equipamiento, plano, tarifas, transporte y excepciones.</p>
-          <p><strong>Enfoque:</strong> motor de más de 200 reglas documentadas, flujo guiado y propuesta estructurada para revisión.</p>
-          <div class="study-scope"><span>Reglas</span><span>Pricing</span><span>Apps Script</span></div>
-          <a class="study-link" href="https://gracianb.github.io/professional-deck/proyecto-calculadora.html" target="_blank" rel="noopener">Ver enfoque del caso ↗</a>
-          <span class="study-note">Demo técnica disponible bajo solicitud; fórmulas y tarifas internas no se publican.</span>
+          <div class="case-visual case-visual-pricing" aria-hidden="true"><span>REGLAS DE NEGOCIO</span><div class="case-eq"><b>Datos</b><i>+</i><b>200+ reglas</b><i>→</i><b>Propuesta</b></div><small>FLUJO GUIADO · CONTROL DE EXCEPCIONES</small></div>
+          <h3>Calculadora de gimnasios · De variables a presupuesto.</h3>
+          <p class="study-problem"><strong>El reto:</strong> cada presupuesto depende de productos, modelos, plano, compatibilidades, transporte e instalación.</p>
+          <p><strong>La solución:</strong> más de 200 reglas de negocio coordinadas en un flujo guiado hasta una propuesta estructurada para revisar.</p>
+          <div class="study-proof" aria-label="Alcance de la evidencia calculadora">
+            <span class="study-proof-label">Prueba disponible</span>
+            <p>Arquitectura y decisiones documentadas en el caso. Tarifas, fórmulas y datos de clientes permanecen privados.</p>
+          </div>
+          <details class="study-decisions">
+            <summary>Cómo se diseñó el sistema <span aria-hidden="true">+</span></summary>
+            <ol><li>Normalizar el brief y los SKU o modelos.</li><li>Aplicar restricciones de espacio y excepciones.</li><li>Incorporar logística y preparar una propuesta revisable.</li></ol>
+          </details>
+          <div class="study-scope"><span>Apps Script</span><span>Pricing</span><span>Reglas</span></div>
+          <div class="study-actions">
+            <a class="study-link" href="https://gracianb.github.io/professional-deck/proyecto-calculadora.html" target="_blank" rel="noopener">Ver el enfoque documentado ↗</a>
+            <span class="study-note">Demo técnica sujeta a solicitud; no es una herramienta pública.</span>
+            <a class="study-discuss" href="#contacto" data-case-choice="calculadora">Necesito algo parecido ↗</a>
+          </div>
         </article>
-        <article class="study-card reveal">
+        <article class="study-card reveal" data-case-id="outreach">
           <div class="study-top"><span class="kicker">03 · SALES OPERATIONS</span><span class="study-label study-label-private">Sistema privado</span></div>
-          <div class="case-visual case-visual-sales" aria-hidden="true"><span>OPERACIONES COMERCIALES</span><div><b>Contexto</b><i>→</i><b>Personalización</b><i>→</i><b>Revisión humana</b></div><small>SECUENCIA CONTROLADA · NÚCLEO PRIVADO</small></div><h3>Outreach GenAI · Prospección con criterio y control.</h3>
-          <p class="study-problem"><strong>Necesidad:</strong> estructurar prospección, contexto comercial y seguimiento sin depender de tareas manuales dispersas.</p>
-          <p><strong>Enfoque:</strong> automatización de estados y personalización asistida, con reglas y supervisión humana.</p>
-          <div class="study-scope"><span>Sales Ops</span><span>Automatización</span><span>IA asistida</span></div>
-          <a class="study-link" href="https://gracianb.github.io/professional-deck/proyecto-outreach.html" target="_blank" rel="noopener">Ver enfoque del caso ↗</a>
-          <span class="study-note">No se muestran contactos, campañas ni resultados comerciales privados.</span>
+          <div class="case-visual case-visual-sales" aria-hidden="true"><span>OPERACIONES COMERCIALES</span><div><b>Contexto</b><i>→</i><b>Personalización</b><i>→</i><b>Revisión humana</b></div><small>SECUENCIA CONTROLADA · NÚCLEO PRIVADO</small></div>
+          <h3>Outreach GenAI · Prospección con criterio y control.</h3>
+          <p class="study-problem"><strong>El reto:</strong> personalizar mensajes según empresa y puesto sin perder trazabilidad ni criterio humano.</p>
+          <p><strong>La solución:</strong> segmentación de base de datos, borradores asistidos por IA, revisión y seguimiento de estados.</p>
+          <div class="study-proof" aria-label="Alcance de la evidencia Outreach">
+            <span class="study-proof-label">Prueba disponible</span>
+            <p>Recorrido y decisiones explicados en el caso. No se publican bases reales, contactos, credenciales ni tasas de conversión.</p>
+          </div>
+          <details class="study-decisions">
+            <summary>Cómo se diseñó el sistema <span aria-hidden="true">+</span></summary>
+            <ol><li>Segmentar por sector, empresa y función.</li><li>Preparar un borrador contextualizado, no un envío automático sin revisar.</li><li>Registrar actividad y mantener validación humana.</li></ol>
+          </details>
+          <div class="study-scope"><span>Sales Ops</span><span>Automatización</span><span>GenAI</span></div>
+          <div class="study-actions">
+            <a class="study-link" href="https://gracianb.github.io/professional-deck/proyecto-outreach.html" target="_blank" rel="noopener">Ver el enfoque documentado ↗</a>
+            <span class="study-note">El núcleo y las campañas son privados.</span>
+            <a class="study-discuss" href="#contacto" data-case-choice="outreach">Quiero explorar este enfoque ↗</a>
+          </div>
         </article>
       </div>
       <div class="case-credibility"><p><strong>Qué se demuestra:</strong> análisis, diseño de flujos, desarrollo y control operativo. No atribuyo porcentajes de ahorro, facturación o conversión sin datos comprobables.</p><a class="btn btn-secondary" href="#contacto">Hablemos de tu proceso ↗</a></div>
@@ -300,6 +336,8 @@
           <input type="hidden" name="_captcha" value="true">
           <input type="hidden" name="_next" value="https://gracianb.github.io/revops-studio/gracias.html?via=proveedor">
           <input type="hidden" name="estimacion" id="estimacion" value="">
+          <input type="hidden" name="caso_referencia" id="casoReferencia" value="">
+          <div class="case-context" id="caseContext" hidden><p id="caseContextSummary" role="status"></p><button type="button" class="text-link" id="caseContextClear">Quitar referencia</button></div>
           <div class="calc-context" id="calcContext" hidden><p id="calcContextSummary" role="status"></p><button type="button" id="calcContextClear" class="text-link">Quitar estimación</button></div>
           <div class="form-honeypot" aria-hidden="true"><label for="websiteExtra">Deja este campo vacío</label><input name="_honey" id="websiteExtra" tabindex="-1" autocomplete="off"></div>
           <div class="form-grid">
