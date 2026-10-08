@@ -1,4 +1,5 @@
 import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActionQueueCsv } from "./workflow-engine.js";
+import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -8,6 +9,7 @@ const query=new URLSearchParams(location.search).get("scenario");
 let scenario=allowed.includes(query)?query:"orders";
 let latest=null;
 let activeFilter="all",editIndex=null,undoSource=null;
+let mappingSource=null,mappingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
 function errorText(message){
   const element=$("workflowError");
@@ -24,6 +26,78 @@ function invalidate(message){
   $("demoContact").dataset.ready="false";
   setText("workflowStatus",message);
 }
+function closeColumnMapper(){
+  mappingSource=null;
+  mappingScenario=null;
+  $("columnMapper").hidden=true;
+  $("columnMappingRows").replaceChildren();
+  $("columnMappingPreview").replaceChildren();
+  setText("columnMappingStatus","");
+}
+function mappingStatus(message,isError=false){
+  const element=$("columnMappingStatus");
+  element.textContent=message;
+  element.dataset.error=String(isError);
+}
+function openColumnMapper(text){
+  const guess=suggestMapping(scenario,text);
+  mappingSource=text;
+  mappingScenario=scenario;
+  const container=$("columnMappingRows");
+  container.replaceChildren();
+  for(const destination of guess.columns){
+    const row=document.createElement("div");
+    row.className="workbench-mapping-row";
+    const label=document.createElement("label");
+    label.htmlFor="mapping-"+destination;
+    label.textContent=destination;
+    const select=document.createElement("select");
+    select.id=label.htmlFor;
+    select.name=destination;
+    select.dataset.target=destination;
+    const option=document.createElement("option");
+    option.value="";
+    option.textContent="Seleccionar columna…";
+    select.append(option);
+    for(const header of guess.sourceHeaders){
+      const choice=document.createElement("option");
+      choice.value=header;
+      choice.textContent=header;
+      select.append(choice);
+    }
+    select.value=guess.mapping[destination]||"";
+    const hint=document.createElement("span");
+    hint.className="workbench-match-hint";
+    hint.textContent=guess.mapping[destination] ?
+      (guess.matches[destination]==="exacta"?"Coincidencia exacta":"Sugerencia · confirmar") :
+      "Pendiente · obligatorio";
+    row.append(label,select,hint);
+    container.append(row);
+  }
+  const other=guess.ignored.length?guess.ignored.join(", "):"ninguna";
+  setText("columnMappingIgnored","Columnas adicionales que no se usarán: "+other+". Las originales se conservarán hasta confirmar.");
+  const preview=$("columnMappingPreview");
+  preview.replaceChildren();
+  const title=document.createElement("p");
+  title.textContent=guess.rowCount+" filas detectadas. Primeros valores del archivo original:";
+  preview.append(title);
+  for(const sample of guess.samples){
+    const row=document.createElement("div");
+    row.className="workbench-preview-row";
+    const identifier=document.createElement("strong");
+    identifier.textContent="Fila "+sample.line;
+    row.append(identifier);
+    const details=document.createElement("span");
+    details.textContent=guess.sourceHeaders.slice(0,4).map(h=>h+": "+sample.values[h]).join(" · ");
+    row.append(details);
+    preview.append(row);
+  }
+  $("columnMapper").hidden=false;
+  mappingStatus(guess.unassigned.length?
+    "Faltan correspondencias para: "+guess.unassigned.join(", ")+". Revisa las sugerencias antes de aplicar.":
+    "Todas las columnas obligatorias tienen una propuesta. Confírmalas antes de procesar.",Boolean(guess.unassigned.length));
+  $("columnMapper").scrollIntoView({block:"nearest",behavior:"instant"});
+}
 function chooseScenario(next){
   if(!SCENARIOS[next])return;
   scenario=next;
@@ -35,6 +109,7 @@ function chooseScenario(next){
   });
   $("workflowSource").value=data.sample;
   $("importWorkflow").value="";
+  closeColumnMapper();
   undoSource=null;
   $("undoCorrection").disabled=true;
   activeFilter="all";
@@ -154,6 +229,7 @@ async function copySummary(){
 }
 $("workflowSource").addEventListener("input",()=>{
   errorText("");
+  closeColumnMapper();
   undoSource=null;
   $("undoCorrection").disabled=true;
   invalidate("Has modificado las entradas. Ejecuta el proceso para actualizar los resultados.");
@@ -276,18 +352,64 @@ $("importWorkflow").addEventListener("change",async event=>{
     if(file.size>32000)throw Error("Archivo demasiado grande. Límite de 32 KB.");
     const text=await file.text();
     if(selectedScenario!==scenario)throw Error("El escenario cambió durante la lectura. Selecciona el archivo de nuevo.");
-    // Validate before changing the input. Never transmit or persist imported rows.
-    const result=runWorkflow(scenario,text);
-    $("workflowSource").value=text;
-    undoSource=null;
-    $("undoCorrection").disabled=true;
-    errorText("");
-    render(result);
-    setText("workflowStatus","Archivo leído localmente ("+result.counts.total+" filas). Revisa y corrige registros sin salir de esta pantalla.");
+    // A valid file may use entirely different headers. Preview/confirm mapping
+    // before changing any existing input; exact headers remain one-click.
+    const suggestion=suggestMapping(scenario,text);
+    if(suggestion.unassigned.length || suggestion.ignored.length ||
+       suggestion.columns.some(name=>suggestion.matches[name]!=="exacta")){
+      openColumnMapper(text);
+      errorText(suggestion.unassigned.length?
+        "Relaciona las columnas que faltan antes de ejecutar. No se han modificado tus datos.":
+        "");
+    }else{
+      const result=runWorkflow(scenario,text);
+      $("workflowSource").value=text;
+      closeColumnMapper();
+      undoSource=null;
+      $("undoCorrection").disabled=true;
+      errorText("");
+      render(result);
+      setText("workflowStatus","Archivo leído localmente ("+result.counts.total+" filas). Revisa y corrige registros sin salir de esta pantalla.");
+    }
   }catch(error){
     $("workflowSource").value=previous;
     errorText(error?.message||"No se pudo leer el archivo.");
   }finally{input.value="";}
+});
+
+$("openColumnMapper").addEventListener("click",()=>{
+  try{
+    openColumnMapper($("workflowSource").value);
+    errorText("");
+  }catch(error){errorText(error?.message||"No se pudo leer la tabla.");}
+});
+for(const id of ["cancelColumnMapper","cancelColumnMapping"]){
+  $(id).addEventListener("click",()=>{
+    closeColumnMapper();
+    errorText("");
+  });
+}
+$("applyColumnMapping").addEventListener("click",()=>{
+  if(mappingSource===null || mappingScenario!==scenario)return;
+  const mapping=Object.fromEntries([...$("columnMappingRows").querySelectorAll("select")].map(select=>
+    [select.dataset.target,select.value]));
+  try{
+    const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
+    const result=runWorkflow(scenario,converted);
+    $("workflowSource").value=converted;
+    undoSource=null;
+    $("undoCorrection").disabled=true;
+    closeColumnMapper();
+    render(result);
+    errorText("");
+    setText("workflowStatus","Correspondencias confirmadas. "+result.counts.total+
+      " registros analizados localmente. Edita errores en la tabla; no se ha enviado nada.");
+  }catch(error){
+    mappingStatus(error?.message||"No se puede aplicar el mapeo.",true);
+  }
+});
+$("columnMappingRows").addEventListener("change",event=>{
+  if(event.target.matches("select"))mappingStatus("Correspondencias modificadas. Comprueba que cada campo utiliza una columna distinta.");
 });
 
 $("resetWorkflow").addEventListener("click",()=>chooseScenario(scenario));
