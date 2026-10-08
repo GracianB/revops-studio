@@ -141,7 +141,7 @@ async function auditProductWorkbench(browser) {
   page.on("pageerror",error=>failures.push(error.message));
   try {
     await page.goto(base+"/demo.html?scenario=orders",{waitUntil:"load"});
-    await page.locator("#countTotal").getByText("6").waitFor();
+    await page.waitForFunction(()=>document.querySelector("#countTotal")?.textContent==="6");
     assert.equal(await page.locator("#countReady").innerText(),"3");
     assert.equal(await page.locator("#countReview").innerText(),"1");
     assert.equal(await page.locator("#countBlocked").innerText(),"2");
