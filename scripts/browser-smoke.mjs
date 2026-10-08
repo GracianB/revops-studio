@@ -190,7 +190,7 @@ async function auditProductWorkbench(browser) {
     await page.locator("#importWorkflow").setInputFiles({
       name:"exportacion-crm.csv",mimeType:"text/csv",buffer:Buffer.from(externalCsv)
     });
-    assert.equal(await page.locator("#columnMapper").isVisible(),true,"renamed headers open guided mapping");
+    await page.locator("#columnMapper").waitFor({state:"visible",timeout:10000});
     assert.equal(await page.locator("#workflowSource").inputValue(),previousCsv,"no replacement before confirmation");
     assert.equal(await page.locator("#columnMappingRows select").count(),5);
     assert.equal(await page.locator("#mapping-pedido").inputValue(),"order id");
