@@ -82,3 +82,8 @@ test("all internal hash links resolve within their own page",()=>{
     }
   }
 });
+
+test("legacy shared configuration hashes are forwarded to the isolated lab",()=>{
+  assert.match(site,/window\.location\.hash\.startsWith\("#config="\)/);
+  assert.match(site,/window\.location\.replace\("\.\/laboratorio\.html" \+ window\.location\.hash\)/);
+});
