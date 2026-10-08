@@ -100,11 +100,47 @@ async function auditCommercialCssParity(browser) {
   console.log("V45 CSS VISUAL PARITY PASS ("+engineName+"): desktop, mobile, ES dark/light, contact and privacy");
 }
 
+async function auditCustomerDiagnostic(browser) {
+  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce"});
+  try {
+    await page.goto(base+"/",{waitUntil:"load"});
+    assert.equal(await page.locator("#diagnosticPlan").isHidden(),true);
+    await page.locator("#diagProblem").selectOption("reporting");
+    assert.equal(await page.locator("#diagnosticPlan").isVisible(),true);
+    assert.match(await page.locator("#diagRoute").innerText(),/Datos y BI/);
+    assert.match(await page.locator("#diagDeliverable").innerText(),/KPIs/);
+    await page.locator("#diagTools").selectOption("mixed");
+    assert.match(await page.locator("#diagPackage").innerText(),/4.000 €/);
+    await page.locator("#dolor").fill("Este texto lo he escrito yo y no se debe cambiar.");
+    await page.locator("#servicio").selectOption("Quick win");
+    await page.locator("#diagToContact").click();
+    assert.match(await page.locator("#diagnosticoBrief").inputValue(),/Ruta sugerida: Datos y BI/);
+    assert.equal(await page.locator("#dolor").inputValue(),"Este texto lo he escrito yo y no se debe cambiar.");
+    assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+    assert.equal(await page.locator("#diagnosticContext").isVisible(),true);
+    assert.match(decodeURIComponent(await page.locator("#briefEmailFallback").getAttribute("href")),/Mapa inicial orientativo/);
+    await page.locator("#diagProblem").selectOption("rules");
+    assert.equal(await page.locator("#diagnosticoBrief").inputValue(),"","changed diagnosis must not leave a stale brief attached");
+    assert.equal(await page.locator("#diagnosticContext").isHidden(),true);
+    await page.locator("#diagToContact").click();
+    assert.match(await page.locator("#diagnosticoBrief").inputValue(),/Ruta sugerida: Software a medida/);
+    await page.locator("#diagnosticContextClear").click();
+    assert.equal(await page.locator("#diagnosticoBrief").inputValue(),"");
+    await page.locator("#diagReset").click();
+    assert.equal(await page.locator("#diagnosticPlan").isHidden(),true);
+    assert.equal(await page.locator("#diagProblem").inputValue(),"");
+    const dims=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
+    assert.ok(dims.scroll<=dims.viewport+3,"guided product mobile overflow "+JSON.stringify(dims));
+    console.log("PRODUCT DIAGNOSTIC PASS ("+engineName+"): recommendations, copy-to-brief, user text preservation, stale clearing and reset");
+  } finally { await page.close(); }
+}
+
 try {
   browser=await browserEngine.launch(engineName==="chrome"?
     {channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]}:
     {headless:true});
   await auditCommercialCssParity(browser);
+  await auditCustomerDiagnostic(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
