@@ -8,7 +8,7 @@ test("RevOps diagnostic and demo has an accurate PNG share preview", () => {
   assert.equal(png.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
   assert.equal(png.readUInt32BE(16),1200);
   assert.equal(png.readUInt32BE(20),630);
-  assert.match(home,/og:image" content="https:\/\/gracianb.github.io\/revops-studio\/assets\/og.png\?v=40/);
+  assert.ok(home.includes("https://gracianb.github.io/revops-studio/assets/og.png?v=40"), "Social image URL must be portfolio-specific");
   assert.match(home,/summary_large_image/);
   assert.match(svg,/MENOS FRICCIÓN/);
   assert.match(svg,/MÁS SISTEMA/);
