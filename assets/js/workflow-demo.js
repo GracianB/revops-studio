@@ -779,7 +779,8 @@ $("exportMappingProfile").addEventListener("click",()=>{
   }catch(error){setText("mappingProfileStatus",error?.message||"No se puede exportar el perfil.");}
 });
 $("importMappingProfile").addEventListener("change",async event=>{
-  const file=event.currentTarget.files?.[0];
+  const input=event.currentTarget;
+  const file=input.files?.[0];
   if(!file||mappingSource===null)return;
   const selectedScenario=scenario;
   try{
@@ -791,7 +792,7 @@ $("importMappingProfile").addEventListener("change",async event=>{
     setText("mappingProfileStatus","Perfil cargado en la vista previa. Revisa y confirma antes de aplicar.");
     renderMappingPreview();
   }catch(error){setText("mappingProfileStatus",error?.message||"Perfil inválido.");}
-  finally{event.currentTarget.value="";}
+  finally{input.value="";}
 });
 $("columnMappingRows").addEventListener("change",event=>{
   if(event.target.matches("select"))renderMappingPreview();
