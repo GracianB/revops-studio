@@ -2,7 +2,7 @@
 
 Cada entrada describe una conducta que puede observarse o verificarse; no se cuentan commits, retoques de padding o pruebas como nuevas funciones comerciales.
 
-**Corte de esta rama:** 77 comportamientos ya implementados/validados o existentes y relevantes; 113 pendientes en cartera. Solo los cambios de código y pruebas de esta PR cuentan como entrega nueva; parte de los implementados pertenecen a las versiones anteriores.
+**Corte de esta rama:** 77 comportamientos identificados en el corte inicial, más implementaciones R1/R2/PR71 documentadas individualmente. Algunas capacidades existentes todavía aparecen como pendientes en este inventario y deberán reconciliarse con evidencia; no usar este texto como contador global exacto. Solo los cambios de código y pruebas de esta PR cuentan como entrega nueva; parte de los implementados pertenecen a las versiones anteriores.
 
 **IMPLEMENTADO** = observable en el producto o cubierto por código de esta línea de desarrollo. **PENDIENTE** = no debe anunciarse como entregado. La lista total es un plan por prioridades, no una afirmación de que las 190 están terminadas.
 
@@ -24,15 +24,15 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 ## 02 · Recorrido comercial
 
 - [   ] **P011** · Rutas de entrada por problema empresarial · PENDIENTE
-- [   ] **P012** · Ruta de comprador que no conoce tecnología · PENDIENTE
-- [   ] **P013** · Ruta de responsable de operaciones · PENDIENTE
-- [   ] **P014** · Ruta de analista de datos · PENDIENTE
-- [   ] **P015** · Ruta de soporte al cliente · PENDIENTE
+- [ x ] **P012** · Ruta de comprador que no conoce tecnología · IMPLEMENTADO (PR71, Discovery Studio)
+- [ x ] **P013** · Ruta de responsable de operaciones · IMPLEMENTADO (PR71, Discovery Studio)
+- [ x ] **P014** · Ruta de analista de datos · IMPLEMENTADO (PR71, Discovery Studio)
+- [ x ] **P015** · Ruta de soporte al cliente · IMPLEMENTADO (PR71, Discovery Studio)
 - [   ] **P016** · CTA contextual tras detectar bloqueos · PENDIENTE
 - [   ] **P017** · CTA contextual tras preparar una cola · PENDIENTE
 - [   ] **P018** · Enlace a caso relacionado con el escenario · PENDIENTE
 - [   ] **P019** · Estimación de alcance basada en requisitos reales · PENDIENTE
-- [   ] **P020** · Revisión final del brief antes del envío · PENDIENTE
+- [ x ] **P020** · Revisión final del brief antes del envío · IMPLEMENTADO (PR71, Discovery Studio)
 
 ## 03 · Ejemplos interactivos
 
