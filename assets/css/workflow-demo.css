@@ -403,3 +403,19 @@ body[data-experience="simple"] .workbench-insights{margin-top:0}
 .workbench-r2-head .btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 @media(max-width:740px){.workbench-r2-head{flex-direction:column}.workbench-r2-head .btn{width:100%;white-space:normal}.workbench-r2-columns{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.workbench-r2 *{transition:none!important}}
+
+
+/* PR72 · import integrity, local profile and explicit discard boundary */
+.workbench-import-audit{margin:13px 0;padding:15px;border:1px solid var(--line-2);border-radius:12px;background:var(--bg-2)}
+.workbench-import-audit strong{font:750 13px/1.4 var(--display);color:var(--text)}
+.workbench-import-audit p,.workbench-import-audit li{font:11px/1.65 var(--sans);color:var(--muted)}
+.workbench-import-audit p{margin:6px 0}
+.workbench-import-audit ul{margin:8px 0 0;padding-left:17px}
+.workbench-mapping-profile{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:15px;margin:12px 0;border:1px solid var(--line-2);border-radius:11px;background:var(--bg-2)}
+.workbench-mapping-profile label{font:750 11px/1.5 var(--sans);color:var(--text)}
+.workbench-mapping-profile input{max-width:100%;font:11px/1.4 var(--sans)}
+.workbench-mapping-profile p{width:100%;font:11px/1.5 var(--sans);color:var(--muted);margin:0}
+.workbench-discard-confirm{display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--line-2);border-radius:10px;font:11px/1.55 var(--sans);color:var(--muted)}
+.workbench-discard-confirm input{width:20px;height:20px;flex-shrink:0;accent-color:var(--accent)}
+.workbench-discard-confirm:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:650px){.workbench-mapping-profile{display:grid;grid-template-columns:1fr}.workbench-mapping-profile button{width:100%}.workbench-discard-confirm{font-size:12px}}
