@@ -1228,6 +1228,24 @@ $("demoContact").addEventListener("click",event=>{
       "&body="+encodeURIComponent(summary());
   }
 });
+// Keyboard support without trapping ordinary navigation outside the discard confirmation.
+installAccessibleNavigation({
+ document,
+ openRow:index=>openEditor(index),
+ cancelDiscard:()=>$("cancelScenarioDiscard").click(),
+ closePanels:()=>{
+  // Editor and mapping preserve their existing Escape/focus recovery handlers.
+  if(!$("columnMapper").hidden||!$("workflowEditForm").hidden)return false;
+  for(const [panel,close] of [
+   ["reportStudio","reportClose"],
+   ["candidateStudio","candidateClose"],
+   ["rulesStudio","rulesClose"]
+  ]){
+   if(!$(panel).hidden){$(close).click();return true;}
+  }
+  return false;
+ }
+});
 chooseScenario(scenario);
 // Run the real engine once; guided and advanced views share one result, not two demos.
 $("runWorkflow").click();
