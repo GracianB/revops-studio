@@ -1,3 +1,11 @@
+## RevOps PR74 · Mesa de correcciones profesional (sin lanzamiento)
+
+La mesa de trabajo añade **previsualización local del cambio antes de guardarlo**, recálculo real de estados, diferencias por campo, avisos de revisión humana, validaciones del motor existentes y botón inactivo cuando no existen diferencias. `assets/js/correction-workbench.js` proporciona una línea temporal acotada a 20 correcciones: múltiples deshacer/rehacer, salto entre estados, eliminación de futuras correcciones al ramificar e historial sin filas ni identificadores en etiquetas.
+
+La interfaz añade siguiente bloqueo, conservación de modificaciones al intentar navegar, restauración del foco, atajos Ctrl/Cmd+Z e Y fuera de campos editables, presets de filtros, orden y visibilidad de columnas. Las vistas guardadas por acción explícita en `sessionStorage` contienen **solo filtros/orden/densidad y dos opciones booleanas**, nunca registros ni texto de búsqueda; incluyen borrado. En móvil, los registros se leen como fichas con etiquetas, en vez de forzar una tabla desbordada. Los tres escenarios siguen usando el motor local V40 sin conexión a CRM.
+
+Pruebas y aceptación: `tests/correction-workbench.test.js`, los smoke de Chrome/Firefox y `docs/PR74-CORRECCIONES.md`. Esta rama depende de PR73 y permanece en borrador: no fusionar ni desplegar.
+
 ## RevOps PR73 · Data Quality Cockpit (desarrollo sin lanzamiento)
 
 La demo añade un panel de análisis de calidad accesible en modo avanzado. El motor puro `assets/js/quality-cockpit.js` calcula campos vacíos, completitud, claves únicas, duplicados exactos, IDs contradictorios, distribución numérica, fechas inválidas, negativos, números inválidos y candidatos a valor atípico con IQR **solo cuando hay al menos cinco observaciones y dispersión suficiente**. Permite abrir la primera fila asociada a cada hallazgo, identifica el bloqueo más frecuente, mantiene la línea base de la ejecución y compara cambios tras corregir, deshacer o rehacer.
