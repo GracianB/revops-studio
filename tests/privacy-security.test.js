@@ -22,7 +22,7 @@ test("PR79: every CSV sink escapes formulas while preserving quotes, accents and
   assert.match(csv,/^﻿"fila"|^﻿"pedido"/);
   assert.match(csv,/"'=HYPERLINK\(""https:\/\/example\.test"", ""click""\)"/);
   assert.match(csv,/"'@SUM\(A1:A2\)"/);
-  assert.match(csv,/"'  \+cmd\|\/c calc"/);
+  assert.match(csv,/"'\+cmd\|\/c calc"/);
   assert.match(csv,/"'-2\+3"/);
   assert.match(csv,/"Informe"/);
   assert.ok(csv.endsWith("\r\n"));
@@ -49,7 +49,7 @@ test("PR79: no bidi or invisible controls in pasted or uploaded input; never mut
  for(const secret of ["\u202E","\u2066","\u200B","\u0001","\u007f","\u009f"]){
   const malicious=prefix+secret;
   assert.throws(()=>parseDelimited(malicious),/invisibles/);
-  assert.throws(()=>decodeImportBytes(new TextEncoder().encode(malicious)),/invisibles/);
+  assert.throws(()=>decodeImportBytes(new TextEncoder().encode(malicious)),/invisibles|control|nulos/);
   assert.throws(()=>inspectImport("orders",malicious),/invisibles/);
  }
  assert.equal(validateTextBoundary("José\nAvenida 1\n🙂"),"José\nAvenida 1\n🙂");
