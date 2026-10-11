@@ -3,6 +3,7 @@ import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
 import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
 import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} from "./workflow-product-kit.js";
 import {createClientJourney} from "./client-journey.js";
+import {compareWorkflow,comparisonReport} from "./workflow-comparison.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -15,7 +16,7 @@ const initialMode=urlParams.get("view")==="simple"?"simple":
   urlParams.has("scenario")?"advanced":"simple";
 let guide=null;
 let scenario=allowed.includes(query)?query:"orders";
-let latest=null;
+let latest=null, baseline=null, evidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
@@ -28,7 +29,9 @@ function errorText(message){
   if(message)element.focus();
 }
 function invalidate(message){
-  latest=null;
+  latest=null;baseline=null;evidence=null;
+  $("r2Evidence").hidden=true;
+  $("r2Export").disabled=true;
   $("exportWorkflow").disabled=true;
   $("copyWorkflow").disabled=true;
   $("exportActionQueue").disabled=true;
@@ -293,6 +296,7 @@ function loadWorkflowExample(){
     closeColumnMapper();errorText("");
     activeFilter="all";syncFilterButtons();
     $("workflowSort").value="source";$("workflowSearch").value="";
+    baseline=null;
     render(parsed);
     $("changeComparison").hidden=true;
     setText("workflowStatus","Ejemplo «"+RECIPE_LABELS[name].label+"» procesado. Puedes editar sus filas.");
@@ -322,8 +326,40 @@ function cell(tr,text,className){
   td.textContent=String(text);
   tr.append(td);return td;
 }
+function renderR2(result){
+  if(!baseline)baseline=result;
+  evidence=compareWorkflow(baseline,result);
+  const a=evidence.before,b=evidence.after,d=evidence.delta;
+  for(const [id,value] of Object.entries({
+    r2BeforePrepared:a.prepared,r2BeforeBlocked:a.blocked,r2BeforeReview:a.reviewing,
+    r2AfterPrepared:b.prepared,r2AfterBlocked:b.blocked,r2AfterReview:b.reviewing
+  }))setText(id,value);
+  setText("r2Summary",evidence.summary);
+  const signed=n=>n>0?"+"+n:String(n);
+  setText("r2Delta","Cambios del cálculo: "+signed(d.prepared)+" propuestas, "+
+    signed(d.blocked)+" bloqueos y "+signed(d.reviewing)+" revisiones humanas. "+
+    "Acciones externas ejecutadas: 0.");
+  const list=$("r2Transitions"),items=document.createDocumentFragment();
+  if(evidence.transitions.length){
+    for(const item of evidence.transitions){
+      const li=document.createElement("li");
+      li.textContent=item.description;
+      items.append(li);
+    }
+  }else{
+    const li=document.createElement("li");
+    li.textContent="Sin diferencias en decisiones o motivos entre las ejecuciones comparadas.";
+    items.append(li);
+  }
+  list.replaceChildren(items);
+  setText("r2Rules",evidence.rule+" "+evidence.limitation);
+  $("r2Evidence").hidden=false;
+  $("r2Export").disabled=!evidence.comparable;
+}
+
 function render(result){
   latest=result;
+  renderR2(result);
   setText("countTotal",result.counts.total);
   setText("countReady",result.counts.listo);
   setText("countReview",result.counts.revisar);
@@ -645,6 +681,7 @@ $("importWorkflow").addEventListener("change",async event=>{
       undoSource=null;redoSource=null;
       $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
       errorText("");
+      baseline=null;
       render(result);
       setText("workflowStatus","Archivo leído localmente ("+result.counts.total+" filas). Revisa y corrige registros sin salir de esta pantalla.");
     }
@@ -678,6 +715,7 @@ $("applyColumnMapping").addEventListener("click",()=>{
     undoSource=null;redoSource=null;
     $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
     closeColumnMapper();
+    baseline=null;
     render(result);
     $("changeComparison").hidden=true;
     errorText("");
@@ -741,6 +779,16 @@ $("exportVisible").addEventListener("click",()=>{
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(href),1000);
   setText("workflowStatus","Exportadas "+indices.length+" filas visibles en su orden actual. Incluye valores de esas filas; no se han enviado.");
+});
+$("r2Export").addEventListener("click",()=>{
+  if(!evidence?.comparable)return;
+  const text=comparisonReport(evidence);
+  const uri=URL.createObjectURL(new Blob([text],{type:"text/plain;charset=utf-8"}));
+  const link=document.createElement("a");
+  link.href=uri;link.download="revops-comparativa-r2-"+scenario+".txt";
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(uri),1000);
+  setText("workflowStatus","Comparativa R2 descargada. Sin filas, contactos ni ejecución externa.");
 });
 $("exportInsights").addEventListener("click",()=>{
   if(!latest)return;
