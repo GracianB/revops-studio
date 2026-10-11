@@ -952,3 +952,18 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 .pilot-session-audit-list li{min-width:0;padding:11px;border-radius:9px;border:1px solid var(--line);background:var(--bg-2);font:12px/1.5 var(--sans);overflow-wrap:anywhere}
 @media(max-width:620px){.pilot-session-audit-list{grid-template-columns:1fr}}
 @media(forced-colors:active){.pilot-session-audit-list li{border:1px solid ButtonText}}
+
+/* PR94 · Phase, role and risk evidence matrix. */
+.pilot-evidence-review{padding:13px;margin:14px 0;border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2);min-width:0}
+.pilot-evidence-review h5{margin:4px 0 7px;font:750 14px/1.5 var(--sans)}
+.pilot-evidence-review label{display:grid;gap:7px;margin:12px 0;font:750 12px/1.5 var(--sans)}
+#pilotEvidenceReviewFilter{width:100%;max-width:100%;min-width:0;min-height:44px;padding:8px;background:var(--panel);color:var(--text);border:1px solid var(--line-2);border-radius:8px}
+.pilot-evidence-review-list{margin:10px 0;padding:0;list-style:none;display:grid;gap:8px}
+.pilot-evidence-review-list li{min-width:0;display:grid;gap:5px;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);overflow-wrap:anywhere}
+.pilot-evidence-review-list strong{font:750 12px/1.5 var(--sans)}
+.pilot-evidence-review-list small{font:11px/1.5 var(--sans);color:var(--muted)}
+.pilot-evidence-review-list p{margin:0}
+.pilot-evidence-review-list button{min-height:44px;padding:8px;border:1px solid var(--line-2);border-radius:9px;background:var(--bg-2);color:var(--text);font:750 12px/1.5 var(--sans)}
+.pilot-evidence-review-list button:disabled{opacity:.75}
+#pilotEvidenceReviewSummary,#pilotEvidenceReviewStatus{padding:10px;background:var(--panel);border-left:3px solid var(--accent)}
+@media(forced-colors:active){.pilot-evidence-review-list li{border:1px solid ButtonText}}
