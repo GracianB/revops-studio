@@ -10,6 +10,10 @@ export function previewRecordEdit(type,source,index,changes){
  if(!Number.isInteger(index)||index<0||index>=before.rows.length)throw Error("Selecciona un registro existente.");
  if(!changes||typeof changes!=="object"||Array.isArray(changes))throw Error("Corrección no válida.");
  const row=before.rows[index];
+ for(const [field,value] of Object.entries(changes)){
+  if(!SCENARIOS[type].columns.includes(field))throw Error("Campo no permitido: "+field);
+  if(typeof value!=="string"||value.length>400)throw Error("Cada campo debe contener hasta 400 caracteres.");
+ }
  const diff=[];
  for(const key of SCENARIOS[type].columns){
   if(!Object.hasOwn(changes,key))continue;
