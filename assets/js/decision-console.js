@@ -90,6 +90,14 @@ export function mountDecisionConsole({getState,openEditor}){
   container.replaceChildren(fragment);
  }
  const controller={
+  clear(){
+   policy=null;ledger=null;currentSource=null;currentScenario=null;
+   $("humanReviewNote").value="";$("humanReviewRow").replaceChildren();
+   $("ruleTraceRow").replaceChildren();$("ruleTraceDetail").replaceChildren();
+   $("ruleConflicts").replaceChildren();$("ruleCatalogList").replaceChildren();
+   $("rulesExport").disabled=true;
+   status("Datos de revisión eliminados de esta sesión.");
+  },
   reviewSummary(type,source){
    if(!ledger||type!==currentScenario||source!==currentSource)return null;
    return ledger.summary();
