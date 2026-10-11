@@ -4,7 +4,7 @@ const SCHEMAS=Object.freeze(new Set([
  "revops-pilot-risk-v1","revops-pilot-evidence-v1","revops-pilot-drills-v1",
  "revops-guided-route-v1","revops-pilot-session-journal-v1",
  "revops-pilot-evidence-review-v1","revops-pilot-validation-atlas-v1",
- "revops-pilot-supervised-review-v1","revops-pilot-stress-v1"
+ "revops-pilot-supervised-review-v1","revops-pilot-stress-v1","revops-pilot-accessibility-v1"
 ]));
 const RESTRICTED=/^(?:email|customer|customerName|clientName|rawRows|rawSource|csv|password|apiKey|accessToken|secret|phone|ipAddress|personalData)$/i;
 const ZERO_FIELDS=new Set(["realApprovals","externalExecutions","realEvidence","realEvidenceSupplied","realEvidenceVerified","verifiedReal","approvedReal"]);
