@@ -687,3 +687,11 @@ body[data-experience="simple"] .workbench-p76,body[data-experience="simple"] .wo
   transition-duration:.01ms!important;scroll-behavior:auto!important
  }
 }
+
+
+/* PR78 axe finding: white on a lightened coral button was only 2.83:1.
+   Keep a near-black label for readable coral buttons in either theme. */
+.workbench-page .workbench-recipe-controls button#loadWorkflowRecipe,
+.workbench-page .workbench-discard-actions button#confirmScenarioDiscard{
+ color:#090d16;
+}
