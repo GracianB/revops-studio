@@ -357,3 +357,25 @@ test("PR71 is one complete discovery workflow, lazy-loaded and consent-first",()
  assert.doesNotMatch(engine,/fetch\(|localStorage|sessionStorage|mailto:/);
  assert.match(design,/@media\(max-width:700px\)/);
 });
+
+
+test("PR72 import contract is enforced before any data replacement",()=>{
+ const ui=file("assets/js/workflow-demo.js");
+ const contract=file("assets/js/import-contract.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["importAudit","importAuditTitle","importAuditSummary","importAuditFindings",
+   "exportMappingProfile","importMappingProfile","confirmDiscardColumns","mappingProfileStatus"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(ui,/decodeImportBytes\(bytes\)/);
+ assert.match(ui,/inspectImport\(scenario,text\)/);
+ assert.match(ui,/ensureImportReady\(validation,\$\("confirmDiscardColumns"\)\.checked\)/);
+ assert.match(ui,/readMappingProfile\(await file\.text\(\)/);
+ assert.match(ui,/makeMappingProfile\(scenario,currentMapping\(\)\)/);
+ assert.match(contract,/TextDecoder\("utf-8",\{fatal:true/);
+ assert.match(contract,/regional_ambiguous/);
+ assert.match(contract,/duplicado idéntico/);
+ assert.match(contract,/conflicto de identificador/);
+ assert.match(contract,/revops-mapping-profile-v1/);
+ assert.doesNotMatch(contract,/fetch\(|localStorage|sessionStorage/);
+ assert.match(css,/\.workbench-discard-confirm/);
+});
