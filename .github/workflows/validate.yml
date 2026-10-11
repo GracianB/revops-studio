@@ -30,6 +30,18 @@ jobs:
       - name: PR80 integrated synthetic acceptance
         run: npm run pr80:check
 
+      - name: PR99 candidate integrity and release boundary
+        run: node scripts/pr99-candidate-audit.mjs
+
+      - name: Upload PR99 technical inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr99-inventory-${{ github.run_id }}
+          path: .ci-artifacts/pr99-candidate-inventory.json
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Install lightweight browser smoke dependency
         run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0 axe-core@4.10.3
 
