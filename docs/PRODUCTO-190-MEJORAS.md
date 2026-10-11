@@ -144,12 +144,12 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P102** · Desglose de campos incompletos · IMPLEMENTADO
 - [ x ] **P103** · Advertir que integridad no equivale a exactitud · IMPLEMENTADO
 - [ x ] **P104** · Mostrar faltantes por columna · IMPLEMENTADO
-- [   ] **P105** · Contar identificadores únicos · PENDIENTE
-- [   ] **P106** · Contar claves conflictivas · PENDIENTE
-- [   ] **P107** · Detectar distribución de valores numéricos · PENDIENTE
-- [   ] **P108** · Comprobar formatos de fecha por columna · PENDIENTE
-- [   ] **P109** · Identificar patrones de valores atípicos · PENDIENTE
-- [   ] **P110** · Medir evolución de calidad entre dos ejecuciones · PENDIENTE
+- [ x ] **P105** · Contar identificadores únicos · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P106** · Contar claves conflictivas · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P107** · Detectar distribución de valores numéricos · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P108** · Comprobar formatos de fecha por columna · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P109** · Identificar patrones de valores atípicos · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P110** · Medir evolución de calidad entre dos ejecuciones · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
 
 ## 12 · Comprensión de resultados
 
@@ -160,7 +160,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P115** · Navegar desde recomendación hasta filtro · PENDIENTE
 - [ x ] **P116** · Comparación real antes/después de una corrección · IMPLEMENTADO (R2: comparación de reglas sobre mismo conjunto y punto de partida)
 - [ x ] **P117** · Enseñar qué reglas causaron cada resultado · IMPLEMENTADO (R2: motivos de regla en transiciones y tabla de decisiones)
-- [   ] **P118** · Mostrar impacto agregado por tipo de error · PENDIENTE
+- [ x ] **P118** · Mostrar impacto agregado por tipo de error · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
 - [   ] **P119** · Comparar dos conjuntos de datos sin guardarlos · PENDIENTE
 - [   ] **P120** · Representar un flujo paso a paso con eventos · PENDIENTE
 
