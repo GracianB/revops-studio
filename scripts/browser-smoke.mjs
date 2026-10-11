@@ -298,7 +298,7 @@ async function auditProductWorkbench(browser) {
     assert.equal(await page.locator("#qualityUniqueIds").innerText(),"5");
     assert.equal(await page.locator("#qualityExactDuplicates").innerText(),"1");
     assert.equal(await page.locator("#qualityConflicts").innerText(),"0");
-    assert.match(await page.locator("#qualityColumnDetails").innerText(),/email[\\s\\S]*1 vacío/);
+    assert.match(await page.locator("#qualityColumnDetails").innerText(),/email[\s\S]*1 vacío/);
     await page.locator("#qualityColumnDetails [data-quality-index]").first().click();
     assert.equal(await page.locator("#workflowEditForm").isVisible(),true);
     assert.match(await page.locator("#workbench-edit-title").innerText(),/PED-103/);
@@ -376,11 +376,11 @@ async function auditProductWorkbench(browser) {
     const qualityDownloadPromise=page.waitForEvent("download");
     await page.locator("#qualityExport").click();
     const qualityFile=await qualityDownloadPromise;
-    assert.match(qualityFile.suggestedFilename(),/revops-calidad-pr73-orders\\.txt/);
+    assert.match(qualityFile.suggestedFilename(),/revops-calidad-pr73-orders\.txt/);
     const qualityText=await readFile(await qualityFile.path(),"utf8");
     assert.match(qualityText,/Cambio de bloqueados: -1/);
     assert.match(qualityText,/Acciones ejecutadas fuera del navegador: 0/);
-    assert.doesNotMatch(qualityText,/PED-101|PED-999|norte@ejemplo\\.test|Tienda Norte/);
+    assert.doesNotMatch(qualityText,/PED-101|PED-999|norte@ejemplo\.test|Tienda Norte/);
     assert.match(await page.locator("#r2Delta").innerText(),/\+1 propuestas, -1 bloqueos/);
     assert.match(await page.locator("#r2Transitions").innerText(),/bloqueado → listo/);
     const r2Promise=page.waitForEvent("download");
