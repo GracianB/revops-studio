@@ -17,13 +17,16 @@
 </head>
 <body class="workbench-page">
 <a class="skip-link" href="#main">Saltar a la demostración</a>
+<a class="skip-link workbench-a11y-skip" href="#simulador">Saltar al editor</a>
+<a class="skip-link workbench-a11y-skip" href="#workbench-table-title">Saltar a los resultados</a>
 <header class="workbench-header">
   <nav class="shell workbench-nav" aria-label="Navegación de demostración">
     <a class="brand" href="./" aria-label="RevOps Studio, portada"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">REVOPS<span>STUDIO</span></span></a>
     <div class="workbench-nav-actions"><a class="workbench-back" href="./#diagnostico">← Volver al diagnóstico</a><button type="button" class="theme-toggle" data-theme-toggle aria-label="Cambiar a modo claro" aria-pressed="false"><span data-theme-icon aria-hidden="true">◐</span><span data-theme-label>Modo claro</span></button></div>
   </nav>
 </header>
-<main id="main">
+<main id="main" tabindex="-1">
+  <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="workbenchA11yAnnounce"></div>
   <section class="shell workbench-hero" aria-labelledby="workbench-title">
     <div class="workbench-eyebrow"><span class="workbench-live-dot" aria-hidden="true"></span> MESA DE PRUEBAS · DEMO INTERACTIVA · 100 % LOCAL</div>
     <div class="workbench-hero-grid"><div><h1 id="workbench-title">De datos desordenados a <em>decisiones claras.</em></h1><p>Importa datos de ejemplo, detecta incidencias y entiende qué merece atención. Corrige una fila, comprueba qué ha cambiado y llévate un informe claro antes de plantear una integración real.</p></div>
@@ -79,7 +82,7 @@
       <button type="button" class="workbench-scenario" data-scenario="support" aria-pressed="false"><span>02 / CLIENTES</span><strong>Soporte y escalado</strong><small>Prioridad · incidencias · revisión</small></button>
       <button type="button" class="workbench-scenario" data-scenario="data" aria-pressed="false"><span>03 / DATOS</span><strong>Calidad y conciliación</strong><small>Fechas · cifras · anomalías</small></button>
     </div>
-    <section id="scenarioDiscard" class="workbench-discard" hidden aria-labelledby="scenarioDiscardTitle" role="group">
+    <section id="scenarioDiscard" class="workbench-discard" hidden aria-labelledby="scenarioDiscardTitle" aria-describedby="scenarioDiscardDescription" role="group">
       <div><h3 id="scenarioDiscardTitle">Tienes datos modificados en este proceso</h3><p id="scenarioDiscardDescription">Si cambias de proceso, perderás los cambios que has introducido en esta pestaña. Nada se ha guardado en un servidor.</p></div>
       <div class="workbench-discard-actions"><button type="button" id="cancelScenarioDiscard">Seguir con mis datos</button><button type="button" id="confirmScenarioDiscard">Descartar y cambiar de proceso</button></div>
     </section>
@@ -156,7 +159,7 @@
           <button class="btn btn-secondary" type="button" id="undoCorrection" disabled>Deshacer corrección</button>
           <button class="btn btn-secondary" type="button" id="redoCorrection" disabled>Rehacer corrección</button>
         </div>
-        <p id="workflowError" class="workbench-error" tabindex="-1" role="alert" hidden></p>
+        <p id="workflowError" class="workbench-error" tabindex="-1" role="alert" aria-atomic="true" hidden></p>
       </section>
       <section class="workbench-panel workbench-output" aria-labelledby="workbench-output-title">
         <div class="workbench-panel-head"><div><span>03 / RESULTADO</span><h3 id="workbench-output-title">Trazabilidad en directo</h3></div><span class="workbench-local-label">SOLO SIMULACIÓN</span></div>
@@ -314,7 +317,7 @@
               <button type="button" id="humanReviewApprove">Aprobación simulada</button>
               <button type="button" id="humanReviewReject">Rechazar en simulación</button>
             </div>
-            <p id="humanReviewFeedback" role="status" aria-live="polite"></p>
+            <p id="humanReviewFeedback" role="status" aria-live="polite" aria-atomic="true"></p>
           </section>
           <section class="workbench-p75-section" aria-labelledby="rulesSafetyTitle">
             <h4 id="rulesSafetyTitle">Límites y seguridad del recorrido</h4>
@@ -355,7 +358,7 @@
           </div>
         </div>
         <p id="candidateControlExplain" class="workbench-p76-explain">Solo se modifican los criterios de revisión del candidato.</p>
-        <p id="candidateStatus" role="status" aria-live="polite">Abre la simulación para comparar.</p>
+        <p id="candidateStatus" role="status" aria-live="polite" aria-atomic="true">Abre la simulación para comparar.</p>
         <div class="workbench-p76-stats" aria-label="Comparación del mismo conjunto, ninguna acción externa">
           <div><small>Listos · original</small><strong id="candidateOriginalReady">0</strong></div>
           <div><small>Listos · candidato</small><strong id="candidateNewReady">0</strong></div>
@@ -384,6 +387,10 @@
     </section>
     <section class="workbench-rows" aria-labelledby="workbench-table-title">
       <div class="workbench-section-head"><div><span class="workbench-section-index">04 / AUDITORÍA DE REGISTROS</span><h2 id="workbench-table-title">Cada decisión tiene un motivo.</h2></div><p>Filtra errores, corrige cada registro directamente, compara los resultados y exporta solo las acciones preparadas. Ninguna se ejecuta en sistemas externos.</p></div>
+      <details class="workbench-p78-help" id="workbenchKeyboardGuide">
+        <summary>Accesibilidad: atajos, navegación y ayuda para lectores de pantalla</summary>
+        <div><p>Tab y Mayús+Tab recorren los controles. En los botones de edición de registros, flecha arriba/abajo pasa al anterior/siguiente visible, e Inicio/Fin va al primero/último. Intro o Espacio abre la corrección. Escape cierra paneles secundarios y devuelve el foco al control de apertura.</p><p>Ctrl+Intro ejecuta el CSV desde su editor. Fuera de campos editables, Ctrl/Cmd+Z deshace y Ctrl/Cmd+Y rehace. Las tablas muestran cada resultado también como texto, sin depender del color.</p></div>
+      </details>
       <div class="workbench-review-toolbar" role="group" aria-label="Filtrar registros según el resultado">
         <button type="button" class="workbench-filter is-active" data-workflow-filter="all" aria-pressed="true">Todos</button>
         <button type="button" class="workbench-filter" data-workflow-filter="bloqueado" aria-pressed="false">Bloqueados</button>
@@ -432,16 +439,17 @@
       </section>
       <p class="workbench-filter-status" id="workflowFilterStatus" role="status" aria-live="polite">Elige un escenario para ver los registros.</p>
       <div class="workbench-no-results" id="workflowNoResults" hidden role="status"><strong>No encontramos registros con ese filtro.</strong><span>Prueba otra búsqueda o vuelve a mostrar todos.</span><button type="button" id="resetResultsView">Mostrar todos los registros</button></div>
-      <div class="workbench-table-scroll"><table class="workbench-table"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th><th scope="col">Corregir</th></tr></thead><tbody id="workflowRows"><tr><td colspan="5">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
-      <form id="workflowEditForm" class="workbench-edit" hidden aria-labelledby="workbench-edit-title">
+      <p id="workbenchKeyboardHelp" class="sr-only">Usa Tab para entrar en una fila. En los botones Editar, flecha arriba y abajo, Inicio y Fin navegan por los registros visibles. Pulsa Intro para abrir la corrección. Los estados también se expresan por escrito.</p>
+      <div class="workbench-table-scroll"><table class="workbench-table" aria-describedby="workbenchKeyboardHelp"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th><th scope="col">Corregir</th></tr></thead><tbody id="workflowRows"><tr><td colspan="5">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
+      <form id="workflowEditForm" class="workbench-edit" hidden aria-labelledby="workbench-edit-title" aria-describedby="workflowEditHint">
         <div class="workbench-edit-heading"><div><span class="workbench-section-index">CORRECCIÓN LOCAL · SIN ENVÍOS</span><h3 id="workbench-edit-title">Corregir registro</h3><p id="workflowEditHint">Los cambios solo afectan a los datos de esta pestaña. Se vuelve a ejecutar todo el proceso.</p></div><button type="button" class="workbench-edit-close" id="cancelWorkflowEdit">Cerrar ×</button></div>
         <div class="workbench-edit-grid" id="workflowEditFields"></div>
         <section id="editPreview" class="workbench-p74-preview" aria-labelledby="editPreviewTitle">
           <div class="workbench-p74-preview-head"><h4 id="editPreviewTitle">Vista previa, todavía sin guardar</h4>
             <strong id="editPreviewStatus">Modifica un campo para calcular el resultado.</strong></div>
-          <p id="editPreviewImpact">El estado y las reglas se recalcularán sobre todo el escenario antes de guardar.</p>
+          <p id="editPreviewImpact" aria-live="off">El estado y las reglas se recalcularán sobre todo el escenario antes de guardar.</p>
           <div id="editPreviewDiff" class="workbench-p74-diff"></div>
-          <p id="editPreviewWarning" role="status" aria-live="polite"></p>
+          <p id="editPreviewWarning" role="status" aria-live="polite" aria-atomic="true"></p>
         </section>
         <div class="workbench-p74-navigation">
           <button type="button" class="btn btn-secondary" id="editNextIssue">Siguiente registro bloqueado ↗</button>
@@ -488,7 +496,7 @@
           <button type="button" class="btn btn-secondary" id="reportJson">Agregados JSON ↧</button>
           <button type="button" class="btn btn-secondary" id="reportClose">Cerrar informe</button>
         </div>
-        <p id="reportStatus" role="status" aria-live="polite">Informe disponible para descarga, sin conexiones externas.</p>
+        <p id="reportStatus" role="status" aria-live="polite" aria-atomic="true">Informe disponible para descarga, sin conexiones externas.</p>
         <p class="workbench-p77-disclaimer">Solo números, reglas predefinidas y conclusiones del cálculo. Un PDF con datos agregados también debe revisarse antes de enviarlo. Acciones externas: 0. Aprobaciones reales: 0.</p>
       </section>
     </section>
