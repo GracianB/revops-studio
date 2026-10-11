@@ -70,7 +70,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P046** · Límite de tamaño antes de leer el archivo · PENDIENTE
 - [   ] **P047** · Conservar archivo anterior cuando falla la carga · PENDIENTE
 - [   ] **P048** · Vigilancia de cambio de escenario durante lectura · PENDIENTE
-- [   ] **P049** · Resaltar encoding no UTF-8 antes de aceptar · PENDIENTE
+- [ x ] **P049** · Resaltar encoding no UTF-8 antes de aceptar · IMPLEMENTADO (PR72, contrato verificable)
 - [ x ] **P050** · Compatibilidad controlada con TSV · IMPLEMENTADO
 
 ## 06 · Mapeo de columnas
@@ -83,8 +83,8 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P056** · Impedir mapear una columna dos veces · PENDIENTE
 - [   ] **P057** · Mantener CSV anterior mientras no se confirme · PENDIENTE
 - [   ] **P058** · Aclarar campos obligatorios sin equivalente · PENDIENTE
-- [   ] **P059** · Perfiles de mapeo descargables sin datos · PENDIENTE
-- [   ] **P060** · Confirmación cuando se descarta una columna adicional · PENDIENTE
+- [ x ] **P059** · Perfiles de mapeo descargables sin datos · IMPLEMENTADO (PR72, contrato verificable)
+- [ x ] **P060** · Confirmación cuando se descarta una columna adicional · IMPLEMENTADO (PR72, contrato verificable)
 
 ## 07 · Validación de filas
 
@@ -96,7 +96,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P066** · Estados cerrados apartados de nuevas acciones · PENDIENTE
 - [   ] **P067** · Escalado humano de tickets urgentes · PENDIENTE
 - [   ] **P068** · Revisión humana de valores negativos · PENDIENTE
-- [   ] **P069** · Diferenciar duplicado idéntico de conflicto · PENDIENTE
+- [ x ] **P069** · Diferenciar duplicado idéntico de conflicto · IMPLEMENTADO (PR72, contrato verificable)
 - [   ] **P070** · Comprobar moneda y separadores regionales · PENDIENTE
 
 ## 08 · Corrección guiada
