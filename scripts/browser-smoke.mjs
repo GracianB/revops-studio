@@ -819,6 +819,57 @@ async function auditPilotReadiness(browser){
  }finally{await page.close();}
 }
 
+async function auditPilotControlCenter(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
+ const failures=[],requests=[];
+ page.on("pageerror",e=>failures.push(e.message));
+ page.on("request",r=>requests.push(r.url()));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  assert.equal(await page.locator("#pilotControlStudio").isHidden(),true);
+  assert.equal(requests.some(u=>u.includes("pilot-control-center.js")),false,"PR85 must load lazily");
+  await page.locator("#pilotControlOpen").click();
+  await page.locator("#pilotControlStudio").waitFor({state:"visible"});
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotControlTitle");
+  assert.equal(await page.locator("#pilotControlRisks li").count(),10);
+  assert.equal(await page.locator("#pilotControlApproval").innerText(),"0");
+  assert.equal(await page.locator('[data-evidence-id="E-SIGNOFF"]').isDisabled(),true);
+  assert.ok(await page.locator('[data-evidence-id="E-SCOPE"]').isEnabled());
+  const missing=Number(await page.locator("#pilotControlEvidence").innerText());
+  await page.locator('[data-evidence-id="E-SCOPE"]').check();
+  assert.equal(Number(await page.locator("#pilotControlEvidence").innerText()),missing-1);
+  await page.locator("#pilotControlRun").click();
+  assert.equal(await page.locator("#pilotControlDrills").innerText(),"7/7");
+  assert.equal(await page.locator("#pilotControlDrillList li").count(),7);
+  await page.locator("#pilotControlFilter").selectOption("critical");
+  assert.ok(await page.locator("#pilotControlRisks li").count()>=1);
+  const dl=page.waitForEvent("download");
+  await page.locator("#pilotControlExport").click();
+  const file=await dl;
+  assert.equal(file.suggestedFilename(),"revops-control-piloto-orders.json");
+  const exported=await readFile(await file.path(),"utf8");
+  const parsed=JSON.parse(exported);
+  assert.equal(parsed.schema,"revops-pilot-control-v1");
+  assert.equal(parsed.realApprovals,0);
+  assert.equal(parsed.externalExecutions,0);
+  assert.equal(parsed.drills.passed,7);
+  assert.doesNotMatch(exported,/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  await page.locator("#pilotControlReset").click();
+  assert.equal(await page.locator("#pilotControlDrills").innerText(),"Sin ejecutar");
+  await page.setViewportSize({width:320,height:844});
+  const dims=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(dims.scroll<=dims.width+3,"PR85 mobile overflow: "+JSON.stringify(dims));
+  await auditAccessibility(page,"pilot-control-pr85");
+  await page.locator("#pilotControlClose").click();
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotControlOpen");
+  await page.locator("#workflowSource").fill("pedido;cliente;email;total;estado\nNEW;Sample;x@ejemplo.test;1;nuevo");
+  assert.equal(await page.locator("#pilotControlOpen").isDisabled(),true);
+  assert.ok(requests.some(u=>u.includes("/pilot-control-center.js")),"PR85 lazy-loaded code missing");
+  assert.deepEqual(failures,[],"PR85 runtime errors");
+  console.log("PR85 PILOT CONTROL PASS ("+engineName+"): risk, evidence, local drills, export, reset, focus, privacy, 320px");
+ }finally{await page.close();}
+}
+
 async function auditPilotPlan(browser){
  const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true,reducedMotion:"reduce"});
  const errors=[],requests=[];
@@ -1263,6 +1314,7 @@ try {
   await auditPrivacySecurity(browser);
   await auditPilotReadiness(browser);
   await auditPilotPlan(browser);
+  await auditPilotControlCenter(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
