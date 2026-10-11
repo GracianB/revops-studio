@@ -839,3 +839,22 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 @media(max-width:850px){.workbench-p85-columns{grid-template-columns:minmax(0,1fr)}.workbench-p85-head{flex-wrap:wrap}.workbench-p85-head .btn{width:100%}}
 @media(max-width:550px){.workbench-p85-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.workbench-p85-actions{display:grid;grid-template-columns:minmax(0,1fr)}.workbench-p85-actions button{width:100%}}
 @media(forced-colors:active){.workbench-p85-list li{border:2px solid ButtonText}.pilot-control-severity{border:1px solid ButtonText}}
+
+/* PR86 · Accessible comparison of dependency waves and role-constrained capacity. */
+.pilot-capacity{margin:20px 0;padding:18px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel)}
+.pilot-capacity h4{margin:0 0 8px}
+.pilot-capacity h5{font:750 13px/1.5 var(--sans);margin:17px 0 6px;color:var(--text)}
+.pilot-capacity label{display:grid;gap:8px;max-width:420px;margin:16px 0;font:750 12px/1.5 var(--sans)}
+#pilotCapacityRoleLimit{min-height:46px;padding:10px;border:1px solid var(--line-2);border-radius:9px;background:var(--bg-2);color:var(--text);max-width:100%}
+.pilot-capacity-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--line);border-radius:9px}
+#pilotCapacityTable{border-collapse:collapse;width:100%;min-width:500px;font:12px/1.55 var(--sans);text-align:left}
+#pilotCapacityTable caption{text-align:left;padding:12px;font:750 12px/1.55 var(--sans);color:var(--text)}
+#pilotCapacityTable th,#pilotCapacityTable td{padding:11px;border-top:1px solid var(--line);vertical-align:top}
+#pilotCapacityTable th{color:var(--text);font-weight:750}
+#pilotCapacityTable td{color:var(--muted)}
+#pilotCapacityTable tbody tr:nth-child(odd){background:var(--bg-2)}
+#pilotCapacitySummary{padding:11px;border-left:3px solid var(--accent)}
+.pilot-capacity-roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0;list-style:none}
+.pilot-capacity-roles li{padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--bg-2);font:12px/1.5 var(--sans);overflow-wrap:anywhere}
+@media(max-width:650px){.pilot-capacity{padding:12px}.pilot-capacity-roles{grid-template-columns:1fr}}
+@media(forced-colors:active){.pilot-capacity-scroll,.pilot-capacity-roles li{border:1px solid ButtonText}}
