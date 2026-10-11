@@ -1,3 +1,13 @@
+## RevOps PR80 · Evaluación integrada para un piloto supervisado (NO PUBLICAR)
+
+**Un flujo completo y verificable:** la demo avanzada puede evaluar una muestra local desde el CSV hasta el resultado, la calidad, la trazabilidad PR75 y el análisis de privacidad PR79. Ocho comprobaciones independientes muestran bloqueos de validación, revisión humana, datos sensibles, celdas vacías, propuestas disponibles, conflictos de IDs y ausencia de ejecuciones reales. Cada aviso enlaza a una función existente de corrección, reglas o privacidad.
+
+El visitante puede exportar evidencia TXT o JSON agregada, sin filas, nombres, emails, identificadores ni notas. Una muestra ficticia válida se marca exclusivamente como *apta para ensayo supervisado*, nunca aprobada para producción. El panel es de carga diferida, accesible en móvil y se invalida al cambiar los datos.
+
+Nuevo comando de aceptación: `npm run pr80:check`, incluido en `npm run verify`. Cruza 3 motores, 18 ejemplos, reglas, calidad, privacidad, escenarios conservadores, PDFs y correcciones, además de pruebas E2E Chrome y Firefox. Documentación: `docs/PR80-EVALUACION-PILOTO.md`.
+
+V40 sigue siendo la rama `main` sin modificar; PR69-PR80 permanecen en borrador, sin fusión ni despliegue. El repositorio GitHub es público aunque estas funciones aún no se hayan publicado.
+
 ## RevOps PR79 · Privacidad, seguridad y rendimiento (sin publicación)
 
 **Frontera de datos explícita:** el motor y la importación comparten `validateTextBoundary` y rechazan caracteres invisibles, controles Unicode maliciosos, columnas superiores a 24, celdas superiores a 400 caracteres y cabeceras superiores a 128. Los tres CSV de salida pasan por el mismo `secureCsvCell`: protegen del inicio de fórmulas `= + - @`, equivalentes de anchura completa y prefijos invisibles. Las comillas y delimitadores continúan escapándose correctamente. Los CSV detallados **incluyen los valores de las filas** y la aplicación advierte antes de compartirlos.
