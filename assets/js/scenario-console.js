@@ -71,6 +71,13 @@ export function mountCandidateStudio({getState}){
   refreshInputs();renderCandidate();
  }
  const api={
+  clear(){
+   current=null;source=null;type=null;settings=null;
+   $("candidateImportTemplate").value="";$("candidateThreshold").value="0";
+   $("candidateEscalate").checked=false;$("candidateAffected").replaceChildren();
+   $("candidateExportTemplate").disabled=true;$("candidateDownloadReport").disabled=true;
+   say("Variante y muestra descartadas de memoria.");
+  },
   candidateSummary(typeValue,sourceValue){
    return current&&typeValue===type&&sourceValue===source?current:null;
   },
