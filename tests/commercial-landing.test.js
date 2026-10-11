@@ -464,3 +464,32 @@ test("PR75 uses one source of policy truth, with local human review and lazy saf
  assert.match(css,/\.workbench-p75-layout/);
  assert.match(css,/@media\(max-width:560px\)/);
 });
+
+
+test("PR76 candidate studio is safe, reversible, lazy and does not mutate source workflow",()=>{
+ const pure=file("assets/js/scenario-builder.js");
+ const interactive=file("assets/js/scenario-console.js");
+ const ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["candidateOpen","candidateClose","candidateStudio","candidateStudioTitle",
+   "candidatePreset","candidateThreshold","candidateEscalate","candidateApply",
+   "candidateRollback","candidateOriginalReady","candidateNewReady","candidateOriginalReview",
+   "candidateNewReview","candidateDelta","candidateAffected","candidateSafety",
+   "candidateExportTemplate","candidateImportTemplate","candidateDownloadReport",
+   "candidateTemplateStatus","candidateStatus"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(pure,/baseline=runWorkflow\(type,source\)/);
+ assert.match(pure,/if\(row\.status!=="listo"/);
+ assert.match(pure,/Regla insegura: el candidato intentó evitar un bloqueo/);
+ assert.match(pure,/revops-scenario-settings-v1/);
+ assert.match(pure,/Cambios externos ejecutados: 0/);
+ assert.match(ui,/import\("\.\/scenario-console\.js"\)/);
+ assert.match(ui,/\$\("candidateStudio"\)\.hidden=true/);
+ assert.match(interactive,/decodeScenarioTemplate\(await file\.text\(\),type\)/);
+ assert.match(interactive,/scenarioComparisonReport\(current\)/);
+ assert.match(interactive,/presetFor\(type,"base"\)/);
+ assert.doesNotMatch(pure,/fetch\(|sessionStorage|localStorage|XMLHttpRequest/);
+ assert.doesNotMatch(interactive,/fetch\(|sessionStorage|localStorage|XMLHttpRequest/);
+ assert.match(css,/\.workbench-p76-stats/);
+ assert.match(css,/@media\(max-width:720px\)/);
+});
