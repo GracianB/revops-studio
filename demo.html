@@ -650,6 +650,17 @@
             <h4 id="pilotControlEvidenceTitle" tabindex="-1">02 · Requisitos de evidencia</h4>
             <p>Marcar una casilla significa solamente ensayar la lista, sin adjuntar ni verificar documentos.</p>
             <ul id="pilotControlChecklist" class="workbench-p85-list"></ul>
+            <div class="pilot-evidence-review" aria-labelledby="pilotEvidenceReviewHeading">
+              <h5 id="pilotEvidenceReviewHeading">Revisión de trazabilidad · PR94</h5>
+              <p>Consulta función, fase, riesgos vinculados y pruebas todavía por verificar. Una casilla ensayada no es evidencia recibida.</p>
+              <label for="pilotEvidenceReviewFilter">Filtrar función responsable
+                <select id="pilotEvidenceReviewFilter"><option value="all">Todas las funciones</option></select>
+              </label>
+              <p id="pilotEvidenceReviewSummary" role="status" aria-live="polite"></p>
+              <ol id="pilotEvidenceReviewList" class="pilot-evidence-review-list"></ol>
+              <div class="workbench-p85-actions"><button type="button" id="pilotEvidenceReviewExport">Exportar matriz de requisitos JSON ↧</button></div>
+              <p id="pilotEvidenceReviewStatus" role="status" aria-live="polite">0 evidencias reales verificadas.</p>
+            </div>
           </section>
         </div>
         <section aria-labelledby="pilotControlDrillTitle">
