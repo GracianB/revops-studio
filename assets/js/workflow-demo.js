@@ -1019,6 +1019,52 @@ document.addEventListener("keydown",event=>{
   }
 });
 $("workflowSort").addEventListener("change",()=>{sortResults();applyFilter();});
+const savedViewKey="revops-studio:p74:view-v1";
+$("workbenchViewPreset").addEventListener("change",event=>{
+ const preset=safeViewPreset(event.target.value);
+ if(!preset)return;
+ applyWorkbenchView({
+  filter:preset.filter,sort:preset.sort,density:event.target.value==="compact"?"compact":"comfortable",
+  reason:preset.columns.reason,action:preset.columns.action
+ });
+ setText("workbenchViewStatus","Vista "+event.target.selectedOptions[0].textContent+
+  " aplicada localmente. La búsqueda se ha limpiado sin guardar su contenido.");
+});
+$("workbenchDensity").addEventListener("change",applyWorkbenchPresentation);
+for(const name of ["workbenchShowReason","workbenchShowAction"])
+ $(name).addEventListener("change",applyWorkbenchPresentation);
+$("workbenchSaveView").addEventListener("click",()=>{
+ try{
+  // Explicit opt-in. Exact whitelisted keys only: never store the search or any row.
+  sessionStorage.setItem(savedViewKey,JSON.stringify(readWorkbenchView()));
+  setText("workbenchViewStatus","Preferencias de vista guardadas en esta sesión, sin búsqueda ni datos.");
+ }catch{setText("workbenchViewStatus","El navegador impide el almacenamiento: la vista sigue activa solo en memoria.");}
+});
+$("workbenchRestoreView").addEventListener("click",()=>{
+ try{
+  const raw=sessionStorage.getItem(savedViewKey);
+  if(!raw){setText("workbenchViewStatus","No hay ninguna vista guardada.");return;}
+  if(raw.length>240||!applyWorkbenchView(JSON.parse(raw)))throw Error("La vista guardada no es válida.");
+  setText("workbenchViewStatus","Vista restaurada, sin búsquedas ni valores personales.");
+ }catch{setText("workbenchViewStatus","No se puede restaurar esta configuración.");}
+});
+$("workbenchClearView").addEventListener("click",()=>{
+ try{sessionStorage.removeItem(savedViewKey);}catch{}
+ setText("workbenchViewStatus","Configuración guardada borrada. Los registros no se almacenaban allí.");
+});
+document.addEventListener("keydown",event=>{
+ const el=document.activeElement;
+ const editing=el?.matches("input,textarea,select,[contenteditable]")||el?.closest("[contenteditable]");
+ if(editing||!(event.ctrlKey||event.metaKey)||event.altKey)return;
+ if(event.key.toLowerCase()==="z"){
+  event.preventDefault();
+  if(event.shiftKey)$("redoCorrection").click();
+  else $("undoCorrection").click();
+ }else if(event.key.toLowerCase()==="y"){
+  event.preventDefault();$("redoCorrection").click();
+ }
+});
+
 $("cancelScenarioDiscard").addEventListener("click",()=>{
   pendingScenario=null;
   $("scenarioDiscard").hidden=true;
