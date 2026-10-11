@@ -1,3 +1,11 @@
+## RevOps PR76 · Scenario Builder (sin fusión ni lanzamiento)
+
+El modo avanzado incorpora un **Scenario Builder** opcional, descargado al abrirlo. Permite ensayar tres variantes *conservadoras* de la política de pedidos, soporte y datos sobre **el mismo CSV**, sin modificar el original: umbral de revisión para pedidos, escalado de prioridad media en soporte y umbral de valores elevados en conciliación. Incluye presets base/prudente/estricto, controles personalizados con límites, resumen antes/después, explicación por grupo de incidencias, protección de históricos, bloques y revisión existente, reversión explícita y plantillas JSON reutilizables sin registros.
+
+**Contrato de seguridad:** solo se permiten nuevas revisiones humanas de filas que el motor original daba por listas. Se preservan todos los bloqueos, revisiones humanas anteriores e históricos, y ningún candidato puede aprobar, desbloquear o ejecutar acciones reales. El TXT de comparación contiene únicamente agregados. La configuración JSON incluye solamente versión, tipo de escenario, un ajuste validado y la marca NOT_EXECUTED. No hay datos sensibles persistidos ni envío externo.
+
+Código: `assets/js/scenario-builder.js`, `assets/js/scenario-console.js`; pruebas: `tests/scenario-builder.test.js`, smoke Chrome/Firefox/320px; contrato: `docs/PR76-ESCENARIOS.md`. Rama apilada sobre PR75, borrador y fuera de `main`.
+
 ## RevOps PR75 · Rules & Human Decision Studio (desarrollo sin publicación)
 
 La demo avanzada ofrece una consola de auditoría opcional y de carga diferida. **El motor y la auditoría comparten exactamente el mismo catálogo de reglas ordenadas** (`assets/js/workflow-policy.js`), en vez de mantener explicaciones duplicadas. Cada resultado se acompaña de un identificador estable de regla, precedencia, restricciones adicionales ocultas por reglas prioritarias, recuentos de aplicación y análisis de conflictos por fila. Si el resultado y la regla descrita no coinciden, la consola se niega a presentar una trazabilidad falsa.
