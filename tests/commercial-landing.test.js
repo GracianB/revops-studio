@@ -403,3 +403,32 @@ test("PR73 quality cockpit uses pure analytical contracts and safe DOM drilldown
  assert.match(sheet,/body\[data-experience="simple"\] \.quality-cockpit/);
  assert.match(sheet,/@media\(max-width:820px\)/);
 });
+
+
+test("PR74 delivers live preview, bounded edit timeline and privacy-safe workbench views",()=>{
+ const ui=file("assets/js/workflow-demo.js");
+ const engine=file("assets/js/correction-workbench.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["workbenchP74Title","workbenchViewPreset","workbenchDensity","workbenchShowReason",
+  "workbenchShowAction","workbenchSaveView","workbenchRestoreView","workbenchClearView",
+  "editPreview","editPreviewStatus","editPreviewImpact","editPreviewDiff","editPreviewWarning",
+  "editNextIssue","editDirtyStatus","correctionHistory","correctionHistorySteps","correctionHistoryStatus"]){
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ }
+ assert.match(ui,/previewRecordEdit\(scenario,old,editIndex,currentEdits\(\)\)/);
+ assert.match(ui,/correctionTimeline\.push\(preview\)/);
+ assert.match(ui,/correctionTimeline\?\.undo\(\)/);
+ assert.match(ui,/correctionTimeline\?\.redo\(\)/);
+ assert.match(ui,/correctionTimeline\.jump\(index\)/);
+ assert.match(ui,/nextBlockedIndex\(latest,editIndex\)/);
+ assert.match(ui,/sessionStorage\.setItem\(savedViewKey,JSON\.stringify\(readWorkbenchView\(\)\)\)/);
+ assert.match(ui,/const focus=editorTrigger/);
+ assert.match(ui,/input,textarea,select/);
+ assert.match(engine,/maximum=20/);
+ assert.match(engine,/previewRecordEdit/);
+ assert.match(engine,/safeViewPreset/);
+ assert.doesNotMatch(engine,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.match(css,/\.workbench-p74-preview/);
+ assert.match(css,/@media\(max-width:700px\)/);
+ assert.match(css,/\.workbench-table \.workbench-row\{display:grid/);
+});
