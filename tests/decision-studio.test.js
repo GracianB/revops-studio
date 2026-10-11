@@ -133,7 +133,7 @@ test("PR75: report is strictly aggregate and never includes notes, IDs, names or
  for(const secret of ["TICKET-SECRET","Documento interno privado","persona privada","@email.test","TK-2"])
   assert.equal(report.includes(secret),false);
  assert.throws(()=>humanDecisionReport(null,ledger),/Necesitas/);
- assert.throws(()=>humanDecisionReport(policy,createHumanReviewLedger(runWorkflow("orders",SCENARIOS.orders.sample))),/otro conjunto/);
+ assert.throws(()=>humanDecisionReport(policy,createHumanReviewLedger(runWorkflow("orders","pedido;cliente;email;total;estado\nP1;Acme;a@b.es;10;nuevo"))),/otro conjunto/);
 });
 test("PR75: case with zero human gates disables attempts at a fake approval",()=>{
  const input="pedido;cliente;email;total;estado\nO1;Tienda;x@ejemplo.test;10;nuevo";
