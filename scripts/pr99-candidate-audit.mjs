@@ -10,7 +10,8 @@ export const CANDIDATE_MODULES=Object.freeze([
  "pilot-validation-atlas","pilot-section-navigation","pilot-guided-route",
  "pilot-session-journal","pilot-evidence-review","pilot-supervised-review",
  "pilot-export-integrity","pilot-computation-cache","pilot-accessibility-protocol",
- "pilot-v100-snapshot"
+ "pilot-v100-snapshot",
+ "pilot-ux-progressive"
 ]);
 const SUPPORT=Object.freeze([
  "assets/js/workflow-demo.js","assets/css/workflow-demo.css",
@@ -18,7 +19,8 @@ const SUPPORT=Object.freeze([
  "scripts/pr80-acceptance.mjs",".github/workflows/validate.yml",
  "docs/PR96-INTEGRIDAD-EXPORTACIONES.md","docs/PR97-RENDIMIENTO-LOCAL.md",
  "docs/PR98-ACCESIBILIDAD-PENDIENTE.md",
- "docs/PR100-REVOPS-MILESTONE.md","scripts/pr100-milestone-acceptance.mjs"
+ "docs/PR100-REVOPS-MILESTONE.md","scripts/pr100-milestone-acceptance.mjs",
+ "docs/V100-UX-AUDIT.md","scripts/ux-audit.mjs"
 ]);
 const FORBIDDEN=/\b(?:eval|fetch)\s*\(|\bnew\s+Function\b|\blocalStorage\b|\bsessionStorage\b|\bXMLHttpRequest\b/;
 export function auditCandidate(root,{read=readFileSync,exists=existsSync}={}){
@@ -47,7 +49,8 @@ export function auditCandidate(root,{read=readFileSync,exists=existsSync}={}){
   "REVOPS_BROWSER=firefox node scripts/browser-smoke.mjs",
   "node scripts/performance-budget.mjs",
   "node scripts/pr99-candidate-audit.mjs",
-  "node scripts/pr100-milestone-acceptance.mjs"])
+  "node scripts/pr100-milestone-acceptance.mjs",
+  "node scripts/ux-audit.mjs"])
   if(!pipeline.includes(step))problems.push("CI_GATE_MISSING "+step);
  const source=get("assets/js/pilot-supervised-review.js");
  if(!source.includes('outcome:"NO AUTORIZADO PARA PRODUCCIÓN"')||
