@@ -186,6 +186,36 @@
         <p class="workbench-empty-insight">Los pasos recomendados aparecerán después de ejecutar el proceso.</p>
       </div>
       <div class="workbench-change-comparison" id="changeComparison" role="status" aria-live="polite" hidden></div>
+      <section class="workbench-r2" id="r2Evidence" aria-labelledby="r2Title" hidden>
+        <div class="workbench-r2-head">
+          <div><span class="workbench-section-index">R2 · EVIDENCIA DEL CAMBIO · MISMAS FILAS</span>
+            <h3 id="r2Title">Antes, después y el porqué.</h3>
+            <p id="r2Summary">Punto de partida: modifica un registro para observar cómo recalculan las reglas.</p>
+          </div>
+          <button class="btn btn-secondary" type="button" id="r2Export" disabled>Descargar comparativa sin filas ↧</button>
+        </div>
+        <div class="workbench-r2-columns" aria-label="Contadores de la simulación, no resultados reales">
+          <div class="workbench-r2-column">
+            <span class="workbench-r2-kicker">ANTES · PUNTO DE PARTIDA</span>
+            <div><span>Propuestas preparadas</span><strong id="r2BeforePrepared">0</strong></div>
+            <div><span>Bloqueadas</span><strong id="r2BeforeBlocked">0</strong></div>
+            <div><span>Revisión humana</span><strong id="r2BeforeReview">0</strong></div>
+          </div>
+          <div class="workbench-r2-column">
+            <span class="workbench-r2-kicker">DESPUÉS · REGLAS RECALCULADAS</span>
+            <div><span>Propuestas preparadas</span><strong id="r2AfterPrepared">0</strong></div>
+            <div><span>Bloqueadas</span><strong id="r2AfterBlocked">0</strong></div>
+            <div><span>Revisión humana</span><strong id="r2AfterReview">0</strong></div>
+          </div>
+        </div>
+        <p class="workbench-r2-delta" id="r2Delta" role="status" aria-live="polite"></p>
+        <div class="workbench-r2-explain">
+          <h4>Qué cambió en las decisiones</h4>
+          <ul id="r2Transitions"><li>Aún no hay cambios entre los dos cálculos.</li></ul>
+          <p id="r2Rules">Las decisiones proceden de reglas explícitas del ejemplo.</p>
+        </div>
+        <p class="workbench-r2-safety">Acciones ejecutadas externamente: <strong>0</strong>. «Preparada» no significa «enviada». No es una medición de ahorro, rendimiento o ROI real.</p>
+      </section>
       <div class="workbench-insight-note">Recomendaciones basadas en las reglas visibles de esta demo. No se comprueban fuentes externas ni se calculan ahorros.</div>
     </section>
     <section class="workbench-rows" aria-labelledby="workbench-table-title">
