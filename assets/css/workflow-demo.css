@@ -505,3 +505,5 @@ body[data-experience="simple"] .workbench-p74-toolbar,body[data-experience="simp
  .workbench-table .workbench-row-edit{width:100%;min-height:46px}
 }
 @media(prefers-reduced-motion:reduce){.workbench-p74-toolbar *, .workbench-p74-history *, .workbench-p74-preview *{transition:none!important}}
+
+.workbench-row:focus-within{outline:2px solid var(--accent);outline-offset:-2px;background:color-mix(in srgb,var(--accent) 7%,var(--panel))}
