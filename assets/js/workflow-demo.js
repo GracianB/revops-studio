@@ -1,5 +1,6 @@
 import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActionQueueCsv, exportVisibleRowsCsv } from "./workflow-engine.js";
 import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
+import {decodeImportBytes,inspectImport,ensureImportReady,makeMappingProfile,readMappingProfile} from "./import-contract.js";
 import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
 import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} from "./workflow-product-kit.js";
 import {createClientJourney} from "./client-journey.js";
@@ -51,7 +52,39 @@ function closeColumnMapper(){
   $("columnMappingRows").replaceChildren();
   $("columnMappingPreview").replaceChildren();
   setText("columnMappingStatus","");
+  $("confirmDiscardColumns").checked=false;
+  setText("mappingProfileStatus","Un perfil solo contiene los nombres de columnas y el escenario.");
 }
+function auditImport(check){
+  setText("importAuditTitle","Contrato: "+check.format+" · "+check.rows+" registro(s)");
+  setText("importAuditSummary","Estado: "+({
+    ready:"Listo para validar",confirm_discards:"Confirma columnas adicionales",
+    mapping_required:"Relaciona campos obligatorios",mapping_conflict:"Corrige columnas repetidas",
+    regional_ambiguous:"Corrige separadores regionales ambiguos"
+  }[check.status]||"Requiere revisión")+". No se ha sustituido el archivo anterior.");
+  const list=$("importAuditFindings"),frag=document.createDocumentFragment();
+  const info=[
+    ...(check.ignored.length?["Columnas extras: "+check.ignored.join(", ")]:[]),
+    ...(check.missing.length?["Campos sin correspondencia: "+check.missing.join(", ")]:[]),
+    ...(check.conflicts.length?["IDs repetidos: "+check.conflicts.map(v=>"fila "+v.line+" ("+v.kind+")").join("; ")]:[]),
+    ...(check.ambiguousLines.length?["Importes ambiguos en filas "+check.ambiguousLines.join(", ")+": revisa puntos y comas antes de aplicar."]:[]),
+    ...(check.counts?["Simulación: "+check.counts.listo+" listos, "+check.counts.revisar+" revisiones, "+check.counts.bloqueado+" bloqueados."]:[])
+  ];
+  for(const item of info.length?info:["Cabeceras y contenido estructural válidos."]){
+    const li=document.createElement("li");li.textContent=item;frag.append(li);
+  }
+  list.replaceChildren(frag);
+}
+function currentMapping(){
+  return Object.fromEntries([...$("columnMappingRows").querySelectorAll("select")].map(select=>
+    [select.dataset.target,select.value]));
+}
+function downloadMappingFile(filename,body){
+  const url=URL.createObjectURL(new Blob([body],{type:"application/json;charset=utf-8"}));
+  const link=document.createElement("a");link.href=url;link.download=filename;
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+
 function mappingStatus(message,isError=false){
   const element=$("columnMappingStatus");
   element.textContent=message;
@@ -66,6 +99,9 @@ function renderMappingPreview(){
   const heading=document.createElement("p");
   preview.append(heading);
   try{
+    const validation=inspectImport(scenario,mappingSource,mapping);
+    auditImport(validation);
+    ensureImportReady(validation,true); // Preview is not applying or discarding rows.
     const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
     const result=runWorkflow(scenario,converted);
     heading.textContent="VISTA PREVIA DE DESTINO · "+result.counts.total+" filas. "+
@@ -134,6 +170,8 @@ function openColumnMapper(text){
     container.append(row);
   }
   const other=guess.ignored.length?guess.ignored.join(", "):"ninguna";
+  auditImport(inspectImport(scenario,text));
+  $("confirmDiscardColumns").checked=false;
   setText("columnMappingIgnored","Columnas adicionales que no se usarán: "+other+". Las originales se conservarán hasta confirmar.");
   $("columnMapper").hidden=false;
   renderMappingPreview();
@@ -662,10 +700,13 @@ $("importWorkflow").addEventListener("change",async event=>{
   try{
     if(!/\.(csv|tsv|txt)$/i.test(file.name))throw Error("Selecciona un archivo CSV, TSV o TXT.");
     if(file.size>32000)throw Error("Archivo demasiado grande. Límite de 32 KB.");
-    const text=await file.text();
+    const bytes=new Uint8Array(await file.arrayBuffer());
     if(selectedScenario!==scenario)throw Error("El escenario cambió durante la lectura. Selecciona el archivo de nuevo.");
-    // A valid file may use entirely different headers. Preview/confirm mapping
-    // before changing any existing input; exact headers remain one-click.
+    const text=decodeImportBytes(bytes);
+    const check=inspectImport(scenario,text);
+    auditImport(check);
+    if(check.ambiguousLines.length)throw Error("Importe ambiguo en las filas "+check.ambiguousLines.join(", ")+". Corrige sus separadores y vuelve a importar.");
+    // Inspect schema first; no file replaces the current work before validation.
     const suggestion=suggestMapping(scenario,text);
     if(suggestion.unassigned.length || suggestion.ignored.length ||
        suggestion.columns.some(name=>suggestion.matches[name]!=="exacta")){
@@ -674,6 +715,7 @@ $("importWorkflow").addEventListener("change",async event=>{
         "Relaciona las columnas que faltan antes de ejecutar. No se han modificado tus datos.":
         "");
     }else{
+      ensureImportReady(check);
       const result=runWorkflow(scenario,text);
       $("workflowSource").value=text;
       modifiedSource=true;
@@ -705,9 +747,11 @@ for(const id of ["cancelColumnMapper","cancelColumnMapping"]){
 }
 $("applyColumnMapping").addEventListener("click",()=>{
   if(mappingSource===null || mappingScenario!==scenario)return;
-  const mapping=Object.fromEntries([...$("columnMappingRows").querySelectorAll("select")].map(select=>
-    [select.dataset.target,select.value]));
+  const mapping=currentMapping();
   try{
+    const validation=inspectImport(scenario,mappingSource,mapping);
+    auditImport(validation);
+    ensureImportReady(validation,$("confirmDiscardColumns").checked);
     const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
     const result=runWorkflow(scenario,converted);
     $("workflowSource").value=converted;
@@ -724,6 +768,30 @@ $("applyColumnMapping").addEventListener("click",()=>{
   }catch(error){
     mappingStatus(error?.message||"No se puede aplicar el mapeo.",true);
   }
+});
+$("confirmDiscardColumns").addEventListener("change",()=>renderMappingPreview());
+$("exportMappingProfile").addEventListener("click",()=>{
+  try{
+    if(mappingSource===null)return;
+    const profile=makeMappingProfile(scenario,currentMapping());
+    downloadMappingFile("revops-perfil-columnas-"+scenario+".json",profile);
+    setText("mappingProfileStatus","Perfil descargado: solo escenario y correspondencias, nunca filas.");
+  }catch(error){setText("mappingProfileStatus",error?.message||"No se puede exportar el perfil.");}
+});
+$("importMappingProfile").addEventListener("change",async event=>{
+  const file=event.currentTarget.files?.[0];
+  if(!file||mappingSource===null)return;
+  const selectedScenario=scenario;
+  try{
+    if(file.size>3000||!file.name.toLowerCase().endsWith(".json"))throw Error("Elige un perfil JSON de máximo 3 KB.");
+    const profile=readMappingProfile(await file.text(),scenario,suggestMapping(scenario,mappingSource).sourceHeaders);
+    if(selectedScenario!==scenario||mappingSource===null)throw Error("El escenario cambió durante la lectura del perfil.");
+    for(const select of $("columnMappingRows").querySelectorAll("select"))select.value=profile[select.dataset.target];
+    $("confirmDiscardColumns").checked=false;
+    setText("mappingProfileStatus","Perfil cargado en la vista previa. Revisa y confirma antes de aplicar.");
+    renderMappingPreview();
+  }catch(error){setText("mappingProfileStatus",error?.message||"Perfil inválido.");}
+  finally{event.currentTarget.value="";}
 });
 $("columnMappingRows").addEventListener("change",event=>{
   if(event.target.matches("select"))renderMappingPreview();
