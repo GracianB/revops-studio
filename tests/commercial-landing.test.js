@@ -324,3 +324,33 @@ test("R2 makes before-after rules visible without pretending to execute external
  assert.match(demoCss,/@media\(max-width:740px\)/);
  assert.match(demoCss, /\.workbench-r2\[hidden\]\{display:none!important\}/);
 });
+
+
+test("PR71 is one complete discovery workflow, lazy-loaded and consent-first",()=>{
+ const ui=file("assets/js/discovery-ui.js"),engine=file("assets/js/discovery-engine.js");
+ const design=file("assets/css/discovery-studio.css");
+ for(const id of ["discoveryStudio","discoveryRole","discoveryOutcome","discoveryUrgency",
+   "discoveryStage","discoveryOwner","discoverySample","discoveryIntegration",
+   "discoverySensitivity","discoveryGoal","discoveryConstraint","discoveryExclusion",
+   "discoveryReadiness","discoveryGaps","discoveryRisks","discoveryPreview",
+   "discoveryRegenerate","discoveryCopy","discoveryDownloadTxt","discoveryDownloadJson",
+   "discoveryDemoLink","discoveryAttach","discoveryClose","discoveryStatus"]){
+   assert.match(index,new RegExp('id="'+id+'"'),"missing discovery control "+id);
+ }
+ assert.match(index,/id="discoveryStudio"[^>]*hidden/);
+ assert.match(index,/id="diagStudioOpen"[^>]+aria-controls="discoveryStudio"/);
+ assert.match(site,/import\("\.\/discovery-ui\.js"\)/);
+ assert.doesNotMatch(index,/<script[^>]+src="[^"]*discovery-ui\.js/);
+ assert.doesNotMatch(index,/<link[^>]+href="[^"]*discovery-studio\.css/);
+ assert.match(ui,/css.href="\.\/assets\/css\/discovery-studio\.css"/);
+ assert.match(ui,/attachedValue/);
+ assert.match(ui,/if\(edited\)/);
+ assert.match(ui,/preview.value=formatDiscoveryBrief\(current\)/);
+ assert.match(ui,/JSON\.parse\(discoveryJson\(current\)\)/);
+ assert.match(ui,/field\.value=attachedValue/);
+ assert.match(ui,/form.dispatchEvent\(new Event\("input"/);
+ assert.match(engine,/readiness=/);
+ assert.match(engine,/const acceptance=/);
+ assert.doesNotMatch(engine,/fetch\(|localStorage|sessionStorage|mailto:/);
+ assert.match(design,/@media\(max-width:700px\)/);
+});
