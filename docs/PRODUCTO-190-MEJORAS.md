@@ -158,8 +158,8 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P113** · Mostrar distribución de estados · PENDIENTE
 - [   ] **P114** · Priorizar la corrección más repetida · PENDIENTE
 - [   ] **P115** · Navegar desde recomendación hasta filtro · PENDIENTE
-- [   ] **P116** · Comparación real antes/después de una corrección · PENDIENTE
-- [   ] **P117** · Enseñar qué reglas causaron cada resultado · PENDIENTE
+- [ x ] **P116** · Comparación real antes/después de una corrección · IMPLEMENTADO (R2: comparación de reglas sobre mismo conjunto y punto de partida)
+- [ x ] **P117** · Enseñar qué reglas causaron cada resultado · IMPLEMENTADO (R2: motivos de regla en transiciones y tabla de decisiones)
 - [   ] **P118** · Mostrar impacto agregado por tipo de error · PENDIENTE
 - [   ] **P119** · Comparar dos conjuntos de datos sin guardarlos · PENDIENTE
 - [   ] **P120** · Representar un flujo paso a paso con eventos · PENDIENTE
