@@ -88,7 +88,11 @@ export function mountExecutiveReporting({getState}){
   $("reportOpen").focus();
  });
  sync();
- return Object.freeze({sync,close(){
+ return Object.freeze({sync,clear(){
+  documentModel=null;
+  for(const id of ["reportRows","reportReady","reportReview","reportBlocked"])$(id).textContent="0";
+  status("Se ha descartado el resumen temporal del informe.");
+ },close(){
   $("reportStudio").hidden=true;
   $("reportOpen").setAttribute("aria-expanded","false");
  }});
