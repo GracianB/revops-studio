@@ -7,6 +7,7 @@ import {buildPilotEvidenceLedger,simulateEvidenceCoverage,evidencePacketJson}
 import {runPilotFailureDrills,pilotDrillReportJson} from "./pilot-failure-drills.js";
 import {buildPilotCapacityExplorer,pilotCapacityReportJson} from "./pilot-capacity-explorer.js";
 import {buildPilotAuthorizationBoard,pilotAuthorizationJson} from "./pilot-authorization-board.js";
+import {buildPilotHandoffPack,pilotHandoffHtml,pilotHandoffTxt} from "./pilot-handoff-pack.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -181,6 +182,27 @@ export function mountPilotControlCenter({getState}){
    set("pilotControlStatus","Informe agregado exportado. Sin filas, correos, notas ni aprobaciones reales.");
   }catch(error){set("pilotControlStatus","Exportación rechazada: "+error.message);}
  });
+ const exportHandoff=(format,extension,mime)=>{
+  try{
+   rebuild();
+   const board=buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills});
+   const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
+   const pack=buildPilotHandoffPack(board,plan,risks,ledger,capacity);
+   const content=format(pack);
+   const url=URL.createObjectURL(new Blob([content],{type:mime}));
+   const link=document.createElement("a");
+   link.href=url;
+   link.download="revops-revision-piloto-"+scenario+"."+extension;
+   document.body.append(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2500);
+   set("pilotHandoffStatus","Informe "+extension.toUpperCase()+
+    " generado sin datos de filas, firmas ni autorizaciones reales.");
+  }catch(error){set("pilotHandoffStatus","No se puede exportar: "+error.message);}
+ };
+ $("pilotHandoffHtml").addEventListener("click",()=>
+  exportHandoff(pilotHandoffHtml,"html","text/html;charset=utf-8"));
+ $("pilotHandoffTxt").addEventListener("click",()=>
+  exportHandoff(pilotHandoffTxt,"txt","text/plain;charset=utf-8"));
  $("pilotAuthorizationReadiness").addEventListener("click",()=>$("pilotOpen").click());
  $("pilotAuthorizationPlan").addEventListener("click",()=>$("pilotPlanOpen").click());
  $("pilotControlReset").addEventListener("click",()=>{
@@ -210,6 +232,7 @@ export function mountPilotControlCenter({getState}){
    set("pilotAuthorizationCandidate","");
    set("pilotAuthorizationChecklist","");
    set("pilotAuthorizationOutcome","NO AUTORIZADO PARA PRODUCCIÓN");
+   set("pilotHandoffStatus","La muestra ha cambiado. Recalcula antes de exportar.");
    set("pilotControlStatus","Muestra modificada o sesión limpiada. Ejecuta el proceso nuevamente.");
   }
  });
