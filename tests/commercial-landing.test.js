@@ -432,3 +432,35 @@ test("PR74 delivers live preview, bounded edit timeline and privacy-safe workben
  assert.match(css,/@media\(max-width:700px\)/);
  assert.match(css,/\.workbench-table \.workbench-row\{display:grid/);
 });
+
+
+test("PR75 uses one source of policy truth, with local human review and lazy safe evidence",()=>{
+ const workflow=file("assets/js/workflow-engine.js");
+ const policy=file("assets/js/workflow-policy.js");
+ const consoleUi=file("assets/js/decision-console.js");
+ const human=file("assets/js/human-decision.js");
+ const ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["rulesOpen","rulesClose","rulesStudio","rulesStudioTitle",
+  "rulesCount","rulesCovered","rulesOverlaps","rulesHumanGates","ruleCatalogList",
+  "ruleTraceRow","ruleTraceDetail","ruleConflicts","humanReviewCounters",
+  "humanReviewRow","humanReviewState","humanReviewNote","humanReviewStart",
+  "humanReviewApprove","humanReviewReject","humanReviewFeedback","rulesPolicyStatus","rulesExport"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(workflow,/import \{evaluatePolicy\} from "\.\/workflow-policy\.js"/);
+ assert.match(workflow,/const decision=evaluatePolicy\(type,row,\{duplicate\}\)/);
+ assert.doesNotMatch(workflow,/function classify\(type,row\)/);
+ assert.match(policy,/Las reglas visibles no coinciden con el motor/);
+ assert.match(policy,/competingRestrictions:material.length>1/);
+ assert.match(consoleUi,/describePolicy\(type,source,result,parseDelimited\)/);
+ assert.match(consoleUi,/createHumanReviewLedger\(result\)/);
+ assert.match(consoleUi,/humanDecisionReport\(policy,ledger\)/);
+ assert.match(ui,/import\("\.\/decision-console\.js"\)/);
+ assert.match(ui,/\$\("rulesStudio"\)\.hidden=true/);
+ assert.match(human,/realApprovals:0/);
+ assert.match(human,/engineReviewCount:allowed.size/);
+ assert.doesNotMatch(policy,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.doesNotMatch(human,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.match(css,/\.workbench-p75-layout/);
+ assert.match(css,/@media\(max-width:560px\)/);
+});
