@@ -984,3 +984,18 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 #pilotFinalReviewStatus{padding:12px;background:var(--bg-2);border-left:3px solid var(--accent);overflow-wrap:anywhere}
 @media(max-width:680px){.pilot-final-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pilot-final-list{grid-template-columns:1fr}}
 @media(forced-colors:active){.pilot-final-list li{border:1px solid ButtonText}.pilot-final-verdict{border:2px solid ButtonText}}
+
+/* PR98 · Demonstrate automation separately from pending human accessibility work. */
+.pilot-a11y{margin:20px 0;padding:clamp(12px,2.5vw,19px);border:1px solid var(--line-2);border-radius:12px;background:var(--panel);min-width:0}
+.pilot-a11y h4{margin:0 0 9px}
+.pilot-a11y h5{font:750 13px/1.5 var(--sans)}
+.pilot-a11y-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.pilot-a11y-columns>div{min-width:0}
+.pilot-a11y-columns ol{list-style:none;margin:12px 0;padding:0;display:grid;gap:7px}
+.pilot-a11y-columns li{display:grid;gap:5px;padding:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;font:12px/1.6 var(--sans);overflow-wrap:anywhere}
+.pilot-a11y-columns li small{font:11px/1.6 var(--sans);color:var(--muted)}
+#pilotA11ySummary{padding:12px;border-left:3px solid var(--accent);background:var(--bg-2)}
+#pilotControlStudio h4[tabindex="-1"],#pilotControlStudio h3[tabindex="-1"]{scroll-margin-top:115px}
+@media(prefers-reduced-motion:reduce){.pilot-section-controls,.pilot-capacity-scroll,.pilot-stress-scroll{scroll-behavior:auto!important}}
+@media(max-width:680px){.pilot-a11y-columns{grid-template-columns:minmax(0,1fr)}}
+@media(forced-colors:active){.pilot-a11y-columns li{border:1px solid ButtonText}}
