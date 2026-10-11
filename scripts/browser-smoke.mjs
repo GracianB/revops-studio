@@ -433,6 +433,7 @@ async function auditProductWorkbench(browser) {
       name:"ambiguous.csv",mimeType:"text/csv",
       buffer:Buffer.from('pedido;cliente;email;total;estado\n0007;Tienda;x@ejemplo.test;"1.234";nuevo')
     });
+    await page.locator("#workflowError").waitFor({state:"visible"});
     assert.match(await page.locator("#workflowError").innerText(),/Importe ambiguo/);
     assert.equal(await page.locator("#workflowSource").inputValue(),beforeAmbiguous);
     const savedSource=await page.locator("#workflowSource").inputValue();
