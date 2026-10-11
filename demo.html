@@ -713,6 +713,24 @@
           <p id="pilotStressStatus" role="status" aria-live="polite">Sin resultados de pruebas.</p>
           <p class="workbench-p85-disclaimer">Pruebas funcionales deterministas con muestras inventadas. No miden usuarios concurrentes, rendimiento real, fiabilidad de redes o impacto empresarial.</p>
         </section>
+        <section class="pilot-atlas" aria-labelledby="pilotAtlasHeading">
+          <h4 id="pilotAtlasHeading">08 · Verificación transversal PR90</h4>
+          <p>Ejecuta en este navegador las 18 muestras ficticias de los tres procesos con los motores reales: ocho controles de preparación, siete pruebas defensivas y seis invariantes por muestra. No sustituye GitHub Actions ni una auditoría independiente.</p>
+          <div class="pilot-atlas-metrics" role="group" aria-label="Resumen de pruebas sintéticas">
+            <div><small>Muestras comprobadas</small><strong id="pilotAtlasCases">0</strong></div>
+            <div><small>Controles evaluados</small><strong id="pilotAtlasGates">0</strong></div>
+            <div><small>Ensayos defensivos locales</small><strong id="pilotAtlasDrills">0</strong></div>
+            <div><small>Muestras con fallos</small><strong id="pilotAtlasIssues">0</strong></div>
+          </div>
+          <p id="pilotAtlasStatus" role="status" aria-live="polite" aria-atomic="true">Validación transversal pendiente. No existe autorización de producción.</p>
+          <ol id="pilotAtlasResults" class="pilot-atlas-results" aria-label="Resultados de las 18 muestras"></ol>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotAtlasRun">Ejecutar las 18 comprobaciones sintéticas</button>
+            <button type="button" id="pilotAtlasExportJson" disabled>Descargar resultados JSON ↧</button>
+            <button type="button" id="pilotAtlasExportTxt" disabled>Descargar resultados TXT ↧</button>
+          </div>
+          <p class="workbench-p85-disclaimer">La verificación verde solo significa que los invariantes locales han pasado. Producción no autorizada: faltan controles humanos, pruebas independientes, despliegue y aprobación empresarial.</p>
+        </section>
         <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
         <div class="workbench-p85-actions">
           <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
