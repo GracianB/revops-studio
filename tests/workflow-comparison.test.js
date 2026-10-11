@@ -20,10 +20,10 @@ test("R2: every scenario starts from actual rule-derived counters, never an assu
   }
 });
 test("R2: correcting duplicate changes the real rule decision and counters",()=>{
-  for(const [scenario,index,field,id] of [
-    ["orders",2,"pedido","PED-999"],
-    ["support",3,"ticket","TK-999"],
-    ["data",2,"registro","REG-999"]
+  for(const [scenario,index,field,id,nextStatus,deltaPrepared,deltaReview] of [
+    ["orders",2,"pedido","PED-999","listo",1,0],
+    ["support",3,"ticket","TK-999","revisar",0,1],
+    ["data",2,"registro","REG-999","listo",1,0]
   ]){
     const src=SCENARIOS[scenario].sample,original=runWorkflow(scenario,src);
     const corrected=runWorkflow(scenario,editWorkflowRecord(scenario,src,index,{[field]:id}));
@@ -32,9 +32,10 @@ test("R2: correcting duplicate changes the real rule decision and counters",()=>
     assert.equal(evidence.comparable,true);
     assert.equal(evidence.before.total,evidence.after.total);
     assert.equal(evidence.delta.blocked,-1);
-    assert.equal(evidence.delta.prepared,1);
+    assert.equal(evidence.delta.prepared,deltaPrepared);
+    assert.equal(evidence.delta.reviewing,deltaReview);
     assert.equal(evidence.changed,1);
-    assert.ok(evidence.transitions.some(x=>x.from==="bloqueado"&&x.to==="listo"&&x.count===1));
+    assert.ok(evidence.transitions.some(x=>x.from==="bloqueado"&&x.to===nextStatus&&x.count===1));
     assert.ok(evidence.transitions.some(x=>x.description.includes("Regla: Duplicado: identificador ya procesado")));
     assert.ok(evidence.transitions.some(x=>x.description.includes("→ ")));
     assert.doesNotMatch(comparisonReport(evidence),new RegExp(id));
