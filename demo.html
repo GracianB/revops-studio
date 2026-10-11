@@ -297,16 +297,54 @@
           <option value="status">Estado</option>
         </select>
       </div>
+      <section class="workbench-p74-toolbar" aria-labelledby="workbenchP74Title">
+        <div class="workbench-p74-title"><span class="workbench-section-index">PR74 · MESA DE CORRECCIONES</span><h3 id="workbenchP74Title">Investiga y corrige sin perder el control.</h3></div>
+        <div class="workbench-p74-options">
+          <label for="workbenchViewPreset">Vista rápida
+            <select id="workbenchViewPreset">
+              <option value="all">Todos · origen</option>
+              <option value="errors">Resolver bloqueos</option>
+              <option value="review">Decisiones humanas</option>
+              <option value="compact">Escanear prioridades</option>
+            </select>
+          </label>
+          <label for="workbenchDensity">Densidad de tabla
+            <select id="workbenchDensity"><option value="comfortable">Cómoda</option><option value="compact">Compacta</option></select>
+          </label>
+          <fieldset class="workbench-p74-columns"><legend>Columnas opcionales</legend>
+            <label><input id="workbenchShowReason" type="checkbox" checked> Motivo</label>
+            <label><input id="workbenchShowAction" type="checkbox" checked> Acción</label>
+          </fieldset>
+        </div>
+        <p class="workbench-p74-help">Solo guardamos las preferencias de vista durante esta visita. No almacenamos registros ni exportamos datos al cambiar de vista.</p>
+      </section>
       <p class="workbench-filter-status" id="workflowFilterStatus" role="status" aria-live="polite">Elige un escenario para ver los registros.</p>
       <div class="workbench-no-results" id="workflowNoResults" hidden role="status"><strong>No encontramos registros con ese filtro.</strong><span>Prueba otra búsqueda o vuelve a mostrar todos.</span><button type="button" id="resetResultsView">Mostrar todos los registros</button></div>
       <div class="workbench-table-scroll"><table class="workbench-table"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th><th scope="col">Corregir</th></tr></thead><tbody id="workflowRows"><tr><td colspan="5">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
       <form id="workflowEditForm" class="workbench-edit" hidden aria-labelledby="workbench-edit-title">
         <div class="workbench-edit-heading"><div><span class="workbench-section-index">CORRECCIÓN LOCAL · SIN ENVÍOS</span><h3 id="workbench-edit-title">Corregir registro</h3><p id="workflowEditHint">Los cambios solo afectan a los datos de esta pestaña. Se vuelve a ejecutar todo el proceso.</p></div><button type="button" class="workbench-edit-close" id="cancelWorkflowEdit">Cerrar ×</button></div>
         <div class="workbench-edit-grid" id="workflowEditFields"></div>
+        <section id="editPreview" class="workbench-p74-preview" aria-labelledby="editPreviewTitle">
+          <div class="workbench-p74-preview-head"><h4 id="editPreviewTitle">Vista previa, todavía sin guardar</h4>
+            <strong id="editPreviewStatus">Modifica un campo para calcular el resultado.</strong></div>
+          <p id="editPreviewImpact">El estado y las reglas se recalcularán sobre todo el escenario antes de guardar.</p>
+          <div id="editPreviewDiff" class="workbench-p74-diff"></div>
+          <p id="editPreviewWarning" role="status" aria-live="polite"></p>
+        </section>
+        <div class="workbench-p74-navigation">
+          <button type="button" class="btn btn-secondary" id="editNextIssue">Siguiente registro bloqueado ↗</button>
+          <p id="editDirtyStatus" role="status" aria-live="polite"></p>
+        </div>
         <div class="workbench-editor-actions"><button type="submit" class="btn btn-primary" id="saveWorkflowEdit">Guardar y volver a procesar</button><button type="button" class="btn btn-secondary" id="cancelWorkflowEditSecondary">Cancelar</button></div>
         <p class="workbench-edit-status" id="workflowEditStatus" role="status" aria-live="polite"></p>
         <p class="workbench-edit-guide">Los campos marcados se relacionan con el motivo de bloqueo o revisión. Corrige y guarda para recalcular las reglas.</p>
       </form>
+      <section id="correctionHistory" class="workbench-p74-history" aria-labelledby="correctionHistoryTitle">
+        <div><span class="workbench-section-index">HISTORIAL LOCAL · MÁXIMO 20 CORRECCIONES</span><h3 id="correctionHistoryTitle">Tu recorrido de cambios</h3>
+          <p id="correctionHistoryStatus" role="status" aria-live="polite">Punto de partida. Cada corrección guardada añadirá un paso que puedes deshacer.</p></div>
+        <ol id="correctionHistorySteps" class="workbench-p74-history-steps"></ol>
+        <p>No se transmite el historial ni contiene datos reales en el texto de los pasos. Cambiar los datos de entrada inicia otro historial.</p>
+      </section>
     </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
       <div><p><strong>Listo:</strong> pasa las reglas de esta demostración. Puede ser una acción propuesta o un registro histórico, que no debe volver a ejecutarse.</p><p><strong>Revisar:</strong> necesita una decisión humana, aunque algunos campos sean válidos.</p><p><strong>Bloqueado:</strong> no cumple alguna regla y no puede avanzar hasta corregirse.</p><p><strong>Importante:</strong> ningún registro se introduce en tu CRM ni en otra aplicación. Esta mesa de trabajo es una simulación local.</p></div>
