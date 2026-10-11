@@ -632,6 +632,29 @@
           <p>Los siete ensayos fuerzan situaciones inválidas en memoria y comprueban que los validadores las rechazan. No prueban servicios externos.</p>
           <ul id="pilotControlDrillList" class="workbench-p85-drills"></ul>
         </section>
+        <section class="pilot-capacity" aria-labelledby="pilotCapacityHeading">
+          <h4 id="pilotCapacityHeading">04 · Capacidad, dependencias y cuellos de botella</h4>
+          <p>Compara cuatro capacidades de ejecución y comprueba cómo cambia el número de olas si una función puede atender una o dos tareas a la vez. No representa personas asignadas, plazos ni ahorros.</p>
+          <label for="pilotCapacityRoleLimit">Simultaneidad por función
+            <select id="pilotCapacityRoleLimit">
+              <option value="1" selected>1 tarea simultánea por función (conservador)</option>
+              <option value="2">2 tareas simultáneas por función (hipótesis)</option>
+            </select>
+          </label>
+          <div class="pilot-capacity-scroll" tabindex="0" role="region" aria-label="Tabla comparativa de capacidad">
+            <table id="pilotCapacityTable">
+              <caption>Olas lógicas necesarias según capacidad y restricción de función</caption>
+              <thead><tr><th scope="col">Tareas por ola</th><th scope="col">Sin restricción de función</th><th scope="col">Con límite funcional</th><th scope="col">Olas adicionales</th></tr></thead>
+              <tbody id="pilotCapacityRows"></tbody>
+            </table>
+          </div>
+          <p id="pilotCapacitySummary" role="status" aria-live="polite"></p>
+          <h5>Cadena de dependencias de mayor esfuerzo relativo</h5>
+          <p id="pilotCapacityCritical"></p>
+          <h5>Carga relativa por función</h5>
+          <ol id="pilotCapacityRoles" class="pilot-capacity-roles"></ol>
+          <p class="workbench-p85-disclaimer">Estas olas son unidades lógicas, no semanas, horas, costes o pronósticos. La aprobación final siempre requiere verificación humana externa.</p>
+        </section>
         <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
         <div class="workbench-p85-actions">
           <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
