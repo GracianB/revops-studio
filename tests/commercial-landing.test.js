@@ -590,3 +590,31 @@ test("PR79 privacy/security boundary scrubs only RevOps state and hardens all CS
  assert.match(css,/\.workbench-p79-privacy/);
  assert.doesNotMatch(privacy,/fetch\(|XMLHttpRequest|navigator|localStorage/);
 });
+
+
+test("PR80 pilot readiness integrates source truth, privacy, quality and safe outcomes",()=>{
+ const pure=file("assets/js/pilot-readiness.js");
+ const panel=file("assets/js/pilot-console.js"),ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["pilotReadinessTitle","pilotOpen","pilotStudio","pilotStudioTitle",
+  "pilotOutcome","pilotPassed","pilotWarnings","pilotBlockers","pilotChecks",
+  "pilotExportTxt","pilotExportJson","pilotRefresh","pilotClose","pilotStatus"])
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(pure,/runWorkflow\(type,source\)/);
+ assert.match(pure,/buildQualityCockpit\(type,source,actual\)/);
+ assert.match(pure,/describePolicy\(type,source,actual,parseDelimited\)/);
+ assert.match(pure,/inspectDataExposure\(actual\)/);
+ assert.match(pure,/No certifica software de producción/);
+ assert.match(pure,/realApprovals:0,remoteConnections:0/);
+ assert.match(panel,/assessPilotReadiness\(state\.scenario,state\.source,state\.result\)/);
+ assert.match(panel,/pilotReadinessText/);
+ assert.match(panel,/pilotReadinessJson/);
+ assert.match(panel,/replaceChildren\(frag\)/);
+ assert.match(ui,/import\("\.\/pilot-console\.js"\)/);
+ assert.match(ui,/pilotConsole\?\.clear\?\.\(\)/);
+ assert.match(ui,/focusHeading\(document,"pilotStudio","pilotStudioTitle"\)/);
+ assert.match(css,/\.workbench-p80-checks/);
+ assert.match(css,/@media\(max-width:560px\)/);
+ assert.doesNotMatch(pure,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.doesNotMatch(panel,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+});
