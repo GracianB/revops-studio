@@ -24,7 +24,7 @@ let scenario=allowed.includes(query)?query:"orders";
 let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let correctionTimeline=null, editPreview=null, editorTrigger=null, editorDirty=false;
-let decisionConsole=null,candidateConsole=null,reportConsole=null,pilotConsole=null,pilotPlanConsole=null;
+let decisionConsole=null,candidateConsole=null,reportConsole=null,pilotConsole=null,pilotPlanConsole=null,pilotControlConsole=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
@@ -40,9 +40,11 @@ function errorText(message){
 function invalidate(message){
   latest=null;baseline=null;evidence=null;qualityBaseline=null;qualityCurrent=null;qualityEvidence=null;
   correctionTimeline=null;editPreview=null;
-  decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();
+  decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();pilotControlConsole?.clear?.();
   $("pilotStudio").hidden=true;$("pilotOpen").disabled=true;
   $("pilotPlanStudio").hidden=true;$("pilotPlanOpen").disabled=true;
+  $("pilotControlStudio").hidden=true;$("pilotControlOpen").disabled=true;
+  $("pilotControlOpen").setAttribute("aria-expanded","false");
   $("pilotPlanOpen").setAttribute("aria-expanded","false");
   $("pilotOpen").setAttribute("aria-expanded","false");
   $("privacyInspect").disabled=true;
@@ -659,7 +661,9 @@ function render(result){
   $("reportOpen").disabled=false;
   $("pilotOpen").disabled=false;
   $("pilotPlanOpen").disabled=false;
+  $("pilotControlOpen").disabled=false;
   if(pilotPlanConsole&&!$("pilotPlanStudio").hidden)pilotPlanConsole.sync();
+  if(pilotControlConsole&&!$("pilotControlStudio").hidden)pilotControlConsole.sync();
   if(pilotConsole&&!$("pilotStudio").hidden)pilotConsole.sync();
   if(reportConsole&&!$("reportStudio").hidden)reportConsole.sync();
   if(candidateConsole&&!$("candidateStudio").hidden)candidateConsole.sync();
@@ -1188,7 +1192,7 @@ $("privacyClearConfirmButton").addEventListener("click",()=>{
  let store=null;
  try{store=sessionStorage;}catch{}
  const summary=clearRevopsSession(store);
- decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();
+ decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();pilotControlConsole?.clear?.();
  $("importAuditFindings").replaceChildren();
  setText("importAuditTitle","Sin importación pendiente");
  setText("importAuditSummary","Historial de importaciones de esta demo limpiado.");
@@ -1210,6 +1214,21 @@ $("privacyClearConfirmButton").addEventListener("click",()=>{
    "Preferencias de RevOps eliminadas ("+summary.cleared+" claves).")+
   " Los ejemplos ficticios se han restaurado. Las descargas anteriores y el portapapeles no pueden revocarse.");
  announceWorkbench("Sesión de trabajo limpiada; ejemplos ficticios restaurados.");
+});
+$("pilotControlOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(pilotControlConsole)pilotControlConsole.sync();
+  else{
+   const module=await import("./pilot-control-center.js");
+   if(!latest)return;
+   pilotControlConsole=module.mountPilotControlCenter({
+    getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null
+   });
+  }
+  $("pilotControlStudio").scrollIntoView({block:"start",behavior:"instant"});
+  focusHeading(document,"pilotControlStudio","pilotControlTitle");
+ }catch(error){errorText("Centro de control no disponible: "+(error?.message||"entrada inválida"));}
 });
 $("pilotPlanOpen").addEventListener("click",async()=>{
  if(!latest)return;
@@ -1370,6 +1389,7 @@ installAccessibleNavigation({
   // Editor and mapping preserve their existing Escape/focus recovery handlers.
   if(!$("columnMapper").hidden||!$("workflowEditForm").hidden)return false;
   for(const [panel,close] of [
+   ["pilotControlStudio","pilotControlClose"],
    ["pilotPlanStudio","pilotPlanClose"],
    ["pilotStudio","pilotClose"],
    ["reportStudio","reportClose"],
