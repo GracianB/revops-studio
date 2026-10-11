@@ -17,6 +17,7 @@ import {buildPilotSupervisedReview,pilotSupervisedReviewJson,pilotSupervisedRevi
 import {validatePilotExportJson,validatePilotHtmlHandoff} from "./pilot-export-integrity.js";
 import {createPilotComputationCache} from "./pilot-computation-cache.js";
 import {runPilotAccessibilityPreflight,pilotAccessibilityJson} from "./pilot-accessibility-protocol.js";
+import {buildPilotV100Snapshot,pilotV100SnapshotJson,pilotV100SnapshotText} from "./pilot-v100-snapshot.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -77,6 +78,7 @@ export function mountPilotControlCenter({getState}){
   const finalReview=buildPilotSupervisedReview({
    readiness,plan,risks,ledger,coverage,drills,capacity,evidenceReview,atlas:atlasReport
   });
+  const milestone=buildPilotV100Snapshot({readiness,review:finalReview,risks,capacity,evidenceReview,atlas:atlasReport});
   set("pilotGuidedSummary",guided.pending+" pasos pendientes; "+guided.blocked+
    " bloqueantes y "+guided.review+" por revisar. Siguiente: "+guided.next.title+".");
   const routeFragment=document.createDocumentFragment();
@@ -93,6 +95,34 @@ export function mountPilotControlCenter({getState}){
    li.append(jump);routeFragment.append(li);
   }
   $("pilotGuidedList").replaceChildren(routeFragment);
+  set("pilotV100Stage",milestone.stage);
+  set("pilotV100Outcome",milestone.outcome);
+  set("pilotV100Checks",milestone.metrics.localControlsPassed+"/8");
+  set("pilotV100External",milestone.metrics.externalChecksOpen);
+  set("pilotV100Risks",milestone.metrics.risksOpen);
+  set("pilotV100Atlas",milestone.metrics.atlasExecuted?
+   milestone.metrics.atlasFixturesPassed+"/18":"Pendiente");
+  const actionFragment=document.createDocumentFragment();
+  for(const next of milestone.actions){
+   const li=el("li");
+   li.append(el("strong",next.title),el("small",next.role+" · "+
+    (next.kind==="external"?"Revisión fuera de la demo":"Corrección local pendiente")));
+   const link=el("button","Ir a revisión ↗");
+   link.type="button";link.dataset.v100Target=next.destination;
+   li.append(link);actionFragment.append(li);
+  }
+  $("pilotV100Actions").replaceChildren(actionFragment);
+  const highlights=document.createDocumentFragment();
+  for(const risk of milestone.riskHighlights){
+   const li=el("li");
+   li.append(el("strong",risk.id+" · "+risk.title),
+    el("small",risk.level.toUpperCase()+" · Score "+risk.score));
+   highlights.append(li);
+  }
+  $("pilotV100RiskHighlights").replaceChildren(highlights);
+  set("pilotV100Summary",milestone.metrics.evidenceRequirements+
+   " requisitos documentales pendientes de verificación humana. "+
+   "Aprobaciones reales: 0. Ninguna ejecución externa.");
   set("pilotFinalReviewVerdict",finalReview.outcome);
   set("pilotFinalLocal",finalReview.localPassed+"/8");
   set("pilotFinalAttention",finalReview.attention);
@@ -435,6 +465,41 @@ export function mountPilotControlCenter({getState}){
  };
  $("pilotAtlasExportJson").addEventListener("click",()=>saveAtlas("json","application/json;charset=utf-8","json"));
  $("pilotAtlasExportTxt").addEventListener("click",()=>saveAtlas("txt","text/plain;charset=utf-8","txt"));
+ $("pilotV100Actions").addEventListener("click",event=>{
+  const button=event.target.closest("button[data-v100-target]");
+  if(!button)return;
+  try{const target=$(button.dataset.v100Target);target?.focus({preventScroll:true});
+   target?.scrollIntoView({block:"start",behavior:"instant"});}
+  catch(error){set("pilotV100Summary","Navegación no disponible: "+error.message);}
+ });
+ const currentV100=()=>{
+  rebuild();
+  const coverage=simulateEvidenceCoverage(ledger,rehearsed);
+  const roleLimit=Number($("pilotCapacityRoleLimit").value);
+  const capacity=workCache.capacity(roleLimit,()=>buildPilotCapacityExplorer(readiness,roleLimit));
+  const evidenceReview=buildPilotEvidenceReview(plan,ledger,risks,coverage);
+  const review=buildPilotSupervisedReview({
+   readiness,plan,risks,ledger,coverage,drills,capacity,evidenceReview,atlas:atlasReport
+  });
+  return buildPilotV100Snapshot({readiness,review,risks,capacity,evidenceReview,atlas:atlasReport});
+ };
+ for(const [id,format,ext,mime] of [
+  ["pilotV100ExportJson",pilotV100SnapshotJson,"json","application/json;charset=utf-8"],
+  ["pilotV100ExportTxt",pilotV100SnapshotText,"txt","text/plain;charset=utf-8"]
+ ]){
+  $(id).addEventListener("click",()=>{
+   try{
+    const body=format(currentV100());
+    if(ext==="json")validatePilotExportJson(body);
+    const url=URL.createObjectURL(new Blob([body],{type:mime}));
+    const a=document.createElement("a");a.href=url;
+    a.download="revops-v100-resumen-ejecutivo."+ext;
+    document.body.append(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2500);
+    set("pilotV100Summary","Informe V100 descargado sin datos personales ni aprobaciones reales.");
+   }catch(error){set("pilotV100Summary","Informe V100 no exportable: "+error.message);}
+  });
+ }
  const currentFinalReview=()=>{
   rebuild();
   const coverage=simulateEvidenceCoverage(ledger,rehearsed);
@@ -543,6 +608,11 @@ export function mountPilotControlCenter({getState}){
    $("pilotGuidedList").replaceChildren();
    set("pilotGuidedSummary","Sin ruta: ejecuta el proceso.");
    $("pilotFinalReviewList").replaceChildren();
+   $("pilotV100Actions").replaceChildren();
+   $("pilotV100RiskHighlights").replaceChildren();
+   set("pilotV100Checks","0/8");
+   set("pilotV100Atlas","Pendiente");
+   set("pilotV100Stage","Ejecuta la muestra actual para regenerar el resumen.");
    set("pilotFinalLocal","0/8");
    set("pilotFinalAttention","0");
    set("pilotFinalExternal","4");
