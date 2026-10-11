@@ -514,7 +514,7 @@ async function auditExecutivePdf(browser){
   }));
   assert.equal(printProbe.target,"_blank");
   assert.ok(printProbe.href.startsWith("blob:"));
-  assert.match(await page.locator("#reportStatus").innerText(),/imprimir/);
+  assert.match(await page.locator("#reportStatus").innerText(),/imprimir/i);
   await page.locator("#reportClose").click();
   assert.equal(await page.locator("#reportStudio").isHidden(),true);
   assert.equal(await page.evaluate(()=>document.activeElement?.id),"reportOpen");
