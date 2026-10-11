@@ -1,4 +1,3 @@
-// Lightweight RevOps Studio commercial interactions (no V40 engine imports).
 import { submissionState } from "./contact-response.js";
 import { buildDiagnostic } from "./diagnostic.js";
 const STORAGE_KEY = "revops-studio:brief:v2";
@@ -247,7 +246,6 @@ function initDiagnostic() {
       const element = qs(selector);
       if (element) element.textContent = value;
     }
-    // A previous snapshot must not be submitted after changing the diagnosis.
     if (field.value && field.value !== current.summary) {
       field.value = "";
       showDiagnosticContext();
@@ -279,6 +277,7 @@ function initDiagnostic() {
       if (feedback) feedback.textContent = "No se ha podido copiar. Puedes incluir el mapa en tu consulta.";
     }
   });
+  qs("#diagStudioOpen")?.addEventListener("click", () => import("./discovery-ui.js").then(m => m.mountDiscoveryStudio()));
   qs("#diagDownload")?.addEventListener("click", async () => {
     if (!current) return;
     try {
@@ -304,7 +303,6 @@ function initDiagnostic() {
     notifyForm();
   });
   render();
-  // Receive only a user-approved scenario summary, never the input rows.
   try {
     const raw = sessionStorage.getItem("revops-studio:demo:handoff");
     if (raw) {
