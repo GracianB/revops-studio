@@ -655,6 +655,28 @@
           <ol id="pilotCapacityRoles" class="pilot-capacity-roles"></ol>
           <p class="workbench-p85-disclaimer">Estas olas son unidades lógicas, no semanas, horas, costes o pronósticos. La aprobación final siempre requiere verificación humana externa.</p>
         </section>
+        <section class="pilot-authorization" aria-labelledby="pilotAuthorizationHeading">
+          <h4 id="pilotAuthorizationHeading">05 · Decisión de lanzamiento y condiciones de autorización</h4>
+          <p>La evaluación técnica de muestras no concede permisos empresariales. Este panel explica exactamente qué queda por verificar antes de contemplar un piloto conectado.</p>
+          <p id="pilotAuthorizationOutcome" class="pilot-authorization-verdict" role="status" aria-live="polite">NO AUTORIZADO PARA PRODUCCIÓN</p>
+          <p id="pilotAuthorizationCandidate"></p>
+          <div class="pilot-authorization-grid">
+            <section aria-labelledby="pilotAuthorizationGatesTitle">
+              <h5 id="pilotAuthorizationGatesTitle">Controles de aceptación</h5>
+              <ol id="pilotAuthorizationGates" class="pilot-authorization-list"></ol>
+            </section>
+            <section aria-labelledby="pilotAuthorizationNextTitle">
+              <h5 id="pilotAuthorizationNextTitle">Correcciones detectadas en esta muestra</h5>
+              <ol id="pilotAuthorizationNext" class="pilot-authorization-list"></ol>
+              <p id="pilotAuthorizationChecklist"></p>
+            </section>
+          </div>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotAuthorizationReadiness">Revisar las ocho comprobaciones PR80 ↗</button>
+            <button type="button" id="pilotAuthorizationPlan">Abrir el plan de tareas PR81 ↗</button>
+          </div>
+          <p class="workbench-p85-disclaimer">Un resultado positivo solo puede referirse a muestras sintéticas o ensayos locales. La aprobación de producción, la seguridad de sistemas reales, el tratamiento de riesgos y el plan de reversión requieren evidencia y autorización independientes.</p>
+        </section>
         <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
         <div class="workbench-p85-actions">
           <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
