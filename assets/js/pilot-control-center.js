@@ -6,6 +6,7 @@ import {buildPilotEvidenceLedger,simulateEvidenceCoverage,evidencePacketJson}
  from "./pilot-evidence-ledger.js";
 import {runPilotFailureDrills,pilotDrillReportJson} from "./pilot-failure-drills.js";
 import {buildPilotCapacityExplorer,pilotCapacityReportJson} from "./pilot-capacity-explorer.js";
+import {buildPilotAuthorizationBoard,pilotAuthorizationJson} from "./pilot-authorization-board.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -36,6 +37,7 @@ export function mountPilotControlCenter({getState}){
  function paint(){
   const coverage=simulateEvidenceCoverage(ledger,rehearsed);
   const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
+  const authorization=buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills});
   set("pilotControlHigh",risks.high);
   set("pilotControlEvidence",coverage.missing);
   set("pilotControlDrills",drills?drills.passed+"/"+drills.total:"Sin ejecutar");
@@ -103,6 +105,33 @@ export function mountPilotControlCenter({getState}){
    roleRows.append(li);
   }
   $("pilotCapacityRoles").replaceChildren(roleRows);
+  set("pilotAuthorizationOutcome",authorization.outcome);
+  set("pilotAuthorizationCandidate",authorization.supervisedDemoCandidate?
+   "La muestra cumple los criterios de demostración supervisada. Esto NO autoriza una operación real.":
+   "La muestra necesita correcciones o revisiones antes de una demostración supervisada.");
+  const gateList=document.createDocumentFragment();
+  for(const gate of authorization.gates){
+   const item=el("li");
+   item.append(el("strong",gate.id+" · "+gate.title));
+   item.append(el("span",gate.label+" · Función: "+gate.role));
+   item.append(el("small",gate.next));
+   gateList.append(item);
+  }
+  $("pilotAuthorizationGates").replaceChildren(gateList);
+  const toFix=document.createDocumentFragment();
+  if(!authorization.remediation.length)
+   toFix.append(el("li","Sin incidencias de muestra en los ocho controles; los requisitos operativos externos siguen abiertos."));
+  for(const pending of authorization.remediation){
+   const item=el("li");
+   item.append(el("strong",pending.gate+" · "+pending.title));
+   item.append(el("span",pending.action));
+   toFix.append(item);
+  }
+  $("pilotAuthorizationNext").replaceChildren(toFix);
+  set("pilotAuthorizationChecklist",authorization.outstanding+" controles abiertos; "+
+   authorization.unresolvedRiskCount+" riesgos operativos y "+
+   authorization.unverifiedEvidenceCount+" evidencias sin verificación real. "+
+   (authorization.localDrills.run?"Ensayos locales: "+authorization.localDrills.passed+"/"+(authorization.localDrills.passed+authorization.localDrills.failed)+".":"Ensayos locales sin ejecutar."));
   set("pilotControlStatus",drills?
     drills.status+" Aprobaciones reales: 0.":"Ejecuta los ensayos para comprobar barreras locales. Ninguna autorización real.");
  }
@@ -140,6 +169,7 @@ export function mountPilotControlCenter({getState}){
     scenario,risks:JSON.parse(riskRegisterJson(risks)),
     evidence:JSON.parse(evidencePacketJson(ledger,coverage)),
     capacity:JSON.parse(pilotCapacityReportJson(buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value)))),
+    authorization:JSON.parse(pilotAuthorizationJson(buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills}))),
     drills:drills?JSON.parse(pilotDrillReportJson(drills)):null,
     realApprovals:0,externalExecutions:0,
     notice:"Informe de simulación; no existe autorización real."},null,2)+"\n";
@@ -151,6 +181,8 @@ export function mountPilotControlCenter({getState}){
    set("pilotControlStatus","Informe agregado exportado. Sin filas, correos, notas ni aprobaciones reales.");
   }catch(error){set("pilotControlStatus","Exportación rechazada: "+error.message);}
  });
+ $("pilotAuthorizationReadiness").addEventListener("click",()=>$("pilotOpen").click());
+ $("pilotAuthorizationPlan").addEventListener("click",()=>$("pilotPlanOpen").click());
  $("pilotControlReset").addEventListener("click",()=>{
   rehearsed=[];drills=null;if(ledger)paint();
   set("pilotControlStatus","Ensayos reiniciados. Los requisitos externos siguen pendientes.");
@@ -173,6 +205,11 @@ export function mountPilotControlCenter({getState}){
    $("pilotCapacityRoles").replaceChildren();
    set("pilotCapacityCritical","");
    set("pilotCapacitySummary","");
+   $("pilotAuthorizationGates").replaceChildren();
+   $("pilotAuthorizationNext").replaceChildren();
+   set("pilotAuthorizationCandidate","");
+   set("pilotAuthorizationChecklist","");
+   set("pilotAuthorizationOutcome","NO AUTORIZADO PARA PRODUCCIÓN");
    set("pilotControlStatus","Muestra modificada o sesión limpiada. Ejecuta el proceso nuevamente.");
   }
  });
