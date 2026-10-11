@@ -664,6 +664,83 @@ async function auditInclusiveWorkbench(browser){
  }finally{await page.close();}
 }
 
+async function auditPrivacySecurity(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
+ const errors=[],remote=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ page.on("request",request=>{
+  if(!request.url().startsWith(base))remote.push(request.url());
+ });
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  assert.equal(await page.locator("#privacyInspect").isEnabled(),true);
+  assert.match(await page.locator("#privacyRiskStatus").innerText(),/6 registros en memoria/);
+  await page.locator("#privacyInspect").click();
+  assert.match(await page.locator("#privacyRiskStatus").innerText(),/Sin envío, sin telemetría/);
+  await page.locator("#workflowSource").fill(
+   'pedido;cliente;email;total;estado\nR-SECRET;"=HYPERLINK(""https://evil.test"",""click"")";persona.real@empresa.es;15;nuevo\nR2;Cliente;test@ejemplo.test;33;revisar');
+  await page.locator("#runWorkflow").click();
+  assert.equal(await page.locator("#countTotal").innerText(),"2");
+  assert.match(await page.locator("#privacyRiskStatus").innerText(),/1 fuera de dominios de ejemplo/);
+  assert.match(await page.locator("#privacyRiskStatus").innerText(),/1 celda\(s\) con fórmulas/);
+  const csvPromise=page.waitForEvent("download");
+  await page.locator("#exportWorkflow").click();
+  const csvFile=await csvPromise;
+  const csv=await readFile(await csvFile.path(),"utf8");
+  assert.match(csv,/"'=HYPERLINK\(""https:\/\/evil\.test"",""click""\)"/);
+  assert.match(csv,/persona.real@empresa.es/,"explicit detailed CSV includes user data; warning must be visible");
+  assert.match(await page.locator(".workbench-export-warning").innerText(),/incluyen valores/);
+  await page.locator("#rulesOpen").click();
+  await page.locator("#rulesStudio").waitFor({state:"visible"});
+  await page.locator("#humanReviewNote").fill("Nota confidencial de prueba: secreto temporal único.");
+  await page.locator("#humanReviewApprove").click();
+  assert.match(await page.locator("#humanReviewCounters").innerText(),/Aprobación simulada: 1/);
+  await page.locator("#rulesClose").click();
+  await page.evaluate(()=>{
+   sessionStorage.setItem("revops-studio:demo:handoff","sensitive handoff");
+   sessionStorage.setItem("revops-studio:p74:view-v1","private view");
+   sessionStorage.setItem("other-app:keep","other");
+   localStorage.setItem("revops-theme","light");
+  });
+  await page.locator("#privacyClearOpen").click();
+  assert.equal(await page.locator("#privacyClearConfirm").isVisible(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"privacyClearTitle");
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#privacyClearConfirm").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"privacyClearOpen");
+  assert.match(await page.locator("#workflowSource").inputValue(),/R-SECRET/);
+  await page.locator("#privacyClearOpen").click();
+  await page.locator("#privacyClearConfirmButton").click();
+  assert.equal(await page.locator("#privacyClearConfirm").isHidden(),true);
+  assert.match(await page.locator("#workflowSource").inputValue(),/PED-101/);
+  assert.doesNotMatch(await page.locator("#workflowSource").inputValue(),/R-SECRET|persona.real@empresa/);
+  assert.equal(await page.locator("#countTotal").innerText(),"6");
+  assert.equal(await page.locator("#countReady").innerText(),"3");
+  assert.equal(await page.locator("#humanReviewNote").inputValue(),"");
+  assert.equal(await page.locator("#rulesExport").isDisabled(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"privacyClearOpen");
+  const storage=await page.evaluate(()=>({
+   handoff:sessionStorage.getItem("revops-studio:demo:handoff"),
+   view:sessionStorage.getItem("revops-studio:p74:view-v1"),
+   other:sessionStorage.getItem("other-app:keep"),theme:localStorage.getItem("revops-theme")
+  }));
+  assert.equal(storage.handoff,null);
+  assert.equal(storage.view,null);
+  assert.equal(storage.other,"other");
+  assert.equal(storage.theme,"light");
+  assert.match(await page.locator("#privacyClearStatus").innerText(),/descargas anteriores y el portapapeles/);
+  await page.locator("#rulesOpen").click();
+  await page.locator("#rulesStudio").waitFor({state:"visible"});
+  assert.match(await page.locator("#humanReviewCounters").innerText(),/Aprobación simulada: 0/);
+  await page.setViewportSize({width:320,height:760});
+  const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(dimensions.scroll<=dimensions.width+3,"PR79 privacy mobile overflow "+JSON.stringify(dimensions));
+  assert.equal(remote.length,0,"PR79 demo must not use remote scripts or send any data");
+  assert.deepEqual(errors,[],"PR79 browser errors");
+  console.log("PR79 SECURITY PASS ("+engineName+"): spreadsheet injection, scope, safe reset, memory scrub, first-party network, 320px");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -1027,6 +1104,7 @@ try {
   await auditScenarioBuilder(browser);
   await auditExecutivePdf(browser);
   await auditInclusiveWorkbench(browser);
+  await auditPrivacySecurity(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
