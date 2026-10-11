@@ -8,6 +8,7 @@ import {runPilotFailureDrills,pilotDrillReportJson} from "./pilot-failure-drills
 import {buildPilotCapacityExplorer,pilotCapacityReportJson} from "./pilot-capacity-explorer.js";
 import {buildPilotAuthorizationBoard,pilotAuthorizationJson} from "./pilot-authorization-board.js";
 import {buildPilotHandoffPack,pilotHandoffHtml,pilotHandoffTxt} from "./pilot-handoff-pack.js";
+import {buildPilotStressMatrix,pilotStressMatrixJson} from "./pilot-stress-matrix.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -39,6 +40,7 @@ export function mountPilotControlCenter({getState}){
   const coverage=simulateEvidenceCoverage(ledger,rehearsed);
   const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
   const authorization=buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills});
+  const stress=buildPilotStressMatrix(readiness);
   set("pilotControlHigh",risks.high);
   set("pilotControlEvidence",coverage.missing);
   set("pilotControlDrills",drills?drills.passed+"/"+drills.total:"Sin ejecutar");
@@ -129,6 +131,28 @@ export function mountPilotControlCenter({getState}){
    toFix.append(item);
   }
   $("pilotAuthorizationNext").replaceChildren(toFix);
+  set("pilotStressCurrent","Muestra actual: "+stress.current.total+" registros, "+
+   stress.current.blocked+" bloqueados, "+stress.current.review+" para revisión, "+
+   stress.current.gatesPassed+" de 8 controles superados.");
+  const stressFilter=$("pilotStressFilter").value;
+  const stressItems=stress.samples.filter(sample=>stressFilter==="all"||
+   (stressFilter==="issues"?!sample.data.supervisedDemoCandidate:sample.data.supervisedDemoCandidate));
+  const stressRows=document.createDocumentFragment();
+  for(const sample of stressItems){
+   const tr=document.createElement("tr");
+   const head=document.createElement("th");head.scope="row";head.textContent=sample.label;
+   tr.append(head);
+   for(const cellValue of [sample.data.total,sample.data.blocked,sample.data.review,
+     sample.data.gatesPassed+"/8",sample.data.highRisks,
+     sample.differenceFromCurrent.blocked>0?"+"+sample.differenceFromCurrent.blocked:
+      String(sample.differenceFromCurrent.blocked)]){
+    const cell=document.createElement("td");cell.textContent=String(cellValue);tr.append(cell);
+   }
+   stressRows.append(tr);
+  }
+  $("pilotStressRows").replaceChildren(stressRows);
+  set("pilotStressStatus",stressItems.length+" de 6 patrones sintéticos visibles. "+
+   "La muestra actual no se ha modificado y ninguna conclusión autoriza producción.");
   set("pilotAuthorizationChecklist",authorization.outstanding+" controles abiertos; "+
    authorization.unresolvedRiskCount+" riesgos operativos y "+
    authorization.unverifiedEvidenceCount+" evidencias sin verificación real. "+
@@ -140,6 +164,7 @@ export function mountPilotControlCenter({getState}){
   rebuild();paint();root.hidden=false;
   $("pilotControlOpen").setAttribute("aria-expanded","true");
  }
+ $("pilotStressFilter").addEventListener("change",()=>{if(ledger)paint();});
  $("pilotCapacityRoleLimit").addEventListener("change",()=>{
   if(ledger)paint();
  });
@@ -171,6 +196,7 @@ export function mountPilotControlCenter({getState}){
     evidence:JSON.parse(evidencePacketJson(ledger,coverage)),
     capacity:JSON.parse(pilotCapacityReportJson(buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value)))),
     authorization:JSON.parse(pilotAuthorizationJson(buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills}))),
+    stress:JSON.parse(pilotStressMatrixJson(buildPilotStressMatrix(readiness))),
     drills:drills?JSON.parse(pilotDrillReportJson(drills)):null,
     realApprovals:0,externalExecutions:0,
     notice:"Informe de simulación; no existe autorización real."},null,2)+"\n";
@@ -233,6 +259,9 @@ export function mountPilotControlCenter({getState}){
    set("pilotAuthorizationChecklist","");
    set("pilotAuthorizationOutcome","NO AUTORIZADO PARA PRODUCCIÓN");
    set("pilotHandoffStatus","La muestra ha cambiado. Recalcula antes de exportar.");
+   $("pilotStressRows").replaceChildren();
+   set("pilotStressCurrent","Sin muestra actual.");
+   set("pilotStressStatus","Matriz invalidada; vuelve a ejecutar el proceso.");
    set("pilotControlStatus","Muestra modificada o sesión limpiada. Ejecuta el proceso nuevamente.");
   }
  });
