@@ -589,6 +589,59 @@
         </div>
       </section>
     </section>
+    <section class="workbench-p85" aria-labelledby="pilotControlHeading">
+      <div class="workbench-p85-head">
+        <div><span class="workbench-section-index">PR85 · PILOT CONTROL CENTER · ENSAYO SUPERVISADO</span>
+          <h2 id="pilotControlHeading">Control de riesgos, evidencias y fallos en un mismo lugar.</h2>
+          <p>Revisa los riesgos pendientes, ensaya requisitos de evidencia y comprueba siete protecciones del producto. Nada de esto constituye una aprobación, prueba de producción o conexión real.</p>
+        </div>
+        <button type="button" class="btn btn-primary" id="pilotControlOpen" aria-controls="pilotControlStudio" aria-expanded="false" disabled>Abrir centro de control ↗</button>
+      </div>
+      <section id="pilotControlStudio" hidden aria-labelledby="pilotControlTitle">
+        <h3 id="pilotControlTitle" tabindex="-1">Preparación supervisada: vista integrada</h3>
+        <p id="pilotControlSummary" role="status" aria-live="polite">Ejecuta un escenario para comprobar sus señales.</p>
+        <div class="workbench-p85-metrics" role="group" aria-label="Estado de la preparación">
+          <div><small>Riesgos altos o críticos</small><strong id="pilotControlHigh">0</strong></div>
+          <div><small>Requisitos sin ensayar</small><strong id="pilotControlEvidence">0</strong></div>
+          <div><small>Ensayos de rechazo</small><strong id="pilotControlDrills">Sin ejecutar</strong></div>
+          <div><small>Aprobaciones reales</small><strong id="pilotControlApproval">0</strong></div>
+        </div>
+        <div class="workbench-p85-columns">
+          <section aria-labelledby="pilotControlRiskTitle">
+            <h4 id="pilotControlRiskTitle">01 · Registro de riesgos</h4>
+            <label for="pilotControlFilter">Filtrar severidad
+              <select id="pilotControlFilter">
+                <option value="all">Todos los riesgos</option>
+                <option value="critical">Crítica</option>
+                <option value="high">Alta</option>
+                <option value="medium">Media</option>
+                <option value="low">Baja</option>
+              </select>
+            </label>
+            <p id="pilotControlRiskCount">Sin datos.</p>
+            <ul id="pilotControlRisks" class="workbench-p85-list"></ul>
+          </section>
+          <section aria-labelledby="pilotControlEvidenceTitle">
+            <h4 id="pilotControlEvidenceTitle">02 · Requisitos de evidencia</h4>
+            <p>Marcar una casilla significa solamente ensayar la lista, sin adjuntar ni verificar documentos.</p>
+            <ul id="pilotControlChecklist" class="workbench-p85-list"></ul>
+          </section>
+        </div>
+        <section aria-labelledby="pilotControlDrillTitle">
+          <h4 id="pilotControlDrillTitle">03 · Ensayos de defensas locales</h4>
+          <p>Los siete ensayos fuerzan situaciones inválidas en memoria y comprueban que los validadores las rechazan. No prueban servicios externos.</p>
+          <ul id="pilotControlDrillList" class="workbench-p85-drills"></ul>
+        </section>
+        <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
+        <div class="workbench-p85-actions">
+          <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
+          <button type="button" id="pilotControlExport">Exportar revisión agregada JSON ↧</button>
+          <button type="button" id="pilotControlReset">Reiniciar ensayos</button>
+          <button type="button" id="pilotControlClose">Cerrar centro de control</button>
+        </div>
+        <p class="workbench-p85-disclaimer">Riesgos y tareas abiertos hasta verificación humana externa. Ningún resultado de esta pantalla prueba una autorización real, un despliegue, una firma, un CRM o una recuperación técnica.</p>
+      </section>
+    </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
       <div><p><strong>Listo:</strong> pasa las reglas de esta demostración. Puede ser una acción propuesta o un registro histórico, que no debe volver a ejecutarse.</p><p><strong>Revisar:</strong> necesita una decisión humana, aunque algunos campos sean válidos.</p><p><strong>Bloqueado:</strong> no cumple alguna regla y no puede avanzar hasta corregirse.</p><p><strong>Importante:</strong> ningún registro se introduce en tu CRM ni en otra aplicación. Esta mesa de trabajo es una simulación local.</p></div>
     </details>
