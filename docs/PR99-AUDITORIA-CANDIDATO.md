@@ -1,0 +1,7 @@
+# PR99 · Auditoría reproducible del candidato técnico
+
+**Qué hace.** Añade `node scripts/pr99-candidate-audit.mjs` como control **obligatorio en GitHub Actions** sin modificar la orden histórica `npm run verify`. Inventaría los módulos de preparación, gestión de riesgos, evidencias, defensas, capacidad, accesibilidad, autorización y pruebas; exige los archivos de test y documentación, detecta uso imprevisto de `fetch`, `eval`, `new Function`, `XMLHttpRequest` o almacenamiento local en los módulos del piloto y verifica que CI conserva las pruebas Node, PR80, Chrome, Firefox y rendimiento.
+
+**Prueba material.** GitHub Actions adjunta `.ci-artifacts/pr99-candidate-inventory.json` con resumen, hashes SHA-256 de archivos y huella agregada. Es trazabilidad de un árbol de código, **no una firma de seguridad, certificado, autorización de clientes ni certificación de accesibilidad**. Si falta una pieza, se detecta un patrón peligroso o se suprime alguna puerta de CI, la comprobación termina en fallo.
+
+La comprobación no intenta resolver pendientes empresariales: sigue habiendo cero permisos reales y ocho verificaciones manuales de accesibilidad por hacer. El historial de contenido queda en PR; no se fusiona ni despliega por el hecho de que la CI esté verde.
