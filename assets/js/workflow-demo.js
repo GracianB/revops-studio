@@ -196,6 +196,7 @@ function openColumnMapper(text){
   $("columnMapper").hidden=false;
   renderMappingPreview();
   $("columnMapper").scrollIntoView({block:"nearest",behavior:"instant"});
+  focusHeading(document,"columnMapper","columnMapperTitle");
 }
 function chooseScenario(next,force=false){
   if(!SCENARIOS[next])return;
@@ -552,6 +553,9 @@ function paintEditPreview(){
    setText("editPreviewStatus","Sin cambios");
    setText("editPreviewImpact",check.message);
    warning.textContent="";return;
+  }
+  for(const input of $("workflowEditFields").querySelectorAll("input[aria-invalid]")){
+   if(check.afterReason!==latest.rows[editIndex].reason)input.setAttribute("aria-invalid","false");
   }
   setText("editPreviewStatus",check.beforeStatus+" → "+check.afterStatus);
   setText("editPreviewImpact","Reglas recalculadas sobre "+check.counts.after.total+" registros: "+
@@ -1141,6 +1145,7 @@ $("reportOpen").addEventListener("click",async()=>{
    });
   }
   $("reportStudio").scrollIntoView({behavior:"instant",block:"start"});
+  focusHeading(document,"reportStudio","reportStudioTitle");
  }catch(error){errorText("No se pudo preparar el informe ejecutivo: "+(error?.message||"error inesperado"));}
 });
 $("candidateOpen").addEventListener("click",async()=>{
@@ -1155,6 +1160,7 @@ $("candidateOpen").addEventListener("click",async()=>{
    });
   }
   $("candidateStudio").scrollIntoView({behavior:"instant",block:"start"});
+  focusHeading(document,"candidateStudio","candidateStudioTitle");
  }catch(error){
   errorText("No se pudo abrir Scenario Builder: "+(error?.message||"error desconocido"));
  }
@@ -1174,6 +1180,7 @@ $("rulesOpen").addEventListener("click",async()=>{
       });
     }
     $("rulesStudio").scrollIntoView({behavior:"instant",block:"start"});
+    focusHeading(document,"rulesStudio","rulesStudioTitle");
   }catch(error){
     errorText("No se pudo abrir la auditoría de reglas: "+(error?.message||"error desconocido"));
   }
