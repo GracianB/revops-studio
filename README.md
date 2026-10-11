@@ -12,7 +12,7 @@ La consola avanzada se carga solo al abrirla y se limpia al cambiar los datos o 
 
 El visitante puede exportar evidencia TXT o JSON agregada, sin filas, nombres, emails, identificadores ni notas. Una muestra ficticia válida se marca exclusivamente como *apta para ensayo supervisado*, nunca aprobada para producción. El panel es de carga diferida, accesible en móvil y se invalida al cambiar los datos.
 
-Nuevo comando de aceptación: `npm run pr80:check`, incluido en `npm run verify`. Cruza 3 motores, 18 ejemplos, reglas, calidad, privacidad, escenarios conservadores, PDFs y correcciones, además de pruebas E2E Chrome y Firefox. Documentación: `docs/PR80-EVALUACION-PILOTO.md`.
+Nuevo comando de aceptación: `npm run pr80:check`, ejecutado como paso obligatorio separado en GitHub Actions después de `npm run verify` para conservar el contrato V40. Cruza 3 motores, 18 ejemplos, reglas, calidad, privacidad, escenarios conservadores, PDFs y correcciones, además de pruebas E2E Chrome y Firefox. Documentación: `docs/PR80-EVALUACION-PILOTO.md`.
 
 V40 sigue siendo la rama `main` sin modificar; PR69-PR80 permanecen en borrador, sin fusión ni despliegue. El repositorio GitHub es público aunque estas funciones aún no se hayan publicado.
 
