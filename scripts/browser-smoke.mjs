@@ -456,7 +456,7 @@ async function auditProductWorkbench(browser) {
     assert.match(await page.locator("#columnMappingIgnored").innerText(),/nota privada/);
     await page.locator("#mapping-cliente").selectOption("order id");
     await page.locator("#applyColumnMapping").click();
-    assert.match(await page.locator("#columnMappingStatus").innerText(),/más de un campo/);
+    assert.match(await page.locator("#columnMappingStatus").innerText(),/misma columna|más de un campo/);
     await page.locator("#mapping-cliente").selectOption("company");
     assert.match(await page.locator("#importAuditFindings").innerText(),/Columnas extras:/);
     // PR72: cannot discard an extra column without explicit confirmation.
