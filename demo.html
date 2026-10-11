@@ -600,6 +600,20 @@
       <section id="pilotControlStudio" hidden aria-labelledby="pilotControlTitle">
         <h3 id="pilotControlTitle" tabindex="-1">Preparación supervisada: vista integrada</h3>
         <p id="pilotControlSummary" role="status" aria-live="polite">Ejecuta un escenario para comprobar sus señales.</p>
+        <nav id="pilotSectionNavigation" class="pilot-section-navigation" aria-label="Secciones del centro de control">
+          <p>Explora las ocho áreas. Usa flechas, Inicio y Fin sobre los botones para cambiar de opción.</p>
+          <div class="pilot-section-controls" role="group" aria-label="Ir a una sección">
+            <button type="button" data-pilot-section="pilotControlRiskTitle">01 · Riesgos</button>
+            <button type="button" data-pilot-section="pilotControlEvidenceTitle">02 · Evidencias</button>
+            <button type="button" data-pilot-section="pilotControlDrillTitle">03 · Defensas</button>
+            <button type="button" data-pilot-section="pilotCapacityHeading">04 · Capacidad</button>
+            <button type="button" data-pilot-section="pilotAuthorizationHeading">05 · Autorización</button>
+            <button type="button" data-pilot-section="pilotHandoffHeading">06 · Entrega</button>
+            <button type="button" data-pilot-section="pilotStressHeading">07 · Muestras</button>
+            <button type="button" data-pilot-section="pilotAtlasHeading">08 · Validación</button>
+          </div>
+          <p id="pilotSectionAnnouncement" class="pilot-section-live" role="status" aria-live="polite" aria-atomic="true"></p>
+        </nav>
         <div class="workbench-p85-metrics" role="group" aria-label="Estado de la preparación">
           <div><small>Riesgos altos o críticos</small><strong id="pilotControlHigh">0</strong></div>
           <div><small>Requisitos sin ensayar</small><strong id="pilotControlEvidence">0</strong></div>
@@ -608,7 +622,7 @@
         </div>
         <div class="workbench-p85-columns">
           <section aria-labelledby="pilotControlRiskTitle">
-            <h4 id="pilotControlRiskTitle">01 · Registro de riesgos</h4>
+            <h4 id="pilotControlRiskTitle" tabindex="-1">01 · Registro de riesgos</h4>
             <label for="pilotControlFilter">Filtrar severidad
               <select id="pilotControlFilter">
                 <option value="all">Todos los riesgos</option>
@@ -622,18 +636,18 @@
             <ul id="pilotControlRisks" class="workbench-p85-list"></ul>
           </section>
           <section aria-labelledby="pilotControlEvidenceTitle">
-            <h4 id="pilotControlEvidenceTitle">02 · Requisitos de evidencia</h4>
+            <h4 id="pilotControlEvidenceTitle" tabindex="-1">02 · Requisitos de evidencia</h4>
             <p>Marcar una casilla significa solamente ensayar la lista, sin adjuntar ni verificar documentos.</p>
             <ul id="pilotControlChecklist" class="workbench-p85-list"></ul>
           </section>
         </div>
         <section aria-labelledby="pilotControlDrillTitle">
-          <h4 id="pilotControlDrillTitle">03 · Ensayos de defensas locales</h4>
+          <h4 id="pilotControlDrillTitle" tabindex="-1">03 · Ensayos de defensas locales</h4>
           <p>Los siete ensayos fuerzan situaciones inválidas en memoria y comprueban que los validadores las rechazan. No prueban servicios externos.</p>
           <ul id="pilotControlDrillList" class="workbench-p85-drills"></ul>
         </section>
         <section class="pilot-capacity" aria-labelledby="pilotCapacityHeading">
-          <h4 id="pilotCapacityHeading">04 · Capacidad, dependencias y cuellos de botella</h4>
+          <h4 id="pilotCapacityHeading" tabindex="-1">04 · Capacidad, dependencias y cuellos de botella</h4>
           <p>Compara cuatro capacidades de ejecución y comprueba cómo cambia el número de olas si una función puede atender una o dos tareas a la vez. No representa personas asignadas, plazos ni ahorros.</p>
           <label for="pilotCapacityRoleLimit">Simultaneidad por función
             <select id="pilotCapacityRoleLimit">
@@ -656,7 +670,7 @@
           <p class="workbench-p85-disclaimer">Estas olas son unidades lógicas, no semanas, horas, costes o pronósticos. La aprobación final siempre requiere verificación humana externa.</p>
         </section>
         <section class="pilot-authorization" aria-labelledby="pilotAuthorizationHeading">
-          <h4 id="pilotAuthorizationHeading">05 · Decisión de lanzamiento y condiciones de autorización</h4>
+          <h4 id="pilotAuthorizationHeading" tabindex="-1">05 · Decisión de lanzamiento y condiciones de autorización</h4>
           <p>La evaluación técnica de muestras no concede permisos empresariales. Este panel explica exactamente qué queda por verificar antes de contemplar un piloto conectado.</p>
           <p id="pilotAuthorizationOutcome" class="pilot-authorization-verdict" role="status" aria-live="polite">NO AUTORIZADO PARA PRODUCCIÓN</p>
           <p id="pilotAuthorizationCandidate"></p>
@@ -678,7 +692,7 @@
           <p class="workbench-p85-disclaimer">Un resultado positivo solo puede referirse a muestras sintéticas o ensayos locales. La aprobación de producción, la seguridad de sistemas reales, el tratamiento de riesgos y el plan de reversión requieren evidencia y autorización independientes.</p>
         </section>
         <section class="pilot-handoff" aria-labelledby="pilotHandoffHeading">
-          <h4 id="pilotHandoffHeading">06 · Paquete de revisión para responsables</h4>
+          <h4 id="pilotHandoffHeading" tabindex="-1">06 · Paquete de revisión para responsables</h4>
           <p>Prepara un documento local con los controles de aceptación, riesgos principales, tareas por olas y condiciones que requieren verificación independiente. No incluye las filas del CSV ni autoriza ningún lanzamiento.</p>
           <div class="workbench-p85-actions">
             <button type="button" id="pilotHandoffHtml">Descargar documento imprimible (HTML) ↧</button>
@@ -688,7 +702,7 @@
           <p class="workbench-p85-disclaimer">El archivo HTML es autónomo, sin scripts, imágenes, trackers ni conexiones remotas. Abre el documento y utiliza la función de impresión del navegador para generar un PDF si es necesario.</p>
         </section>
         <section class="pilot-stress" aria-labelledby="pilotStressHeading">
-          <h4 id="pilotStressHeading">07 · Matriz de pruebas funcionales con ejemplos sintéticos</h4>
+          <h4 id="pilotStressHeading" tabindex="-1">07 · Matriz de pruebas funcionales con ejemplos sintéticos</h4>
           <p>Contrasta la muestra actual con seis patrones ficticios del mismo proceso: original, correcta, duplicados, campos vacíos, revisión humana y casos límite. No modifica los datos que estés editando.</p>
           <p id="pilotStressCurrent" role="status" aria-live="polite">Muestra actual sin evaluar.</p>
           <label for="pilotStressFilter">Mostrar ejemplos
@@ -714,7 +728,7 @@
           <p class="workbench-p85-disclaimer">Pruebas funcionales deterministas con muestras inventadas. No miden usuarios concurrentes, rendimiento real, fiabilidad de redes o impacto empresarial.</p>
         </section>
         <section class="pilot-atlas" aria-labelledby="pilotAtlasHeading">
-          <h4 id="pilotAtlasHeading">08 · Verificación transversal PR90</h4>
+          <h4 id="pilotAtlasHeading" tabindex="-1">08 · Verificación transversal PR90</h4>
           <p>Ejecuta en este navegador las 18 muestras ficticias de los tres procesos con los motores reales: ocho controles de preparación, siete pruebas defensivas y seis invariantes por muestra. No sustituye GitHub Actions ni una auditoría independiente.</p>
           <div class="pilot-atlas-metrics" role="group" aria-label="Resumen de pruebas sintéticas">
             <div><small>Muestras comprobadas</small><strong id="pilotAtlasCases">0</strong></div>
