@@ -13,6 +13,7 @@ import {mountPilotSectionNavigation} from "./pilot-section-navigation.js";
 import {buildPilotGuidedRoute,guidedRouteJson} from "./pilot-guided-route.js";
 import {createPilotSessionJournal,pilotSessionJournalJson} from "./pilot-session-journal.js";
 import {buildPilotEvidenceReview,pilotEvidenceReviewJson} from "./pilot-evidence-review.js";
+import {buildPilotSupervisedReview,pilotSupervisedReviewJson,pilotSupervisedReviewText} from "./pilot-supervised-review.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -62,6 +63,9 @@ export function mountPilotControlCenter({getState}){
   const stress=buildPilotStressMatrix(readiness);
   const guided=buildPilotGuidedRoute(readiness,plan,ledger,coverage,drills);
   const evidenceReview=buildPilotEvidenceReview(plan,ledger,risks,coverage);
+  const finalReview=buildPilotSupervisedReview({
+   readiness,plan,risks,ledger,coverage,drills,capacity,evidenceReview,atlas:atlasReport
+  });
   set("pilotGuidedSummary",guided.pending+" pasos pendientes; "+guided.blocked+
    " bloqueantes y "+guided.review+" por revisar. Siguiente: "+guided.next.title+".");
   const routeFragment=document.createDocumentFragment();
@@ -78,6 +82,24 @@ export function mountPilotControlCenter({getState}){
    li.append(jump);routeFragment.append(li);
   }
   $("pilotGuidedList").replaceChildren(routeFragment);
+  set("pilotFinalReviewVerdict",finalReview.outcome);
+  set("pilotFinalLocal",finalReview.localPassed+"/8");
+  set("pilotFinalAttention",finalReview.attention);
+  set("pilotFinalExternal",finalReview.externalRequired);
+  set("pilotFinalApprovals","0");
+  const finalRows=document.createDocumentFragment();
+  for(const gate of finalReview.gates){
+   const li=el("li");
+   li.append(el("strong",gate.id+" · "+gate.title));
+   li.append(el("small",gate.state==="local_pass"?"CONTROL LOCAL CORRECTO":
+    gate.state==="attention"?"REQUIERE CORRECCIÓN O ENSAYO":"REVISIÓN EXTERNA OBLIGATORIA"));
+   li.append(el("p",gate.reason+" · Función: "+gate.role));
+   finalRows.append(li);
+  }
+  $("pilotFinalReviewList").replaceChildren(finalRows);
+  set("pilotFinalReviewStatus",finalReview.localPassed+
+   "/8 comprobaciones locales correctas, "+finalReview.externalRequired+
+   " validaciones externas abiertas. Producción NO autorizada.");
   set("pilotControlHigh",risks.high);
   set("pilotControlEvidence",coverage.missing);
   set("pilotControlDrills",drills?drills.passed+"/"+drills.total:"Sin ejecutar");
@@ -371,7 +393,7 @@ export function mountPilotControlCenter({getState}){
    atlasModule=module;
    const report=module.runPilotValidationAtlas();
    if(generation!==atlasGeneration)return;
-   atlasReport=report;drawAtlas(report);remember("atlas_run");
+   atlasReport=report;drawAtlas(report);paint();remember("atlas_run");
   }catch(error){
    if(generation===atlasGeneration){
     atlasReport=null;
@@ -397,6 +419,36 @@ export function mountPilotControlCenter({getState}){
  };
  $("pilotAtlasExportJson").addEventListener("click",()=>saveAtlas("json","application/json;charset=utf-8","json"));
  $("pilotAtlasExportTxt").addEventListener("click",()=>saveAtlas("txt","text/plain;charset=utf-8","txt"));
+ const currentFinalReview=()=>{
+  rebuild();
+  const coverage=simulateEvidenceCoverage(ledger,rehearsed);
+  const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
+  const evidenceReview=buildPilotEvidenceReview(plan,ledger,risks,coverage);
+  return buildPilotSupervisedReview({
+   readiness,plan,risks,ledger,coverage,drills,capacity,evidenceReview,atlas:atlasReport
+  });
+ };
+ $("pilotFinalReviewRefresh").addEventListener("click",()=>{
+  try{rebuild();paint();}
+  catch(error){set("pilotFinalReviewStatus","Revisión no calculada: "+error.message);}
+ });
+ for(const [id,format,ext,mime] of [
+  ["pilotFinalReviewJson",pilotSupervisedReviewJson,"json","application/json;charset=utf-8"],
+  ["pilotFinalReviewTxt",pilotSupervisedReviewText,"txt","text/plain;charset=utf-8"]
+ ]){
+  $(id).addEventListener("click",()=>{
+   try{
+    const content=format(currentFinalReview());
+    const url=URL.createObjectURL(new Blob([content],{type:mime}));
+    const a=document.createElement("a");a.href=url;
+    a.download="revops-revision-supervisada-pr95."+ext;
+    document.body.append(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2500);
+    set("pilotFinalReviewStatus","Revisión "+ext.toUpperCase()+
+     " descargada. Sin aprobaciones ni evidencias empresariales verificadas.");
+   }catch(error){set("pilotFinalReviewStatus","Revisión no exportable: "+error.message);}
+  });
+ }
  $("pilotSessionAuditExport").addEventListener("click",()=>{
   try{
    const payload=pilotSessionJournalJson(sessionJournal.snapshot());
@@ -431,6 +483,12 @@ export function mountPilotControlCenter({getState}){
    set("pilotEvidenceReviewStatus","0 evidencias reales verificadas.");
    $("pilotGuidedList").replaceChildren();
    set("pilotGuidedSummary","Sin ruta: ejecuta el proceso.");
+   $("pilotFinalReviewList").replaceChildren();
+   set("pilotFinalLocal","0/8");
+   set("pilotFinalAttention","0");
+   set("pilotFinalExternal","4");
+   set("pilotFinalApprovals","0");
+   set("pilotFinalReviewStatus","Revisión invalidada al modificar la muestra.");
    set("pilotGuidedStatus","Ruta invalidada por el cambio de muestra.");
    $("pilotControlRisks").replaceChildren();
    $("pilotControlChecklist").replaceChildren();
