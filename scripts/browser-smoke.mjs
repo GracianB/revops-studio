@@ -831,6 +831,24 @@ async function auditPilotControlCenter(browser){
   await page.locator("#pilotControlOpen").click();
   await page.locator("#pilotControlStudio").waitFor({state:"visible"});
   assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotControlTitle");
+  assert.equal(await page.locator("#pilotUXDetails").isHidden(),true,
+   "V100 UX: the complete cockpit must be collapsed for first-time operators");
+  assert.equal(await page.locator("#pilotGuidedList li:visible").count(),3,
+   "V100 UX: show only three immediate steps at first");
+  assert.equal(await page.locator("#pilotControlRisks li:visible").count(),0,
+   "V100 UX: technical risks stay available but not overwhelming");
+  assert.match(await page.locator("#pilotUXStatus").innerText(),/Vista esencial/);
+  await page.locator("#pilotUXToggle").click();
+  assert.equal(await page.locator("#pilotUXDetails").isVisible(),true);
+  assert.equal(await page.locator("#pilotUXToggle").getAttribute("aria-expanded"),"true");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.pilotSection),"pilotControlRiskTitle");
+  assert.ok(await page.locator("#pilotGuidedList li:visible").count()>3);
+  await page.locator("#pilotUXToggle").click();
+  assert.equal(await page.locator("#pilotUXDetails").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotUXToggle");
+  await page.locator("#pilotUXMore").click();
+  assert.equal(await page.locator("#pilotUXDetails").isVisible(),true);
+
   assert.equal(await page.locator("#pilotSectionNavigation button").count(),8);
   await page.locator('[data-pilot-section="pilotControlRiskTitle"]').focus();
   await page.keyboard.press("End");
@@ -1064,6 +1082,7 @@ async function auditPilotControlCenter(browser){
   try{
    await a11yPage.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
    await a11yPage.locator("#pilotControlOpen").click();
+   await a11yPage.locator("#pilotUXToggle").click();
    await a11yPage.locator("#pilotA11yRun").click();
    const accessibilityDownload=a11yPage.waitForEvent("download");
    await a11yPage.locator("#pilotA11yExport").click();
