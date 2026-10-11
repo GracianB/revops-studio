@@ -174,7 +174,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P126** · Informe de simulación sin filas ni emails · IMPLEMENTADO
 - [ x ] **P127** · Plantilla descargable con filas ficticias · IMPLEMENTADO
 - [   ] **P128** · Aviso de datos sensibles en exportación completa · PENDIENTE
-- [   ] **P129** · Exportar informe legible como PDF · PENDIENTE
+- [ x ] **P129** · Exportar informe legible como PDF · IMPLEMENTADO (PR77: PDF 1.4 A4 nativo, paginación real, pruebas estructurales y Chrome/Firefox)
 - [ x ] **P130** · Exportar resumen comercial estructurado · IMPLEMENTADO (R1: documento HTML local imprimible, no PDF directo)
 
 ## 14 · Accesibilidad
