@@ -841,7 +841,7 @@ async function auditPilotPlan(browser){
   assert.equal(await page.locator('[data-plan-check="OWNERS"]').isEnabled(),true);
   await page.locator('[data-plan-check="OWNERS"]').check();
   assert.equal(await page.locator("#pilotPlanTried").innerText(),"2");
-  await page.locator('[data-plan-check="SCOPE"]').uncheck();
+  await page.locator('[data-plan-check="SCOPE"]').click();
   assert.equal(await page.locator('[data-plan-check="SCOPE"]').isChecked(),true,"dependents prevent removing prerequisite");
   assert.match(await page.locator("#pilotPlanStatus").innerText(),/dependencias previas/);
   const txtPromise=page.waitForEvent("download");
