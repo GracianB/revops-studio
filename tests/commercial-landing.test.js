@@ -644,3 +644,15 @@ test("PR81 planning is a deterministic dependency DAG and never a real productio
  assert.doesNotMatch(model,/fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
  assert.doesNotMatch(panel,/fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
 });
+
+
+test("PR80-PR81 release guard preserves V40 verify and separately requires integrated acceptance",()=>{
+ const pkg=JSON.parse(file("package.json"));
+ const ci=file(".github/workflows/validate.yml");
+ assert.equal(pkg.scripts.verify,"npm run verify:pre-release && npm run release:check");
+ assert.equal(pkg.scripts["pr80:check"],"node scripts/pr80-acceptance.mjs");
+ assert.match(ci,/name: Run full verification gate\s+run: npm run verify/);
+ assert.match(ci,/name: PR80 integrated synthetic acceptance\s+run: npm run pr80:check/);
+ assert.ok(ci.indexOf("name: Run full verification gate")<
+  ci.indexOf("name: PR80 integrated synthetic acceptance"));
+});
