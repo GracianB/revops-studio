@@ -24,7 +24,7 @@
 - Exportaciones TXT y JSON agregadas, sin datos de cada fila ni notas humanas.
 - Panel accesible con carga diferida, cierre y foco recuperable, sin carga inicial innecesaria.
 - Limpieza del estado temporal en PR79 cuando el usuario descarta datos.
-- Validación transversal `npm run pr80:check` incorporada a `npm run verify`.
+- Validación transversal `npm run pr80:check` incorporada a `npm run verify` y el paso independiente `npm run pr80:check`.
 - 18 ejemplos en tres procesos con motor, calidad, reglas, privacidad, escenario conservador y PDF auténtico.
 - Browser smoke Chrome/Firefox para los ocho controles, exportaciones, ruta a la corrección, casos limpios, cambios de origen y 320 px.
 
@@ -41,4 +41,4 @@ La etiqueta «muestra apta para ensayo supervisado» solo expresa que la muestra
 
 ## Pruebas y criterio de cierre
 
-Pruebas unitarias y adversariales PR71–PR80; `npm run verify` incluyendo `pr80:check` y release gate V40; Chrome y Firefox en escritorio/móvil; accesibilidad, presupuesto de rendimiento y seguridad de exportaciones. Esta PR seguirá draft y sin publicación hasta autorización.
+Pruebas unitarias y adversariales PR71–PR80; `npm run verify` y el paso independiente `npm run pr80:check` incluyendo `pr80:check` y release gate V40; Chrome y Firefox en escritorio/móvil; accesibilidad, presupuesto de rendimiento y seguridad de exportaciones. Esta PR seguirá draft y sin publicación hasta autorización.
