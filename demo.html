@@ -614,6 +614,17 @@
           </div>
           <p id="pilotSectionAnnouncement" class="pilot-section-live" role="status" aria-live="polite" aria-atomic="true"></p>
         </nav>
+        <section class="pilot-guided-route" aria-labelledby="pilotGuidedTitle">
+          <div class="pilot-guided-route-head">
+            <div><h4 id="pilotGuidedTitle">Qué revisar a continuación</h4>
+              <p>Ruta priorizada según las incidencias reales de la muestra, los requisitos pendientes y los ensayos locales. No asigna empleados ni ejecuta operaciones.</p>
+            </div>
+            <button type="button" id="pilotGuidedExport">Exportar ruta JSON ↧</button>
+          </div>
+          <p id="pilotGuidedSummary" role="status" aria-live="polite"></p>
+          <ol id="pilotGuidedList" class="pilot-guided-list"></ol>
+          <p id="pilotGuidedStatus" role="status" aria-live="polite">Las autorizaciones reales deben completarse fuera de esta demo.</p>
+        </section>
         <div class="workbench-p85-metrics" role="group" aria-label="Estado de la preparación">
           <div><small>Riesgos altos o críticos</small><strong id="pilotControlHigh">0</strong></div>
           <div><small>Requisitos sin ensayar</small><strong id="pilotControlEvidence">0</strong></div>
