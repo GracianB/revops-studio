@@ -846,6 +846,10 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotCapacityRows tr").count(),4,"PR86 four capacities visible");
   assert.match(await page.locator("#pilotCapacityCritical").innerText(),/SIGNOFF/);
   assert.ok(await page.locator("#pilotCapacityRoles li").count()>2);
+  assert.equal(await page.locator("#pilotAuthorizationGates li").count(),8);
+  assert.match(await page.locator("#pilotAuthorizationOutcome").innerText(),/NO AUTORIZADO PARA PRODUCCIÓN/);
+  assert.ok(await page.locator("#pilotAuthorizationNext li").count()>0);
+  assert.match(await page.locator("#pilotAuthorizationChecklist").innerText(),/sin verificación real/);
   assert.equal(await page.locator("#pilotCapacityRoleLimit").inputValue(),"1");
   const before=await page.locator("#pilotCapacityRows").innerText();
   await page.locator("#pilotCapacityRoleLimit").selectOption("2");
@@ -864,13 +868,29 @@ async function auditPilotControlCenter(browser){
   assert.equal(parsed.capacity.schema,"revops-pilot-capacity-v1");
   assert.equal(parsed.capacity.roleConcurrency,2);
   assert.equal(parsed.capacity.comparisons.length,4);
+  assert.equal(parsed.authorization.schema,"revops-pilot-authorization-v1");
+  assert.equal(parsed.authorization.productionGo,false);
+  assert.equal(parsed.authorization.gates.length,8);
+  assert.equal(parsed.authorization.realApprovals,0);
   assert.ok(parsed.capacity.criticalPath.tasks.includes("SIGNOFF"));
   assert.doesNotMatch(exported,/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  await page.locator("#pilotAuthorizationReadiness").click();
+  await page.locator("#pilotStudio").waitFor({state:"visible"});
+  await page.locator("#pilotAuthorizationPlan").click();
+  await page.locator("#pilotPlanStudio").waitFor({state:"visible"});
   await page.locator("#pilotControlReset").click();
   assert.equal(await page.locator("#pilotControlDrills").innerText(),"Sin ejecutar");
   await page.setViewportSize({width:320,height:844});
-  const dims=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
-  assert.ok(dims.scroll<=dims.width+3,"PR85 mobile overflow: "+JSON.stringify(dims));
+  const dims=await page.evaluate(()=>({
+   width:innerWidth,scroll:document.documentElement.scrollWidth,
+   oversized:[...document.querySelectorAll("body *")]
+    .filter(node=>node.getBoundingClientRect().right>innerWidth+3)
+    .slice(0,12).map(node=>({tag:node.tagName,id:node.id,
+     className:typeof node.className==="string"?node.className:"",
+     right:Math.round(node.getBoundingClientRect().right),
+     width:Math.round(node.getBoundingClientRect().width)}))
+  }));
+  assert.ok(dims.scroll<=dims.width+3,"PR87 mobile overflow: "+JSON.stringify(dims));
   await auditAccessibility(page,"pilot-control-pr85");
   await page.locator("#pilotControlClose").click();
   assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotControlOpen");
