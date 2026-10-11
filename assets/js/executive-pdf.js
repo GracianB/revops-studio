@@ -3,9 +3,13 @@
 import {SCENARIOS} from "./workflow-engine.js";
 import {RULE_CATALOG} from "./workflow-policy.js";
 
-const LIMIT=80;
+const LIMIT=80,MAX_CELLS=LIMIT*5;
 const count=(value,label)=>{
  if(!Number.isInteger(value)||value<0||value>LIMIT)throw Error("Recuento inválido: "+label);
+ return value;
+};
+const cellsCount=(value,label)=>{
+ if(!Number.isInteger(value)||value<0||value>MAX_CELLS)throw Error("Número de celdas inválido: "+label);
  return value;
 };
 const delta=(value,label)=>{
@@ -55,7 +59,7 @@ function readQuality(type,quality,total){
  if(!Number.isInteger(completeness)||completeness<0||completeness>100)
   throw Error("Integridad de celdas no válida.");
  return Object.freeze({
-  completeness,missingCells:count(quality.missingCells,"celdas vacías"),
+  completeness,missingCells:cellsCount(quality.missingCells,"celdas vacías"),
   uniqueIds:count(quality.uniqueIds,"IDs distintos"),
   conflicts:count(quality.flags?.conflictingIds?.count,"conflictos"),
   identical:count(quality.flags?.exactDuplicates?.count,"duplicados idénticos"),
@@ -256,7 +260,7 @@ const widthOf=(value,size)=>{
  return unit*size;
 };
 function wrapLines(value,fontSize=10,width=SAFE_WIDTH){
- const output=[],words=normalizedWinAnsi(value).split(/\s+/).filter(Boolean);
+ const output=[],words=String(value??"").replace(/[\u0000-\u001f\u007f]/g," ").replace(/→/g,"->").split(/\s+/).filter(Boolean);
  let current="";
  for(let word of words){
   // Prevent pathologically long tokens from escaping the page.
