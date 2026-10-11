@@ -316,7 +316,8 @@
             <label><input id="workbenchShowAction" type="checkbox" checked> Acción</label>
           </fieldset>
         </div>
-        <p class="workbench-p74-help">Solo guardamos las preferencias de vista durante esta visita. No almacenamos registros ni exportamos datos al cambiar de vista.</p>
+        <div class="workbench-p74-saved"><button type="button" id="workbenchSaveView">Guardar esta vista sin búsqueda ni registros</button><button type="button" id="workbenchRestoreView">Restaurar vista guardada</button><button type="button" id="workbenchClearView">Borrar vista guardada</button></div>
+        <p class="workbench-p74-help" id="workbenchViewStatus" role="status" aria-live="polite">Las vistas solo guardan filtros, orden y columnas, nunca búsquedas o registros.</p>
       </section>
       <p class="workbench-filter-status" id="workflowFilterStatus" role="status" aria-live="polite">Elige un escenario para ver los registros.</p>
       <div class="workbench-no-results" id="workflowNoResults" hidden role="status"><strong>No encontramos registros con ese filtro.</strong><span>Prueba otra búsqueda o vuelve a mostrar todos.</span><button type="button" id="resetResultsView">Mostrar todos los registros</button></div>
