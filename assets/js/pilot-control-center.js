@@ -84,11 +84,12 @@ export function mountPilotControlCenter({getState}){
   const capacityRows=document.createDocumentFragment();
   for(const comparison of capacity.comparisons){
    const row=document.createElement("tr");
-   for(const value of [comparison.capacity,comparison.optimisticWaves,
+   const header=document.createElement("th");
+   header.scope="row";header.textContent=String(comparison.capacity);row.append(header);
+   for(const value of [comparison.optimisticWaves,
     comparison.waves,comparison.roleConstraintWaves]){
     const cell=document.createElement("td");cell.textContent=String(value);row.append(cell);
    }
-   row.firstChild.outerHTML="<th scope=\"row\">"+comparison.capacity+"</th>";
    capacityRows.append(row);
   }
   $("pilotCapacityRows").replaceChildren(capacityRows);
