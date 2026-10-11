@@ -175,7 +175,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P127** · Plantilla descargable con filas ficticias · IMPLEMENTADO
 - [   ] **P128** · Aviso de datos sensibles en exportación completa · PENDIENTE
 - [   ] **P129** · Exportar informe legible como PDF · PENDIENTE
-- [   ] **P130** · Exportar resumen comercial estructurado · PENDIENTE
+- [ x ] **P130** · Exportar resumen comercial estructurado · IMPLEMENTADO (R1: documento HTML local imprimible, no PDF directo)
 
 ## 14 · Accesibilidad
 
@@ -237,8 +237,8 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P174** · Enlazar casos reales con pruebas públicas · PENDIENTE
 - [   ] **P175** · Clarificar el alcance de pruebas gratuitas · PENDIENTE
 - [   ] **P176** · Explicar precio orientativo sin promesas · PENDIENTE
-- [   ] **P177** · Mostrar de forma humana cómo sería la implantación · PENDIENTE
-- [   ] **P178** · Ofrecer un entregable claro después del diagnóstico · PENDIENTE
+- [ x ] **P177** · Mostrar de forma humana cómo sería la implantación · IMPLEMENTADO (R1: fases del plan descargable)
+- [ x ] **P178** · Ofrecer un entregable claro después del diagnóstico · IMPLEMENTADO (R1: plan de trabajo local descargable)
 - [   ] **P179** · Exponer políticas de soporte y mantenimiento · PENDIENTE
 - [   ] **P180** · Confirmar recepción sin confundir envío con lectura · PENDIENTE
 
