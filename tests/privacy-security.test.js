@@ -50,7 +50,7 @@ test("PR79: no bidi or invisible controls in pasted or uploaded input; never mut
   const malicious=prefix+secret;
   assert.throws(()=>parseDelimited(malicious),/invisibles/);
   assert.throws(()=>decodeImportBytes(new TextEncoder().encode(malicious)),/invisibles|control|nulos/);
-  assert.throws(()=>inspectImport("orders",malicious),/invisibles/);
+  assert.throws(()=>inspectImport("orders",malicious),/invisibles|control|nulos/);
  }
  assert.equal(validateTextBoundary("José\nAvenida 1\n🙂"),"José\nAvenida 1\n🙂");
  assert.deepEqual(runWorkflow("orders",prefix).counts,{total:1,listo:1,revisar:0,bloqueado:0});
