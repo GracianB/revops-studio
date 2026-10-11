@@ -184,6 +184,26 @@
           <button class="btn btn-secondary" type="button" id="exportActionQueue" disabled>Exportar cola lista (sin históricos)</button>
           <p class="workbench-export-warning">Los CSV detallados incluyen valores de las filas mostradas, aunque sean ficticios o anonimizados. El informe explicativo no incluye esas filas.</p>
         </div>
+        <section id="privacyBoundary" class="workbench-p79-privacy" aria-labelledby="privacyBoundaryTitle">
+          <div class="workbench-p79-head"><div><span class="workbench-section-index">PR79 · PRIVACIDAD Y SEGURIDAD DE DATOS</span>
+            <h3 id="privacyBoundaryTitle">Tus datos siguen bajo tu control.</h3>
+            <p>Los CSV completos contienen filas originales. Los TXT, PDF y JSON ejecutivos usan solo cifras y reglas predefinidas. Esta demo no conecta con servicios de CRM ni ejecuta acciones.</p>
+          </div></div>
+          <p id="privacyRiskStatus" role="status" aria-live="polite" aria-atomic="true">Ejecuta una simulación para revisar sus riesgos de exportación.</p>
+          <div class="workbench-p79-actions">
+            <button type="button" id="privacyInspect" disabled>Inspeccionar riesgos del CSV ↗</button>
+            <button type="button" id="privacyClearOpen">Borrar la sesión de trabajo ↶</button>
+          </div>
+          <div id="privacyClearConfirm" class="workbench-p79-confirm" hidden role="group" aria-labelledby="privacyClearTitle" aria-describedby="privacyClearDescription">
+            <h4 id="privacyClearTitle" tabindex="-1">¿Descartar los datos introducidos en esta pestaña?</h4>
+            <p id="privacyClearDescription">Se vaciarán ediciones, búsquedas, historial, vistas guardadas, configuraciones de revisión, auditorías y datos temporales de informes, y se restaurarán los ejemplos ficticios. No es posible borrar archivos que ya hayas descargado ni el contenido del portapapeles.</p>
+            <div class="workbench-p79-actions">
+              <button type="button" id="privacyClearCancel">Conservar mi trabajo</button>
+              <button type="button" id="privacyClearConfirmButton">Sí, limpiar y cargar el ejemplo</button>
+            </div>
+          </div>
+          <p id="privacyClearStatus" role="status" aria-live="polite" aria-atomic="true">La limpieza solo afecta a esta demo y a sus preferencias de sesión identificadas.</p>
+        </section>
       </section>
     </div>
     <section class="workbench-insights" aria-labelledby="insights-title" id="lectura-resultados">
