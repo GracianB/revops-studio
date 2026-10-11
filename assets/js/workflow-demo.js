@@ -22,7 +22,7 @@ let scenario=allowed.includes(query)?query:"orders";
 let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let correctionTimeline=null, editPreview=null, editorTrigger=null, editorDirty=false;
-let decisionConsole=null,candidateConsole=null;
+let decisionConsole=null,candidateConsole=null,reportConsole=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
@@ -39,6 +39,9 @@ function invalidate(message){
   $("r2Evidence").hidden=true;
   $("rulesStudio").hidden=true;
   $("candidateStudio").hidden=true;
+  $("reportStudio").hidden=true;
+  $("reportOpen").disabled=true;
+  $("reportOpen").setAttribute("aria-expanded","false");
   $("candidateOpen").setAttribute("aria-expanded","false");
   $("candidateOpen").disabled=true;
   $("rulesOpen").setAttribute("aria-expanded","false");
@@ -629,6 +632,8 @@ function render(result){
   renderInsights(result);
   $("rulesOpen").disabled=false;
   $("candidateOpen").disabled=false;
+  $("reportOpen").disabled=false;
+  if(reportConsole&&!$("reportStudio").hidden)reportConsole.sync();
   if(candidateConsole&&!$("candidateStudio").hidden)candidateConsole.sync();
   if(decisionConsole&&!$("rulesStudio").hidden)
     decisionConsole.sync(scenario,$("workflowSource").value,result);
@@ -1109,6 +1114,25 @@ $("r2Export").addEventListener("click",()=>{
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(uri),1000);
   setText("workflowStatus","Comparativa R2 descargada. Sin filas, contactos ni ejecución externa.");
+});
+$("reportOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(reportConsole)reportConsole.sync();
+  else{
+   const module=await import("./report-console.js");
+   if(!latest)return;
+   reportConsole=module.mountExecutiveReporting({
+    getState:()=>latest?{
+      scenario,source:$("workflowSource").value,result:latest,quality:qualityCurrent,
+      comparison:evidence,
+      reviewSummary:decisionConsole?.reviewSummary?.(scenario,$("workflowSource").value)||null,
+      candidate:candidateConsole?.candidateSummary?.(scenario,$("workflowSource").value)||null
+    }:null
+   });
+  }
+  $("reportStudio").scrollIntoView({behavior:"instant",block:"start"});
+ }catch(error){errorText("No se pudo preparar el informe ejecutivo: "+(error?.message||"error inesperado"));}
 });
 $("candidateOpen").addEventListener("click",async()=>{
  if(!latest)return;
