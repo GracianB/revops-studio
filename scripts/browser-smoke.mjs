@@ -869,8 +869,16 @@ async function auditPilotControlCenter(browser){
   await page.locator("#pilotControlReset").click();
   assert.equal(await page.locator("#pilotControlDrills").innerText(),"Sin ejecutar");
   await page.setViewportSize({width:320,height:844});
-  const dims=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
-  assert.ok(dims.scroll<=dims.width+3,"PR85 mobile overflow: "+JSON.stringify(dims));
+  const dims=await page.evaluate(()=>({
+   width:innerWidth,scroll:document.documentElement.scrollWidth,
+   oversized:[...document.querySelectorAll("body *")]
+    .filter(node=>node.getBoundingClientRect().right>innerWidth+3)
+    .slice(0,12).map(node=>({tag:node.tagName,id:node.id,
+     className:typeof node.className==="string"?node.className:"",
+     right:Math.round(node.getBoundingClientRect().right),
+     width:Math.round(node.getBoundingClientRect().width)}))
+  }));
+  assert.ok(dims.scroll<=dims.width+3,"PR86 mobile overflow: "+JSON.stringify(dims));
   await auditAccessibility(page,"pilot-control-pr85");
   await page.locator("#pilotControlClose").click();
   assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotControlOpen");
