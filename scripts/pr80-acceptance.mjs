@@ -32,7 +32,10 @@ for(const type of Object.keys(SCENARIOS)){
   assert.equal(gate.realApprovals,0);
   assert.equal(inspectDataExposure(result).externallyTransmitted,0);
   assert.ok(exportResultCsv(result).startsWith("\uFEFF"));
-  assert.ok(exportActionQueueCsv(result).includes("NO ejecutado"));
+  const queue=exportActionQueueCsv(result);
+  assert.ok(queue.startsWith("\uFEFF"));
+  if(gate.metrics.prepared>0)assert.ok(queue.includes("NO ejecutado"));
+  else assert.equal(queue.trim().split(/\r?\n/).length,1,"empty queue contains header only");
   assert.ok(text.startsWith("%PDF-1.4"));
   assert.ok(text.endsWith("%%EOF\n"));
   assert.ok(!text.includes("PED-101"));
