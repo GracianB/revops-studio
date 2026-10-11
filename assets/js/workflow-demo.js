@@ -7,6 +7,7 @@ import {createClientJourney} from "./client-journey.js";
 import {compareWorkflow,comparisonReport} from "./workflow-comparison.js";
 import {buildQualityCockpit,compareQualityCockpit,qualityCockpitReport} from "./quality-cockpit.js";
 import {previewRecordEdit,createCorrectionTimeline,nextBlockedIndex,safeViewPreset} from "./correction-workbench.js";
+import {installAccessibleNavigation,focusHeading} from "./a11y-workbench.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -26,11 +27,13 @@ let decisionConsole=null,candidateConsole=null,reportConsole=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
+function announceWorkbench(text){setText("workbenchA11yAnnounce",String(text).slice(0,190));}
 function errorText(message){
   const element=$("workflowError");
   if(!element)return;
   element.hidden=!message;
   element.textContent=message||"";
+  $("workflowSource").setAttribute("aria-invalid",String(Boolean(message)));
   if(message)element.focus();
 }
 function invalidate(message){
@@ -42,6 +45,7 @@ function invalidate(message){
   $("reportStudio").hidden=true;
   $("reportOpen").disabled=true;
   $("reportOpen").setAttribute("aria-expanded","false");
+  announceWorkbench("Datos modificados. Debes ejecutar el proceso para recuperar informes y resultados.");
   $("candidateOpen").setAttribute("aria-expanded","false");
   $("candidateOpen").disabled=true;
   $("rulesOpen").setAttribute("aria-expanded","false");
@@ -618,12 +622,15 @@ function render(result){
     trigger.type="button";
     trigger.className="workbench-row-edit";
     trigger.dataset.editIndex=String(index);
-    trigger.setAttribute("aria-label","Editar registro "+row.id);
+    trigger.setAttribute("aria-label","Editar fila "+(index+1)+". "+row.status+". "+row.reason);
+    trigger.setAttribute("aria-describedby","workbenchKeyboardHelp");
+    trigger.setAttribute("aria-keyshortcuts","ArrowDown ArrowUp Home End");
     trigger.textContent="Editar ↗";
     edit.append(trigger);
     frag.append(tr);
   }
   body.replaceChildren(frag);
+  announceWorkbench("Proceso analizado: "+result.counts.total+" registros, "+result.counts.bloqueado+" bloqueados y "+result.counts.revisar+" pendientes de revisión.");
   applyWorkbenchPresentation();
   guide?.sync(result);
   sortResults();
@@ -784,7 +791,9 @@ function openEditor(index){
       input.setAttribute("aria-invalid","true");
       const msg=document.createElement("strong");
       msg.className="workbench-field-problem";
+      msg.id="editIssue-"+column;
       msg.textContent="Revisar: "+row.reason;
+      input.setAttribute("aria-describedby",hint.id+" "+msg.id);
       wrap.append(msg);
     }
     if(guide.options){
