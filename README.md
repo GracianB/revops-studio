@@ -1,3 +1,11 @@
+## RevOps PR71 · Discovery Studio (desarrollo sin lanzamiento)
+
+La portada incorpora ahora un **Discovery Studio opcional** detrás del diagnóstico existente, cargado solo cuando se pulsa «Preparar brief de proyecto». El visitante puede definir perfil, objetivo a medir, prioridad, madurez del proceso, responsable, muestra disponible, dependencia de sistemas, sensibilidad y tres notas editables. El motor puro `assets/js/discovery-engine.js` produce una lectura de viabilidad y riesgos, fases, criterios de aceptación y una propuesta verificable sin prometer ejecución ni ROI.
+
+La salida es un **brief editable** que puede copiarse, descargarse como TXT o JSON y asociarse **voluntariamente** como extracto a la consulta. Si cambian las condiciones después de editar el texto, se avisa de que está desactualizado y se conservan las ediciones hasta regenerar expresamente. Solo el envío voluntario del formulario existente, con consentimiento, transmite el extracto al proveedor; ninguna opción lo envía por sí sola.
+
+Documentación detallada y criterios de aceptación: [PR71 · Discovery Studio](docs/PR71-DISCOVERY-STUDIO.md). Mantener en borrador y sin fusionar/desplegar. **El repositorio sigue siendo público** a pesar de estar en desarrollo.
+
 ## RevOps R2 · Evidencia explicable «antes → después» (rama acumulada de desarrollo)
 
 La simulación local `demo.html` ahora presenta una comparación visual a dos columnas entre el **punto de partida real** y los resultados tras corregir un registro. `assets/js/workflow-comparison.js` calcula métricas agregadas, cambios de estado por posición y motivos de reglas reconocidas, sin exportar valores ni identificadores de clientes. En la vista guiada aparece junto al resultado; en herramientas avanzadas permanece visible durante las correcciones.
