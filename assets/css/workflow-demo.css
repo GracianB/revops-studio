@@ -879,3 +879,10 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 .pilot-authorization-list span,.pilot-authorization-list small{font:11px/1.6 var(--sans);color:var(--muted)}
 @media(max-width:680px){.pilot-authorization-grid{grid-template-columns:minmax(0,1fr)}}
 @media(forced-colors:active){.pilot-authorization-verdict{border:2px solid ButtonText}.pilot-authorization-list li{border:1px solid ButtonText}}
+
+/* PR88 · Non-identifying, offline executive handoff controls. */
+.pilot-handoff{margin:18px 0;padding:clamp(12px,2.5vw,20px);min-width:0;max-width:100%;box-sizing:border-box;border:1px solid var(--line-2);border-radius:12px;background:var(--panel)}
+.pilot-handoff h4{margin:0 0 9px}
+#pilotHandoffStatus{font:12px/1.65 var(--sans);padding:12px;border-left:3px solid var(--accent);color:var(--text);background:var(--bg-2);overflow-wrap:anywhere}
+@media(max-width:550px){.pilot-handoff .workbench-p85-actions{display:grid;grid-template-columns:1fr}.pilot-handoff .workbench-p85-actions button{width:100%}}
+@media(forced-colors:active){.pilot-handoff{border:1px solid ButtonText}}
