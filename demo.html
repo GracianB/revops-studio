@@ -756,6 +756,16 @@
           </div>
           <p class="workbench-p85-disclaimer">La verificación verde solo significa que los invariantes locales han pasado. Producción no autorizada: faltan controles humanos, pruebas independientes, despliegue y aprobación empresarial.</p>
         </section>
+        <section class="pilot-session-audit" aria-labelledby="pilotSessionAuditHeading">
+          <h4 id="pilotSessionAuditHeading">Registro efímero de interacción · PR93</h4>
+          <p>Solo acciones predefinidas de esta pantalla. No guarda valores, nombres, tiempos de empleados ni decisiones empresariales. Los eventos desaparecen al cambiar los datos o cerrar la pestaña.</p>
+          <p id="pilotSessionAuditCount" role="status" aria-live="polite">Sin interacciones registradas.</p>
+          <ol id="pilotSessionAuditEntries" class="pilot-session-audit-list"></ol>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotSessionAuditExport">Exportar eventos locales JSON ↧</button>
+            <button type="button" id="pilotSessionAuditClear">Vaciar este historial</button>
+          </div>
+        </section>
         <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
         <div class="workbench-p85-actions">
           <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
