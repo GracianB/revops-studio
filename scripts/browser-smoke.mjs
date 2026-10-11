@@ -1008,6 +1008,9 @@ async function auditPilotControlCenter(browser){
   assert.doesNotMatch(printable,/<script\b|<iframe\b|PED-101|norte@ejemplo\.test/i);
   const txtDownload=page.waitForEvent("download");
   await page.locator("#pilotHandoffTxt").click();
+  const handoffStatus=await page.locator("#pilotHandoffStatus").innerText();
+  console.log("PR98 DEBUG TXT HANDOFF:",handoffStatus);
+  assert.doesNotMatch(handoffStatus,/No se puede exportar|rechazada/i);
   const txtFile=await txtDownload;
   assert.equal(txtFile.suggestedFilename(),"revops-revision-piloto-orders.txt");
   const summary=await readFile(await txtFile.path(),"utf8");
