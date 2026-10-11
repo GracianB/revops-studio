@@ -71,6 +71,9 @@ export function mountCandidateStudio({getState}){
   refreshInputs();renderCandidate();
  }
  const api={
+  candidateSummary(typeValue,sourceValue){
+   return current&&typeValue===type&&sourceValue===source?current:null;
+  },
   sync(){
    const state=getState();
    if(!state?.result)return;
