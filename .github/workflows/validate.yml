@@ -42,6 +42,18 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      - name: PR100 milestone 18-scenario acceptance
+        run: node scripts/pr100-milestone-acceptance.mjs
+
+      - name: Upload PR100 technical acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr100-acceptance-${{ github.run_id }}
+          path: .ci-artifacts/pr100-acceptance.json
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Install lightweight browser smoke dependency
         run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0 axe-core@4.10.3
 
