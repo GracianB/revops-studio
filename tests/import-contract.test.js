@@ -41,7 +41,7 @@ test("PR72: exact headers and scenario-specific aliases, prepared counts from re
  assert.equal(ensureImportReady(synonyms,true),true);
 });
 test("PR72: required mapping cannot be guessed from a row and duplicated columns are blocked",()=>{
- const missing=inspectImport("orders","id;company;correo;amount;status\nA;Acme;a@b.es;1;nuevo");
+ const missing=inspectImport("orders","codigo;company;correo;amount;status\nA;Acme;a@b.es;1;nuevo");
  assert.deepEqual(missing.missing,["pedido"]);
  assert.equal(missing.status,"mapping_required");
  assert.throws(()=>ensureImportReady(missing,true),/obligatorios/);
