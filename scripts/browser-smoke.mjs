@@ -540,6 +540,130 @@ async function auditExecutivePdf(browser){
  }finally{await page.close();}
 }
 
+async function auditInclusiveWorkbench(browser){
+ const page=await browser.newPage({viewport:{width:1280,height:800},reducedMotion:"reduce",acceptDownloads:true});
+ const errors=[];page.on("pageerror",error=>errors.push(error.message));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  const links=page.locator("a.skip-link");
+  assert.equal(await links.count(),3,"skip links to main, editor and results");
+  await page.keyboard.press("Tab");
+  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("href")),"#main");
+  await page.keyboard.press("Tab");
+  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("href")),"#simulador");
+  await page.keyboard.press("Tab");
+  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("href")),"#workbench-table-title");
+  await page.locator("#workbenchKeyboardGuide summary").focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.locator("#workbenchKeyboardGuide").getAttribute("open"),"");
+  assert.match(await page.locator("#workbenchKeyboardGuide").innerText(),/Inicio\/Fin/);
+  await page.locator('[data-workflow-filter="bloqueado"]').click();
+  const blocked=page.locator(".workbench-row:visible .workbench-row-edit");
+  assert.equal(await blocked.count(),2);
+  assert.match(await blocked.first().getAttribute("aria-label"),/Editar fila 3\. bloqueado/);
+  assert.equal(await blocked.first().getAttribute("aria-keyshortcuts"),"ArrowDown ArrowUp Home End");
+  await blocked.first().focus();
+  await page.keyboard.press("ArrowDown");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.editIndex),"3");
+  await page.keyboard.press("End");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.editIndex),"3");
+  await page.keyboard.press("Home");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.editIndex),"2");
+  await page.keyboard.press("ArrowUp");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.editIndex),"3","wrap to last visible row");
+  await page.keyboard.press("Enter");
+  assert.equal(await page.locator("#workflowEditForm").isVisible(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("name")),"email");
+  const email=page.locator('#workflowEditFields input[name="email"]');
+  assert.equal(await email.getAttribute("aria-invalid"),"true");
+  assert.match(await email.getAttribute("aria-describedby"),/editIssue-email/);
+  await email.fill("respuesta@ejemplo.test");
+  assert.equal(await email.getAttribute("aria-invalid"),"false");
+  assert.equal(await page.locator("#saveWorkflowEdit").isEnabled(),true);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#workflowEditForm").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.editIndex),"3","editor restores source focus");
+  await page.locator("#rulesOpen").click();
+  await page.locator("#rulesStudio").waitFor({state:"visible"});
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"rulesStudioTitle");
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#rulesStudio").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"rulesOpen");
+  await page.locator("#candidateOpen").click();
+  await page.locator("#candidateStudio").waitFor({state:"visible"});
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"candidateStudioTitle");
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#candidateStudio").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"candidateOpen");
+  await page.locator("#reportOpen").click();
+  await page.locator("#reportStudio").waitFor({state:"visible"});
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"reportStudioTitle");
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#reportStudio").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"reportOpen");
+
+  await page.locator("#workflowSource").fill(
+   "pedido;cliente;email;total;estado\nA-01;Equipo;test@ejemplo.test;12;nuevo");
+  assert.equal(await page.locator("#exportWorkflow").isDisabled(),true);
+  await page.locator('[data-scenario="support"]').click();
+  assert.equal(await page.locator("#scenarioDiscard").isVisible(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"confirmScenarioDiscard");
+  await page.keyboard.press("Tab");
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"cancelScenarioDiscard","Tab wraps within confirmation");
+  await page.keyboard.press("Shift+Tab");
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"confirmScenarioDiscard");
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#scenarioDiscard").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("data-scenario")),"orders");
+  await page.locator("#workflowSource").fill("pedido;cliente;email;total;estado\nA-01;Mal;no-es-correo;10;nuevo");
+  await page.locator("#runWorkflow").click();
+  assert.equal(await page.locator("#workflowSource").getAttribute("aria-invalid"),"false","CSV structural validity is separate from row status");
+  await page.locator("#workflowSource").fill("pedido;cliente\nX;A");
+  await page.locator("#runWorkflow").click();
+  assert.equal(await page.locator("#workflowSource").getAttribute("aria-invalid"),"true");
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"workflowError");
+  assert.match(await page.locator("#workflowError").getAttribute("aria-atomic"),/true/);
+  await page.locator("#resetWorkflow").click();
+  await page.locator("#runWorkflow").click();
+  assert.equal(await page.locator("#workflowSource").getAttribute("aria-invalid"),"false");
+
+  await auditAccessibility(page,"PR78 closed panels");
+  for(const theme of ["dark","light"]){
+   if(await page.locator("html").getAttribute("data-theme")!==theme)
+    await page.locator("[data-theme-toggle]").click();
+   assert.equal(await page.locator("html").getAttribute("data-theme"),theme);
+   const c=await page.evaluate(()=>{
+    const color=selector=>{
+     const style=getComputedStyle(document.querySelector(selector));
+     return {color:style.color,background:style.backgroundColor};
+    };
+    return [color(".workbench-p78-help summary"),color(".workbench-p77-preview h3")];
+   });
+   assert.equal(c.length,2);
+   await auditAccessibility(page,"PR78 "+theme+" contrast and labels");
+  }
+  // 1280 physical px at 400% browser zoom corresponds to a 320 CSS-px reflow.
+  for(const width of [390,320]){
+   await page.setViewportSize({width,height:760});
+   const dims=await page.evaluate(()=>({cssWidth:innerWidth,scroll:document.documentElement.scrollWidth}));
+   assert.ok(dims.scroll<=dims.cssWidth+3,"PR78 400% CSS reflow "+JSON.stringify(dims));
+   const targets=await page.evaluate(()=>["#runWorkflow","#reportOpen","#rulesOpen","#candidateOpen",
+    ".workbench-row:visible .workbench-row-edit"].map(selector=>{
+     const el=document.querySelector(selector);
+     return {selector,height:el?.getBoundingClientRect().height||0};
+   }));
+   for(const target of targets)assert.ok(target.height>=44,
+    "PR78 44px touch/keyboard target "+JSON.stringify(target));
+  }
+  // Forced colors and reduced motion are supported CSS states; do not infer user OS settings.
+  await page.emulateMedia({forcedColors:"active",reducedMotion:"reduce"});
+  assert.equal(await page.evaluate(()=>matchMedia("(forced-colors: active)").matches),true);
+  assert.equal(await page.evaluate(()=>matchMedia("(prefers-reduced-motion: reduce)").matches),true);
+  assert.deepEqual(errors,[]);
+  console.log("PR78 ACCESSIBLE WORKBENCH PASS ("+engineName+"): tab, arrow keys, panels, focus return, form errors, 400% equivalent reflow, axe");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -902,6 +1026,7 @@ try {
   await auditDecisionStudio(browser);
   await auditScenarioBuilder(browser);
   await auditExecutivePdf(browser);
+  await auditInclusiveWorkbench(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
