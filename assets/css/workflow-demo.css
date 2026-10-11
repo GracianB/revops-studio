@@ -858,3 +858,10 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 .pilot-capacity-roles li{padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--bg-2);font:12px/1.5 var(--sans);overflow-wrap:anywhere}
 @media(max-width:650px){.pilot-capacity{padding:12px}.pilot-capacity-roles{grid-template-columns:1fr}}
 @media(forced-colors:active){.pilot-capacity-scroll,.pilot-capacity-roles li{border:1px solid ButtonText}}
+
+/* PR86 · Prevent intrinsic table/select widths escaping the 320px viewport. */
+.workbench-p85,#pilotControlStudio,.pilot-capacity{min-width:0;box-sizing:border-box;max-width:100%}
+.pilot-capacity label{min-width:0;max-width:100%}
+#pilotCapacityRoleLimit{min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+.pilot-capacity-scroll{display:block;min-width:0;width:100%;max-width:100%;box-sizing:border-box;overflow-x:auto;overscroll-behavior-inline:contain}
+.pilot-capacity-roles li{min-width:0}
