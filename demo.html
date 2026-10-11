@@ -105,7 +105,7 @@
       </div>
       <p id="recipeHint" class="workbench-recipe-detail" role="status">Ejemplo original con situaciones mezcladas. Cambiar la opción no sustituirá tus datos hasta pulsar cargar.</p>
     </div>
-    <div class="workbench-quickstart" aria-label="Cómo probar esta herramienta">
+    <div class="workbench-quickstart" role="group" aria-label="Cómo probar esta herramienta">
       <div><span>01</span><p><strong>Elige un proceso</strong><small>Los ejemplos ya están listos.</small></p></div>
       <div><span>02</span><p><strong>Explora los resultados</strong><small>Comprueba los errores detectados.</small></p></div>
       <div><span>03</span><p><strong>Corrige y compara</strong><small>Prueba una corrección y exporta.</small></p></div>
@@ -164,7 +164,7 @@
       <section class="workbench-panel workbench-output" aria-labelledby="workbench-output-title">
         <div class="workbench-panel-head"><div><span>03 / RESULTADO</span><h3 id="workbench-output-title">Trazabilidad en directo</h3></div><span class="workbench-local-label">SOLO SIMULACIÓN</span></div>
         <p class="workbench-results-note" id="workflowStatus" role="status" aria-live="polite">Ejecuta un escenario para ver los resultados.</p>
-        <div class="workbench-kpis" aria-label="Resumen de registros procesados">
+        <div class="workbench-kpis" role="group" aria-label="Resumen de registros procesados">
           <div><small>Analizados</small><strong id="countTotal">0</strong></div>
           <div><small>Listos</small><strong id="countReady">0</strong></div>
           <div><small>Para revisar</small><strong id="countReview">0</strong></div>
@@ -200,7 +200,7 @@
         <span><i class="legend-review"></i><b id="insightsReview">0</b> requieren revisión</span>
         <span><i class="legend-blocked"></i><b id="insightsBlocked">0</b> bloqueados</span>
       </div>
-      <div class="workbench-insight-steps" id="insightsSteps" aria-label="Siguientes pasos recomendados">
+      <div class="workbench-insight-steps" id="insightsSteps" role="group" aria-label="Siguientes pasos recomendados">
         <p class="workbench-empty-insight">Los pasos recomendados aparecerán después de ejecutar el proceso.</p>
       </div>
       <section class="quality-cockpit" id="qualityCockpit" aria-labelledby="qualityCockpitTitle" hidden>
@@ -211,7 +211,7 @@
           </div>
           <button class="btn btn-secondary" id="qualityExport" type="button" disabled>Descargar resumen agregado ↧</button>
         </div>
-        <div class="quality-cockpit-kpis" aria-label="Métricas calculadas sobre los registros">
+        <div class="quality-cockpit-kpis" role="group" aria-label="Métricas calculadas sobre los registros">
           <div><small>Claves únicas</small><strong id="qualityUniqueIds">0</strong></div>
           <div><small>IDs conflictivos</small><strong id="qualityConflicts">0</strong></div>
           <div><small>Duplicados idénticos</small><strong id="qualityExactDuplicates">0</strong></div>
@@ -250,7 +250,7 @@
           </div>
           <button class="btn btn-secondary" type="button" id="r2Export" disabled>Descargar comparativa sin filas ↧</button>
         </div>
-        <div class="workbench-r2-columns" aria-label="Contadores de la simulación, no resultados reales">
+        <div class="workbench-r2-columns" role="group" aria-label="Contadores de la simulación, no resultados reales">
           <div class="workbench-r2-column">
             <span class="workbench-r2-kicker">ANTES · PUNTO DE PARTIDA</span>
             <div><span>Propuestas preparadas</span><strong id="r2BeforePrepared">0</strong></div>
@@ -281,7 +281,7 @@
           <button id="rulesExport" type="button" class="btn btn-secondary" disabled>Descargar auditoría agregada ↧</button>
           <button id="rulesClose" type="button" class="btn btn-secondary">Cerrar auditoría</button>
         </div>
-        <div class="workbench-p75-stats" aria-label="Indicadores de reglas auditadas">
+        <div class="workbench-p75-stats" role="group" aria-label="Indicadores de reglas auditadas">
           <div><small>Reglas del escenario</small><strong id="rulesCount">0</strong></div>
           <div><small>Con aplicación efectiva</small><strong id="rulesCovered">0</strong></div>
           <div><small>Restricciones simultáneas</small><strong id="rulesOverlaps">0</strong></div>
@@ -359,7 +359,7 @@
         </div>
         <p id="candidateControlExplain" class="workbench-p76-explain">Solo se modifican los criterios de revisión del candidato.</p>
         <p id="candidateStatus" role="status" aria-live="polite" aria-atomic="true">Abre la simulación para comparar.</p>
-        <div class="workbench-p76-stats" aria-label="Comparación del mismo conjunto, ninguna acción externa">
+        <div class="workbench-p76-stats" role="group" aria-label="Comparación del mismo conjunto, ninguna acción externa">
           <div><small>Listos · original</small><strong id="candidateOriginalReady">0</strong></div>
           <div><small>Listos · candidato</small><strong id="candidateNewReady">0</strong></div>
           <div><small>Revisión · original</small><strong id="candidateOriginalReview">0</strong></div>
@@ -401,7 +401,7 @@
         <div><span class="workbench-section-index">CALIDAD DE LAS ENTRADAS</span><h3 id="quality-title">Estado de los campos</h3>
         <p>La integridad mide celdas rellenadas, no la calidad total ni la exactitud de la información.</p></div>
         <div class="workbench-quality-meter"><strong id="qualityCompleteness">0 %</strong><span>Campos con algún valor</span></div>
-        <div class="workbench-quality-fields" id="qualityFields" aria-label="Campos incompletos"></div>
+        <div class="workbench-quality-fields" id="qualityFields" role="group" aria-label="Campos incompletos"></div>
       </div>
       <div class="workbench-search-row">
         <label for="workflowSearch">Buscar por registro, motivo o acción</label>
@@ -477,7 +477,7 @@
       <section id="reportStudio" class="workbench-p77-studio" aria-label="Exportar informe ejecutivo seguro" hidden>
         <div class="workbench-p77-preview">
           <div><h3>Vista previa del contenido agregado</h3><p>Esta vista se recompone a partir de las reglas y resultados actuales. No muestra registros de origen ni almacena datos.</p></div>
-          <div class="workbench-p77-counters" aria-label="Datos que figuran en el informe">
+          <div class="workbench-p77-counters" role="group" aria-label="Datos que figuran en el informe">
             <div><small>Analizados</small><strong id="reportRows">0</strong></div>
             <div><small>Propuestas</small><strong id="reportReady">0</strong></div>
             <div><small>Revisión</small><strong id="reportReview">0</strong></div>
