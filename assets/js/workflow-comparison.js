@@ -3,6 +3,20 @@
 import { analyzeWorkflow } from "./workflow-insights.js";
 
 const STATES = Object.freeze(["listo", "revisar", "bloqueado"]);
+const RULE_REASONS = new Set([
+  "Identificador vacío","Duplicado: identificador ya procesado",
+  "Falta el cliente","Email incompleto o inválido","Total no válido o no positivo",
+  "Estado de pedido desconocido","Marcado para revisión por origen",
+  "Pedido cerrado; no debe reabrirse","Pedido listo tras validación",
+  "Falta el asunto de la incidencia","Prioridad desconocida","Estado de ticket desconocido",
+  "Incidencia ya cerrada","Prioridad alta: necesita criterio humano","Incidencia válida",
+  "Falta fuente","Fecha inválida; utiliza AAAA-MM-DD",
+  "Valor numérico incorrecto","Valor negativo: confirmar con la fuente","Registro consistente"
+]);
+function ruleReason(reason) {
+  return RULE_REASONS.has(reason) ? reason : "Regla no catalogada";
+}
+
 
 function snapshot(result) {
   const a = analyzeWorkflow(result);
@@ -43,9 +57,10 @@ export function compareWorkflow(baseline, current) {
       }
       if (left.status !== right.status || left.reason !== right.reason || left.action !== right.action) {
         changed++;
-        const key = left.status + ">" + right.status;
+        const fromReason=ruleReason(left.reason),toReason=ruleReason(right.reason);
+        const key = [left.status,right.status,fromReason,toReason].join("\u001f");
         const group = transitions.get(key) || {
-          from: left.status, to: right.status, count: 0
+          from: left.status, to: right.status, fromReason, toReason, count: 0
         };
         group.count++;
         transitions.set(key, group);
@@ -53,7 +68,8 @@ export function compareWorkflow(baseline, current) {
     }
   }
   const changes = Object.freeze([...transitions.values()].map(item => Object.freeze({
-    ...item, description: item.count + " registro(s): " + label(item.from) + " → " + label(item.to)
+    ...item, description: item.count + " registro(s): " + label(item.from) + " → " + label(item.to) +
+      " · Regla: " + item.fromReason + " → " + item.toReason
   })));
   const delta = Object.freeze({
     prepared: diff(before.prepared, after.prepared),
