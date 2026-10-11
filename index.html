@@ -204,9 +204,68 @@
           <a class="btn btn-primary" id="diagToContact" href="#contacto">Añadir este mapa a mi consulta ↗</a>
           <button class="btn btn-secondary" type="button" id="diagCopy">Copiar mi mapa</button>
           <button class="btn btn-secondary" type="button" id="diagDownload" aria-describedby="diagDownloadHelp">Descargar plan completo ↧</button>
+          <button class="btn btn-secondary" type="button" id="diagStudioOpen" aria-controls="discoveryStudio" aria-expanded="false">Preparar brief de proyecto ↗</button>
           <a class="btn btn-secondary" href="./demo.html?scenario=orders" id="diagTryDemo">Ver ejemplo funcionando ↗</a>
           <button class="diagnostic-reset" type="button" id="diagReset">Empezar de nuevo</button>
         </div>
+
+        <section id="discoveryStudio" class="discovery-studio" aria-labelledby="discoveryTitle" hidden>
+          <div class="discovery-head">
+            <div><span class="eyebrow">PR71 · Discovery Studio</span><h3 id="discoveryTitle">Define el proyecto antes de construirlo.</h3>
+              <p>Completa los límites, responsables y la evidencia disponible. Tendrás un brief que podrás revisar, modificar y llevarte. No se guardará ni enviará por abrirlo.</p></div>
+            <button type="button" id="discoveryClose" class="diagnostic-reset" aria-label="Cerrar el brief de proyecto">Cerrar</button>
+          </div>
+          <div class="discovery-fields">
+            <div class="diagnostic-field"><label for="discoveryRole">¿Desde qué responsabilidad vienes?</label>
+              <select id="discoveryRole"><option value="direction">Dirección / compras</option><option value="operations" selected>Operaciones</option><option value="analyst">Datos / analítica</option><option value="support">Soporte / atención</option></select></div>
+            <div class="diagnostic-field"><label for="discoveryOutcome">¿Qué resultado quieres comprobar?</label>
+              <select id="discoveryOutcome"><option value="speed">Menos pasos manuales</option><option value="quality" selected>Menos errores verificables</option><option value="visibility">Información fiable y puntual</option><option value="trace">Decisiones con trazabilidad</option></select></div>
+            <div class="diagnostic-field"><label for="discoveryUrgency">Prioridad temporal</label>
+              <select id="discoveryUrgency"><option value="explore" selected>Explorando opciones</option><option value="quarter">Próximo trimestre</option><option value="priority">Prioritario, por concretar fecha</option></select></div>
+            <div class="diagnostic-field"><label for="discoveryStage">¿Hasta dónde habéis definido el proceso?</label>
+              <select id="discoveryStage"><option value="explore" selected>Nos falta documentarlo</option><option value="mapped">Tenemos el proceso dibujado</option><option value="approved">Alcance preliminar acordado</option></select></div>
+            <div class="diagnostic-field"><label for="discoveryOwner">¿Quién aprobaría decisiones y resultado?</label>
+              <select id="discoveryOwner"><option value="unknown" selected>No está claro</option><option value="pending">Por designar</option><option value="assigned">Hay responsable definido</option></select></div>
+            <div class="diagnostic-field"><label for="discoverySample">¿Hay datos de prueba utilizables?</label>
+              <select id="discoverySample"><option value="none" selected>Todavía no</option><option value="partial">Sí, falta definir campos</option><option value="ready">Sí, muestras anonimizadas</option></select></div>
+            <div class="diagnostic-field"><label for="discoveryIntegration">Dependencia de sistemas externos</label>
+              <select id="discoveryIntegration"><option value="local">Piloto aislado posible</option><option value="possible" selected>Hay que evaluar conectores</option><option value="required">Integración obligatoria</option></select></div>
+            <div class="diagnostic-field"><label for="discoverySensitivity">Tipo de información del piloto</label>
+              <select id="discoverySensitivity"><option value="normal" selected>Ficticia o anonimizada</option><option value="confidential">Información interna</option><option value="restricted">Datos personales o sensibles</option></select></div>
+            <div class="diagnostic-field discovery-wide"><label for="discoveryGoal">Objetivo concreto que te gustaría comprobar (opcional)</label>
+              <textarea id="discoveryGoal" maxlength="240" rows="2" placeholder="Por ejemplo: detectar pedidos duplicados antes de preparar una cola"></textarea></div>
+            <div class="diagnostic-field discovery-wide"><label for="discoveryConstraint">Principal condición o dependencia (opcional)</label>
+              <textarea id="discoveryConstraint" maxlength="240" rows="2" placeholder="Por ejemplo: aprobación del responsable de operaciones"></textarea></div>
+            <div class="diagnostic-field discovery-wide"><label for="discoveryExclusion">¿Qué no entra en el primer piloto? (opcional)</label>
+              <textarea id="discoveryExclusion" maxlength="240" rows="2" placeholder="Por ejemplo: automatizar todos los departamentos"></textarea></div>
+          </div>
+          <p class="discovery-privacy">Usa descripciones generales: no escribas nombres de clientes, contraseñas ni información confidencial. Generar el brief no envía datos.</p>
+          <div class="discovery-assessment" id="discoveryAssessment" aria-live="polite">
+            <h4>Lectura de viabilidad</h4><strong id="discoveryReadiness">Pendiente de evaluar</strong>
+            <p id="discoveryRoleHint"></p>
+            <h5>Condiciones para empezar</h5><ul id="discoveryGaps"></ul>
+            <h5>Riesgos que hay que validar</h5><ul id="discoveryRisks"></ul>
+          </div>
+          <div class="discovery-phases" aria-label="Tres fases del proyecto">
+            <div><b>01</b><strong>Descubrir y medir</strong><span>Mapa del proceso, punto de partida y responsables</span></div>
+            <div><b>02</b><strong>Probar en pequeño</strong><span>Casos ficticios, excepciones y control humano</span></div>
+            <div><b>03</b><strong>Verificar y entregar</strong><span>Pruebas, criterios de aceptación y reversión</span></div>
+          </div>
+          <div class="diagnostic-field discovery-editor">
+            <label for="discoveryPreview">Tu brief completo (puedes editarlo antes de copiarlo o descargarlo)</label>
+            <textarea id="discoveryPreview" rows="14" maxlength="9500" spellcheck="true"></textarea>
+            <p class="discovery-edit-note">El texto es editable. Si modificas las opciones después, el brief queda pendiente de regeneración para evitar información desactualizada. No se sobrescribirán tus cambios sin pulsar «Regenerar».</p>
+          </div>
+          <div class="discovery-actions">
+            <button class="btn btn-secondary" type="button" id="discoveryRegenerate">Regenerar brief ↻</button>
+            <button class="btn btn-secondary" type="button" id="discoveryCopy">Copiar brief</button>
+            <button class="btn btn-secondary" type="button" id="discoveryDownloadTxt">Descargar TXT ↧</button>
+            <button class="btn btn-secondary" type="button" id="discoveryDownloadJson">Descargar JSON ↧</button>
+            <a class="btn btn-secondary" id="discoveryDemoLink" href="./demo.html?scenario=orders">Probar escenario relacionado ↗</a>
+            <button class="btn btn-primary" type="button" id="discoveryAttach">Adjuntar extracto a consulta ↗</button>
+          </div>
+          <p id="discoveryStatus" class="diagnostic-feedback" role="status" aria-live="polite">Brief de trabajo generado localmente.</p>
+        </section>
         <p class="diagnostic-feedback" id="diagDownloadHelp">Archivo HTML privado en tu dispositivo, listo para guardar o imprimir como PDF. No se envía a servidores.</p>
         <p class="diagnostic-feedback" id="diagnosticStatus" role="status" aria-live="polite"></p>
       </div>
