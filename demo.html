@@ -687,6 +687,32 @@
           <p id="pilotHandoffStatus" role="status" aria-live="polite" aria-atomic="true">Informe disponible únicamente con datos agregados y texto predefinido.</p>
           <p class="workbench-p85-disclaimer">El archivo HTML es autónomo, sin scripts, imágenes, trackers ni conexiones remotas. Abre el documento y utiliza la función de impresión del navegador para generar un PDF si es necesario.</p>
         </section>
+        <section class="pilot-stress" aria-labelledby="pilotStressHeading">
+          <h4 id="pilotStressHeading">07 · Matriz de pruebas funcionales con ejemplos sintéticos</h4>
+          <p>Contrasta la muestra actual con seis patrones ficticios del mismo proceso: original, correcta, duplicados, campos vacíos, revisión humana y casos límite. No modifica los datos que estés editando.</p>
+          <p id="pilotStressCurrent" role="status" aria-live="polite">Muestra actual sin evaluar.</p>
+          <label for="pilotStressFilter">Mostrar ejemplos
+            <select id="pilotStressFilter">
+              <option value="all" selected>Todos los escenarios ficticios</option>
+              <option value="issues">Con bloqueos o advertencias</option>
+              <option value="clear">Sin bloqueos ni advertencias</option>
+            </select>
+          </label>
+          <div class="pilot-stress-scroll" tabindex="0" role="region" aria-label="Matriz de escenarios sintéticos">
+            <table id="pilotStressTable">
+              <caption>Comparación de seis patrones ficticios, sin datos originales ni probabilidades</caption>
+              <thead><tr>
+                <th scope="col">Muestra sintética</th><th scope="col">Registros</th>
+                <th scope="col">Bloqueados</th><th scope="col">Revisión</th>
+                <th scope="col">Controles superados</th><th scope="col">Riesgos altos</th>
+                <th scope="col">Cambio en bloqueos frente a la actual</th>
+              </tr></thead>
+              <tbody id="pilotStressRows"></tbody>
+            </table>
+          </div>
+          <p id="pilotStressStatus" role="status" aria-live="polite">Sin resultados de pruebas.</p>
+          <p class="workbench-p85-disclaimer">Pruebas funcionales deterministas con muestras inventadas. No miden usuarios concurrentes, rendimiento real, fiabilidad de redes o impacto empresarial.</p>
+        </section>
         <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
         <div class="workbench-p85-actions">
           <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
