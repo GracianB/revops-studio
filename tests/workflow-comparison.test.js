@@ -35,6 +35,8 @@ test("R2: correcting duplicate changes the real rule decision and counters",()=>
     assert.equal(evidence.delta.prepared,1);
     assert.equal(evidence.changed,1);
     assert.ok(evidence.transitions.some(x=>x.from==="bloqueado"&&x.to==="listo"&&x.count===1));
+    assert.ok(evidence.transitions.some(x=>x.description.includes("Regla: Duplicado: identificador ya procesado")));
+    assert.ok(evidence.transitions.some(x=>x.description.includes("→ ")));
     assert.doesNotMatch(comparisonReport(evidence),new RegExp(id));
     assert.doesNotMatch(comparisonReport(evidence),/@ejemplo\.test/);
   }
