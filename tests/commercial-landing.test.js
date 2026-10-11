@@ -618,3 +618,29 @@ test("PR80 pilot readiness integrates source truth, privacy, quality and safe ou
  assert.doesNotMatch(pure,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
  assert.doesNotMatch(panel,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
 });
+
+
+test("PR81 planning is a deterministic dependency DAG and never a real production authorization",()=>{
+ const model=file("assets/js/pilot-plan.js"),panel=file("assets/js/pilot-plan-console.js");
+ const app=file("assets/js/workflow-demo.js"),styles=file("assets/css/workflow-demo.css");
+ for(const id of ["pilotPlanHeading","pilotPlanOpen","pilotPlanStudio","pilotPlanStudioTitle",
+  "pilotPlanSummary","pilotPlanCapacity","pilotPlanTasks","pilotPlanWaves",
+  "pilotPlanTried","pilotPlanApproved","pilotPlanWavesList","pilotPlanStatus",
+  "pilotPlanExportTxt","pilotPlanExportJson","pilotPlanReset","pilotPlanReview","pilotPlanClose"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(model,/createPilotExecutionPlan/);
+ assert.match(model,/simulatePlanProgress/);
+ assert.match(model,/La autorización externa no puede marcarse/);
+ assert.match(model,/externalExecutions:0,realApprovals:0/);
+ assert.match(model,/Ola /);
+ assert.match(panel,/assessPilotReadiness\(current\.scenario,current\.source,current\.result\)/);
+ assert.match(panel,/data\.startsWith|pilotPlanText/);
+ assert.match(panel,/replaceChildren\(frag\)/);
+ assert.match(app,/import\("\.\/pilot-plan-console\.js"\)/);
+ assert.match(app,/pilotPlanConsole\?\.clear\?\.\(\)/);
+ assert.match(app,/focusHeading\(document,"pilotPlanStudio","pilotPlanStudioTitle"\)/);
+ assert.match(styles,/\.workbench-p81-wave/);
+ assert.match(styles,/@media\(max-width:540px\)/);
+ assert.doesNotMatch(model,/fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
+ assert.doesNotMatch(panel,/fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
+});
