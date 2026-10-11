@@ -184,9 +184,9 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P133** · Enfoque en error de entrada tras fallo · IMPLEMENTADO
 - [ x ] **P134** · Etiquetas específicas de campos de edición · IMPLEMENTADO
 - [ x ] **P135** · Texto de ayuda conectado a cada campo · IMPLEMENTADO
-- [   ] **P136** · Estados erróneos anunciados como texto · PENDIENTE
-- [   ] **P137** · Objetivos táctiles suficientemente grandes · PENDIENTE
-- [   ] **P138** · Probar navegación de teclado sin ratón · PENDIENTE
+- [ x ] **P136** · Estados erróneos anunciados como texto · IMPLEMENTADO (PR78: teclado, anuncios, 44px, reflujo y pruebas de navegador)
+- [ x ] **P137** · Objetivos táctiles suficientemente grandes · IMPLEMENTADO (PR78: teclado, anuncios, 44px, reflujo y pruebas de navegador)
+- [ x ] **P138** · Probar navegación de teclado sin ratón · IMPLEMENTADO (PR78: teclado, anuncios, 44px, reflujo y pruebas de navegador)
 - [ x ] **P139** · Restaurar foco al cerrar el editor · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [   ] **P140** · Revisar contraste en todas las tarjetas claro/oscuro · PENDIENTE
 
