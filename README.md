@@ -1,3 +1,11 @@
+## RevOps PR81 · Planificación operativa supervisada, con dependencias reales (NO PUBLICAR)
+
+Tras las ocho comprobaciones de PR80, **Pilot Planning Studio** transforma los riesgos identificados en una lista determinista de tareas de preparación, gobernanza y ensayo técnico. Incluye roles por función (sin asignar personas), criterios de aceptación concretos, dependencias verificadas mediante un grafo sin ciclos y capacidad configurable de **2 a 5 tareas simultáneas por ola**. Esta capacidad es una herramienta de ordenación, **no horas o fechas inventadas**.
+
+El visitante puede marcar tareas **ensayadas dentro de la simulación**, respetando sus requisitos previos; no puede eliminar un prerrequisito marcado si de él dependen otras tareas ya ensayadas. La actividad final de autorización externa **permanece bloqueada**, incluso cuando todo lo demás esté ensayado. Existen controles para reiniciar, comparar distintos niveles de capacidad, abrir PR80 y exportar TXT/JSON con tareas y recuentos, pero sin CSV, identificadores, correos, notas ni aprobaciones reales.
+
+La consola avanzada se carga solo al abrirla y se limpia al cambiar los datos o pulsar el borrado de PR79. Pruebas unitarias sobre 18 recetas, dependencias, privacidad, restricciones de firma externa y E2E en Chrome y Firefox. Contrato en `docs/PR81-PLAN-PILOTO.md`. PR apilada sobre PR80, borrador, sin fusión ni despliegue.
+
 ## RevOps PR80 · Evaluación integrada para un piloto supervisado (NO PUBLICAR)
 
 **Un flujo completo y verificable:** la demo avanzada puede evaluar una muestra local desde el CSV hasta el resultado, la calidad, la trazabilidad PR75 y el análisis de privacidad PR79. Ocho comprobaciones independientes muestran bloqueos de validación, revisión humana, datos sensibles, celdas vacías, propuestas disponibles, conflictos de IDs y ausencia de ejecuciones reales. Cada aviso enlaza a una función existente de corrección, reglas o privacidad.
