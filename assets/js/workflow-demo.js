@@ -22,6 +22,7 @@ let scenario=allowed.includes(query)?query:"orders";
 let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let correctionTimeline=null, editPreview=null, editorTrigger=null, editorDirty=false;
+let decisionConsole=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
@@ -36,6 +37,9 @@ function invalidate(message){
   latest=null;baseline=null;evidence=null;qualityBaseline=null;qualityCurrent=null;qualityEvidence=null;
   correctionTimeline=null;editPreview=null;
   $("r2Evidence").hidden=true;
+  $("rulesStudio").hidden=true;
+  $("rulesOpen").setAttribute("aria-expanded","false");
+  $("rulesOpen").disabled=true;
   $("qualityCockpit").hidden=true;
   $("qualityExport").disabled=true;
   $("r2Export").disabled=true;
@@ -620,6 +624,9 @@ function render(result){
   renderQuality();
   renderQualityCockpit(result);
   renderInsights(result);
+  $("rulesOpen").disabled=false;
+  if(decisionConsole&&!$("rulesStudio").hidden)
+    decisionConsole.sync(scenario,$("workflowSource").value,result);
   applyFilter();
   setText("workflowStatus",result.counts.total+" registros analizados. "+result.counts.listo+" listos, "+
     result.counts.revisar+" pendientes de revisión y "+result.counts.bloqueado+" bloqueados. "+
@@ -1097,6 +1104,25 @@ $("r2Export").addEventListener("click",()=>{
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(uri),1000);
   setText("workflowStatus","Comparativa R2 descargada. Sin filas, contactos ni ejecución externa.");
+});
+$("rulesOpen").addEventListener("click",async()=>{
+  if(!latest)return;
+  try{
+    if(decisionConsole){
+      decisionConsole.sync(scenario,$("workflowSource").value,latest);
+    }else{
+      // Audit UI and its rule history load only on demand.
+      const module=await import("./decision-console.js");
+      if(!latest)return;
+      decisionConsole=module.mountDecisionConsole({
+        getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null,
+        openEditor:index=>openEditor(index)
+      });
+    }
+    $("rulesStudio").scrollIntoView({behavior:"instant",block:"start"});
+  }catch(error){
+    errorText("No se pudo abrir la auditoría de reglas: "+(error?.message||"error desconocido"));
+  }
 });
 $("qualityCockpit").addEventListener("click",event=>{
   const button=event.target.closest("[data-quality-index]");
