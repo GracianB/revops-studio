@@ -817,6 +817,84 @@ async function auditPilotReadiness(browser){
  }finally{await page.close();}
 }
 
+async function auditPilotPlan(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true,reducedMotion:"reduce"});
+ const errors=[],requests=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ page.on("request",req=>requests.push(req.url()));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  assert.equal(await page.locator("#pilotPlanStudio").isHidden(),true);
+  assert.equal(requests.some(url=>url.includes("/pilot-plan-console.js")),false);
+  await page.locator("#pilotPlanOpen").click();
+  await page.locator("#pilotPlanStudio").waitFor({state:"visible"});
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotPlanStudioTitle");
+  assert.equal(await page.locator("#pilotPlanOpen").getAttribute("aria-expanded"),"true");
+  const total=Number(await page.locator("#pilotPlanTasks").innerText());
+  assert.ok(total>8);
+  assert.ok(Number(await page.locator("#pilotPlanWaves").innerText())>1);
+  assert.equal(await page.locator("#pilotPlanApproved").innerText(),"0");
+  assert.equal(await page.locator('[data-plan-check="SIGNOFF"]').isDisabled(),true);
+  assert.equal(await page.locator('[data-plan-check="OWNERS"]').isDisabled(),true);
+  await page.locator('[data-plan-check="SCOPE"]').check();
+  assert.equal(await page.locator("#pilotPlanTried").innerText(),"1");
+  assert.equal(await page.locator('[data-plan-check="OWNERS"]').isEnabled(),true);
+  await page.locator('[data-plan-check="OWNERS"]').check();
+  assert.equal(await page.locator("#pilotPlanTried").innerText(),"2");
+  await page.locator('[data-plan-check="SCOPE"]').uncheck();
+  assert.equal(await page.locator('[data-plan-check="SCOPE"]').isChecked(),true,"dependents prevent removing prerequisite");
+  assert.match(await page.locator("#pilotPlanStatus").innerText(),/dependencias previas/);
+  const txtPromise=page.waitForEvent("download");
+  await page.locator("#pilotPlanExportTxt").click();
+  const txt=await txtPromise;
+  assert.equal(txt.suggestedFilename(),"revops-plan-supervisado-orders.txt");
+  const body=await readFile(await txt.path(),"utf8");
+  assert.match(body,/PLAN POR OLAS/);
+  assert.match(body,/VALIDACIÓN EXTERNA REQUERIDA/);
+  assert.match(body,/Aprobaciones reales: 0/);
+  assert.doesNotMatch(body,/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  const jsonPromise=page.waitForEvent("download");
+  await page.locator("#pilotPlanExportJson").click();
+  const json=await jsonPromise,output=JSON.parse(await readFile(await json.path(),"utf8"));
+  assert.equal(output.plan.schema,"revops-pilot-plan-v1");
+  assert.equal(output.progress.simulatedCount,2);
+  assert.equal(output.progress.realApprovals,0);
+  assert.equal(output.plan.tasks.find(t=>t.id==="SIGNOFF").locked,true);
+  assert.doesNotMatch(JSON.stringify(output),/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  await page.locator("#pilotPlanCapacity").selectOption("2");
+  assert.equal(await page.locator("#pilotPlanTried").innerText(),"2");
+  assert.equal(await page.locator("#pilotPlanTasks").innerText(),String(total));
+  await page.locator("#pilotPlanReset").click();
+  assert.equal(await page.locator("#pilotPlanTried").innerText(),"0");
+  assert.equal(await page.locator('[data-plan-check="OWNERS"]').isDisabled(),true);
+  await auditAccessibility(page,"PR81 execution plan expanded");
+  await page.locator("#pilotPlanReview").click();
+  await page.locator("#pilotStudio").waitFor({state:"visible"});
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotStudioTitle");
+  await page.locator("#pilotClose").click();
+  await page.locator("#pilotPlanClose").click();
+  assert.equal(await page.locator("#pilotPlanStudio").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotPlanOpen");
+  await page.locator("#workflowRecipe").selectOption("clear");
+  await page.locator("#loadWorkflowRecipe").click();
+  await page.locator("#pilotPlanOpen").click();
+  assert.equal(await page.locator("#pilotPlanTasks").innerText(),"8");
+  assert.equal(await page.locator("#pilotPlanApproved").innerText(),"0");
+  await page.locator("#workflowSource").fill("pedido;cliente;email;total;estado\nX;;invalid;1;nuevo");
+  assert.equal(await page.locator("#pilotPlanStudio").isHidden(),true);
+  assert.equal(await page.locator("#pilotPlanOpen").isDisabled(),true);
+  await page.locator("#runWorkflow").click();
+  await page.locator("#pilotPlanOpen").click();
+  assert.ok(Number(await page.locator("#pilotPlanTasks").innerText())>8);
+  await page.setViewportSize({width:320,height:760});
+  const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(dimensions.scroll<=dimensions.width+3,"PR81 mobile overflow "+JSON.stringify(dimensions));
+  assert.ok(requests.some(url=>url.includes("/pilot-plan-console.js")));
+  assert.deepEqual(errors,[]);
+  console.log("PR81 PILOT PLAN PASS ("+engineName+"): dependencies, immutable signoff, capacity, export, reset, privacy and mobile");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -1182,6 +1260,7 @@ try {
   await auditInclusiveWorkbench(browser);
   await auditPrivacySecurity(browser);
   await auditPilotReadiness(browser);
+  await auditPilotPlan(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
