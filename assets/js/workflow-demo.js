@@ -8,6 +8,7 @@ import {compareWorkflow,comparisonReport} from "./workflow-comparison.js";
 import {buildQualityCockpit,compareQualityCockpit,qualityCockpitReport} from "./quality-cockpit.js";
 import {previewRecordEdit,createCorrectionTimeline,nextBlockedIndex,safeViewPreset} from "./correction-workbench.js";
 import {installAccessibleNavigation,focusHeading} from "./a11y-workbench.js";
+import {inspectDataExposure,clearRevopsSession} from "./privacy-security.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -39,6 +40,9 @@ function errorText(message){
 function invalidate(message){
   latest=null;baseline=null;evidence=null;qualityBaseline=null;qualityCurrent=null;qualityEvidence=null;
   correctionTimeline=null;editPreview=null;
+  decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();
+  $("privacyInspect").disabled=true;
+  $("privacyClearConfirm").hidden=true;
   $("r2Evidence").hidden=true;
   $("rulesStudio").hidden=true;
   $("candidateStudio").hidden=true;
@@ -593,6 +597,11 @@ function render(result){
   setText("countReady",result.counts.listo);
   setText("countReview",result.counts.revisar);
   setText("countBlocked",result.counts.bloqueado);
+  $("privacyInspect").disabled=false;
+  const exposure=inspectDataExposure(result);
+  setText("privacyRiskStatus",exposure.records+" registros en memoria · "+exposure.emails+" apariciones de email ("+
+   exposure.nonExampleEmails+" fuera de dominios de ejemplo) · "+exposure.formulaLike+
+   " celda(s) con fórmulas potenciales. CSV detallado: puede contener datos privados. Los informes agregados no contienen filas.");
   const list=$("workflowPipeline").querySelectorAll("li");
   result.steps.forEach((step,index)=>{
     const li=list[index];
@@ -1127,6 +1136,72 @@ $("r2Export").addEventListener("click",()=>{
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(uri),1000);
   setText("workflowStatus","Comparativa R2 descargada. Sin filas, contactos ni ejecución externa.");
+});
+$("privacyInspect").addEventListener("click",()=>{
+ if(!latest)return;
+ const exposure=inspectDataExposure(latest);
+ setText("privacyRiskStatus",
+  "Auditoría local: "+exposure.records+" registros, "+exposure.cells+" celdas. "+
+  "Emails detectados: "+exposure.emails+"; fuera de dominios de prueba: "+exposure.nonExampleEmails+
+  ". Fórmulas potenciales: "+exposure.formulaLike+
+  ". Controles invisibles: "+exposure.controlCells+
+  ". Textos extensos: "+exposure.longCells+
+  ". Revisiones humanas: "+exposure.manualReview+
+  ". Sin envío, sin telemetría. Los CSV completos o visibles sí incluyen valores; evita compartirlos sin revisarlos.");
+});
+const privacyConfirm=$("privacyClearConfirm");
+function cancelPrivacyClear(){
+ privacyConfirm.hidden=true;
+ $("privacyClearOpen").setAttribute("aria-expanded","false");
+ $("privacyClearOpen").focus();
+}
+$("privacyClearOpen").setAttribute("aria-controls","privacyClearConfirm");
+$("privacyClearOpen").setAttribute("aria-expanded","false");
+$("privacyClearOpen").addEventListener("click",()=>{
+ privacyConfirm.hidden=false;
+ $("privacyClearOpen").setAttribute("aria-expanded","true");
+ $("privacyClearTitle").focus({preventScroll:true});
+ privacyConfirm.scrollIntoView({block:"nearest",behavior:"instant"});
+});
+$("privacyClearCancel").addEventListener("click",cancelPrivacyClear);
+privacyConfirm.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){
+  event.preventDefault();event.stopPropagation();cancelPrivacyClear();return;
+ }
+ if(event.key!=="Tab")return;
+ const a=$("privacyClearCancel"),b=$("privacyClearConfirmButton"),focused=document.activeElement;
+ if(event.shiftKey && (focused===a || !privacyConfirm.contains(focused))){
+  event.preventDefault();b.focus();
+ }else if(!event.shiftKey && focused===b){
+  event.preventDefault();a.focus();
+ }
+});
+$("privacyClearConfirmButton").addEventListener("click",()=>{
+ let store=null;
+ try{store=sessionStorage;}catch{}
+ const summary=clearRevopsSession(store);
+ decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();
+ $("importAuditFindings").replaceChildren();
+ setText("importAuditTitle","Sin importación pendiente");
+ setText("importAuditSummary","Historial de importaciones de esta demo limpiado.");
+ setText("columnMappingIgnored","");
+ setText("mappingProfileStatus","");
+ setText("humanReviewFeedback","");
+ setText("humanReviewState","");
+ setText("candidateTemplateStatus","");
+ setText("candidateDelta","");
+ setText("reportStatus","");
+ $("workflowSearch").value="";
+ chooseScenario(scenario,true);
+ $("runWorkflow").click();
+ privacyConfirm.hidden=true;
+ $("privacyClearOpen").setAttribute("aria-expanded","false");
+ $("privacyClearOpen").focus();
+ setText("privacyClearStatus","Datos y anotaciones locales descartados. "+
+  (summary.unavailable?"El navegador impidió verificar todas las preferencias de sesión.":
+   "Preferencias de RevOps eliminadas ("+summary.cleared+" claves).")+
+  " Los ejemplos ficticios se han restaurado. Las descargas anteriores y el portapapeles no pueden revocarse.");
+ announceWorkbench("Sesión de trabajo limpiada; ejemplos ficticios restaurados.");
 });
 $("reportOpen").addEventListener("click",async()=>{
  if(!latest)return;
