@@ -329,14 +329,15 @@ test("R2 makes before-after rules visible without pretending to execute external
 test("PR71 is one complete discovery workflow, lazy-loaded and consent-first",()=>{
  const ui=file("assets/js/discovery-ui.js"),engine=file("assets/js/discovery-engine.js");
  const template=file("assets/js/discovery-view.js");
+ const templateMarkup=JSON.parse(template.split("export const DISCOVERY_VIEW_HTML=")[1].trim().replace(/;$/,""));
  const design=file("assets/css/discovery-studio.css");
- for(const id of ["discoveryStudio","discoveryRole","discoveryOutcome","discoveryUrgency",
+ for(const id of ["discoveryRole","discoveryOutcome","discoveryUrgency",
    "discoveryStage","discoveryOwner","discoverySample","discoveryIntegration",
    "discoverySensitivity","discoveryGoal","discoveryConstraint","discoveryExclusion",
    "discoveryReadiness","discoveryGaps","discoveryRisks","discoveryPreview",
    "discoveryRegenerate","discoveryCopy","discoveryDownloadTxt","discoveryDownloadJson",
    "discoveryDemoLink","discoveryAttach","discoveryClose","discoveryStatus"]){
-   assert.match(template,new RegExp('id=\\"'+id+'\\"'),"missing lazy discovery control "+id);
+   assert.match(templateMarkup,new RegExp('id="'+id+'"'),"missing lazy discovery control "+id);
  }
  assert.match(index,/id="discoveryStudio"[^>]*hidden/);
  assert.match(index,/id="diagStudioOpen"[^>]+aria-controls="discoveryStudio"/);
