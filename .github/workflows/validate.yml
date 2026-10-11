@@ -27,6 +27,9 @@ jobs:
       - name: Run full verification gate
         run: npm run verify
 
+      - name: PR80 integrated synthetic acceptance
+        run: npm run pr80:check
+
       - name: Install lightweight browser smoke dependency
         run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0 axe-core@4.10.3
 
