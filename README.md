@@ -1,3 +1,11 @@
+## RevOps PR77 · Informes profesionales con PDF A4 real (NO PUBLICAR)
+
+La demo integra **Reporting Studio**: prepara a petición un informe ejecutivo PDF auténtico (`%PDF-1.4`, catálogo de objetos, referencias cruzadas, fuentes Helvetica/Helvetica-Bold con WinAnsi, páginas A4 numeradas y saltos de página). No se renombra HTML como PDF ni se utilizan proveedores externos. Además ofrece vista PDF en otra pestaña para imprimir con el visor del navegador, resumen TXT y JSON estructurado.
+
+El informe reúne un resumen ejecutivo, indicadores, calidad por columna, evidencia antes/después de la misma muestra, cobertura de reglas de PR75, anotaciones humanas *solo como recuentos*, escenarios PR76 compatibles, fases sugeridas, fuentes y límites. El documento **nunca incorpora filas, IDs, nombres, emails, notas de aprobación ni valores introducidos**: se construye sobre una instantánea de contadores y textos predefinidos, validada antes de codificar o descargar. Las aprobaciones reales y las ejecuciones externas se mantienen en cero. Revisa cualquier informe antes de compartirlo.
+
+Código: `assets/js/executive-pdf.js` y `assets/js/report-console.js`, cargados solo tras abrir el panel; pruebas PDF y navegador: `tests/executive-pdf.test.js`, `scripts/browser-smoke.mjs`; detalles y alcance: `docs/PR77-INFORMES-PDF.md`. Rama apilada sobre PR76, sin cambiar el motor V40 ni el despliegue.
+
 ## RevOps PR76 · Scenario Builder (sin fusión ni lanzamiento)
 
 El modo avanzado incorpora un **Scenario Builder** opcional, descargado al abrirlo. Permite ensayar tres variantes *conservadoras* de la política de pedidos, soporte y datos sobre **el mismo CSV**, sin modificar el original: umbral de revisión para pedidos, escalado de prioridad media en soporte y umbral de valores elevados en conciliación. Incluye presets base/prudente/estricto, controles personalizados con límites, resumen antes/después, explicación por grupo de incidencias, protección de históricos, bloques y revisión existente, reversión explícita y plantillas JSON reutilizables sin registros.
