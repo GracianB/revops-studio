@@ -927,3 +927,19 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 .pilot-section-controls button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .pilot-section-navigation [tabindex="-1"]:focus{outline:none}
 @media(forced-colors:active){.pilot-section-controls button[aria-current="location"]{border:2px solid Highlight}}
+
+/* PR92 · Actionable supervised route, no automated completion. */
+.pilot-guided-route{padding:clamp(12px,2.5vw,18px);margin:14px 0;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);min-width:0}
+.pilot-guided-route-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pilot-guided-route-head>div{flex:1 1 280px;min-width:0}
+.pilot-guided-route-head h4{margin:0 0 7px}
+.pilot-guided-route button{min-height:44px;border:1px solid var(--line-2);border-radius:9px;padding:9px 12px;background:var(--bg-2);color:var(--text);font:750 12px/1.5 var(--sans);cursor:pointer}
+.pilot-guided-route button:disabled{cursor:not-allowed;opacity:.78}
+.pilot-guided-list{padding:0;margin:14px 0;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.pilot-guided-list li{min-width:0;display:grid;gap:7px;align-content:start;justify-items:start;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:13px;overflow-wrap:anywhere}
+.pilot-guided-list strong{font:750 13px/1.4 var(--sans)}
+.pilot-guided-list small{font:750 10px/1.5 var(--mono);color:var(--muted)}
+.pilot-guided-list p{margin:0}
+#pilotGuidedSummary,#pilotGuidedStatus{padding:10px 12px;background:var(--bg-2);border-left:3px solid var(--accent);overflow-wrap:anywhere}
+@media(max-width:680px){.pilot-guided-list{grid-template-columns:minmax(0,1fr)}.pilot-guided-route-head>button{width:100%}}
+@media(forced-colors:active){.pilot-guided-list li{border:1px solid ButtonText}}
