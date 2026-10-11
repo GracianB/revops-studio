@@ -549,6 +549,46 @@
         <p id="pilotStatus" role="status" aria-live="polite" aria-atomic="true">La preparación se evalúa únicamente en este navegador.</p>
       </section>
     </section>
+    <section class="workbench-p81" aria-labelledby="pilotPlanHeading">
+      <div class="workbench-p81-head">
+        <div><span class="workbench-section-index">PR81 · PILOT PLANNING STUDIO · SOLO SIMULACIÓN</span>
+          <h2 id="pilotPlanHeading">De las incidencias a un plan de trabajo que tiene sentido.</h2>
+          <p>Responsables por función, dependencias reales entre tareas, prioridades, olas de capacidad y una simulación reversible de progreso. Sin fechas ficticias, aprobaciones automáticas ni asignar nombres de personas.</p>
+        </div>
+        <button type="button" id="pilotPlanOpen" class="btn btn-primary" aria-controls="pilotPlanStudio" aria-expanded="false" disabled>Construir plan supervisado ↗</button>
+      </div>
+      <section id="pilotPlanStudio" class="workbench-p81-studio" aria-labelledby="pilotPlanStudioTitle" hidden>
+        <div class="workbench-p81-top">
+          <div><h3 id="pilotPlanStudioTitle">Ruta hacia un piloto controlado</h3>
+            <p id="pilotPlanSummary" role="status" aria-live="polite" aria-atomic="true">Calculando prioridades...</p>
+          </div>
+          <label for="pilotPlanCapacity">Tareas simultáneas por ola
+            <select id="pilotPlanCapacity">
+              <option value="2">2 tareas (prudente)</option>
+              <option value="3" selected>3 tareas (equilibrado)</option>
+              <option value="4">4 tareas (ampliado)</option>
+              <option value="5">5 tareas (máximo de la demo)</option>
+            </select>
+          </label>
+        </div>
+        <div class="workbench-p81-progress" role="group" aria-label="Indicadores del plan">
+          <div><small>Acciones propuestas</small><strong id="pilotPlanTasks">0</strong></div>
+          <div><small>Olas de trabajo</small><strong id="pilotPlanWaves">0</strong></div>
+          <div><small>Ensayadas en esta pestaña</small><strong id="pilotPlanTried">0</strong></div>
+          <div><small>Aprobaciones reales</small><strong id="pilotPlanApproved">0</strong></div>
+        </div>
+        <p class="workbench-p81-limits">Las tareas marcadas solo cuentan como <strong>ensayadas en esta simulación</strong>. No hay empleados asignados, conexión con CRM, firmas ni autorizaciones. La última tarea de aprobación siempre queda bloqueada para verificación externa.</p>
+        <div id="pilotPlanWavesList" class="workbench-p81-waves" aria-label="Tareas por ola y sus dependencias"></div>
+        <p id="pilotPlanStatus" role="status" aria-live="polite" aria-atomic="true">Sin cambios de producción.</p>
+        <div class="workbench-p81-actions">
+          <button type="button" id="pilotPlanExportTxt">Descargar plan TXT agregado ↧</button>
+          <button type="button" id="pilotPlanExportJson">Descargar estructura JSON ↧</button>
+          <button type="button" id="pilotPlanReset">Reiniciar simulación de tareas ↶</button>
+          <button type="button" id="pilotPlanReview">Volver a las comprobaciones PR80 ↗</button>
+          <button type="button" id="pilotPlanClose">Cerrar plan</button>
+        </div>
+      </section>
+    </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
       <div><p><strong>Listo:</strong> pasa las reglas de esta demostración. Puede ser una acción propuesta o un registro histórico, que no debe volver a ejecutarse.</p><p><strong>Revisar:</strong> necesita una decisión humana, aunque algunos campos sean válidos.</p><p><strong>Bloqueado:</strong> no cumple alguna regla y no puede avanzar hasta corregirse.</p><p><strong>Importante:</strong> ningún registro se introduce en tu CRM ni en otra aplicación. Esta mesa de trabajo es una simulación local.</p></div>
     </details>
