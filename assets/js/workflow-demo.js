@@ -6,6 +6,7 @@ import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} f
 import {createClientJourney} from "./client-journey.js";
 import {compareWorkflow,comparisonReport} from "./workflow-comparison.js";
 import {buildQualityCockpit,compareQualityCockpit,qualityCockpitReport} from "./quality-cockpit.js";
+import {previewRecordEdit,createCorrectionTimeline,nextBlockedIndex,safeViewPreset} from "./correction-workbench.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -20,6 +21,7 @@ let guide=null;
 let scenario=allowed.includes(query)?query:"orders";
 let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
+let correctionTimeline=null, editPreview=null, editorTrigger=null, editorDirty=false;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
@@ -32,6 +34,7 @@ function errorText(message){
 }
 function invalidate(message){
   latest=null;baseline=null;evidence=null;qualityBaseline=null;qualityCurrent=null;qualityEvidence=null;
+  correctionTimeline=null;editPreview=null;
   $("r2Evidence").hidden=true;
   $("qualityCockpit").hidden=true;
   $("qualityExport").disabled=true;
@@ -462,8 +465,111 @@ function renderQualityCockpit(result){
   $("qualityExport").disabled=false;
 }
 
+function historyEntry(button,label,active,index){
+  button.type="button";
+  button.dataset.historyIndex=String(index);
+  button.setAttribute("aria-current",active?"step":"false");
+  button.textContent=label+(active?" · actual":"");
+  return button;
+}
+function updateCorrectionHistory(){
+  const view=correctionTimeline?.state(),list=$("correctionHistorySteps");
+  if(!list)return;
+  const frag=document.createDocumentFragment();
+  for(const step of view?.operations||[]){
+    const li=document.createElement("li");
+    const button=document.createElement("button");
+    li.append(historyEntry(button,step.label,step.active,step.index));
+    frag.append(li);
+  }
+  list.replaceChildren(frag);
+  setText("correctionHistoryStatus",view?
+    (view.index+" de "+(view.states-1)+" correcciones activas · "+(view.states-1)+" estados reversibles. Solo en esta pestaña."):
+    "Aún no hay correcciones. Ejecuta un escenario para comenzar.");
+  $("undoCorrection").disabled=!view?.canUndo;
+  $("redoCorrection").disabled=!view?.canRedo;
+}
+function applyWorkbenchPresentation(){
+  const reason=$("workbenchShowReason").checked,action=$("workbenchShowAction").checked;
+  const head=$("workflowRows").closest("table");
+  head.classList.toggle("workbench-p74-hide-reason",!reason);
+  head.classList.toggle("workbench-p74-hide-action",!action);
+  head.classList.toggle("workbench-p74-density-compact",$("workbenchDensity").value==="compact");
+}
+function readWorkbenchView(){
+ return {
+  filter:activeFilter,sort:$("workflowSort").value,density:$("workbenchDensity").value,
+  reason:$("workbenchShowReason").checked,action:$("workbenchShowAction").checked
+ };
+}
+function applyWorkbenchView(config){
+ const filters=["all","bloqueado","revisar","listo"];
+ const sorts=["source","risk","identifier","status"];
+ if(!config||!filters.includes(config.filter)||!sorts.includes(config.sort)||
+   !["compact","comfortable"].includes(config.density)||
+   typeof config.reason!=="boolean"||typeof config.action!=="boolean")return false;
+ activeFilter=config.filter;
+ $("workflowSort").value=config.sort;
+ $("workbenchDensity").value=config.density;
+ $("workbenchShowReason").checked=config.reason;
+ $("workbenchShowAction").checked=config.action;
+ $("workflowSearch").value="";
+ $("workbenchViewPreset").value="all";
+ syncFilterButtons();
+ sortResults();applyWorkbenchPresentation();applyFilter();
+ return true;
+}
+function currentEdits(){
+ return Object.fromEntries([...$("workflowEditFields").querySelectorAll("input")].map(input=>[input.name,input.value]));
+}
+function paintEditPreview(){
+ if(editIndex===null||!latest)return;
+ const old=$("workflowSource").value,container=$("editPreviewDiff"),warning=$("editPreviewWarning");
+ container.replaceChildren();editPreview=null;
+ try{
+  const check=previewRecordEdit(scenario,old,editIndex,currentEdits());
+  editPreview=check;
+  editorDirty=check.changed;
+  $("saveWorkflowEdit").disabled=!check.valid;
+  setText("editDirtyStatus",check.changed?
+   "Tienes cambios sin guardar. Guarda o cancela antes de navegar a otra incidencia.":
+   "No hay modificaciones pendientes.");
+  if(!check.valid){
+   setText("editPreviewStatus","Sin cambios");
+   setText("editPreviewImpact",check.message);
+   warning.textContent="";return;
+  }
+  setText("editPreviewStatus",check.beforeStatus+" → "+check.afterStatus);
+  setText("editPreviewImpact","Reglas recalculadas sobre "+check.counts.after.total+" registros: "+
+   (check.counts.actionableDelta>0?"+":"")+check.counts.actionableDelta+" propuestas preparadas, "+
+   (check.counts.blockedDelta>0?"+":"")+check.counts.blockedDelta+" bloqueos y "+
+   (check.counts.reviewDelta>0?"+":"")+check.counts.reviewDelta+" revisiones. No se ha guardado.");
+  for(const change of check.diff){
+   const row=document.createElement("div");row.className="workbench-p74-diff-row";
+   const label=document.createElement("strong");label.textContent=change.field;
+   const left=document.createElement("span");left.textContent="Antes: "+(change.before||"(vacío)");
+   const right=document.createElement("span");right.textContent="Propuesto: "+(change.after||"(vacío)");
+   row.append(label,left,right);container.append(row);
+  }
+  warning.textContent=check.approvalRequired?
+   "Este registro sigue requiriendo revisión humana. Guardar no equivale a aprobar ni a ejecutar.":
+   check.afterStatus==="bloqueado"?"El registro seguiría bloqueado. La corrección puede guardarse, pero no se ejecutará.":check.message;
+ }catch(error){
+  editorDirty=true;
+  $("saveWorkflowEdit").disabled=true;
+  setText("editDirtyStatus","Hay cambios sin guardar; revisa el error.");
+  setText("editPreviewStatus","No se puede calcular");
+  setText("editPreviewImpact","Corrige el formato del registro antes de continuar.");
+  warning.textContent=error?.message||"Error al recalcular.";
+ }
+}
+
 function render(result){
   latest=result;
+  if(!correctionTimeline||correctionTimeline.state().source!==$("workflowSource").value){
+    correctionTimeline=createCorrectionTimeline(scenario,$("workflowSource").value);
+  }
+  updateCorrectionHistory();
   renderR2(result);
   setText("countTotal",result.counts.total);
   setText("countReady",result.counts.listo);
@@ -484,20 +590,20 @@ function render(result){
   const frag=document.createDocumentFragment();
   for(const [index,row] of result.rows.entries()){
     const tr=document.createElement("tr");
-    cell(tr,row.id);
-    const status=cell(tr,"");
+    const idCell=cell(tr,row.id);idCell.dataset.label="Registro";
+    const status=cell(tr,"");status.dataset.label="Resultado";
     const label=document.createElement("span");
     label.className="workbench-result-pill";
     label.dataset.state=row.status;
     label.textContent=row.status;
     status.append(label);
-    cell(tr,row.reason);
-    cell(tr,row.action);
+    const reasonCell=cell(tr,row.reason);reasonCell.dataset.label="Motivo";reasonCell.classList.add("workbench-optional-reason");
+    const actionCell=cell(tr,row.action);actionCell.dataset.label="Siguiente acción";actionCell.classList.add("workbench-optional-action");
     tr.className="workbench-row";
     tr.dataset.status=row.status;
     tr.dataset.editIndex=String(index);
     tr.dataset.search=normalizeSearch([row.id,...Object.values(row.values),row.reason,row.action].join(" "));
-    const edit=cell(tr,"");
+    const edit=cell(tr,"");edit.dataset.label="Corregir";
     const trigger=document.createElement("button");
     trigger.type="button";
     trigger.className="workbench-row-edit";
@@ -508,6 +614,7 @@ function render(result){
     frag.append(tr);
   }
   body.replaceChildren(frag);
+  applyWorkbenchPresentation();
   guide?.sync(result);
   sortResults();
   renderQuality();
