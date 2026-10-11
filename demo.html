@@ -269,12 +269,14 @@
         </div>
         <p class="workbench-r2-safety">Acciones ejecutadas externamente: <strong>0</strong>. «Preparada» no significa «enviada». No es una medición de ahorro, rendimiento o ROI real.</p>
       </section>
+      <button type="button" id="rulesOpen" class="btn btn-secondary workbench-p75-open" aria-controls="rulesStudio" aria-expanded="false">Abrir auditoría de reglas y revisión humana ↗</button>
       <section id="rulesStudio" class="workbench-p75" aria-labelledby="rulesStudioTitle" hidden>
         <div class="workbench-p75-head">
           <div><span class="workbench-section-index">PR75 · RULES & HUMAN DECISION STUDIO</span>
             <h3 id="rulesStudioTitle">Cada decisión tiene una regla, una prioridad y un límite.</h3>
             <p>El mismo catálogo que decide el resultado muestra por qué gana una regla y cuáles quedan detrás. Una revisión humana nunca significa envío ni aprobación real.</p></div>
           <button id="rulesExport" type="button" class="btn btn-secondary" disabled>Descargar auditoría agregada ↧</button>
+          <button id="rulesClose" type="button" class="btn btn-secondary">Cerrar auditoría</button>
         </div>
         <div class="workbench-p75-stats" aria-label="Indicadores de reglas auditadas">
           <div><small>Reglas del escenario</small><strong id="rulesCount">0</strong></div>
