@@ -693,5 +693,7 @@ body[data-experience="simple"] .workbench-p76,body[data-experience="simple"] .wo
    Keep a near-black label for readable coral buttons in either theme. */
 .workbench-page .workbench-recipe-controls button#loadWorkflowRecipe,
 .workbench-page .workbench-discard-actions button#confirmScenarioDiscard{
- color:#090d16;
+ background:#243448;
+ border-color:#52677a;
+ color:#ffffff;
 }
