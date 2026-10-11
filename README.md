@@ -1,3 +1,13 @@
+## RevOps PR79 · Privacidad, seguridad y rendimiento (sin publicación)
+
+**Frontera de datos explícita:** el motor y la importación comparten `validateTextBoundary` y rechazan caracteres invisibles, controles Unicode maliciosos, columnas superiores a 24, celdas superiores a 400 caracteres y cabeceras superiores a 128. Los tres CSV de salida pasan por el mismo `secureCsvCell`: protegen del inicio de fórmulas `= + - @`, equivalentes de anchura completa y prefijos invisibles. Las comillas y delimitadores continúan escapándose correctamente. Los CSV detallados **incluyen los valores de las filas** y la aplicación advierte antes de compartirlos.
+
+**Control de privacidad utilizable:** la demo avanzada muestra un recuento agregado de campos que parecen emails, direcciones externas a dominios de ejemplo, celdas que parecen fórmulas, celdas largas y revisiones pendientes. No devuelve ni registra los valores inspeccionados. Un segundo control permite eliminar intencionalmente las entradas, correcciones, búsquedas y estados temporales, las anotaciones humanas y configuraciones de escenarios e informes. La limpieza de `sessionStorage` se limita a las dos claves de RevOps identificadas; no elimina opciones de otros sitios. Después se cargan ejemplos ficticios. **No puede revocar archivos ya descargados ni vaciar el portapapeles del usuario**.
+
+Se han añadido pruebas adversariales de CSV, Unicode bidireccional, límites, aislamiento de datos, 18 juegos de ejemplo, recursos web de primera parte y ciclos Chrome/Firefox de exportación y limpieza. El módulo nuevo `assets/js/privacy-security.js` no usa red, dependencias, almacenamiento ni telemetría.
+
+Ver contrato y resultados: `docs/PR79-PRIVACIDAD-SEGURIDAD.md`. PR79 draft y apilada sobre PR78, sin fusión ni despliegue.
+
 ## RevOps PR78 · Accesibilidad y reflujo, sin publicación
 
 La experiencia avanzada incorpora **navegación de registros exclusivamente por teclado**: flechas arriba/abajo, Inicio y Fin actúan sobre filas actualmente visibles sin modificar datos, mientras Intro/Espacio mantienen la acción nativa. Se incorporan enlaces para saltar al editor o resultados, ayuda de teclado en la propia página, resumen corto para lectores de pantalla, etiquetas de fila que explican estado y motivo, asociaciones entre cada campo problemático y su explicación, errores relacionados con el textarea e indicación `aria-invalid` coherente con el resultado de la validación. Los paneles de reglas, variantes, mapping e informes reciben foco en su título al abrirse; Escape cierra el panel correspondiente devolviendo el foco. El aviso de cambio de escenario atrapa temporalmente Tab y Mayús+Tab entre sus dos decisiones y puede cancelarse con Escape.
