@@ -755,3 +755,46 @@ body[data-experience="simple"] .workbench-p80{display:none!important}
 @media(max-width:900px){.workbench-p80-head{flex-wrap:wrap}.workbench-p80-result{grid-template-columns:1fr}.workbench-p80-checks{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:560px){.workbench-p80-head>.btn{width:100%}.workbench-p80-totals{grid-template-columns:repeat(3,minmax(0,1fr))}.workbench-p80-checks li>div{flex-wrap:wrap}.workbench-p80-actions{display:grid;grid-template-columns:1fr}.workbench-p80-actions button{width:100%}}
 @media(forced-colors:active){.workbench-p80-checks li{border:2px solid ButtonText}.workbench-p80-checks button{border:1px solid ButtonText}}
+
+
+/* PR81 · Operational planning, with textual states and dependency-aware controls. */
+.workbench-p81{margin:30px 0;padding:clamp(18px,3vw,30px);border:1px solid var(--line-2);border-radius:18px;background:var(--panel)}
+.workbench-p81-head{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.workbench-p81-head>div{flex:1 1 290px;min-width:0}
+.workbench-p81-head h2{font:750 clamp(23px,3vw,32px)/1.18 var(--display);letter-spacing:-.035em;margin:11px 0}
+.workbench-p81-head p{font:12px/1.7 var(--sans);color:var(--muted);max-width:650px;margin:9px 0}
+.workbench-p81-head>.btn{min-height:48px;white-space:normal}
+.workbench-p81-studio{margin-top:17px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;padding:clamp(14px,2.5vw,24px)}
+.workbench-p81-studio[hidden]{display:none!important}
+.workbench-p81-top{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.workbench-p81-top>div{flex:1 1 280px;min-width:0}
+.workbench-p81-top h3{font:750 21px/1.28 var(--display);margin:0}
+.workbench-p81-top p{font:12px/1.6 var(--sans);color:var(--text);margin:8px 0}
+.workbench-p81-top label{display:grid;gap:7px;font:750 11px/1.4 var(--sans);min-width:180px}
+.workbench-p81-top select{min-height:46px;padding:10px;border-radius:8px;color:var(--text);background:var(--panel);border:1px solid var(--line-2);font:12px var(--sans);max-width:100%}
+.workbench-p81-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:18px 0}
+.workbench-p81-progress>div{padding:12px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.workbench-p81-progress small{display:block;color:var(--muted);font:11px/1.45 var(--sans)}
+.workbench-p81-progress strong{display:block;font:750 25px/1.35 var(--mono);margin-top:5px}
+.workbench-p81-limits{font:12px/1.65 var(--sans);color:var(--muted);border-left:3px solid var(--accent);padding-left:12px}
+.workbench-p81-waves{display:grid;gap:17px;margin:18px 0}
+.workbench-p81-wave{min-width:0}
+.workbench-p81-wave h4{font:750 16px/1.35 var(--display);margin:0 0 10px;color:var(--text)}
+.workbench-p81-wave ol{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.workbench-p81-wave li{min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:14px;overflow-wrap:anywhere}
+.workbench-p81-task-head{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:7px}
+.workbench-p81-task-head strong{font:750 12px/1.45 var(--sans)}
+.workbench-p81-task-head small{font:11px/1.5 var(--sans);color:var(--muted)}
+.workbench-p81-wave li>p{font:11px/1.65 var(--sans);color:var(--muted);margin:8px 0}
+.workbench-p81-wave li>.workbench-p81-deps{color:var(--text)}
+.workbench-p81-mark{display:flex;align-items:center;gap:9px;font:750 11px/1.45 var(--sans);color:var(--text);min-height:44px}
+.workbench-p81-mark input{width:20px;height:20px;flex-shrink:0;accent-color:var(--accent)}
+.workbench-p81-mark:has(input:disabled){color:var(--muted)}
+.workbench-p81-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:17px}
+.workbench-p81-actions button{border:1px solid var(--line-2);border-radius:9px;min-height:46px;padding:11px 14px;color:var(--text);background:var(--panel);font:750 12px/1.5 var(--sans);cursor:pointer;max-width:100%;white-space:normal}
+#pilotPlanStatus{font:12px/1.65 var(--sans);color:var(--text);padding:11px;border-left:3px solid var(--accent);background:var(--panel);overflow-wrap:anywhere}
+.workbench-p81 :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+body[data-experience="simple"] .workbench-p81{display:none!important}
+@media(max-width:850px){.workbench-p81-head,.workbench-p81-top{flex-wrap:wrap}.workbench-p81-head>.btn,.workbench-p81-top label{width:100%}.workbench-p81-wave ol{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:540px){.workbench-p81-progress{grid-template-columns:repeat(2,minmax(0,1fr))}.workbench-p81-actions{display:grid;grid-template-columns:minmax(0,1fr)}.workbench-p81-actions button{width:100%}.workbench-p81{padding:15px}}
+@media(forced-colors:active){.workbench-p81-wave li{border:2px solid ButtonText}.workbench-p81-mark input{outline:1px solid ButtonText}}
