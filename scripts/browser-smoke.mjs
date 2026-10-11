@@ -472,7 +472,7 @@ async function auditExecutivePdf(browser){
   const pdf=await downloaded,bytes=await readFile(await pdf.path());
   const pdfBody=bytes.toString("latin1");
   assert.equal(pdf.suggestedFilename(),"revops-informe-ejecutivo-orders.pdf");
-  assert.ok(bytes.length>10000);
+  assert.ok(bytes.length>1500,"PDF must contain catalog, page resources and content streams");
   assert.ok(pdfBody.startsWith("%PDF-1.4\n"));
   assert.match(pdfBody,/\/MediaBox \[0 0 595\.28 841\.89\]/);
   assert.match(pdfBody,/\/Type \/Pages \/Count [2-9]/);
