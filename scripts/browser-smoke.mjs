@@ -207,7 +207,7 @@ async function auditDiscoveryStudio(browser) {
   assert.equal(await page.locator("#discoveryStudio").isHidden(),true);
   assert.equal(await page.locator("#diagStudioOpen").getAttribute("aria-expanded"),"false");
   await page.locator("#diagStudioOpen").click();
-  assert.equal(await page.locator("#discoveryStudio").isVisible(),true);
+  await page.locator("#discoveryStudio").waitFor({state:"visible"});
   const size=await page.evaluate(()=>({w:innerWidth,scroll:document.documentElement.scrollWidth}));
   assert.ok(size.scroll<=size.w+3,"PR71 mobile overflow "+JSON.stringify(size));
   assert.deepEqual(errors,[],"PR71 page errors");
