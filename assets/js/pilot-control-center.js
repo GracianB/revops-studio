@@ -16,6 +16,7 @@ import {buildPilotEvidenceReview,pilotEvidenceReviewJson} from "./pilot-evidence
 import {buildPilotSupervisedReview,pilotSupervisedReviewJson,pilotSupervisedReviewText} from "./pilot-supervised-review.js";
 import {validatePilotExportJson,validatePilotHtmlHandoff} from "./pilot-export-integrity.js";
 import {createPilotComputationCache} from "./pilot-computation-cache.js";
+import {runPilotAccessibilityPreflight,pilotAccessibilityJson} from "./pilot-accessibility-protocol.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -27,6 +28,7 @@ export function mountPilotControlCenter({getState}){
  const sessionJournal=createPilotSessionJournal();
  const workCache=createPilotComputationCache();
  let prepared=null;
+ let accessibilityReport=null;
  const set=(id,value)=>{$(id).textContent=String(value);};
  const el=(tag,txt,className)=>{
   const node=document.createElement(tag);
@@ -464,6 +466,41 @@ export function mountPilotControlCenter({getState}){
    }catch(error){set("pilotFinalReviewStatus","Revisión no exportable: "+error.message);}
   });
  }
+ $("pilotA11yRun").addEventListener("click",()=>{
+  try{
+   accessibilityReport=runPilotAccessibilityPreflight(root);
+   const auto=document.createDocumentFragment();
+   for(const check of accessibilityReport.automatic){
+    const li=el("li",check.title+" · "+(check.state==="local_pass"?"Correcto en DOM":"Revisar"));
+    auto.append(li);
+   }
+   $("pilotA11yAutomated").replaceChildren(auto);
+   const manual=document.createDocumentFragment();
+   for(const step of accessibilityReport.manual){
+    const li=el("li");
+    li.append(el("strong",step.title),el("small",step.how),el("small","PENDIENTE DE PRUEBA HUMANA"));
+    manual.append(li);
+   }
+   $("pilotA11yManual").replaceChildren(manual);
+   set("pilotA11ySummary",accessibilityReport.automatedPassed+
+    "/6 comprobaciones estructurales; 8 evaluaciones humanas pendientes y 0 verificadas.");
+   $("pilotA11yExport").disabled=false;
+  }catch(error){
+   accessibilityReport=null;$("pilotA11yExport").disabled=true;
+   set("pilotA11ySummary","Evaluación incompleta: "+error.message);
+  }
+ });
+ $("pilotA11yExport").addEventListener("click",()=>{
+  if(!accessibilityReport)return;
+  try{
+   const payload=pilotAccessibilityJson(accessibilityReport);
+   validatePilotExportJson(payload);
+   const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
+   const a=document.createElement("a");a.href=url;a.download="revops-accesibilidad-pendiente.json";
+   document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2500);
+  }catch(error){set("pilotA11ySummary","Exportación rechazada: "+error.message);}
+ });
  $("pilotSessionAuditExport").addEventListener("click",()=>{
   try{
    const payload=pilotSessionJournalJson(sessionJournal.snapshot());
@@ -490,6 +527,11 @@ export function mountPilotControlCenter({getState}){
    sectionNavigation.reset();
    rehearsed=[];drills=null;scenario=null;source=null;
    prepared=null;workCache.clear();
+   accessibilityReport=null;
+   $("pilotA11yAutomated").replaceChildren();
+   $("pilotA11yManual").replaceChildren();
+   $("pilotA11yExport").disabled=true;
+   set("pilotA11ySummary","La muestra ha cambiado; comprobar de nuevo.");
    sessionJournal.clear();drawSessionJournal();
    readiness=null;plan=null;risks=null;ledger=null;
    root.hidden=true;
