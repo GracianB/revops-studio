@@ -1,3 +1,11 @@
+## RevOps PR72 · Importación profesional (rama acumulativa, NO PUBLICAR)
+
+La demo `demo.html` ahora valida archivos con el contrato puro `assets/js/import-contract.js` antes de tocar el editor: bytes UTF-8 estrictos (incluido BOM), rechazo de UTF-16/bytes ilegibles, límite de 32 KB/12.000 caracteres/80 filas, detección CSV/TSV, validación de columnas y reportes específicos de duplicados idénticos frente a IDs en conflicto. Importes con separadores regionales ambiguos se rechazan sin adivinar la conversión.
+
+El mapeador presenta un resumen de formato, filas, errores y decisiones; las columnas adicionales **requieren confirmación explícita** antes de descartarse del resultado. Se pueden descargar e importar perfiles JSON con escenario y nombres de columnas, sin filas, IDs de cliente ni valores. Los perfiles inválidos, de otro escenario o con campos repetidos se rechazan y el CSV anterior se conserva hasta que todo haya sido confirmado. La importación sigue siendo local y nunca ejecuta acciones en un CRM.
+
+Pruebas: `tests/import-contract.test.js` y smoke Chrome/Firefox/móvil. Alcance detallado en `docs/PR72-IMPORTACION.md`. No modifica el laboratorio V40 ni fusiona/despliega esta rama.
+
 ## RevOps PR71 · Discovery Studio (desarrollo sin lanzamiento)
 
 La portada incorpora ahora un **Discovery Studio opcional** detrás del diagnóstico existente, cargado solo cuando se pulsa «Preparar brief de proyecto». El visitante puede definir perfil, objetivo a medir, prioridad, madurez del proceso, responsable, muestra disponible, dependencia de sistemas, sensibilidad y tres notas editables. El motor puro `assets/js/discovery-engine.js` produce una lectura de viabilidad y riesgos, fases, criterios de aceptación y una propuesta verificable sin prometer ejecución ni ROI.
