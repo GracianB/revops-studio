@@ -1,3 +1,15 @@
+## RevOps R2 · Evidencia explicable «antes → después» (rama acumulada de desarrollo)
+
+La simulación local `demo.html` ahora presenta una comparación visual a dos columnas entre el **punto de partida real** y los resultados tras corregir un registro. `assets/js/workflow-comparison.js` calcula métricas agregadas, cambios de estado por posición y motivos de reglas reconocidas, sin exportar valores ni identificadores de clientes. En la vista guiada aparece junto al resultado; en herramientas avanzadas permanece visible durante las correcciones.
+
+- **Antes:** primer resultado del conjunto actual, procedente del motor determinista y no de métricas inventadas.
+- **Después:** la misma ejecución repetida sobre las filas modificadas, con propuestas preparadas, bloqueos y revisiones humanas, además de motivos «regla anterior → regla nueva».
+- **Control de cambios:** una corrección conserva el primer punto de partida; deshacer/rehacer recalcula la comparación. Cambiar de ejemplo, importar CSV, mapear columnas o editar el CSV manualmente reinicia ese punto de partida para evitar mezclas de datos.
+- **Salida responsable:** el botón «Descargar comparativa sin filas» genera un TXT exclusivamente agregado. «Preparadas» son propuestas sin ejecución, y las revisiones siguen siendo humanas. Acciones enviadas a sistemas externos: **cero**. No se indica ahorro, causalidad real, ni ROI.
+- **Límites:** se comparan las mismas posiciones del mismo escenario. El motor se niega a presentar comparaciones de escenarios o conjuntos con un número distinto de registros, en vez de fabricar resultados. Tampoco se guarda una historia de 20 cambios.
+
+**R2 se desarrolla encima de R1**, sin modificar el laboratorio V40 ni fusionar a `main`. La entrega es una fase de producto en desarrollo, no un anuncio de lanzamiento; la configuración de visibilidad GitHub permanece pendiente de decisión.
+
 ## RevOps R1 · Plan de diagnóstico imprimible (rama de desarrollo, sin lanzamiento)
 
 El diagnóstico existente puede descargar un **plan HTML autónomo y listo para imprimir en PDF**, sin registro ni llamadas a red. El documento genera tres fases concretas (delimitar, piloto y validar/entregar), entradas necesarias, criterios de aceptación, riesgos, preguntas pendientes y una modalidad económica *orientativa*, no un presupuesto. Hay 48 combinaciones válidas de problema, herramienta y alcance.
