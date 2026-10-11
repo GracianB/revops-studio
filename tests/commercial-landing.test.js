@@ -521,3 +521,35 @@ test("PR77 genuine local PDF export is lazy and avoids HTML-as-PDF or private ro
  assert.match(sheet,/\.workbench-p77-counters/);
  assert.match(sheet,/@media\(max-width:520px\)/);
 });
+
+
+test("PR78 accessible workbench delivers focus, status, error and 400%-equivalent mobile reflow",()=>{
+ const ui=file("assets/js/workflow-demo.js"),a11y=file("assets/js/a11y-workbench.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["workbenchA11yAnnounce","workbenchKeyboardGuide","workbenchKeyboardHelp",
+  "workbench-table-title","workflowError","workflowEditForm","scenarioDiscard"]){
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ }
+ assert.match(demoHtml,/href="#simulador">Saltar al editor/);
+ assert.match(demoHtml,/href="#workbench-table-title">Saltar a los resultados/);
+ assert.match(demoHtml,/aria-describedby="sourceHelp workflowError"/);
+ assert.match(demoHtml,/aria-describedby="workbenchKeyboardHelp"/);
+ assert.match(demoHtml,/id="workflowError"[^>]*aria-atomic="true"/);
+ assert.match(ui,/installAccessibleNavigation\(/);
+ assert.match(ui,/focusHeading\(document,"rulesStudio","rulesStudioTitle"\)/);
+ assert.match(ui,/focusHeading\(document,"candidateStudio","candidateStudioTitle"\)/);
+ assert.match(ui,/focusHeading\(document,"reportStudio","reportStudioTitle"\)/);
+ assert.match(ui,/focusHeading\(document,"columnMapper","columnMapperTitle"\)/);
+ assert.match(ui,/trigger\.setAttribute\("aria-keyshortcuts","ArrowDown ArrowUp Home End"\)/);
+ assert.match(ui,/input\.setAttribute\("aria-describedby",hint\.id\+" "\+msg\.id\)/);
+ assert.match(ui,/announceWorkbench\("Proceso analizado:/);
+ assert.match(a11y,/nextVisibleRow\(/);
+ assert.match(a11y,/getFocusableIn\(/);
+ assert.match(a11y,/event\.key==="Escape"/);
+ assert.match(a11y,/closePanels\(\)/);
+ assert.match(css,/@media\(max-width:480px\)/);
+ assert.match(css,/@media\(forced-colors:active\)/);
+ assert.match(css,/@media\(prefers-contrast:more\)/);
+ assert.match(css,/min-height:44px/);
+ assert.doesNotMatch(a11y,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+});
