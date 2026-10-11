@@ -279,6 +279,15 @@ function initDiagnostic() {
       if (feedback) feedback.textContent = "No se ha podido copiar. Puedes incluir el mapa en tu consulta.";
     }
   });
+  qs("#diagDownload")?.addEventListener("click", async () => {
+    if (!current) return;
+    try {
+      (await import("./diagnostic-report.js")).downloadPlan(problem.value, tools.value, scope.value);
+      if (feedback) feedback.textContent = "Plan HTML descargado.";
+    } catch {
+      if (feedback) feedback.textContent = "Descarga fallida.";
+    }
+  });
   qs("#diagReset")?.addEventListener("click", () => {
     problem.value = "";
     tools.value = "unknown";
