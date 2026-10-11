@@ -967,3 +967,20 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 .pilot-evidence-review-list button:disabled{opacity:.75}
 #pilotEvidenceReviewSummary,#pilotEvidenceReviewStatus{padding:10px;background:var(--panel);border-left:3px solid var(--accent)}
 @media(forced-colors:active){.pilot-evidence-review-list li{border:1px solid ButtonText}}
+
+/* PR95 · Twelve cross-module safeguards. No go-live badge or fake certificate. */
+.pilot-final-review{margin:18px 0;padding:clamp(14px,2.5vw,21px);border:1px solid var(--line-2);border-radius:12px;background:var(--panel);min-width:0}
+.pilot-final-review h4{margin:0 0 9px}
+.pilot-final-verdict{padding:14px;background:var(--bg-2);border:2px solid var(--line-2);border-left:5px solid var(--accent);border-radius:9px;font:800 clamp(15px,2vw,21px)/1.5 var(--sans)!important;color:var(--text)!important}
+.pilot-final-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}
+.pilot-final-metrics>div{min-width:0;padding:12px;border:1px solid var(--line);background:var(--bg-2);border-radius:9px}
+.pilot-final-metrics small{display:block;font:11px/1.5 var(--sans);color:var(--muted)}
+.pilot-final-metrics strong{display:block;font:750 clamp(17px,2.2vw,25px)/1.5 var(--mono);margin-top:5px}
+.pilot-final-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0;margin:16px 0;list-style:none}
+.pilot-final-list li{display:grid;min-width:0;gap:5px;padding:12px;border-radius:9px;border:1px solid var(--line);background:var(--bg-2);overflow-wrap:anywhere}
+.pilot-final-list strong{font:750 12px/1.5 var(--sans)}
+.pilot-final-list small{font:750 10px/1.5 var(--mono);color:var(--muted)}
+.pilot-final-list p{margin:0}
+#pilotFinalReviewStatus{padding:12px;background:var(--bg-2);border-left:3px solid var(--accent);overflow-wrap:anywhere}
+@media(max-width:680px){.pilot-final-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pilot-final-list{grid-template-columns:1fr}}
+@media(forced-colors:active){.pilot-final-list li{border:1px solid ButtonText}.pilot-final-verdict{border:2px solid ButtonText}}
