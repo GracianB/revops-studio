@@ -520,6 +520,35 @@
         <p class="workbench-p77-disclaimer">Solo números, reglas predefinidas y conclusiones del cálculo. Un PDF con datos agregados también debe revisarse antes de enviarlo. Acciones externas: 0. Aprobaciones reales: 0.</p>
       </section>
     </section>
+    <section class="workbench-p80" aria-labelledby="pilotReadinessTitle">
+      <div class="workbench-p80-head">
+        <div><span class="workbench-section-index">PR80 · EVALUACIÓN INTEGRADA · CANDIDATO DE PILOTO</span>
+          <h2 id="pilotReadinessTitle">¿Qué falta antes de enseñar esto en un piloto?</h2>
+          <p>Conecta los resultados del motor, la calidad de los datos, las reglas, la revisión humana y la privacidad. Obtendrás comprobaciones verificables y acciones siguientes, sin convertir una demo en una aprobación empresarial.</p>
+        </div>
+        <button type="button" id="pilotOpen" class="btn btn-primary" aria-controls="pilotStudio" aria-expanded="false" disabled>Comprobar preparación ↗</button>
+      </div>
+      <section id="pilotStudio" class="workbench-p80-studio" hidden aria-labelledby="pilotStudioTitle">
+        <div class="workbench-p80-result">
+          <div><h3 id="pilotStudioTitle">Resultado de las comprobaciones</h3><p id="pilotOutcome" role="status" aria-live="polite" aria-atomic="true">Preparando evaluación local...</p></div>
+          <div class="workbench-p80-totals" role="group" aria-label="Resultados de preparación">
+            <div><small>Superadas</small><strong id="pilotPassed">0</strong></div>
+            <div><small>Advertencias</small><strong id="pilotWarnings">0</strong></div>
+            <div><small>Bloqueos</small><strong id="pilotBlockers">0</strong></div>
+          </div>
+        </div>
+        <ol id="pilotChecks" class="workbench-p80-checks" aria-label="Comprobaciones del candidato de piloto"></ol>
+        <h4>Condiciones imprescindibles antes de conectar sistemas</h4>
+        <p>Este ensayo local no valida permisos empresariales, contratos, seguridad de un CRM real, identidad de aprobadores, ahorro financiero ni puesta en producción. Una aprobación simulada no sustituye a la firma y autorización de una persona.</p>
+        <div class="workbench-p80-actions">
+          <button type="button" id="pilotExportTxt">Descargar revisión TXT sin registros ↧</button>
+          <button type="button" id="pilotExportJson">Descargar evidencia JSON agregada ↧</button>
+          <button type="button" id="pilotRefresh">Recalcular con esta muestra ↻</button>
+          <button type="button" id="pilotClose">Cerrar revisión</button>
+        </div>
+        <p id="pilotStatus" role="status" aria-live="polite" aria-atomic="true">La preparación se evalúa únicamente en este navegador.</p>
+      </section>
+    </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
       <div><p><strong>Listo:</strong> pasa las reglas de esta demostración. Puede ser una acción propuesta o un registro histórico, que no debe volver a ejecutarse.</p><p><strong>Revisar:</strong> necesita una decisión humana, aunque algunos campos sean válidos.</p><p><strong>Bloqueado:</strong> no cumple alguna regla y no puede avanzar hasta corregirse.</p><p><strong>Importante:</strong> ningún registro se introduce en tu CRM ni en otra aplicación. Esta mesa de trabajo es una simulación local.</p></div>
     </details>
