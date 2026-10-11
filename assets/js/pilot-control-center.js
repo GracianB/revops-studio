@@ -14,6 +14,7 @@ import {buildPilotGuidedRoute,guidedRouteJson} from "./pilot-guided-route.js";
 import {createPilotSessionJournal,pilotSessionJournalJson} from "./pilot-session-journal.js";
 import {buildPilotEvidenceReview,pilotEvidenceReviewJson} from "./pilot-evidence-review.js";
 import {buildPilotSupervisedReview,pilotSupervisedReviewJson,pilotSupervisedReviewText} from "./pilot-supervised-review.js";
+import {validatePilotExportJson,validatePilotHtmlHandoff} from "./pilot-export-integrity.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -263,6 +264,7 @@ export function mountPilotControlCenter({getState}){
    const guided=buildPilotGuidedRoute(readiness,plan,ledger,
     simulateEvidenceCoverage(ledger,rehearsed),drills);
    const payload=guidedRouteJson(guided);
+   validatePilotExportJson(payload);
    const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
    const a=document.createElement("a");a.href=url;
    a.download="revops-ruta-guiada-"+scenario+".json";
@@ -285,6 +287,7 @@ export function mountPilotControlCenter({getState}){
    rebuild();
    const payload=pilotEvidenceReviewJson(buildPilotEvidenceReview(plan,ledger,risks,
     simulateEvidenceCoverage(ledger,rehearsed)));
+   validatePilotExportJson(payload);
    const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
    const link=document.createElement("a");link.href=url;
    link.download="revops-matriz-evidencias-"+scenario+".json";
@@ -332,6 +335,7 @@ export function mountPilotControlCenter({getState}){
     drills:drills?JSON.parse(pilotDrillReportJson(drills)):null,
     realApprovals:0,externalExecutions:0,
     notice:"Informe de simulación; no existe autorización real."},null,2)+"\n";
+   validatePilotExportJson(payload);
    const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
    const a=document.createElement("a");a.href=url;
    a.download="revops-control-piloto-"+scenario+".json";
@@ -348,6 +352,7 @@ export function mountPilotControlCenter({getState}){
    const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
    const pack=buildPilotHandoffPack(board,plan,risks,ledger,capacity);
    const content=format(pack);
+   if(extension==="html")validatePilotHtmlHandoff(content);
    const url=URL.createObjectURL(new Blob([content],{type:mime}));
    const link=document.createElement("a");
    link.href=url;
@@ -407,6 +412,7 @@ export function mountPilotControlCenter({getState}){
   try{
    const text=mode==="json"?atlasModule.pilotValidationAtlasJson(atlasReport):
     atlasModule.pilotValidationAtlasText(atlasReport);
+   if(mode==="json")validatePilotExportJson(text);
    const url=URL.createObjectURL(new Blob([text],{type:mime}));
    const a=document.createElement("a");
    a.href=url;a.download="revops-validacion-sintetica-pr90."+extension;
@@ -439,6 +445,7 @@ export function mountPilotControlCenter({getState}){
   $(id).addEventListener("click",()=>{
    try{
     const content=format(currentFinalReview());
+    if(ext==="json")validatePilotExportJson(content);
     const url=URL.createObjectURL(new Blob([content],{type:mime}));
     const a=document.createElement("a");a.href=url;
     a.download="revops-revision-supervisada-pr95."+ext;
@@ -452,6 +459,7 @@ export function mountPilotControlCenter({getState}){
  $("pilotSessionAuditExport").addEventListener("click",()=>{
   try{
    const payload=pilotSessionJournalJson(sessionJournal.snapshot());
+   validatePilotExportJson(payload);
    const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
    const link=document.createElement("a");link.href=url;
    link.download="revops-eventos-locales.json";
