@@ -145,6 +145,78 @@ async function auditCustomerDiagnostic(browser) {
   } finally { await page.close(); }
 }
 
+async function auditDiscoveryStudio(browser) {
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
+ const errors=[],requests=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ page.on("request",request=>requests.push(request.url()));
+ try{
+  await page.goto(base+"/",{waitUntil:"load"});
+  assert.equal(requests.some(url=>/discovery-(ui|engine|studio)\./.test(url)),false,"PR71 must load only on demand");
+  await page.locator("#diagProblem").selectOption("reporting");
+  await page.locator("#diagStudioOpen").click();
+  await page.locator("#discoveryStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#diagStudioOpen").getAttribute("aria-expanded"),"true");
+  assert.match(await page.locator("#discoveryReadiness").innerText(),/pendientes/);
+  assert.match(await page.locator("#discoveryGaps").innerText(),/responsable/i);
+  assert.equal(await page.locator("#discoveryPreview").inputValue().then(t=>t.includes("ACEPTACIÓN VERIFICABLE")),true);
+  assert.match(await page.locator("#discoveryDemoLink").getAttribute("href"),/scenario=data/);
+  await page.locator("#discoveryRole").selectOption("analyst");
+  await page.locator("#discoveryGoal").fill("Validar el origen de los KPIs");
+  await page.locator("#discoveryOwner").selectOption("assigned");
+  await page.locator("#discoverySample").selectOption("ready");
+  await page.locator("#discoveryIntegration").selectOption("local");
+  await page.locator("#discoveryStage").selectOption("approved");
+  assert.match(await page.locator("#discoveryReadiness").innerText(),/Candidato/);
+  assert.match(await page.locator("#discoveryPreview").inputValue(),/Validar el origen de los KPIs/);
+  // User-edited text is preserved when a field changes; stale exports are blocked.
+  await page.locator("#discoveryPreview").fill("MI BRIEF EDITADO, NO SOBRESCRIBIR");
+  await page.locator("#discoveryUrgency").selectOption("priority");
+  assert.equal(await page.locator("#discoveryPreview").inputValue(),"MI BRIEF EDITADO, NO SOBRESCRIBIR");
+  assert.equal(await page.locator("#discoveryDownloadTxt").isDisabled(),true);
+  assert.match(await page.locator("#discoveryStatus").innerText(),/regenerarlo/);
+  await page.locator("#discoveryRegenerate").click();
+  assert.equal(await page.locator("#discoveryDownloadTxt").isEnabled(),true);
+  assert.match(await page.locator("#discoveryPreview").inputValue(),/Confirmar fecha/);
+  const txtPromise=page.waitForEvent("download");
+  await page.locator("#discoveryDownloadTxt").click();
+  const txt=await txtPromise;
+  assert.match(txt.suggestedFilename(),/revops-discovery-pr71-data\.txt/);
+  const txtText=await readFile(await txt.path(),"utf8");
+  assert.match(txtText,/ACEPTACIÓN VERIFICABLE/);
+  assert.doesNotMatch(txtText,/norte@ejemplo\.test|formsubmit\.co/);
+  const jsonPromise=page.waitForEvent("download");
+  await page.locator("#discoveryDownloadJson").click();
+  const file=await jsonPromise;
+  assert.match(file.suggestedFilename(),/revops-discovery-pr71-data\.json/);
+  const body=JSON.parse(await readFile(await file.path(),"utf8"));
+  assert.equal(body.schema,"revops-discovery-brief-v1");
+  assert.equal(body.state,"proposal_not_executed");
+  assert.match(body.edited_text,/KPIs/);
+  await page.locator("#dolor").fill("Este mensaje lo escribió el visitante");
+  await page.locator("#servicio").selectOption("Quick win");
+  assert.equal(await page.locator("#diagnosticoBrief").inputValue(),"");
+  await page.locator("#discoveryAttach").click();
+  assert.match(await page.locator("#diagnosticoBrief").inputValue(),/Brief PR71/);
+  assert.equal(await page.locator("#dolor").inputValue(),"Este mensaje lo escribió el visitante");
+  assert.equal(await page.locator("#servicio").inputValue(),"Quick win");
+  await page.locator("#discoveryOwner").selectOption("pending");
+  assert.equal(await page.locator("#diagnosticoBrief").inputValue(),"","editing must invalidate attached PR71 snapshot");
+  assert.equal(await page.locator("#diagnosticContext").isHidden(),true);
+  await page.locator("#discoveryClose").click();
+  assert.equal(await page.locator("#discoveryStudio").isHidden(),true);
+  assert.equal(await page.locator("#diagStudioOpen").getAttribute("aria-expanded"),"false");
+  await page.locator("#diagStudioOpen").click();
+  assert.equal(await page.locator("#discoveryStudio").isVisible(),true);
+  const size=await page.evaluate(()=>({w:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(size.scroll<=size.w+3,"PR71 mobile overflow "+JSON.stringify(size));
+  assert.deepEqual(errors,[],"PR71 page errors");
+  assert.ok(requests.some(url=>/discovery-ui\.js/.test(url)));
+  assert.ok(requests.some(url=>/discovery-studio\.css/.test(url)));
+  console.log("DISCOVERY STUDIO PR71 PASS ("+engineName+"): local, gates, edit safety, exports, consent handoff and mobile");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -428,6 +500,7 @@ try {
     {headless:true});
   await auditCommercialCssParity(browser);
   await auditCustomerDiagnostic(browser);
+  await auditDiscoveryStudio(browser);
   await auditClientFirstVisit(browser);
   await auditProductWorkbench(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
