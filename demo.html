@@ -625,6 +625,30 @@
           <p class="workbench-p85-disclaimer">V100 sintetiza el producto real y su evidencia técnica local. Los permisos, la auditoría externa, las pruebas manuales de accesibilidad y el lanzamiento siguen pendientes.</p>
         </section>
         <p id="pilotControlSummary" role="status" aria-live="polite">Ejecuta un escenario para comprobar sus señales.</p>
+        <div class="pilot-ux-toolbar" role="group" aria-label="Nivel de detalle de la consola">
+          <div class="pilot-ux-intro">
+            <strong>Empieza por lo importante</strong>
+            <p>Un resumen y tres prioridades. El análisis completo está disponible, sin perder nada.</p>
+          </div>
+          <div class="pilot-ux-actions">
+            <button type="button" id="pilotUXToggle" aria-controls="pilotUXDetails" aria-expanded="false" class="btn btn-primary">Explorar herramientas y evidencias</button>
+            <button type="button" id="pilotUXClose" class="btn btn-secondary">Cerrar consola</button>
+          </div>
+          <p id="pilotUXStatus" class="pilot-ux-status" role="status" aria-live="polite" aria-atomic="true">Vista esencial.</p>
+        </div>
+        <section class="pilot-guided-route" aria-labelledby="pilotGuidedTitle">
+          <div class="pilot-guided-route-head">
+            <div><h4 id="pilotGuidedTitle">Qué revisar a continuación</h4>
+              <p>Ruta priorizada según las incidencias reales de la muestra, los requisitos pendientes y los ensayos locales. No asigna empleados ni ejecuta operaciones.</p>
+            </div>
+            <button type="button" id="pilotGuidedExport">Exportar ruta JSON ↧</button>
+          </div>
+          <p id="pilotGuidedSummary" role="status" aria-live="polite"></p>
+          <ol id="pilotGuidedList" class="pilot-guided-list"></ol>
+          <button type="button" class="pilot-ux-more" id="pilotUXMore">Ver todos los pasos y controles ↗</button>
+          <p id="pilotGuidedStatus" role="status" aria-live="polite">Las autorizaciones reales deben completarse fuera de esta demo.</p>
+        </section>
+        <div id="pilotUXDetails" class="pilot-ux-details" hidden aria-label="Herramientas completas del piloto">
         <nav id="pilotSectionNavigation" class="pilot-section-navigation" aria-label="Secciones del centro de control">
           <p>Explora las ocho áreas. Usa flechas, Inicio y Fin sobre los botones para cambiar de opción.</p>
           <div class="pilot-section-controls" role="group" aria-label="Ir a una sección">
@@ -639,17 +663,6 @@
           </div>
           <p id="pilotSectionAnnouncement" class="pilot-section-live" role="status" aria-live="polite" aria-atomic="true"></p>
         </nav>
-        <section class="pilot-guided-route" aria-labelledby="pilotGuidedTitle">
-          <div class="pilot-guided-route-head">
-            <div><h4 id="pilotGuidedTitle">Qué revisar a continuación</h4>
-              <p>Ruta priorizada según las incidencias reales de la muestra, los requisitos pendientes y los ensayos locales. No asigna empleados ni ejecuta operaciones.</p>
-            </div>
-            <button type="button" id="pilotGuidedExport">Exportar ruta JSON ↧</button>
-          </div>
-          <p id="pilotGuidedSummary" role="status" aria-live="polite"></p>
-          <ol id="pilotGuidedList" class="pilot-guided-list"></ol>
-          <p id="pilotGuidedStatus" role="status" aria-live="polite">Las autorizaciones reales deben completarse fuera de esta demo.</p>
-        </section>
         <div class="workbench-p85-metrics" role="group" aria-label="Estado de la preparación">
           <div><small>Riesgos altos o críticos</small><strong id="pilotControlHigh">0</strong></div>
           <div><small>Requisitos sin ensayar</small><strong id="pilotControlEvidence">0</strong></div>
@@ -843,6 +856,7 @@
           <button type="button" id="pilotControlClose">Cerrar centro de control</button>
         </div>
         <p class="workbench-p85-disclaimer">Riesgos y tareas abiertos hasta verificación humana externa. Ningún resultado de esta pantalla prueba una autorización real, un despliegue, una firma, un CRM o una recuperación técnica.</p>
+        </div>
       </section>
     </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
