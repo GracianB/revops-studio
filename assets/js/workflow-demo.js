@@ -691,11 +691,16 @@ $("runWorkflow").addEventListener("click",()=>{
     errorText(error?.message||"No se pudo leer el CSV.");
   }
 });
-function closeEditor(){
+function closeEditor(restoreFocus=false){
   const form=$("workflowEditForm");
   if(form)form.hidden=true;
-  editIndex=null;
+  editIndex=null;editPreview=null;editorDirty=false;
   setText("workflowEditStatus","");
+  if(restoreFocus){
+    const focus=editorTrigger?.isConnected && !editorTrigger.closest("[hidden]")?editorTrigger:$("fixFirstIssue");
+    focus?.focus();
+  }
+  editorTrigger=null;
 }
 function syncFilterButtons(){
   document.querySelectorAll("[data-workflow-filter]").forEach(button=>{
@@ -730,11 +735,13 @@ function applyFilter(){
 }
 function openEditor(index){
   if(!latest?.rows[index])return;
+  editorTrigger=document.activeElement;
   const row=latest.rows[index];
   const affected=issueColumn(scenario,row);
   editIndex=index;
   const parent=$("workflowEditFields");
   parent.replaceChildren();
+  editorDirty=false;editPreview=null;
   for(const column of latest.columns){
     const wrap=document.createElement("div");
     wrap.className="workbench-edit-field";
@@ -779,25 +786,29 @@ function openEditor(index){
   setText("workbench-edit-title","Corregir registro "+row.id);
   setText("workflowEditHint",row.reason+". Revisa los valores y guarda para volver a procesar todas las filas.");
   $("workflowEditForm").hidden=false;
+  paintEditPreview();
   $("workflowEditForm").scrollIntoView({behavior:"instant",block:"center"});
   (parent.querySelector(".is-problem input")||parent.querySelector("input"))?.focus();
 }
 function commitEdit(event){
   event.preventDefault();
   if(editIndex===null || !latest)return;
-  const inputs=[...$("workflowEditFields").querySelectorAll("input")];
-  const changes=Object.fromEntries(inputs.map(input=>[input.name,input.value]));
   const original=$("workflowSource").value;
   try{
-    const next=editWorkflowRecord(scenario,original,editIndex,changes);
+    const preview=previewRecordEdit(scenario,original,editIndex,currentEdits());
+    if(!preview.valid)throw Error(preview.message);
+    const next=preview.source;
+    // No state mutation until all rules and preview validation have passed.
+    if(!correctionTimeline||correctionTimeline.state().source!==original)
+      correctionTimeline=createCorrectionTimeline(scenario,original);
+    correctionTimeline.push(preview);
     $("workflowSource").value=next;
     modifiedSource=true;
     errorText("");
     const result=runWorkflow(scenario,next);
     const originalResult=latest;
     const before=analyzeWorkflow(originalResult),after=analyzeWorkflow(result);
-    undoSource=original;redoSource=null;
-    $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
+    undoSource=null;redoSource=null;
     closeEditor();
     render(result);
     const compare=$("changeComparison");
@@ -830,7 +841,7 @@ $("fixFirstIssue").addEventListener("click",firstBlocked);
 $("quickDemoAction").addEventListener("click",firstBlocked);
 $("workflowEditForm").addEventListener("submit",commitEdit);
 for(const id of ["cancelWorkflowEdit","cancelWorkflowEditSecondary"]){
-  $(id).addEventListener("click",closeEditor);
+  $(id).addEventListener("click",()=>closeEditor(true));
 }
 document.querySelectorAll("[data-workflow-filter]").forEach(button=>button.addEventListener("click",()=>{
   activeFilter=button.dataset.workflowFilter;
@@ -838,32 +849,39 @@ document.querySelectorAll("[data-workflow-filter]").forEach(button=>button.addEv
   closeEditor();
   applyFilter();
 }));
-$("undoCorrection").addEventListener("click",()=>{
-  if(undoSource===null)return;
-  const oldUndo=undoSource;
-  redoSource=$("workflowSource").value;
-  undoSource=null;
-  $("undoCorrection").disabled=true;$("redoCorrection").disabled=false;
-  closeEditor();
-  $("workflowSource").value=oldUndo;
+function restoreTimeline(snapshot,verb){
+  if(!snapshot)return;
+  const next=snapshot.source;
+  const result=runWorkflow(scenario,next);
+  closeEditor();$("workflowSource").value=next;
   modifiedSource=true;
-  try{render(runWorkflow(scenario,oldUndo));$("changeComparison").hidden=true;
-    if(guide?.state().mode==="simple")guide.transition("result",false);}
-  catch{invalidate("No se pudo restaurar el estado previo.");}
+  render(result);$("changeComparison").hidden=true;
+  if(guide?.state().mode==="simple")guide.transition("result",false);
+  setText("workflowStatus",verb+". Historial y resultados recalculados, sin acciones externas.");
+}
+$("undoCorrection").addEventListener("click",()=>restoreTimeline(correctionTimeline?.undo(),"Corrección deshecha"));
+$("redoCorrection").addEventListener("click",()=>restoreTimeline(correctionTimeline?.redo(),"Corrección rehecha"));
+$("correctionHistorySteps").addEventListener("click",event=>{
+  const button=event.target.closest("button[data-history-index]");
+  if(!button||!correctionTimeline)return;
+  const index=Number(button.dataset.historyIndex);
+  if(!Number.isInteger(index))return;
+  try{restoreTimeline(correctionTimeline.jump(index),"Estado del historial restaurado");}
+  catch(error){errorText(error?.message||"No se pudo restaurar el historial.");}
 });
-$("redoCorrection").addEventListener("click",()=>{
-  if(redoSource===null)return;
-  const next=redoSource;redoSource=null;
-  undoSource=$("workflowSource").value;
-  $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
-  $("workflowSource").value=next;
-  modifiedSource=true;
-  try{
-    render(runWorkflow(scenario,next));
-    $("changeComparison").hidden=true;
-    if(guide?.state().mode==="simple")guide.transition("result",false);
-    setText("workflowStatus","Corrección rehecha y resultados recalculados.");
-  }catch{invalidate("No se pudo rehacer la corrección.");}
+$("workflowEditFields").addEventListener("input",()=>paintEditPreview());
+$("editNextIssue").addEventListener("click",()=>{
+  if(!latest||editIndex===null)return;
+  if(editorDirty){
+    setText("editDirtyStatus","Primero guarda o cancela los cambios. No se ha perdido ningún dato.");
+    return;
+  }
+  const next=nextBlockedIndex(latest,editIndex);
+  if(next===null){
+    setText("editDirtyStatus","No hay más registros bloqueados.");
+    return;
+  }
+  openEditor(next);
 });
 $("importWorkflow").addEventListener("change",async event=>{
   const input=event.currentTarget;
@@ -997,7 +1015,7 @@ document.addEventListener("keydown",event=>{
   if(!$("columnMapper").hidden){
     closeColumnMapper();$("openColumnMapper").focus();
   }else if(!$("workflowEditForm").hidden){
-    closeEditor();$("fixFirstIssue").focus();
+    closeEditor(true);
   }
 });
 $("workflowSort").addEventListener("change",()=>{sortResults();applyFilter();});
