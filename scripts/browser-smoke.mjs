@@ -101,7 +101,7 @@ async function auditCommercialCssParity(browser) {
 }
 
 async function auditCustomerDiagnostic(browser) {
-  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce"});
+  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   try {
     await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator("#diagnosticPlan").isHidden(),true);
@@ -113,6 +113,16 @@ async function auditCustomerDiagnostic(browser) {
     assert.match(await page.locator("#diagPackage").innerText(),/4.000 €/);
     await page.locator("#dolor").fill("Este texto lo he escrito yo y no se debe cambiar.");
     await page.locator("#servicio").selectOption("Quick win");
+    // The report is created on explicit click, stays local and is printable offline.
+    const r1DownloadPromise=page.waitForEvent("download");
+    await page.locator("#diagDownload").click();
+    const r1Download=await r1DownloadPromise;
+    assert.equal(r1Download.suggestedFilename(),"revops-plan-reporting-team.html");
+    const r1Html=await readFile(await r1Download.path(),"utf8");
+    assert.match(r1Html,/04 · Cómo aceptar el piloto/);
+    assert.match(r1Html,/@media print/);
+    assert.match(r1Html,/4\\.000 €/);
+    assert.doesNotMatch(r1Html,/https?:\\/\\/|<script|FormSubmit|Plausible/i);
     await page.locator("#diagToContact").click();
     assert.match(await page.locator("#diagnosticoBrief").inputValue(),/Ruta sugerida: Datos y BI/);
     assert.equal(await page.locator("#dolor").inputValue(),"Este texto lo he escrito yo y no se debe cambiar.");
