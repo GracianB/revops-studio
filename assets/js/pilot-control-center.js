@@ -12,6 +12,7 @@ import {buildPilotStressMatrix,pilotStressMatrixJson} from "./pilot-stress-matri
 import {mountPilotSectionNavigation} from "./pilot-section-navigation.js";
 import {buildPilotGuidedRoute,guidedRouteJson} from "./pilot-guided-route.js";
 import {createPilotSessionJournal,pilotSessionJournalJson} from "./pilot-session-journal.js";
+import {buildPilotEvidenceReview,pilotEvidenceReviewJson} from "./pilot-evidence-review.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -60,6 +61,7 @@ export function mountPilotControlCenter({getState}){
   const authorization=buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills});
   const stress=buildPilotStressMatrix(readiness);
   const guided=buildPilotGuidedRoute(readiness,plan,ledger,coverage,drills);
+  const evidenceReview=buildPilotEvidenceReview(plan,ledger,risks,coverage);
   set("pilotGuidedSummary",guided.pending+" pasos pendientes; "+guided.blocked+
    " bloqueantes y "+guided.review+" por revisar. Siguiente: "+guided.next.title+".");
   const routeFragment=document.createDocumentFragment();
@@ -113,6 +115,34 @@ export function mountPilotControlCenter({getState}){
    label.append(box,description);li.append(label);evidenceList.append(li);
   }
   $("pilotControlChecklist").replaceChildren(evidenceList);
+  const evidenceFilter=$("pilotEvidenceReviewFilter");
+  const selectedRole=evidenceReview.roles.includes(evidenceFilter.value)?evidenceFilter.value:"all";
+  const roleFragment=document.createDocumentFragment();
+  const allRoles=el("option","Todas las funciones");allRoles.value="all";roleFragment.append(allRoles);
+  for(const role of evidenceReview.roles){
+   const option=el("option",role);option.value=role;roleFragment.append(option);
+  }
+  evidenceFilter.replaceChildren(roleFragment);evidenceFilter.value=selectedRole;
+  const reviewItems=evidenceReview.entries.filter(e=>selectedRole==="all"||e.role===selectedRole);
+  const evidenceRows=document.createDocumentFragment();
+  for(const entry of reviewItems){
+   const li=el("li");
+   li.append(el("strong",entry.id+" · "+entry.kind));
+   li.append(el("small",entry.phase+" · Función: "+entry.role));
+   li.append(el("p",entry.requirement));
+   li.append(el("small","Riesgos: "+(entry.risks.join(", ")||"sin vincular")+
+    " · "+(entry.highRisk?"Incluye riesgo alto":"Sin riesgo alto vinculado")));
+   li.append(el("small",entry.level==="external"?"VERIFICACIÓN EXTERNA":
+    entry.level==="rehearsed"?"ENSAYO DE LISTA REALIZADO":"EVIDENCIA NO ENSAYADA"));
+   const jump=el("button",entry.externalOnly?"Requiere autorización externa":
+    "Ir a requisito en la lista ↗");
+   jump.type="button";jump.dataset.evidenceReviewFocus=entry.id;
+   jump.disabled=entry.externalOnly;li.append(jump);evidenceRows.append(li);
+  }
+  $("pilotEvidenceReviewList").replaceChildren(evidenceRows);
+  set("pilotEvidenceReviewSummary",reviewItems.length+" de "+evidenceReview.required+
+   " requisitos visibles; "+evidenceReview.rehearsed+" ensayados, "+
+   evidenceReview.external+" externos, "+evidenceReview.verifiedReal+" evidencias reales verificadas.");
   const drillList=document.createDocumentFragment();
   if(drills)for(const drill of drills.drills){
    const li=el("li",undefined,"pilot-control-drill");
@@ -220,6 +250,27 @@ export function mountPilotControlCenter({getState}){
    remember("route_export");
   }catch(error){set("pilotGuidedStatus","Ruta no exportable: "+error.message);}
  });
+ $("pilotEvidenceReviewFilter").addEventListener("change",()=>{if(ledger)paint();});
+ $("pilotEvidenceReviewList").addEventListener("click",event=>{
+  const button=event.target.closest("button[data-evidence-review-focus]");
+  if(!button||button.disabled)return;
+  const checkbox=[...$("pilotControlChecklist").querySelectorAll("input[data-evidence-id]")]
+   .find(box=>box.dataset.evidenceId===button.dataset.evidenceReviewFocus);
+  if(checkbox){checkbox.focus();checkbox.scrollIntoView({block:"center",behavior:"instant"});}
+ });
+ $("pilotEvidenceReviewExport").addEventListener("click",()=>{
+  try{
+   rebuild();
+   const payload=pilotEvidenceReviewJson(buildPilotEvidenceReview(plan,ledger,risks,
+    simulateEvidenceCoverage(ledger,rehearsed)));
+   const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
+   const link=document.createElement("a");link.href=url;
+   link.download="revops-matriz-evidencias-"+scenario+".json";
+   document.body.append(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2500);
+   set("pilotEvidenceReviewStatus","Matriz de requisitos descargada; evidencias reales verificadas: 0.");
+  }catch(error){set("pilotEvidenceReviewStatus","La matriz no es exportable: "+error.message);}
+ });
  $("pilotStressFilter").addEventListener("change",()=>{if(ledger)paint();});
  $("pilotCapacityRoleLimit").addEventListener("change",()=>{
   if(ledger){paint();remember("capacity_change");}
@@ -255,6 +306,7 @@ export function mountPilotControlCenter({getState}){
     authorization:JSON.parse(pilotAuthorizationJson(buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills}))),
     stress:JSON.parse(pilotStressMatrixJson(buildPilotStressMatrix(readiness))),
     guided:JSON.parse(guidedRouteJson(buildPilotGuidedRoute(readiness,plan,ledger,coverage,drills))),
+    evidenceReview:JSON.parse(pilotEvidenceReviewJson(buildPilotEvidenceReview(plan,ledger,risks,coverage))),
     drills:drills?JSON.parse(pilotDrillReportJson(drills)):null,
     realApprovals:0,externalExecutions:0,
     notice:"Informe de simulación; no existe autorización real."},null,2)+"\n";
@@ -373,6 +425,10 @@ export function mountPilotControlCenter({getState}){
    readiness=null;plan=null;risks=null;ledger=null;
    root.hidden=true;
    $("pilotControlOpen").setAttribute("aria-expanded","false");
+   $("pilotEvidenceReviewList").replaceChildren();
+   $("pilotEvidenceReviewFilter").value="all";
+   set("pilotEvidenceReviewSummary","Sin revisión activa.");
+   set("pilotEvidenceReviewStatus","0 evidencias reales verificadas.");
    $("pilotGuidedList").replaceChildren();
    set("pilotGuidedSummary","Sin ruta: ejecuta el proceso.");
    set("pilotGuidedStatus","Ruta invalidada por el cambio de muestra.");
