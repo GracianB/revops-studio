@@ -451,6 +451,95 @@ async function auditScenarioBuilder(browser){
  }finally{await page.close();}
 }
 
+async function auditExecutivePdf(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true,reducedMotion:"reduce"});
+ const errors=[],requests=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ page.on("request",request=>requests.push(request.url()));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  assert.equal(await page.locator("#reportStudio").isHidden(),true);
+  assert.equal(requests.some(url=>url.includes("/executive-pdf.js")),false,"PDF engine must load on demand");
+  await page.locator("#reportOpen").click();
+  await page.locator("#reportStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#reportOpen").getAttribute("aria-expanded"),"true");
+  assert.equal(await page.locator("#reportRows").innerText(),"6");
+  assert.equal(await page.locator("#reportReady").innerText(),"3");
+  assert.equal(await page.locator("#reportReview").innerText(),"1");
+  assert.equal(await page.locator("#reportBlocked").innerText(),"2");
+  const downloaded=page.waitForEvent("download");
+  await page.locator("#reportPdf").click();
+  const pdf=await downloaded,bytes=await readFile(await pdf.path());
+  const pdfBody=bytes.toString("latin1");
+  assert.equal(pdf.suggestedFilename(),"revops-informe-ejecutivo-orders.pdf");
+  assert.ok(bytes.length>10000);
+  assert.ok(pdfBody.startsWith("%PDF-1.4\n"));
+  assert.match(pdfBody,/\/MediaBox \[0 0 595\.28 841\.89\]/);
+  assert.match(pdfBody,/\/Type \/Pages \/Count [2-9]/);
+  assert.match(pdfBody,/xref\n0 \d+/);
+  assert.match(pdfBody,/INFORME EJECUTIVO/);
+  assert.match(pdfBody,/07 \/ FUENTES Y ALCANCE/);
+  assert.ok(pdfBody.endsWith("%%EOF\n"));
+  assert.doesNotMatch(pdfBody,/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  const txtPromise=page.waitForEvent("download");
+  await page.locator("#reportTxt").click();
+  const txt=await txtPromise;
+  const textBody=await readFile(await txt.path(),"utf8");
+  assert.match(textBody,/RESUMEN EJECUTIVO/);
+  assert.match(textBody,/FASES PROPUESTAS/);
+  assert.match(textBody,/Aprobaciones verificadas: 0/);
+  assert.doesNotMatch(textBody,/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  const jsonPromise=page.waitForEvent("download");
+  await page.locator("#reportJson").click();
+  const json=await jsonPromise;
+  const report=JSON.parse(await readFile(await json.path(),"utf8"));
+  assert.equal(report.schema,"revops-executive-report-v1");
+  assert.equal(report.counts.total,6);
+  assert.equal(report.counts.blocked,2);
+  assert.equal(report.externalExecuted,0);
+  assert.equal(report.realApprovals,0);
+  assert.equal(report.phases.length,3);
+  assert.doesNotMatch(JSON.stringify(report),/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  await page.evaluate(()=>{
+   window.__printProbe=null;
+   window.open=(where,target)=>{
+    const win={location:{href:""},closed:false,close(){}};
+    window.__printProbe={where,target,win};
+    return win;
+   };
+  });
+  await page.locator("#reportPrint").click();
+  const printProbe=await page.evaluate(()=>({
+   target:window.__printProbe?.target,href:window.__printProbe?.win.location.href||""
+  }));
+  assert.equal(printProbe.target,"_blank");
+  assert.ok(printProbe.href.startsWith("blob:"));
+  assert.match(await page.locator("#reportStatus").innerText(),/imprimir/);
+  await page.locator("#reportClose").click();
+  assert.equal(await page.locator("#reportStudio").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"reportOpen");
+  await page.locator("#workflowSource").fill(
+   "pedido;cliente;email;total;estado\nSENSITIVE-222;Persona protegida;hidden-example@ejemplo.test;1;nuevo");
+  assert.equal(await page.locator("#reportOpen").isDisabled(),true);
+  await page.locator("#runWorkflow").click();
+  await page.locator("#reportOpen").click();
+  await page.locator("#reportStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#reportRows").innerText(),"1");
+  assert.equal(await page.locator("#reportBlocked").innerText(),"0");
+  const nextPromise=page.waitForEvent("download");
+  await page.locator("#reportPdf").click();
+  const nextPdf=await nextPromise;
+  const nextBody=(await readFile(await nextPdf.path())).toString("latin1");
+  assert.doesNotMatch(nextBody,/SENSITIVE-222|Persona protegida|hidden-example@ejemplo\.test/);
+  await page.setViewportSize({width:320,height:760});
+  const dims=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(dims.scroll<=dims.viewport+3,"PR77 report mobile overflow "+JSON.stringify(dims));
+  assert.deepEqual(errors,[],"PR77 browser errors");
+  assert.ok(requests.some(url=>url.includes("/executive-pdf.js")),"PDF generator loaded only after opt-in");
+  console.log("PR77 REAL PDF PASS ("+engineName+"): PDF crossrefs, TXT/JSON privacy, print target, source reset and mobile");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -812,6 +901,7 @@ try {
   await auditCorrectionWorkbench(browser);
   await auditDecisionStudio(browser);
   await auditScenarioBuilder(browser);
+  await auditExecutivePdf(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
