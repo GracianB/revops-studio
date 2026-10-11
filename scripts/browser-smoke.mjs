@@ -366,6 +366,91 @@ async function auditDecisionStudio(browser){
  }finally{await page.close();}
 }
 
+async function auditScenarioBuilder(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true,reducedMotion:"reduce"});
+ const errors=[],requests=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ page.on("request",request=>requests.push(request.url()));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  assert.equal(await page.locator("#candidateStudio").isHidden(),true);
+  assert.equal(requests.some(url=>url.includes("/scenario-console.js")),false);
+  await page.locator("#candidateOpen").click();
+  await page.locator("#candidateStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#candidateOpen").getAttribute("aria-expanded"),"true");
+  assert.equal(await page.locator("#candidateOriginalReady").innerText(),"3");
+  assert.equal(await page.locator("#candidateNewReady").innerText(),"3");
+  assert.equal(await page.locator("#candidateNewReview").innerText(),"1");
+  await page.locator("#candidatePreset").selectOption("strict");
+  assert.equal(await page.locator("#candidateThreshold").inputValue(),"1000");
+  assert.equal(await page.locator("#candidateNewReady").innerText(),"2");
+  assert.equal(await page.locator("#candidateNewReview").innerText(),"2");
+  assert.match(await page.locator("#candidateDelta").innerText(),/-1 acciones preparadas/);
+  assert.match(await page.locator("#candidateSafety").innerText(),/2 bloqueados/);
+  assert.match(await page.locator("#candidateAffected").innerText(),/Fila 2/);
+  assert.equal(await page.locator("#countReady").innerText(),"3","proposal must not mutate source engine");
+  const reportPromise=page.waitForEvent("download");
+  await page.locator("#candidateDownloadReport").click();
+  const reportFile=await reportPromise;
+  assert.match(reportFile.suggestedFilename(),/revops-comparacion-pr76-orders\.txt/);
+  const report=await readFile(await reportFile.path(),"utf8");
+  assert.match(report,/Casos que pasan adicionalmente a revisión: 1/);
+  assert.match(report,/Cambios externos ejecutados: 0/);
+  assert.doesNotMatch(report,/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  const profilePromise=page.waitForEvent("download");
+  await page.locator("#candidateExportTemplate").click();
+  const profileFile=await profilePromise;
+  const profile=await readFile(await profileFile.path(),"utf8");
+  const parsed=JSON.parse(profile);
+  assert.equal(parsed.schema,"revops-scenario-settings-v1");
+  assert.equal(parsed.execution,"NOT_EXECUTED");
+  assert.deepEqual(Object.keys(parsed).sort(),["execution","scenario","schema","settings"]);
+  await page.locator("#candidateRollback").click();
+  assert.equal(await page.locator("#candidateNewReview").innerText(),"1");
+  assert.equal(await page.locator("#candidateThreshold").inputValue(),"0");
+  await page.locator("#candidateImportTemplate").setInputFiles({
+    name:"settings.json",mimeType:"application/json",buffer:Buffer.from(profile)
+  });
+  await page.waitForFunction(()=>document.querySelector("#candidateThreshold")?.value==="1000",null,{timeout:5000});
+  assert.equal(await page.locator("#candidateNewReview").innerText(),"2");
+  await page.locator("#candidateThreshold").fill("5001");
+  assert.equal(await page.locator("#candidateDownloadReport").isDisabled(),true);
+  await page.locator("#candidateApply").click();
+  assert.match(await page.locator("#candidateStatus").innerText(),/Candidato no válido/);
+  await page.locator("#candidateRollback").click();
+  assert.equal(await page.locator("#candidateNewReview").innerText(),"1");
+  await page.locator("#candidateClose").click();
+  assert.equal(await page.locator("#candidateStudio").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"candidateOpen");
+  await page.setViewportSize({width:320,height:760});
+  await page.locator("#candidateOpen").click();
+  const d=await page.evaluate(()=>({w:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(d.scroll<=d.w+3,"PR76 mobile overflow "+JSON.stringify(d));
+  // Other scenarios use different, bounded policies. The default engine stays unchanged.
+  await page.goto(base+"/demo.html?scenario=support&view=advanced",{waitUntil:"load"});
+  await page.locator("#candidateOpen").click();
+  await page.locator("#candidateStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#candidateEscalateLabel").isVisible(),true);
+  assert.equal(await page.locator("#candidateAmountLabel").isHidden(),true);
+  await page.locator("#candidatePreset").selectOption("cautious");
+  assert.equal(await page.locator("#candidateEscalate").isChecked(),true);
+  assert.equal(await page.locator("#candidateNewReview").innerText(),"2");
+  assert.equal(await page.locator("#countReview").innerText(),"1");
+  await page.goto(base+"/demo.html?scenario=data&view=advanced",{waitUntil:"load"});
+  await page.locator("#candidateOpen").click();
+  await page.locator("#candidateStudio").waitFor({state:"visible"});
+  await page.locator("#candidatePreset").selectOption("strict");
+  assert.equal(await page.locator("#candidateNewReview").innerText(),"3");
+  assert.equal(await page.locator("#candidateOriginalReview").innerText(),"1");
+  assert.match(await page.locator("#candidateAffected").innerText(),/Fila 1/);
+  assert.match(await page.locator("#candidateAffected").innerText(),/Fila 6/);
+  assert.equal(await page.locator("#countBlocked").innerText(),"2");
+  assert.deepEqual(errors,[],"PR76 page errors");
+  assert.ok(requests.some(url=>url.includes("/scenario-console.js")));
+  console.log("PR76 SCENARIO BUILDER PASS ("+engineName+"): 3 workflows, guardrails, local profiles, rollback, mobile");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -726,6 +811,7 @@ try {
   await auditProductWorkbench(browser);
   await auditCorrectionWorkbench(browser);
   await auditDecisionStudio(browser);
+  await auditScenarioBuilder(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
