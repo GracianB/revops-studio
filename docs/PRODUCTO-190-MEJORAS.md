@@ -122,7 +122,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P086** · Ordenar por estado · IMPLEMENTADO
 - [ x ] **P087** · Restaurar el orden original · IMPLEMENTADO
 - [ x ] **P088** · Mostrar estado vacío al no encontrar resultados · IMPLEMENTADO
-- [   ] **P089** · Guardar vistas de filtros sin datos sensibles · PENDIENTE
+- [ x ] **P089** · Guardar vistas de filtros sin datos sensibles · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [ x ] **P090** · Exportar únicamente la vista filtrada · IMPLEMENTADO
 
 ## 10 · Tabla de auditoría
@@ -130,13 +130,13 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P091** · Conservar referencia al índice original al ordenar · IMPLEMENTADO
 - [ x ] **P092** · Editar la fila correcta tras ordenar · IMPLEMENTADO
 - [ x ] **P093** · Mantener encabezados visibles al desplazarse · IMPLEMENTADO
-- [   ] **P094** · Mostrar densidad compacta u holgada · PENDIENTE
-- [   ] **P095** · Permitir personalizar columnas visibles · PENDIENTE
+- [ x ] **P094** · Mostrar densidad compacta u holgada · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
+- [ x ] **P095** · Permitir personalizar columnas visibles · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [   ] **P096** · Mostrar detalles completos de cada registro · PENDIENTE
-- [   ] **P097** · Resaltar filas al navegar con teclado · PENDIENTE
-- [   ] **P098** · Navegar al siguiente bloqueo desde una fila · PENDIENTE
+- [ x ] **P097** · Resaltar filas al navegar con teclado · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
+- [ x ] **P098** · Navegar al siguiente bloqueo desde una fila · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [   ] **P099** · Comparar dos registros adyacentes · PENDIENTE
-- [   ] **P100** · Mostrar acciones sin scroll horizontal en móvil · PENDIENTE
+- [ x ] **P100** · Mostrar acciones sin scroll horizontal en móvil · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 
 ## 11 · Calidad de datos
 
@@ -187,7 +187,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P136** · Estados erróneos anunciados como texto · PENDIENTE
 - [   ] **P137** · Objetivos táctiles suficientemente grandes · PENDIENTE
 - [   ] **P138** · Probar navegación de teclado sin ratón · PENDIENTE
-- [   ] **P139** · Restaurar foco al cerrar el editor · PENDIENTE
+- [ x ] **P139** · Restaurar foco al cerrar el editor · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [   ] **P140** · Revisar contraste en todas las tarjetas claro/oscuro · PENDIENTE
 
 ## 15 · Seguridad y privacidad
