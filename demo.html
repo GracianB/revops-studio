@@ -777,6 +777,25 @@
             <button type="button" id="pilotSessionAuditClear">Vaciar este historial</button>
           </div>
         </section>
+        <section class="pilot-final-review" aria-labelledby="pilotFinalReviewHeading">
+          <h4 id="pilotFinalReviewHeading">PR95 · Evaluación integrada para revisión independiente</h4>
+          <p>Ocho controles técnicos derivados del producto y cuatro verificaciones externas que nunca aparecen aprobadas en esta demo. Un ensayo correcto no autoriza producción.</p>
+          <p id="pilotFinalReviewVerdict" class="pilot-final-verdict" role="status" aria-live="polite">NO AUTORIZADO PARA PRODUCCIÓN</p>
+          <div class="pilot-final-metrics" role="group" aria-label="Estado integrado">
+            <div><small>Controles locales correctos</small><strong id="pilotFinalLocal">0/8</strong></div>
+            <div><small>Atenciones técnicas</small><strong id="pilotFinalAttention">0</strong></div>
+            <div><small>Revisiones externas</small><strong id="pilotFinalExternal">4</strong></div>
+            <div><small>Aprobaciones reales</small><strong id="pilotFinalApprovals">0</strong></div>
+          </div>
+          <ol id="pilotFinalReviewList" class="pilot-final-list" aria-label="Doce criterios de revisión"></ol>
+          <p id="pilotFinalReviewStatus" role="status" aria-live="polite" aria-atomic="true">Validación de lanzamiento pendiente de revisión humana.</p>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotFinalReviewRefresh">Recalcular revisión integrada ↻</button>
+            <button type="button" id="pilotFinalReviewJson">Exportar criterios JSON ↧</button>
+            <button type="button" id="pilotFinalReviewTxt">Exportar revisión TXT ↧</button>
+          </div>
+          <p class="workbench-p85-disclaimer">Producción: NO-GO. No se simulan permisos, firmas ni verificaciones empresariales. Los informes exportados son para revisión, no para autorizar un lanzamiento.</p>
+        </section>
         <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
         <div class="workbench-p85-actions">
           <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
