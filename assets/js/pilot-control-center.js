@@ -5,6 +5,7 @@ import {buildPilotRiskRegister,riskRegisterJson} from "./pilot-risk-register.js"
 import {buildPilotEvidenceLedger,simulateEvidenceCoverage,evidencePacketJson}
  from "./pilot-evidence-ledger.js";
 import {runPilotFailureDrills,pilotDrillReportJson} from "./pilot-failure-drills.js";
+import {buildPilotCapacityExplorer,pilotCapacityReportJson} from "./pilot-capacity-explorer.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -34,6 +35,7 @@ export function mountPilotControlCenter({getState}){
  }
  function paint(){
   const coverage=simulateEvidenceCoverage(ledger,rehearsed);
+  const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
   set("pilotControlHigh",risks.high);
   set("pilotControlEvidence",coverage.missing);
   set("pilotControlDrills",drills?drills.passed+"/"+drills.total:"Sin ejecutar");
@@ -79,6 +81,27 @@ export function mountPilotControlCenter({getState}){
    drillList.append(li);
   }
   $("pilotControlDrillList").replaceChildren(drillList);
+  const capacityRows=document.createDocumentFragment();
+  for(const comparison of capacity.comparisons){
+   const row=document.createElement("tr");
+   for(const value of [comparison.capacity,comparison.optimisticWaves,
+    comparison.waves,comparison.roleConstraintWaves]){
+    const cell=document.createElement("td");cell.textContent=String(value);row.append(cell);
+   }
+   row.firstChild.outerHTML="<th scope=\"row\">"+comparison.capacity+"</th>";
+   capacityRows.append(row);
+  }
+  $("pilotCapacityRows").replaceChildren(capacityRows);
+  set("pilotCapacitySummary",capacity.totalTasks+" tareas y "+capacity.relativeEffort+
+   " unidades relativas. Las olas aumentadas reflejan limitaciones de funciones, no retrasos reales.");
+  set("pilotCapacityCritical",capacity.criticalPath.tasks.join(" → ")+
+   " · "+capacity.criticalPath.points+" puntos relativos.");
+  const roleRows=document.createDocumentFragment();
+  for(const role of capacity.workload){
+   const li=el("li",role.role+" · "+role.taskCount+" tareas · "+role.relativeEffort+" puntos relativos");
+   roleRows.append(li);
+  }
+  $("pilotCapacityRoles").replaceChildren(roleRows);
   set("pilotControlStatus",drills?
     drills.status+" Aprobaciones reales: 0.":"Ejecuta los ensayos para comprobar barreras locales. Ninguna autorización real.");
  }
@@ -86,6 +109,9 @@ export function mountPilotControlCenter({getState}){
   rebuild();paint();root.hidden=false;
   $("pilotControlOpen").setAttribute("aria-expanded","true");
  }
+ $("pilotCapacityRoleLimit").addEventListener("change",()=>{
+  if(ledger)paint();
+ });
  $("pilotControlFilter").addEventListener("change",()=>{
   if(ledger)paint();
  });
@@ -112,6 +138,7 @@ export function mountPilotControlCenter({getState}){
    const payload=JSON.stringify({schema:"revops-pilot-control-v1",
     scenario,risks:JSON.parse(riskRegisterJson(risks)),
     evidence:JSON.parse(evidencePacketJson(ledger,coverage)),
+    capacity:JSON.parse(pilotCapacityReportJson(buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value)))),
     drills:drills?JSON.parse(pilotDrillReportJson(drills)):null,
     realApprovals:0,externalExecutions:0,
     notice:"Informe de simulación; no existe autorización real."},null,2)+"\n";
@@ -141,6 +168,10 @@ export function mountPilotControlCenter({getState}){
    $("pilotControlRisks").replaceChildren();
    $("pilotControlChecklist").replaceChildren();
    $("pilotControlDrillList").replaceChildren();
+   $("pilotCapacityRows").replaceChildren();
+   $("pilotCapacityRoles").replaceChildren();
+   set("pilotCapacityCritical","");
+   set("pilotCapacitySummary","");
    set("pilotControlStatus","Muestra modificada o sesión limpiada. Ejecuta el proceso nuevamente.");
   }
  });
