@@ -1,5 +1,6 @@
 // PR71 · lazy, local UI for deeper discovery. Nothing is transmitted automatically.
 import {buildDiscoveryBrief,formatDiscoveryBrief,discoveryJson} from "./discovery-engine.js";
+import {DISCOVERY_VIEW_HTML} from "./discovery-view.js";
 
 const ids=Object.freeze(["role","outcome","urgency","stage","owner","sample","integration","sensitivity","goal","constraint","exclusion"]);
 const hint=Object.freeze({
@@ -16,6 +17,7 @@ export function mountDiscoveryStudio(){
   root.scrollIntoView({block:"start",behavior:"instant"});return;
  }
  if(!$("diagProblem")?.value)return;
+ root.innerHTML=DISCOVERY_VIEW_HTML; // Static first-party markup; no input interpolation.
  root.dataset.bound="true";
  const css=document.createElement("link");
  css.rel="stylesheet";css.href="./assets/css/discovery-studio.css";
