@@ -860,14 +860,6 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotA11yManual li").count(),8);
   assert.match(await page.locator("#pilotA11ySummary").innerText(),/6\/6 comprobaciones/);
   assert.match(await page.locator("#pilotA11ySummary").innerText(),/0 verificadas/);
-  const accessibilityDownload=page.waitForEvent("download");
-  await page.locator("#pilotA11yExport").click();
-  const accessFile=await accessibilityDownload;
-  const accessPayload=JSON.parse(await readFile(await accessFile.path(),"utf8"));
-  assert.equal(accessPayload.automatedPassed,6);
-  assert.equal(accessPayload.manualPending,8);
-  assert.equal(accessPayload.manualVerified,0);
-  assert.equal(accessPayload.productionGo,false);
   assert.equal(await page.locator("#pilotControlRisks li").count(),10);
   assert.equal(await page.locator("#pilotControlApproval").innerText(),"0");
   assert.equal(await page.locator('[data-evidence-id="E-SIGNOFF"]').isDisabled(),true);
@@ -1041,6 +1033,23 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotAtlasExportJson").isDisabled(),true,
    "PR90 atlas must clear on source change");
   assert.ok(requests.some(u=>u.includes("/pilot-control-center.js")),"PR85 lazy-loaded code missing");
+  // Browser security policies can throttle many successive downloads in one tab.
+  // Audit the additional PR98 export in its own realistic fresh browser context.
+  const a11yPage=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+  a11yPage.on("pageerror",error=>failures.push("PR98: "+error.message));
+  try{
+   await a11yPage.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+   await a11yPage.locator("#pilotControlOpen").click();
+   await a11yPage.locator("#pilotA11yRun").click();
+   const accessibilityDownload=a11yPage.waitForEvent("download");
+   await a11yPage.locator("#pilotA11yExport").click();
+   const accessFile=await accessibilityDownload;
+   const accessPayload=JSON.parse(await readFile(await accessFile.path(),"utf8"));
+   assert.equal(accessPayload.automatedPassed,6);
+   assert.equal(accessPayload.manualPending,8);
+   assert.equal(accessPayload.manualVerified,0);
+   assert.equal(accessPayload.productionGo,false);
+  }finally{await a11yPage.close();}
   assert.deepEqual(failures,[],"PR85 runtime errors");
   console.log("PR85 PILOT CONTROL PASS ("+engineName+"): risk, evidence, local drills, export, reset, focus, privacy, 320px");
  }finally{await page.close();}
