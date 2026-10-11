@@ -10,6 +10,7 @@ import {buildPilotAuthorizationBoard,pilotAuthorizationJson} from "./pilot-autho
 import {buildPilotHandoffPack,pilotHandoffHtml,pilotHandoffTxt} from "./pilot-handoff-pack.js";
 import {buildPilotStressMatrix,pilotStressMatrixJson} from "./pilot-stress-matrix.js";
 import {mountPilotSectionNavigation} from "./pilot-section-navigation.js";
+import {buildPilotGuidedRoute,guidedRouteJson} from "./pilot-guided-route.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -43,6 +44,23 @@ export function mountPilotControlCenter({getState}){
   const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
   const authorization=buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills});
   const stress=buildPilotStressMatrix(readiness);
+  const guided=buildPilotGuidedRoute(readiness,plan,ledger,coverage,drills);
+  set("pilotGuidedSummary",guided.pending+" pasos pendientes; "+guided.blocked+
+   " bloqueantes y "+guided.review+" por revisar. Siguiente: "+guided.next.title+".");
+  const routeFragment=document.createDocumentFragment();
+  for(const step of guided.steps){
+   const li=el("li");
+   li.append(el("strong",step.title));
+   li.append(el("small",step.state==="blocked"?"BLOQUEO":step.state==="review"?
+    "REVISIÓN":step.state==="external"?"VALIDACIÓN EXTERNA":"ENSAYO LOCAL"));
+   li.append(el("p",step.summary+" · "+step.role));
+   const jump=el("button",step.state==="external"?
+    "Autorización externa obligatoria":"Ir al control ↗");
+   jump.type="button";jump.dataset.pilotRouteTarget=step.target;
+   jump.disabled=step.state==="external";
+   li.append(jump);routeFragment.append(li);
+  }
+  $("pilotGuidedList").replaceChildren(routeFragment);
   set("pilotControlHigh",risks.high);
   set("pilotControlEvidence",coverage.missing);
   set("pilotControlDrills",drills?drills.passed+"/"+drills.total:"Sin ejecutar");
@@ -166,6 +184,26 @@ export function mountPilotControlCenter({getState}){
   rebuild();paint();root.hidden=false;
   $("pilotControlOpen").setAttribute("aria-expanded","true");
  }
+ $("pilotGuidedList").addEventListener("click",event=>{
+  const button=event.target.closest("button[data-pilot-route-target]");
+  if(!button||button.disabled||!ledger)return;
+  try{sectionNavigation.selectById(button.dataset.pilotRouteTarget);}
+  catch(error){set("pilotGuidedStatus","No se puede navegar: "+error.message);}
+ });
+ $("pilotGuidedExport").addEventListener("click",()=>{
+  try{
+   rebuild();
+   const guided=buildPilotGuidedRoute(readiness,plan,ledger,
+    simulateEvidenceCoverage(ledger,rehearsed),drills);
+   const payload=guidedRouteJson(guided);
+   const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
+   const a=document.createElement("a");a.href=url;
+   a.download="revops-ruta-guiada-"+scenario+".json";
+   document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2500);
+   set("pilotGuidedStatus","Ruta agregada descargada. Sin filas ni autorizaciones reales.");
+  }catch(error){set("pilotGuidedStatus","Ruta no exportable: "+error.message);}
+ });
  $("pilotStressFilter").addEventListener("change",()=>{if(ledger)paint();});
  $("pilotCapacityRoleLimit").addEventListener("change",()=>{
   if(ledger)paint();
@@ -199,6 +237,7 @@ export function mountPilotControlCenter({getState}){
     capacity:JSON.parse(pilotCapacityReportJson(buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value)))),
     authorization:JSON.parse(pilotAuthorizationJson(buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills}))),
     stress:JSON.parse(pilotStressMatrixJson(buildPilotStressMatrix(readiness))),
+    guided:JSON.parse(guidedRouteJson(buildPilotGuidedRoute(readiness,plan,ledger,coverage,drills))),
     drills:drills?JSON.parse(pilotDrillReportJson(drills)):null,
     realApprovals:0,externalExecutions:0,
     notice:"Informe de simulación; no existe autorización real."},null,2)+"\n";
@@ -302,6 +341,9 @@ export function mountPilotControlCenter({getState}){
    readiness=null;plan=null;risks=null;ledger=null;
    root.hidden=true;
    $("pilotControlOpen").setAttribute("aria-expanded","false");
+   $("pilotGuidedList").replaceChildren();
+   set("pilotGuidedSummary","Sin ruta: ejecuta el proceso.");
+   set("pilotGuidedStatus","Ruta invalidada por el cambio de muestra.");
    $("pilotControlRisks").replaceChildren();
    $("pilotControlChecklist").replaceChildren();
    $("pilotControlDrillList").replaceChildren();
