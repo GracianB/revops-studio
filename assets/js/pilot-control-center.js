@@ -15,6 +15,7 @@ import {createPilotSessionJournal,pilotSessionJournalJson} from "./pilot-session
 import {buildPilotEvidenceReview,pilotEvidenceReviewJson} from "./pilot-evidence-review.js";
 import {buildPilotSupervisedReview,pilotSupervisedReviewJson,pilotSupervisedReviewText} from "./pilot-supervised-review.js";
 import {validatePilotExportJson,validatePilotHtmlHandoff} from "./pilot-export-integrity.js";
+import {createPilotComputationCache} from "./pilot-computation-cache.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -24,6 +25,8 @@ export function mountPilotControlCenter({getState}){
  let scenario=null,source=null,readiness=null,plan=null,risks=null,ledger=null;
  let rehearsed=[],drills=null,atlasReport=null,atlasModule=null,atlasGeneration=0;
  const sessionJournal=createPilotSessionJournal();
+ const workCache=createPilotComputationCache();
+ let prepared=null;
  const set=(id,value)=>{$(id).textContent=String(value);};
  const el=(tag,txt,className)=>{
   const node=document.createElement(tag);
@@ -47,6 +50,9 @@ export function mountPilotControlCenter({getState}){
   const state=getState();
   if(!state?.result||!state.scenario||typeof state.source!=="string")
    throw Error("Vuelve a ejecutar la muestra actual.");
+  workCache.setSource(state.scenario,state.source,state.result);
+  if(prepared&&prepared.scenario===state.scenario&&
+     prepared.source===state.source&&prepared.result===state.result)return;
   if(scenario!==state.scenario||source!==state.source){
    rehearsed=[];drills=null;
    sessionJournal.clear();drawSessionJournal();
@@ -56,12 +62,14 @@ export function mountPilotControlCenter({getState}){
   plan=createPilotExecutionPlan(readiness);
   risks=buildPilotRiskRegister(readiness,plan);
   ledger=buildPilotEvidenceLedger(plan,risks);
+  prepared={scenario,source,result:state.result};
  }
  function paint(){
   const coverage=simulateEvidenceCoverage(ledger,rehearsed);
-  const capacity=buildPilotCapacityExplorer(readiness,Number($("pilotCapacityRoleLimit").value));
+  const roleLimit=Number($("pilotCapacityRoleLimit").value);
+  const capacity=workCache.capacity(roleLimit,()=>buildPilotCapacityExplorer(readiness,roleLimit));
   const authorization=buildPilotAuthorizationBoard({readiness,plan,risks,ledger,drills});
-  const stress=buildPilotStressMatrix(readiness);
+  const stress=workCache.stress(()=>buildPilotStressMatrix(readiness));
   const guided=buildPilotGuidedRoute(readiness,plan,ledger,coverage,drills);
   const evidenceReview=buildPilotEvidenceReview(plan,ledger,risks,coverage);
   const finalReview=buildPilotSupervisedReview({
@@ -481,6 +489,7 @@ export function mountPilotControlCenter({getState}){
   sync,close,clear(){
    sectionNavigation.reset();
    rehearsed=[];drills=null;scenario=null;source=null;
+   prepared=null;workCache.clear();
    sessionJournal.clear();drawSessionJournal();
    readiness=null;plan=null;risks=null;ledger=null;
    root.hidden=true;
