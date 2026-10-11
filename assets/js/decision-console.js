@@ -90,6 +90,10 @@ export function mountDecisionConsole({getState,openEditor}){
   container.replaceChildren(fragment);
  }
  const controller={
+  reviewSummary(type,source){
+   if(!ledger||type!==currentScenario||source!==currentSource)return null;
+   return ledger.summary();
+  },
   sync(type,source,result){
    if(!result)return;
    if(type!==currentScenario||source!==currentSource){
