@@ -5,7 +5,7 @@ import {SCENARIOS,runWorkflow} from "./workflow-engine.js";
 import {analyzeWorkflow} from "./workflow-insights.js";
 
 export const SCENARIO_PRESETS=Object.freeze({
- base:Object.freeze({orders:Object.freeze({reviewBelow:0}),support:Object.freeze({escalateMedium:false}),data:Object.freeze({reviewAbove:5000})}),
+ base:Object.freeze({orders:Object.freeze({reviewBelow:0}),support:Object.freeze({escalateMedium:false}),data:Object.freeze({reviewAbove:0})}),
  cautious:Object.freeze({orders:Object.freeze({reviewBelow:500}),support:Object.freeze({escalateMedium:true}),data:Object.freeze({reviewAbove:350})}),
  strict:Object.freeze({orders:Object.freeze({reviewBelow:1000}),support:Object.freeze({escalateMedium:true}),data:Object.freeze({reviewAbove:200})})
 });
@@ -41,7 +41,7 @@ function eligible(type,row,settings){
  if(type==="orders")return numeric(row.values.total)<settings.reviewBelow;
  if(type==="support")return row.values.prioridad.trim().toLocaleLowerCase("es-ES")==="media"&&
   row.values.estado.trim().toLocaleLowerCase("es-ES")==="abierto"&&settings.escalateMedium;
- return numeric(row.values.valor)>settings.reviewAbove;
+ return settings.reviewAbove>0&&numeric(row.values.valor)>settings.reviewAbove;
 }
 export function simulateCandidate(type,source,input){
  const settings=normalizeScenarioSettings(type,input);
