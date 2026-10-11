@@ -11,6 +11,7 @@ import {buildPilotHandoffPack,pilotHandoffHtml,pilotHandoffTxt} from "./pilot-ha
 import {buildPilotStressMatrix,pilotStressMatrixJson} from "./pilot-stress-matrix.js";
 import {mountPilotSectionNavigation} from "./pilot-section-navigation.js";
 import {buildPilotGuidedRoute,guidedRouteJson} from "./pilot-guided-route.js";
+import {createPilotSessionJournal,pilotSessionJournalJson} from "./pilot-session-journal.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
@@ -19,6 +20,7 @@ export function mountPilotControlCenter({getState}){
  const sectionNavigation=mountPilotSectionNavigation(root);
  let scenario=null,source=null,readiness=null,plan=null,risks=null,ledger=null;
  let rehearsed=[],drills=null,atlasReport=null,atlasModule=null,atlasGeneration=0;
+ const sessionJournal=createPilotSessionJournal();
  const set=(id,value)=>{$(id).textContent=String(value);};
  const el=(tag,txt,className)=>{
   const node=document.createElement(tag);
@@ -26,12 +28,25 @@ export function mountPilotControlCenter({getState}){
   if(className)node.className=className;
   return node;
  };
+ const drawSessionJournal=()=>{
+  const snapshot=sessionJournal.snapshot();
+  const fragment=document.createDocumentFragment();
+  for(const entry of snapshot.entries){
+   const li=el("li",entry.sequence+". "+entry.label);
+   fragment.append(li);
+  }
+  $("pilotSessionAuditEntries").replaceChildren(fragment);
+  set("pilotSessionAuditCount",snapshot.visible+" acciones locales visibles; "+
+    snapshot.discarded+" descartadas por el límite de "+32+".");
+ };
+ const remember=type=>{sessionJournal.add(type);drawSessionJournal();};
  function rebuild(){
   const state=getState();
   if(!state?.result||!state.scenario||typeof state.source!=="string")
    throw Error("Vuelve a ejecutar la muestra actual.");
   if(scenario!==state.scenario||source!==state.source){
    rehearsed=[];drills=null;
+   sessionJournal.clear();drawSessionJournal();
    scenario=state.scenario;source=state.source;
   }
   readiness=assessPilotReadiness(scenario,source,state.result);
@@ -187,7 +202,7 @@ export function mountPilotControlCenter({getState}){
  $("pilotGuidedList").addEventListener("click",event=>{
   const button=event.target.closest("button[data-pilot-route-target]");
   if(!button||button.disabled||!ledger)return;
-  try{sectionNavigation.selectById(button.dataset.pilotRouteTarget);}
+  try{sectionNavigation.selectById(button.dataset.pilotRouteTarget);remember("route_navigation");}
   catch(error){set("pilotGuidedStatus","No se puede navegar: "+error.message);}
  });
  $("pilotGuidedExport").addEventListener("click",()=>{
@@ -202,14 +217,15 @@ export function mountPilotControlCenter({getState}){
    document.body.append(a);a.click();a.remove();
    setTimeout(()=>URL.revokeObjectURL(url),2500);
    set("pilotGuidedStatus","Ruta agregada descargada. Sin filas ni autorizaciones reales.");
+   remember("route_export");
   }catch(error){set("pilotGuidedStatus","Ruta no exportable: "+error.message);}
  });
  $("pilotStressFilter").addEventListener("change",()=>{if(ledger)paint();});
  $("pilotCapacityRoleLimit").addEventListener("change",()=>{
-  if(ledger)paint();
+  if(ledger){paint();remember("capacity_change");}
  });
  $("pilotControlFilter").addEventListener("change",()=>{
-  if(ledger)paint();
+  if(ledger){paint();remember("severity_filter");}
  });
  $("pilotControlChecklist").addEventListener("change",event=>{
   const input=event.target.closest("input[data-evidence-id]");
@@ -218,13 +234,14 @@ export function mountPilotControlCenter({getState}){
   const next=input.checked?[...rehearsed,id]:rehearsed.filter(value=>value!==id);
   try{
    simulateEvidenceCoverage(ledger,next);rehearsed=next;paint();
+   remember(input.checked?"evidence_mark":"evidence_unmark");
   }catch(error){
    input.checked=!input.checked;
    set("pilotControlStatus","No se puede ensayar esta evidencia: "+error.message);
   }
  });
  $("pilotControlRun").addEventListener("click",()=>{
-  try{rebuild();drills=runPilotFailureDrills(readiness,plan,risks,ledger);paint();}
+  try{rebuild();drills=runPilotFailureDrills(readiness,plan,risks,ledger);paint();remember("drill_run");}
   catch(error){set("pilotControlStatus","Ensayo interrumpido: "+error.message);}
  });
  $("pilotControlExport").addEventListener("click",()=>{
@@ -247,6 +264,7 @@ export function mountPilotControlCenter({getState}){
    document.body.append(a);a.click();a.remove();
    setTimeout(()=>URL.revokeObjectURL(url),2500);
    set("pilotControlStatus","Informe agregado exportado. Sin filas, correos, notas ni aprobaciones reales.");
+   remember("report_export");
   }catch(error){set("pilotControlStatus","Exportación rechazada: "+error.message);}
  });
  const exportHandoff=(format,extension,mime)=>{
@@ -262,6 +280,7 @@ export function mountPilotControlCenter({getState}){
    link.download="revops-revision-piloto-"+scenario+"."+extension;
    document.body.append(link);link.click();link.remove();
    setTimeout(()=>URL.revokeObjectURL(url),2500);
+   remember("handoff_export");
    set("pilotHandoffStatus","Informe "+extension.toUpperCase()+
     " generado sin datos de filas, firmas ni autorizaciones reales.");
   }catch(error){set("pilotHandoffStatus","No se puede exportar: "+error.message);}
@@ -300,7 +319,7 @@ export function mountPilotControlCenter({getState}){
    atlasModule=module;
    const report=module.runPilotValidationAtlas();
    if(generation!==atlasGeneration)return;
-   atlasReport=report;drawAtlas(report);
+   atlasReport=report;drawAtlas(report);remember("atlas_run");
   }catch(error){
    if(generation===atlasGeneration){
     atlasReport=null;
@@ -319,14 +338,26 @@ export function mountPilotControlCenter({getState}){
    a.href=url;a.download="revops-validacion-sintetica-pr90."+extension;
    document.body.append(a);a.click();a.remove();
    setTimeout(()=>URL.revokeObjectURL(url),2500);
+   remember("atlas_export");
    set("pilotAtlasStatus","Informe "+extension.toUpperCase()+
     " descargado. Todas las pruebas son locales y sintéticas; no existe autorización real.");
   }catch(error){set("pilotAtlasStatus","No se pudo descargar el atlas: "+error.message);}
  };
  $("pilotAtlasExportJson").addEventListener("click",()=>saveAtlas("json","application/json;charset=utf-8","json"));
  $("pilotAtlasExportTxt").addEventListener("click",()=>saveAtlas("txt","text/plain;charset=utf-8","txt"));
+ $("pilotSessionAuditExport").addEventListener("click",()=>{
+  try{
+   const payload=pilotSessionJournalJson(sessionJournal.snapshot());
+   const url=URL.createObjectURL(new Blob([payload],{type:"application/json;charset=utf-8"}));
+   const link=document.createElement("a");link.href=url;
+   link.download="revops-eventos-locales.json";
+   document.body.append(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2500);
+  }catch(error){set("pilotSessionAuditCount","No se puede exportar el historial: "+error.message);}
+ });
+ $("pilotSessionAuditClear").addEventListener("click",()=>{sessionJournal.clear();drawSessionJournal();});
  $("pilotControlReset").addEventListener("click",()=>{
-  rehearsed=[];drills=null;if(ledger)paint();
+  rehearsed=[];drills=null;if(ledger){paint();remember("reset");}
   set("pilotControlStatus","Ensayos reiniciados. Los requisitos externos siguen pendientes.");
  });
  const close=()=>{
@@ -338,6 +369,7 @@ export function mountPilotControlCenter({getState}){
   sync,close,clear(){
    sectionNavigation.reset();
    rehearsed=[];drills=null;scenario=null;source=null;
+   sessionJournal.clear();drawSessionJournal();
    readiness=null;plan=null;risks=null;ledger=null;
    root.hidden=true;
    $("pilotControlOpen").setAttribute("aria-expanded","false");
