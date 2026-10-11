@@ -1,4 +1,5 @@
 import {evaluatePolicy} from "./workflow-policy.js";
+import {secureCsvCell,validateTextBoundary} from "./privacy-security.js";
 // RevOps Studio · local, deterministic workflow simulator, NOT connected to real CRMs.
 // All input stays in this tab; the engine does not depend on browser APIs.
 export const SCENARIOS=Object.freeze({
@@ -56,7 +57,7 @@ const idField={orders:"pedido",support:"ticket",data:"registro"};
 
 export function parseDelimited(source){
   if(typeof source!=="string" || source.length>MAX_CHARS)throw Error("Máximo 12.000 caracteres por ejecución.");
-  const text=source.replace(/^\uFEFF/,"").trim();
+  const text=validateTextBoundary(source.replace(/^\uFEFF/,"")).trim();
   if(!text)throw Error("Pega una cabecera y al menos una fila.");
   // Detect semicolon vs comma in header, respecting quoted values.
   const headerLine=text.split(/\r?\n/)[0];
@@ -92,6 +93,9 @@ export function parseDelimited(source){
   if(cells.some(c=>normalize(c)!==""))records.push(cells);
   if(records.length>LINE_LIMIT+1)throw Error("Máximo 80 registros por ejecución.");
   if(records.length<2)throw Error("Es necesaria la cabecera y al menos un registro.");
+  if(records[0].length>24)throw Error("Máximo 24 columnas por importación.");
+  if(records[0].some(c=>c.length>128))throw Error("Los nombres de columnas no pueden superar 128 caracteres.");
+  if(records.some(row=>row.some(c=>c.length>400)))throw Error("Cada celda admite un máximo de 400 caracteres.");
   const headers=records[0].map(key);
   if(headers.length!==new Set(headers).size)throw Error("Hay nombres de columnas repetidos.");
   const data=records.slice(1);
@@ -129,12 +133,8 @@ export function runWorkflow(type,source){
       {name:"Salida",count:counts.listo,detail:"Preparados; no enviados a sistemas reales"}
     ]};
 }
-function csvCell(value){
-  const raw=String(value??"");
-  // Prevent spreadsheet formula injection when users open exports in Excel/Sheets.
-  const safe=/^[\s]*[=+\-@\t\r]/.test(raw)?"'"+raw:raw;
-  return '"'+safe.replace(/"/g,'""')+'"';
-}
+const csvCell=secureCsvCell;
+
 export function exportResultCsv(result){
   if(!result?.rows)throw Error("Ejecuta el proceso primero.");
   const names=["fila",...result.columns,"resultado","motivo","acción"];
