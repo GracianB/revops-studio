@@ -24,7 +24,7 @@ let scenario=allowed.includes(query)?query:"orders";
 let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let correctionTimeline=null, editPreview=null, editorTrigger=null, editorDirty=false;
-let decisionConsole=null,candidateConsole=null,reportConsole=null,pilotConsole=null;
+let decisionConsole=null,candidateConsole=null,reportConsole=null,pilotConsole=null,pilotPlanConsole=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
@@ -40,8 +40,10 @@ function errorText(message){
 function invalidate(message){
   latest=null;baseline=null;evidence=null;qualityBaseline=null;qualityCurrent=null;qualityEvidence=null;
   correctionTimeline=null;editPreview=null;
-  decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();
+  decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();
   $("pilotStudio").hidden=true;$("pilotOpen").disabled=true;
+  $("pilotPlanStudio").hidden=true;$("pilotPlanOpen").disabled=true;
+  $("pilotPlanOpen").setAttribute("aria-expanded","false");
   $("pilotOpen").setAttribute("aria-expanded","false");
   $("privacyInspect").disabled=true;
   $("privacyClearConfirm").hidden=true;
@@ -656,6 +658,8 @@ function render(result){
   $("candidateOpen").disabled=false;
   $("reportOpen").disabled=false;
   $("pilotOpen").disabled=false;
+  $("pilotPlanOpen").disabled=false;
+  if(pilotPlanConsole&&!$("pilotPlanStudio").hidden)pilotPlanConsole.sync();
   if(pilotConsole&&!$("pilotStudio").hidden)pilotConsole.sync();
   if(reportConsole&&!$("reportStudio").hidden)reportConsole.sync();
   if(candidateConsole&&!$("candidateStudio").hidden)candidateConsole.sync();
@@ -1184,7 +1188,7 @@ $("privacyClearConfirmButton").addEventListener("click",()=>{
  let store=null;
  try{store=sessionStorage;}catch{}
  const summary=clearRevopsSession(store);
- decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();
+ decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();
  $("importAuditFindings").replaceChildren();
  setText("importAuditTitle","Sin importación pendiente");
  setText("importAuditSummary","Historial de importaciones de esta demo limpiado.");
@@ -1206,6 +1210,22 @@ $("privacyClearConfirmButton").addEventListener("click",()=>{
    "Preferencias de RevOps eliminadas ("+summary.cleared+" claves).")+
   " Los ejemplos ficticios se han restaurado. Las descargas anteriores y el portapapeles no pueden revocarse.");
  announceWorkbench("Sesión de trabajo limpiada; ejemplos ficticios restaurados.");
+});
+$("pilotPlanOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(pilotPlanConsole)pilotPlanConsole.sync();
+  else{
+   const module=await import("./pilot-plan-console.js");
+   if(!latest)return;
+   pilotPlanConsole=module.mountPilotPlanConsole({
+    getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null,
+    onReview:()=>$("pilotOpen").click()
+   });
+  }
+  $("pilotPlanStudio").scrollIntoView({block:"start",behavior:"instant"});
+  focusHeading(document,"pilotPlanStudio","pilotPlanStudioTitle");
+ }catch(error){errorText("No se pudo crear el plan supervisado: "+(error?.message||"entrada inválida"));}
 });
 $("pilotOpen").addEventListener("click",async()=>{
  if(!latest)return;
@@ -1350,6 +1370,7 @@ installAccessibleNavigation({
   // Editor and mapping preserve their existing Escape/focus recovery handlers.
   if(!$("columnMapper").hidden||!$("workflowEditForm").hidden)return false;
   for(const [panel,close] of [
+   ["pilotPlanStudio","pilotPlanClose"],
    ["pilotStudio","pilotClose"],
    ["reportStudio","reportClose"],
    ["candidateStudio","candidateClose"],
