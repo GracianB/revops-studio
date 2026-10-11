@@ -849,6 +849,16 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotAuthorizationGates li").count(),8);
   assert.match(await page.locator("#pilotAuthorizationOutcome").innerText(),/NO AUTORIZADO PARA PRODUCCIÓN/);
   assert.ok(await page.locator("#pilotAuthorizationNext li").count()>0);
+  assert.equal(await page.locator("#pilotStressRows tr").count(),6);
+  assert.match(await page.locator("#pilotStressCurrent").innerText(),/Muestra actual:/);
+  const originalSource=await page.locator("#workflowSource").inputValue();
+  await page.locator("#pilotStressFilter").selectOption("clear");
+  assert.ok(await page.locator("#pilotStressRows tr").count()>=1);
+  await page.locator("#pilotStressFilter").selectOption("issues");
+  assert.ok(await page.locator("#pilotStressRows tr").count()>=1);
+  await page.locator("#pilotStressFilter").selectOption("all");
+  assert.equal(await page.locator("#pilotStressRows tr").count(),6);
+  assert.equal(await page.locator("#workflowSource").inputValue(),originalSource,"PR89 must not overwrite the live CSV");
   assert.match(await page.locator("#pilotAuthorizationChecklist").innerText(),/sin verificación real/);
   assert.equal(await page.locator("#pilotCapacityRoleLimit").inputValue(),"1");
   const before=await page.locator("#pilotCapacityRows").innerText();
@@ -871,6 +881,10 @@ async function auditPilotControlCenter(browser){
   assert.equal(parsed.authorization.schema,"revops-pilot-authorization-v1");
   assert.equal(parsed.authorization.productionGo,false);
   assert.equal(parsed.authorization.gates.length,8);
+  assert.equal(parsed.stress.schema,"revops-pilot-stress-v1");
+  assert.equal(parsed.stress.samples.length,6);
+  assert.equal(parsed.stress.syntheticOnly,true);
+  assert.equal(parsed.stress.realApprovals,0);
   assert.equal(parsed.authorization.realApprovals,0);
   assert.ok(parsed.capacity.criticalPath.tasks.includes("SIGNOFF"));
   assert.doesNotMatch(exported,/PED-101|norte@ejemplo\.test|Tienda Norte/);
