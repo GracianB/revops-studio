@@ -808,11 +808,11 @@ async function auditPilotReadiness(browser){
   await page.goto(base+"/demo.html?scenario=support&view=advanced",{waitUntil:"load"});
   await page.locator("#pilotOpen").click();
   await page.locator("#pilotStudio").waitFor({state:"visible"});
-  await page.locator("#pilotOutcome").getByText("requiere correcciones",{exact:false}).waitFor({state:"visible"});
+  await page.waitForFunction(()=>document.querySelector("#pilotOutcome")?.textContent?.includes("requiere correcciones"));
   await page.goto(base+"/demo.html?scenario=data&view=advanced",{waitUntil:"load"});
   await page.locator("#pilotOpen").click();
   await page.locator("#pilotStudio").waitFor({state:"visible"});
-  await page.locator("#pilotOutcome").getByText("requiere correcciones",{exact:false}).waitFor({state:"visible"});
+  await page.waitForFunction(()=>document.querySelector("#pilotOutcome")?.textContent?.includes("requiere correcciones"));
   assert.ok(requests.some(url=>url.includes("/pilot-console.js")),"lazy-loaded advanced module");
   assert.deepEqual(errors,[],"PR80 browser errors");
   console.log("PR80 PILOT READINESS PASS ("+engineName+"): 8 real gates, 3 workflows, remediation, clean baseline, evidence privacy, reset, axe, 320px");
