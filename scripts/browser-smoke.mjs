@@ -217,6 +217,85 @@ async function auditDiscoveryStudio(browser) {
  }finally{await page.close();}
 }
 
+async function auditCorrectionWorkbench(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce"});
+ const errors=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  await page.locator("#qualityCockpit").waitFor({state:"visible"});
+  assert.equal(await page.locator("#correctionHistorySteps button").count(),1);
+  assert.equal(await page.locator("#undoCorrection").isDisabled(),true);
+  const first=page.locator(".workbench-row-edit").nth(2);
+  await first.click();
+  assert.equal(await page.locator("#saveWorkflowEdit").isDisabled(),true);
+  assert.match(await page.locator("#editPreviewStatus").innerText(),/Sin cambios/);
+  await page.locator('#workflowEditFields input[name="pedido"]').fill("PED-900");
+  assert.equal(await page.locator("#saveWorkflowEdit").isEnabled(),true);
+  assert.match(await page.locator("#editPreviewStatus").innerText(),/bloqueado → listo/);
+  assert.match(await page.locator("#editPreviewImpact").innerText(),/-1 bloqueos/);
+  assert.match(await page.locator("#editPreviewDiff").innerText(),/PED-101/);
+  await page.locator("#editNextIssue").click();
+  assert.match(await page.locator("#editDirtyStatus").innerText(),/Primero guarda o cancela/);
+  assert.match(await page.locator("#workbench-edit-title").innerText(),/PED-101/);
+  await page.locator("#saveWorkflowEdit").click();
+  assert.equal(await page.locator("#countBlocked").innerText(),"1");
+  assert.equal(await page.locator("#correctionHistorySteps button").count(),2);
+  assert.equal(await page.locator("#undoCorrection").isEnabled(),true);
+  await page.locator(".workbench-row-edit").nth(3).click();
+  await page.locator('#workflowEditFields input[name="email"]').fill("nuevo@ejemplo.test");
+  assert.match(await page.locator("#editPreviewStatus").innerText(),/bloqueado → listo/);
+  await page.locator("#saveWorkflowEdit").click();
+  assert.equal(await page.locator("#countBlocked").innerText(),"0");
+  assert.equal(await page.locator("#correctionHistorySteps button").count(),3);
+  await page.locator("#undoCorrection").click();
+  assert.equal(await page.locator("#countBlocked").innerText(),"1");
+  await page.locator("#undoCorrection").click();
+  assert.equal(await page.locator("#countBlocked").innerText(),"2");
+  assert.equal(await page.locator("#undoCorrection").isDisabled(),true);
+  await page.locator("#redoCorrection").click();
+  await page.locator("#redoCorrection").click();
+  assert.equal(await page.locator("#countBlocked").innerText(),"0");
+  assert.equal(await page.locator("#redoCorrection").isDisabled(),true);
+  await page.locator("#correctionHistorySteps button").nth(1).click();
+  assert.equal(await page.locator("#countBlocked").innerText(),"1");
+  assert.equal(await page.locator("#redoCorrection").isEnabled(),true);
+  await page.locator(".workbench-row-edit").nth(3).click();
+  await page.locator('#workflowEditFields input[name="email"]').fill("alternativa@ejemplo.test");
+  await page.locator("#saveWorkflowEdit").click();
+  assert.equal(await page.locator("#redoCorrection").isDisabled(),true);
+  assert.equal(await page.locator("#correctionHistorySteps button").count(),3);
+  // Presets must not serialize user search or imported data.
+  await page.locator("#workflowSearch").fill("PED-900-personal");
+  await page.locator("#workbenchViewPreset").selectOption("errors");
+  assert.equal(await page.locator("#workflowSearch").inputValue(),"");
+  assert.equal(await page.locator("#workflowSort").inputValue(),"risk");
+  assert.equal(await page.locator("#workbenchShowAction").isChecked(),false);
+  await page.locator("#workbenchDensity").selectOption("compact");
+  await page.locator("#workbenchSaveView").click();
+  const saved=await page.evaluate(()=>sessionStorage.getItem("revops-studio:p74:view-v1"));
+  assert.deepEqual(Object.keys(JSON.parse(saved)).sort(),["action","density","filter","reason","sort"]);
+  assert.doesNotMatch(saved,/PED-900|@ejemplo|personal|norte|Tienda/);
+  await page.locator("#workbenchViewPreset").selectOption("all");
+  await page.locator("#workbenchRestoreView").click();
+  assert.equal(await page.locator("#workbenchDensity").inputValue(),"compact");
+  assert.equal(await page.locator("#workbenchShowAction").isChecked(),false);
+  await page.locator("#workbenchClearView").click();
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem("revops-studio:p74:view-v1")),null);
+  await page.locator("#workbenchViewPreset").selectOption("all");
+  await page.locator(".workbench-row-edit").first().click();
+  await page.locator("#cancelWorkflowEdit").click();
+  assert.equal(await page.evaluate(()=>document.activeElement?.classList.contains("workbench-row-edit")),true);
+  await page.setViewportSize({width:320,height:760});
+  const dims=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(dims.scroll<=dims.viewport+3,"PR74 mobile overflow "+JSON.stringify(dims));
+  assert.equal(await page.locator(".workbench-table thead").count(),1);
+  assert.equal(await page.locator(".workbench-row").first().evaluate(el=>getComputedStyle(el).display),"grid");
+  assert.deepEqual(errors,[],"PR74 JS runtime errors");
+  console.log("PR74 CORRECTION WORKBENCH PASS ("+engineName+"): live preview, multi undo/redo, branches, privacy views, mobile cards");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -575,6 +654,7 @@ try {
   await auditDiscoveryStudio(browser);
   await auditClientFirstVisit(browser);
   await auditProductWorkbench(browser);
+  await auditCorrectionWorkbench(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
