@@ -741,6 +741,82 @@ async function auditPrivacySecurity(browser){
  }finally{await page.close();}
 }
 
+async function auditPilotReadiness(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true,reducedMotion:"reduce"});
+ const errors=[],requests=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ page.on("request",request=>requests.push(request.url()));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  assert.equal(await page.locator("#pilotStudio").isHidden(),true);
+  assert.equal(requests.some(url=>url.includes("/pilot-console.js")),false);
+  await page.locator("#pilotOpen").click();
+  await page.locator("#pilotStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#pilotOpen").getAttribute("aria-expanded"),"true");
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotStudioTitle");
+  assert.match(await page.locator("#pilotOutcome").innerText(),/requiere correcciones/);
+  assert.equal(await page.locator("#pilotBlockers").innerText(),"1");
+  assert.equal(await page.locator("#pilotChecks li").count(),8);
+  assert.match(await page.locator("#pilotChecks [data-state='blocked']").innerText(),/PIL-02/);
+  assert.match(await page.locator("#pilotChecks").innerText(),/PIL-08/);
+  await page.locator("#pilotChecks button[data-pilot-action='blockers']").click();
+  assert.equal(await page.locator("#workflowEditForm").isVisible(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("name")),"pedido");
+  await page.locator("#cancelWorkflowEdit").click();
+  const txtPromise=page.waitForEvent("download");
+  await page.locator("#pilotExportTxt").click();
+  const txtFile=await txtPromise;
+  assert.match(txtFile.suggestedFilename(),/revops-evaluacion-piloto-orders\.txt/);
+  const body=await readFile(await txtFile.path(),"utf8");
+  assert.match(body,/DEMO LOCAL, NO AUTORIZACIÓN NI CERTIFICACIÓN/);
+  assert.match(body,/Acciones externas ejecutadas: 0/);
+  assert.doesNotMatch(body,/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  const jsonPromise=page.waitForEvent("download");
+  await page.locator("#pilotExportJson").click();
+  const jsonFile=await jsonPromise;
+  const json=JSON.parse(await readFile(await jsonFile.path(),"utf8"));
+  assert.equal(json.schema,"revops-pilot-readiness-v1");
+  assert.equal(json.checks.length,8);
+  assert.equal(json.suitableForSupervisedDemo,false);
+  assert.doesNotMatch(JSON.stringify(json),/PED-101|norte@ejemplo\.test|Tienda Norte/);
+  await page.locator("#pilotClose").click();
+  assert.equal(await page.locator("#pilotStudio").isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotOpen");
+  // Reusing the app's existing guided presets changes genuine engine results.
+  await page.locator("#workflowRecipe").selectOption("clear");
+  await page.locator("#loadWorkflowRecipe").click();
+  assert.equal(await page.locator("#countBlocked").innerText(),"0");
+  assert.equal(await page.locator("#countReview").innerText(),"0");
+  await page.locator("#pilotOpen").click();
+  await page.locator("#pilotStudio").waitFor({state:"visible"});
+  assert.match(await page.locator("#pilotOutcome").innerText(),/muestra apta para ensayo supervisado/);
+  assert.equal(await page.locator("#pilotPassed").innerText(),"8");
+  assert.equal(await page.locator("#pilotWarnings").innerText(),"0");
+  assert.equal(await page.locator("#pilotBlockers").innerText(),"0");
+  // Explicit invalidation forbids exporting a stale readiness certificate.
+  await page.locator("#workflowSource").fill("pedido;cliente;email;total;estado\nO1;;bad;1;nuevo");
+  assert.equal(await page.locator("#pilotStudio").isHidden(),true);
+  assert.equal(await page.locator("#pilotOpen").isDisabled(),true);
+  await page.locator("#runWorkflow").click();
+  await page.locator("#pilotOpen").click();
+  await page.locator("#pilotStudio").waitFor({state:"visible"});
+  assert.match(await page.locator("#pilotOutcome").innerText(),/requiere correcciones/);
+  await page.setViewportSize({width:320,height:760});
+  const d=await page.evaluate(()=>({w:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(d.scroll<=d.w+3,"PR80 320px overflow "+JSON.stringify(d));
+  await auditAccessibility(page,"PR80 pilot preflight open");
+  await page.goto(base+"/demo.html?scenario=support&view=advanced",{waitUntil:"load"});
+  await page.locator("#pilotOpen").click();
+  assert.match(await page.locator("#pilotOutcome").innerText(),/requiere correcciones/);
+  await page.goto(base+"/demo.html?scenario=data&view=advanced",{waitUntil:"load"});
+  await page.locator("#pilotOpen").click();
+  assert.match(await page.locator("#pilotOutcome").innerText(),/requiere correcciones/);
+  assert.ok(requests.some(url=>url.includes("/pilot-console.js")),"lazy-loaded advanced module");
+  assert.deepEqual(errors,[],"PR80 browser errors");
+  console.log("PR80 PILOT READINESS PASS ("+engineName+"): 8 real gates, 3 workflows, remediation, clean baseline, evidence privacy, reset, axe, 320px");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -1105,6 +1181,7 @@ try {
   await auditExecutivePdf(browser);
   await auditInclusiveWorkbench(browser);
   await auditPrivacySecurity(browser);
+  await auditPilotReadiness(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
