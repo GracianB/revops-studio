@@ -1,3 +1,4 @@
+import {evaluatePolicy} from "./workflow-policy.js";
 // RevOps Studio · local, deterministic workflow simulator, NOT connected to real CRMs.
 // All input stays in this tab; the engine does not depend on browser APIs.
 export const SCENARIOS=Object.freeze({
@@ -99,42 +100,6 @@ export function parseDelimited(source){
   }
   return {headers,rows:data.map((values,i)=>Object.fromEntries(headers.map((name,k)=>[name,normalize(values[k])]).concat([["_line",i+2]])))};
 }
-function validDate(input){
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(input))return false;
-  const date=new Date(input+"T00:00:00Z");
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0,10)===input;
-}
-function decimal(value){
-  const trimmed=normalize(value);
-  if(!/^-?\d+(?:[.,]\d{1,2})?$/.test(trimmed))return NaN;
-  return Number(trimmed.replace(",","."));
-}
-function classify(type,row){
-  if(type==="orders"){
-    if(!row.cliente)return BLOCKED("Falta el cliente");
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email))return BLOCKED("Email incompleto o inválido");
-    const amount=decimal(row.total);
-    if(!Number.isFinite(amount) || amount<=0)return BLOCKED("Total no válido o no positivo");
-    if(!["nuevo","revisar","cerrado"].includes(key(row.estado)))return BLOCKED("Estado de pedido desconocido");
-    if(key(row.estado)==="revisar")return REVIEW("Marcado para revisión por origen");
-    if(key(row.estado)==="cerrado")return READY("Pedido cerrado; no debe reabrirse","Conservar como histórico");
-    return READY("Pedido listo tras validación","Preparar actualización de CRM");
-  }
-  if(type==="support"){
-    if(!row.asunto)return BLOCKED("Falta el asunto de la incidencia");
-    if(!["alta","media","baja"].includes(key(row.prioridad)))return BLOCKED("Prioridad desconocida");
-    if(!["abierto","cerrado"].includes(key(row.estado)))return BLOCKED("Estado de ticket desconocido");
-    if(key(row.estado)==="cerrado")return READY("Incidencia ya cerrada","Conservar en histórico");
-    if(key(row.prioridad)==="alta")return REVIEW("Prioridad alta: necesita criterio humano");
-    return READY("Incidencia válida","Asignar a cola de soporte");
-  }
-  if(!row.fuente)return BLOCKED("Falta fuente");
-  if(!validDate(row.fecha))return BLOCKED("Fecha inválida; utiliza AAAA-MM-DD");
-  const number=decimal(row.valor);
-  if(!Number.isFinite(number))return BLOCKED("Valor numérico incorrecto");
-  if(number<0)return REVIEW("Valor negativo: confirmar con la fuente");
-  return READY("Registro consistente","Preparar dataset conciliado");
-}
 
 export function runWorkflow(type,source){
   const config=SCENARIOS[type];
@@ -147,9 +112,11 @@ export function runWorkflow(type,source){
   const rows=parsed.rows.map(row=>{
     const id=normalize(row[idField[type]]);
     let result;
-    if(!id)result=BLOCKED("Identificador vacío");
-    else if(seen.has(key(id)))result=BLOCKED("Duplicado: identificador ya procesado");
-    else{seen.add(key(id));result=classify(type,row);}
+    const duplicate=Boolean(id && seen.has(key(id)));
+    if(id)seen.add(key(id));
+    // The same catalog drives the normal engine and the auditable trace.
+    const decision=evaluatePolicy(type,row,{duplicate});
+    result={status:decision.status,reason:decision.reason,action:decision.action};
     return {line:row._line,id:id||"(sin ID)",values:Object.fromEntries(config.columns.map(col=>[col,row[col]])),...result};
   });
   const counts={total:rows.length,listo:0,revisar:0,bloqueado:0};
