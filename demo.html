@@ -328,6 +328,58 @@
           </section>
         </div>
       </section>
+      <button type="button" id="candidateOpen" class="btn btn-secondary workbench-p76-open" aria-controls="candidateStudio" aria-expanded="false">Probar otro escenario de reglas ↗</button>
+      <section id="candidateStudio" class="workbench-p76" aria-labelledby="candidateStudioTitle" hidden>
+        <div class="workbench-p76-head">
+          <div><span class="workbench-section-index">PR76 · SCENARIO BUILDER · SIN ACCIONES REALES</span>
+            <h3 id="candidateStudioTitle">¿Y si cambiamos el criterio?</h3>
+            <p>Ensaya una regla de revisión más cautelosa sobre el mismo conjunto. El original queda intacto: los candidatos nunca convierten errores o revisiones humanas en acciones listas.</p></div>
+          <button type="button" class="btn btn-secondary" id="candidateClose">Cerrar simulador</button>
+        </div>
+        <div class="workbench-p76-form">
+          <label for="candidatePreset">Punto de partida
+            <select id="candidatePreset">
+              <option value="base">Reglas originales · sin cambios</option>
+              <option value="cautious">Mayor revisión humana</option>
+              <option value="strict">Revisión más estricta</option>
+              <option value="custom">Umbral personalizado</option>
+            </select>
+          </label>
+          <label id="candidateAmountLabel" for="candidateThreshold">Umbral de revisión (0 = desactivado)
+            <input type="number" id="candidateThreshold" min="0" max="5000" step="1" value="0" inputmode="numeric">
+          </label>
+          <label id="candidateEscalateLabel" for="candidateEscalate" hidden><input id="candidateEscalate" type="checkbox"> Enviar tickets abiertos de prioridad media a revisión humana</label>
+          <div class="workbench-p76-form-actions">
+            <button type="button" id="candidateApply">Calcular candidato ↗</button>
+            <button type="button" id="candidateRollback">Volver a reglas originales ↶</button>
+          </div>
+        </div>
+        <p id="candidateControlExplain" class="workbench-p76-explain">Solo se modifican los criterios de revisión del candidato.</p>
+        <p id="candidateStatus" role="status" aria-live="polite">Abre la simulación para comparar.</p>
+        <div class="workbench-p76-stats" aria-label="Comparación del mismo conjunto, ninguna acción externa">
+          <div><small>Listos · original</small><strong id="candidateOriginalReady">0</strong></div>
+          <div><small>Listos · candidato</small><strong id="candidateNewReady">0</strong></div>
+          <div><small>Revisión · original</small><strong id="candidateOriginalReview">0</strong></div>
+          <div><small>Revisión · candidato</small><strong id="candidateNewReview">0</strong></div>
+        </div>
+        <section class="workbench-p76-impact" aria-labelledby="candidateImpactTitle">
+          <h4 id="candidateImpactTitle">Consecuencias de la variante</h4>
+          <p id="candidateDelta" role="status" aria-live="polite">Sin cambios calculados.</p>
+          <div id="candidateAffected" class="workbench-p76-affected"></div>
+          <p id="candidateSafety">Bloqueos, revisiones anteriores e históricos protegidos por contrato.</p>
+        </section>
+        <section class="workbench-p76-files" aria-labelledby="candidateTemplateTitle">
+          <h4 id="candidateTemplateTitle">Compartir la configuración, no los registros</h4>
+          <div class="workbench-p76-file-actions">
+            <button type="button" id="candidateExportTemplate">Descargar plantilla JSON sin datos ↧</button>
+            <label for="candidateImportTemplate">Abrir plantilla de este escenario (máximo 1,2 KB)
+              <input id="candidateImportTemplate" type="file" accept=".json,application/json"></label>
+            <button type="button" id="candidateDownloadReport">Informe agregado TXT ↧</button>
+          </div>
+          <p id="candidateTemplateStatus" role="status" aria-live="polite">Solo se pueden importar reglas acotadas del escenario actual.</p>
+        </section>
+        <p class="workbench-p76-limits">Simulación local: 0 conexiones CRM/ERP, 0 aprobaciones reales, 0 acciones ejecutadas. No se estiman ahorros, no se cambia la tabla original y las reglas imprescindibles no se pueden desactivar.</p>
+      </section>
       <div class="workbench-insight-note">Recomendaciones basadas en las reglas visibles de esta demo. No se comprueban fuentes externas ni se calculan ahorros.</div>
     </section>
     <section class="workbench-rows" aria-labelledby="workbench-table-title">
