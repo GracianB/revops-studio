@@ -54,6 +54,18 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      - name: V100 five-surface usability structure audit
+        run: node scripts/ux-audit.mjs
+
+      - name: Archive V100 UX audit observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-v100-ux-audit-${{ github.run_id }}
+          path: .ci-artifacts/v100-ux-audit.json
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Install lightweight browser smoke dependency
         run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0 axe-core@4.10.3
 
