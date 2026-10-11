@@ -493,3 +493,31 @@ test("PR76 candidate studio is safe, reversible, lazy and does not mutate source
  assert.match(css,/\.workbench-p76-stats/);
  assert.match(css,/@media\(max-width:720px\)/);
 });
+
+
+test("PR77 genuine local PDF export is lazy and avoids HTML-as-PDF or private rows",()=>{
+ const pdf=file("assets/js/executive-pdf.js"),consoleUi=file("assets/js/report-console.js");
+ const ui=file("assets/js/workflow-demo.js"),sheet=file("assets/css/workflow-demo.css");
+ for(const id of ["reportStudioTitle","reportOpen","reportStudio","reportRows",
+  "reportReady","reportReview","reportBlocked","reportPdf","reportPrint",
+  "reportTxt","reportJson","reportStatus","reportClose","reportOutline"])
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(ui,/import\("\.\/report-console\.js"\)/);
+ assert.match(ui,/\$\("reportStudio"\)\.hidden=true/);
+ assert.match(ui,/reviewSummary:decisionConsole\?\.reviewSummary/);
+ assert.match(ui,/candidate:candidateConsole\?\.candidateSummary/);
+ assert.match(consoleUi,/generateReportPdf\(documentModel\)/);
+ assert.match(consoleUi,/type:"application\/pdf"/);
+ assert.match(consoleUi,/window\.open\("about:blank","_blank"\)/);
+ assert.match(consoleUi,/executiveReportJson\(documentModel\)/);
+ assert.match(pdf,/raw="%PDF-1\.4/);
+ assert.match(pdf,/\/MediaBox \[0 0 /);
+ assert.match(pdf,/\/BaseFont \/Helvetica-Bold/);
+ assert.match(pdf,/\/Encoding \/WinAnsiEncoding/);
+ assert.match(pdf,/startxref/);
+ assert.match(pdf,/realApprovals:0/);
+ assert.doesNotMatch(pdf,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.doesNotMatch(consoleUi,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.match(sheet,/\.workbench-p77-counters/);
+ assert.match(sheet,/@media\(max-width:520px\)/);
+});
