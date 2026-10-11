@@ -5,6 +5,7 @@ import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
 import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} from "./workflow-product-kit.js";
 import {createClientJourney} from "./client-journey.js";
 import {compareWorkflow,comparisonReport} from "./workflow-comparison.js";
+import {buildQualityCockpit,compareQualityCockpit,qualityCockpitReport} from "./quality-cockpit.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -17,7 +18,7 @@ const initialMode=urlParams.get("view")==="simple"?"simple":
   urlParams.has("scenario")?"advanced":"simple";
 let guide=null;
 let scenario=allowed.includes(query)?query:"orders";
-let latest=null, baseline=null, evidence=null;
+let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
@@ -30,8 +31,10 @@ function errorText(message){
   if(message)element.focus();
 }
 function invalidate(message){
-  latest=null;baseline=null;evidence=null;
+  latest=null;baseline=null;evidence=null;qualityBaseline=null;qualityCurrent=null;qualityEvidence=null;
   $("r2Evidence").hidden=true;
+  $("qualityCockpit").hidden=true;
+  $("qualityExport").disabled=true;
   $("r2Export").disabled=true;
   $("exportWorkflow").disabled=true;
   $("copyWorkflow").disabled=true;
@@ -365,7 +368,7 @@ function cell(tr,text,className){
   tr.append(td);return td;
 }
 function renderR2(result){
-  if(!baseline)baseline=result;
+  if(!baseline){baseline=result;qualityBaseline=null;}
   evidence=compareWorkflow(baseline,result);
   const a=evidence.before,b=evidence.after,d=evidence.delta;
   for(const [id,value] of Object.entries({
@@ -393,6 +396,70 @@ function renderR2(result){
   setText("r2Rules",evidence.rule+" "+evidence.limitation);
   $("r2Evidence").hidden=false;
   $("r2Export").disabled=!evidence.comparable;
+}
+
+function renderQualityCockpit(result){
+  const current=buildQualityCockpit(scenario,$("workflowSource").value,result);
+  if(!qualityBaseline)qualityBaseline=current;
+  qualityCurrent=current;
+  qualityEvidence=compareQualityCockpit(qualityBaseline,current);
+  const idCounts={
+    qualityUniqueIds:current.uniqueIds,qualityConflicts:current.flags.conflictingIds.count,
+    qualityExactDuplicates:current.flags.exactDuplicates.count,qualityOutliers:current.flags.outliers.count
+  };
+  for(const [name,value] of Object.entries(idCounts))setText(name,value);
+  const make=(name,content)=>{
+    const el=document.createElement(name);el.textContent=content;return el;
+  };
+  const columns=document.createDocumentFragment();
+  for(const [field,state] of Object.entries(current.blanks)){
+    const row=document.createElement("div");row.className="quality-cockpit-row";
+    row.append(make("strong",field),make("span",state.count+" vacío(s)"));
+    if(state.count){
+      const button=make("button","Abrir fila "+(state.indexes[0]+1)+" ↗");
+      button.type="button";button.dataset.qualityIndex=String(state.indexes[0]);row.append(button);
+    }
+    columns.append(row);
+  }
+  $("qualityColumnDetails").replaceChildren(columns);
+  const descriptions={
+    exactDuplicates:"Duplicados idénticos",conflictingIds:"Claves con información contradictoria",
+    invalidDates:"Fechas inválidas",invalidNumbers:"Valores numéricos inválidos",
+    negatives:"Importes negativos",outliers:"Candidatos a valor atípico",
+    blocked:"Registros bloqueados",reviewing:"Pendientes de revisión humana",
+    missing:"Filas con campos vacíos"
+  };
+  const issues=document.createDocumentFragment();
+  for(const [name,title] of Object.entries(descriptions)){
+    const state=current.flags[name];
+    if(!state.count)continue;
+    const button=make("button",title+" · "+state.count+" · revisar ↗");
+    button.type="button";button.dataset.qualityIndex=String(state.indexes[0]);
+    button.className="quality-cockpit-issue";
+    issues.append(button);
+  }
+  if(!issues.childNodes.length)issues.append(make("p","No se han detectado incidencias por estas reglas."));
+  $("qualityInvestigations").replaceChildren(issues);
+  const bands=document.createDocumentFragment();
+  for(const band of current.bands){
+    const row=document.createElement("div");row.className="quality-cockpit-band";
+    row.append(make("span",band.label),make("strong",String(band.count)));
+    bands.append(row);
+  }
+  if(!current.bands.length)bands.append(make("p","Este proceso no tiene un campo numérico de negocio."));
+  $("qualityNumericBands").replaceChildren(bands);
+  setText("qualityStatNote",current.stats.insufficient?
+    "Sin muestra o variación suficiente para detectar candidatos estadísticos. Se necesitan al menos cinco valores y dispersión.":
+    "Candidatos calculados con regla IQR (1,5 × rango intercuartílico); requieren verificación humana.");
+  const d=qualityEvidence.delta,sgn=n=>n>0?"+"+n:String(n);
+  setText("qualityDelta","Desde la primera ejecución: "+sgn(d.completeness)+" puntos de integridad, "+
+    sgn(d.missingCells)+" celdas vacías, "+sgn(d.conflictingIds)+" conflictos de ID, "+
+    sgn(d.blocked)+" bloqueos. Sin acciones externas.");
+  setText("qualityDominant",current.dominant?
+    "Bloqueo más repetido: "+current.dominant.reason+" ("+current.dominant.count+" registro(s)).":
+    "No hay bloqueos registrados en este conjunto.");
+  $("qualityCockpit").hidden=false;
+  $("qualityExport").disabled=false;
 }
 
 function render(result){
@@ -444,6 +511,7 @@ function render(result){
   guide?.sync(result);
   sortResults();
   renderQuality();
+  renderQualityCockpit(result);
   renderInsights(result);
   applyFilter();
   setText("workflowStatus",result.counts.total+" registros analizados. "+result.counts.listo+" listos, "+
@@ -858,6 +926,23 @@ $("r2Export").addEventListener("click",()=>{
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(uri),1000);
   setText("workflowStatus","Comparativa R2 descargada. Sin filas, contactos ni ejecución externa.");
+});
+$("qualityCockpit").addEventListener("click",event=>{
+  const button=event.target.closest("[data-quality-index]");
+  if(!button||!latest)return;
+  const index=Number(button.dataset.qualityIndex);
+  if(!Number.isInteger(index)||index<0||index>=latest.rows.length)return;
+  openEditor(index);
+});
+$("qualityExport").addEventListener("click",()=>{
+  if(!qualityCurrent||!qualityEvidence)return;
+  const report=qualityCockpitReport(qualityCurrent,qualityEvidence);
+  const href=URL.createObjectURL(new Blob([report],{type:"text/plain;charset=utf-8"}));
+  const link=document.createElement("a");link.href=href;
+  link.download="revops-calidad-pr73-"+scenario+".txt";
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),3000);
+  setText("workflowStatus","Informe agregado de calidad descargado. Sin filas, IDs, contactos ni envío externo.");
 });
 $("exportInsights").addEventListener("click",()=>{
   if(!latest)return;
