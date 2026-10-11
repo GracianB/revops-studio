@@ -121,8 +121,8 @@ async function auditCustomerDiagnostic(browser) {
     const r1Html=await readFile(await r1Download.path(),"utf8");
     assert.match(r1Html,/04 · Cómo aceptar el piloto/);
     assert.match(r1Html,/@media print/);
-    assert.match(r1Html,/4\\.000 €/);
-    assert.doesNotMatch(r1Html,/https?:\\/\\/|<script|FormSubmit|Plausible/i);
+    assert.match(r1Html,/4\.000 €/);
+    assert.doesNotMatch(r1Html,/https?:\/\/|<script|FormSubmit|Plausible/i);
     await page.locator("#diagToContact").click();
     assert.match(await page.locator("#diagnosticoBrief").inputValue(),/Ruta sugerida: Datos y BI/);
     assert.equal(await page.locator("#dolor").inputValue(),"Este texto lo he escrito yo y no se debe cambiar.");
