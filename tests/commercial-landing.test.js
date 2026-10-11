@@ -553,3 +553,40 @@ test("PR78 accessible workbench delivers focus, status, error and 400%-equivalen
  assert.match(css,/min-height:44px/);
  assert.doesNotMatch(a11y,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
 });
+
+
+test("PR79 privacy/security boundary scrubs only RevOps state and hardens all CSV outputs",()=>{
+ const privacy=file("assets/js/privacy-security.js");
+ const engine=file("assets/js/workflow-engine.js");
+ const ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ const report=file("assets/js/report-console.js");
+ const review=file("assets/js/decision-console.js");
+ const scenario=file("assets/js/scenario-console.js");
+ for(const id of ["privacyBoundary","privacyBoundaryTitle","privacyInspect",
+   "privacyRiskStatus","privacyClearOpen","privacyClearConfirm",
+   "privacyClearTitle","privacyClearCancel","privacyClearConfirmButton",
+   "privacyClearStatus"]){
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ }
+ assert.match(engine,/import \{secureCsvCell,validateTextBoundary\} from "\.\/privacy-security\.js"/);
+ assert.match(engine,/const csvCell=secureCsvCell/);
+ assert.match(engine,/Máximo 24 columnas por importación/);
+ assert.match(engine,/Cada celda admite un máximo de 400/);
+ assert.match(file("assets/js/import-contract.js"),/validateTextBoundary/);
+ assert.match(privacy,/REVOPS_SESSION_KEYS=Object\.freeze/);
+ assert.match(privacy,/RISK_LEADING=/);
+ assert.match(privacy,/EXAMPLE_SUFFIX=/);
+ assert.match(privacy,/fullCsvContainsRows:true/);
+ assert.match(privacy,/externallyTransmitted:0,telemetryRecorded:0/);
+ assert.match(ui,/decisionConsole\?\.clear\?\.\(\)/);
+ assert.match(ui,/clearRevopsSession\(store\)/);
+ assert.match(ui,/inspectDataExposure\(result\)/);
+ assert.match(ui,/chooseScenario\(scenario,true\)/);
+ assert.match(ui,/confirmPrivacyClear|privacyClearConfirmButton/);
+ assert.match(report,/documentModel=null/);
+ assert.match(review,/policy=null;ledger=null/);
+ assert.match(scenario,/current=null;source=null;type=null;settings=null/);
+ assert.match(css,/\.workbench-p79-privacy/);
+ assert.doesNotMatch(privacy,/fetch\(|XMLHttpRequest|navigator|localStorage/);
+});
