@@ -15,7 +15,7 @@ export function mountPilotControlCenter({getState}){
  const $=id=>document.getElementById(id);
  const root=$("pilotControlStudio");
  let scenario=null,source=null,readiness=null,plan=null,risks=null,ledger=null;
- let rehearsed=[],drills=null;
+ let rehearsed=[],drills=null,atlasReport=null,atlasModule=null,atlasGeneration=0;
  const set=(id,value)=>{$(id).textContent=String(value);};
  const el=(tag,txt,className)=>{
   const node=document.createElement(tag);
@@ -231,6 +231,59 @@ export function mountPilotControlCenter({getState}){
   exportHandoff(pilotHandoffTxt,"txt","text/plain;charset=utf-8"));
  $("pilotAuthorizationReadiness").addEventListener("click",()=>$("pilotOpen").click());
  $("pilotAuthorizationPlan").addEventListener("click",()=>$("pilotPlanOpen").click());
+ const drawAtlas=report=>{
+  set("pilotAtlasCases",report.fixtureCount);
+  set("pilotAtlasGates",report.gatesEvaluated);
+  set("pilotAtlasDrills",report.defensesRehearsed);
+  set("pilotAtlasIssues",report.fixtureFailures);
+  const fragment=document.createDocumentFragment();
+  for(const entry of report.results){
+   const li=el("li");
+   li.append(el("strong",entry.scenario+" · "+entry.label));
+   li.append(el("small",(entry.state==="pass"?"Invariantes locales correctos":"Revisión técnica requerida")+
+    " · "+entry.gatePasses+"/8 controles superados · defensas "+entry.drillsPassed+"/7"));
+   fragment.append(li);
+  }
+  $("pilotAtlasResults").replaceChildren(fragment);
+  set("pilotAtlasStatus",report.status+" No equivale a certificación ni autorización de producción.");
+  $("pilotAtlasExportJson").disabled=false;
+  $("pilotAtlasExportTxt").disabled=false;
+ };
+ $("pilotAtlasRun").addEventListener("click",async()=>{
+  const button=$("pilotAtlasRun"),generation=atlasGeneration;
+  button.disabled=true;
+  set("pilotAtlasStatus","Calculando pruebas funcionales locales...");
+  try{
+   const module=atlasModule||await import("./pilot-validation-atlas.js");
+   if(generation!==atlasGeneration)return;
+   atlasModule=module;
+   const report=module.runPilotValidationAtlas();
+   if(generation!==atlasGeneration)return;
+   atlasReport=report;drawAtlas(report);
+  }catch(error){
+   if(generation===atlasGeneration){
+    atlasReport=null;
+    $("pilotAtlasExportJson").disabled=true;$("pilotAtlasExportTxt").disabled=true;
+    set("pilotAtlasStatus","Validación no completada: "+error.message);
+   }
+  }finally{if(generation===atlasGeneration)button.disabled=false;}
+ });
+ const saveAtlas=(mode,mime,extension)=>{
+  if(!atlasReport||!atlasModule)return;
+  try{
+   const text=mode==="json"?atlasModule.pilotValidationAtlasJson(atlasReport):
+    atlasModule.pilotValidationAtlasText(atlasReport);
+   const url=URL.createObjectURL(new Blob([text],{type:mime}));
+   const a=document.createElement("a");
+   a.href=url;a.download="revops-validacion-sintetica-pr90."+extension;
+   document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2500);
+   set("pilotAtlasStatus","Informe "+extension.toUpperCase()+
+    " descargado. Todas las pruebas son locales y sintéticas; no existe autorización real.");
+  }catch(error){set("pilotAtlasStatus","No se pudo descargar el atlas: "+error.message);}
+ };
+ $("pilotAtlasExportJson").addEventListener("click",()=>saveAtlas("json","application/json;charset=utf-8","json"));
+ $("pilotAtlasExportTxt").addEventListener("click",()=>saveAtlas("txt","text/plain;charset=utf-8","txt"));
  $("pilotControlReset").addEventListener("click",()=>{
   rehearsed=[];drills=null;if(ledger)paint();
   set("pilotControlStatus","Ensayos reiniciados. Los requisitos externos siguen pendientes.");
@@ -262,6 +315,12 @@ export function mountPilotControlCenter({getState}){
    $("pilotStressRows").replaceChildren();
    set("pilotStressCurrent","Sin muestra actual.");
    set("pilotStressStatus","Matriz invalidada; vuelve a ejecutar el proceso.");
+   atlasGeneration++;atlasReport=null;
+   $("pilotAtlasResults").replaceChildren();
+   for(const id of ["pilotAtlasCases","pilotAtlasGates","pilotAtlasDrills","pilotAtlasIssues"])set(id,"0");
+   $("pilotAtlasRun").disabled=false;
+   $("pilotAtlasExportJson").disabled=true;$("pilotAtlasExportTxt").disabled=true;
+   set("pilotAtlasStatus","Validación sintética descartada en esta pestaña.");
    set("pilotControlStatus","Muestra modificada o sesión limpiada. Ejecuta el proceso nuevamente.");
   }
  });
