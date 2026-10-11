@@ -798,3 +798,44 @@ body[data-experience="simple"] .workbench-p81{display:none!important}
 @media(max-width:850px){.workbench-p81-head,.workbench-p81-top{flex-wrap:wrap}.workbench-p81-head>.btn,.workbench-p81-top label{width:100%}.workbench-p81-wave ol{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:540px){.workbench-p81-progress{grid-template-columns:repeat(2,minmax(0,1fr))}.workbench-p81-actions{display:grid;grid-template-columns:minmax(0,1fr)}.workbench-p81-actions button{width:100%}.workbench-p81{padding:15px}}
 @media(forced-colors:active){.workbench-p81-wave li{border:2px solid ButtonText}.workbench-p81-mark input{outline:1px solid ButtonText}}
+
+/* PR85 · Integrated pilot center. Textual status; no color-only risk meaning. */
+.workbench-p85{margin:30px 0;padding:clamp(18px,3vw,30px);border:1px solid var(--line-2);border-radius:18px;background:var(--panel)}
+.workbench-p85-head{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.workbench-p85-head>div{flex:1 1 280px;min-width:0}
+.workbench-p85-head h2{font:750 clamp(23px,3vw,32px)/1.18 var(--display);letter-spacing:-.035em;margin:10px 0}
+.workbench-p85-head p,.workbench-p85 p{font:12px/1.7 var(--sans);color:var(--muted);overflow-wrap:anywhere}
+.workbench-p85-head .btn{min-height:48px;white-space:normal}
+#pilotControlStudio{margin-top:16px;padding:clamp(15px,2.5vw,23px);border:1px solid var(--line);border-radius:14px;background:var(--bg-2)}
+#pilotControlStudio[hidden]{display:none!important}
+.workbench-p85 h3{font:750 21px/1.35 var(--display);margin:0 0 12px}
+.workbench-p85 h4{font:750 16px/1.45 var(--display);margin:18px 0 9px}
+.workbench-p85-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:18px 0}
+.workbench-p85-metrics>div{padding:13px;min-width:0;border-radius:11px;background:var(--panel);border:1px solid var(--line)}
+.workbench-p85-metrics small{display:block;color:var(--muted);font:11px/1.45 var(--sans)}
+.workbench-p85-metrics strong{display:block;margin-top:7px;overflow-wrap:anywhere;font:750 clamp(17px,2vw,25px)/1.35 var(--mono)}
+.workbench-p85-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.workbench-p85-columns>section{min-width:0}
+.workbench-p85 label[for="pilotControlFilter"]{display:grid;gap:7px;font:750 12px/1.5 var(--sans)}
+#pilotControlFilter{width:100%;min-height:46px;padding:10px;border-radius:9px;border:1px solid var(--line-2);color:var(--text);background:var(--panel)}
+.workbench-p85-list,.workbench-p85-drills{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:9px}
+.workbench-p85-list li,.workbench-p85-drills li{padding:13px;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow-wrap:anywhere}
+.pilot-control-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:9px;flex-wrap:wrap}
+.pilot-control-item-head strong,.pilot-control-drill strong{font:750 12px/1.4 var(--sans)}
+.pilot-control-severity{font:750 10px/1.5 var(--mono);border:1px solid var(--line-2);border-radius:9px;padding:3px 7px;letter-spacing:.02em}
+.pilot-control-evidence-row{display:flex;align-items:flex-start;gap:10px;min-height:45px;cursor:pointer}
+.pilot-control-evidence-row input{width:20px;height:20px;flex:0 0 20px;accent-color:var(--accent)}
+.pilot-control-evidence-row span{min-width:0;display:grid;gap:5px}
+.pilot-control-evidence-row strong{font:750 12px/1.4 var(--sans)}
+.pilot-control-evidence-row small{font:11px/1.5 var(--sans);color:var(--muted)}
+.pilot-control-evidence-row:has(input:disabled){opacity:.8;cursor:not-allowed}
+.pilot-control-drill{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:12px/1.5 var(--sans)}
+#pilotControlStatus{border-left:3px solid var(--accent);background:var(--panel);padding:12px;color:var(--text)}
+.workbench-p85-actions{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0}
+.workbench-p85-actions button{min-height:46px;padding:10px 13px;border:1px solid var(--line-2);border-radius:9px;color:var(--text);background:var(--panel);cursor:pointer;white-space:normal;font:750 12px/1.5 var(--sans)}
+.workbench-p85-disclaimer{border-left:3px solid var(--accent);padding-left:12px}
+.workbench-p85 :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+body[data-experience="simple"] .workbench-p85{display:none!important}
+@media(max-width:850px){.workbench-p85-columns{grid-template-columns:minmax(0,1fr)}.workbench-p85-head{flex-wrap:wrap}.workbench-p85-head .btn{width:100%}}
+@media(max-width:550px){.workbench-p85-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.workbench-p85-actions{display:grid;grid-template-columns:minmax(0,1fr)}.workbench-p85-actions button{width:100%}}
+@media(forced-colors:active){.workbench-p85-list li{border:2px solid ButtonText}.pilot-control-severity{border:1px solid ButtonText}}
