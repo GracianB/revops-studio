@@ -1,3 +1,9 @@
+## RevOps PR73 · Data Quality Cockpit (desarrollo sin lanzamiento)
+
+La demo añade un panel de análisis de calidad accesible en modo avanzado. El motor puro `assets/js/quality-cockpit.js` calcula campos vacíos, completitud, claves únicas, duplicados exactos, IDs contradictorios, distribución numérica, fechas inválidas, negativos, números inválidos y candidatos a valor atípico con IQR **solo cuando hay al menos cinco observaciones y dispersión suficiente**. Permite abrir la primera fila asociada a cada hallazgo, identifica el bloqueo más frecuente, mantiene la línea base de la ejecución y compara cambios tras corregir, deshacer o rehacer.
+
+La exportación TXT **solo contiene agregados**, sin filas, identificadores, emails ni valores originales. No hay ahorros simulados, ni envío a sistemas reales, ni cifras empresariales atribuidas a clientes. Integridad de celdas no equivale a exactitud, y un atípico no demuestra un error. Las comparaciones requieren mismo escenario y número de registros. Las mejoras y criterios de aceptación están en `docs/PR73-CALIDAD.md`.
+
 ## RevOps PR72 · Importación profesional (rama acumulativa, NO PUBLICAR)
 
 La demo `demo.html` ahora valida archivos con el contrato puro `assets/js/import-contract.js` antes de tocar el editor: bytes UTF-8 estrictos (incluido BOM), rechazo de UTF-16/bytes ilegibles, límite de 32 KB/12.000 caracteres/80 filas, detección CSV/TSV, validación de columnas y reportes específicos de duplicados idénticos frente a IDs en conflicto. Importes con separadores regionales ambiguos se rechazan sin adivinar la conversión.
