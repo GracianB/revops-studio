@@ -405,6 +405,36 @@ async function auditProductWorkbench(browser) {
     const queueContent=await readFile(await readyFile.path(),"utf8");
     assert.match(queueContent,/NEW-1/);
     assert.doesNotMatch(queueContent,/NEW-2/);
+    // PR72: binary encoding guard preserves the previous valid input.
+    const originalAfterImport=await page.locator("#workflowSource").inputValue();
+    await page.locator("#importWorkflow").setInputFiles({
+      name:"utf16.csv",mimeType:"text/csv",buffer:Buffer.from([0xff,0xfe,0x70,0])
+    });
+    await page.locator("#workflowError").waitFor({state:"visible"});
+    assert.match(await page.locator("#workflowError").innerText(),/UTF-16/);
+    assert.equal(await page.locator("#workflowSource").inputValue(),originalAfterImport);
+    await page.locator("#importWorkflow").setInputFiles({
+      name:"latin1.csv",mimeType:"text/csv",buffer:Buffer.from([0x61,0x3b,0x62,0x0a,0xe9,0x3b,0x31])
+    });
+    assert.match(await page.locator("#workflowError").innerText(),/UTF-8/);
+    assert.equal(await page.locator("#workflowSource").inputValue(),originalAfterImport);
+    // PR72: TSV import, strict text decoding and no silent conversion of IDs.
+    await page.locator("#importWorkflow").setInputFiles({
+      name:"pedidos.tsv",mimeType:"text/tab-separated-values",
+      buffer:Buffer.from("pedido\tcliente\temail\ttotal\testado\n0007\tEmpresa\tx@ejemplo.test\t34\tnuevo")
+    });
+    assert.equal(await page.locator("#countTotal").innerText(),"1");
+    assert.equal(await page.locator("#workflowRows .workbench-row").first().getAttribute("data-status"),"listo");
+    assert.match(await page.locator("#importAuditTitle").innerText(),/TSV/);
+    assert.match(await page.locator("#workflowSource").inputValue(),/0007/);
+    // Ambiguous amounts are flagged and never interpreted as decimals or thousands.
+    const beforeAmbiguous=await page.locator("#workflowSource").inputValue();
+    await page.locator("#importWorkflow").setInputFiles({
+      name:"ambiguous.csv",mimeType:"text/csv",
+      buffer:Buffer.from('pedido;cliente;email;total;estado\n0007;Tienda;x@ejemplo.test;"1.234";nuevo')
+    });
+    assert.match(await page.locator("#workflowError").innerText(),/Importe ambiguo/);
+    assert.equal(await page.locator("#workflowSource").inputValue(),beforeAmbiguous);
     const savedSource=await page.locator("#workflowSource").inputValue();
     await page.locator("#importWorkflow").setInputFiles({
       name:"invalid.csv",mimeType:"text/csv",buffer:Buffer.from("foo;bar\n1;2")
@@ -428,6 +458,26 @@ async function auditProductWorkbench(browser) {
     await page.locator("#applyColumnMapping").click();
     assert.match(await page.locator("#columnMappingStatus").innerText(),/más de un campo/);
     await page.locator("#mapping-cliente").selectOption("company");
+    assert.match(await page.locator("#importAuditFindings").innerText(),/Columnas extras:/);
+    // PR72: cannot discard an extra column without explicit confirmation.
+    await page.locator("#applyColumnMapping").click();
+    assert.match(await page.locator("#columnMappingStatus").innerText(),/Confirma expresamente/);
+    assert.equal(await page.locator("#workflowSource").inputValue(),previousCsv);
+    const profileDownloadPromise=page.waitForEvent("download");
+    await page.locator("#exportMappingProfile").click();
+    const profileDownload=await profileDownloadPromise;
+    assert.match(profileDownload.suggestedFilename(),/revops-perfil-columnas-orders\.json/);
+    const profileText=await readFile(await profileDownload.path(),"utf8");
+    assert.match(profileText,/revops-mapping-profile-v1/);
+    assert.doesNotMatch(profileText,/Almacén Norte|0007|test@ejemplo.test|solo prueba/);
+    // Importing that profile fills the mapper, without modifying any source records.
+    await page.locator("#mapping-cliente").selectOption("order id");
+    await page.locator("#importMappingProfile").setInputFiles({
+      name:"columns.json",mimeType:"application/json",buffer:Buffer.from(profileText)
+    });
+    assert.equal(await page.locator("#mapping-cliente").inputValue(),"company");
+    assert.equal(await page.locator("#workflowSource").inputValue(),previousCsv);
+    await page.locator("#confirmDiscardColumns").check();
     await page.locator("#applyColumnMapping").click();
     assert.equal(await page.locator("#columnMapper").isHidden(),true);
     assert.equal(await page.locator("#countTotal").innerText(),"1");
