@@ -154,7 +154,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 ## 12 · Comprensión de resultados
 
 - [   ] **P111** · Separar acciones propuestas e históricos · PENDIENTE
-- [   ] **P112** · Explicar bloqueos y revisiones humanas · PENDIENTE
+- [ x ] **P112** · Explicar bloqueos y revisiones humanas · IMPLEMENTADO (PR75: reglas compartidas, trazas y revisión humana simulada)
 - [   ] **P113** · Mostrar distribución de estados · PENDIENTE
 - [   ] **P114** · Priorizar la corrección más repetida · PENDIENTE
 - [   ] **P115** · Navegar desde recomendación hasta filtro · PENDIENTE
