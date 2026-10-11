@@ -475,6 +475,7 @@ async function auditProductWorkbench(browser) {
     await page.locator("#importMappingProfile").setInputFiles({
       name:"columns.json",mimeType:"application/json",buffer:Buffer.from(profileText)
     });
+    await page.waitForFunction(()=>document.querySelector("#mapping-cliente")?.value==="company",null,{timeout:5000});
     assert.equal(await page.locator("#mapping-cliente").inputValue(),"company");
     assert.equal(await page.locator("#workflowSource").inputValue(),previousCsv);
     await page.locator("#confirmDiscardColumns").check();
