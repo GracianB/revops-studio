@@ -1,6 +1,7 @@
 // RevOps PR72: local, fail-closed import contract. No network, no persistence.
 import {SCENARIOS,parseDelimited,runWorkflow} from "./workflow-engine.js";
 import {suggestMapping,normalizeMappedCsv} from "./column-mapper.js";
+import {validateTextBoundary} from "./privacy-security.js";
 const MAX_BYTES=32000,MAX_CHARS=12000,MAX_ROWS=80;
 const idKey={orders:"pedido",support:"ticket",data:"registro"};
 const amountKey={orders:"total",data:"valor"};
@@ -12,7 +13,7 @@ function canonical(source) {
  if(source.includes("\u0000"))errors("El contenido contiene caracteres nulos o una codificación incompatible.");
  if(source.includes("\uFFFD"))errors("Hay caracteres de reemplazo: comprueba que el archivo esté en UTF-8.");
  if(/[\u0001-\u0008\u000b\u000c\u000e-\u001f]/.test(source))errors("El archivo contiene caracteres de control no admitidos.");
- return source.replace(/^\uFEFF/,"");
+ return validateTextBoundary(source.replace(/^\uFEFF/,""));
 }
 export function decodeImportBytes(value) {
  if(!(value instanceof Uint8Array))errors("La entrada debe ser un archivo binario.");
