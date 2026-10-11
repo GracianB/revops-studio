@@ -200,6 +200,44 @@
       <div class="workbench-insight-steps" id="insightsSteps" aria-label="Siguientes pasos recomendados">
         <p class="workbench-empty-insight">Los pasos recomendados aparecerán después de ejecutar el proceso.</p>
       </div>
+      <section class="quality-cockpit" id="qualityCockpit" aria-labelledby="qualityCockpitTitle" hidden>
+        <div class="quality-cockpit-head">
+          <div><span class="workbench-section-index">PR73 · DATA QUALITY COCKPIT · ANÁLISIS LOCAL</span>
+            <h3 id="qualityCockpitTitle">Calidad que se puede investigar.</h3>
+            <p>Revisamos completitud, identificadores, errores de formato y valores sospechosos. No confundimos una tabla rellena con datos verdaderos.</p>
+          </div>
+          <button class="btn btn-secondary" id="qualityExport" type="button" disabled>Descargar resumen agregado ↧</button>
+        </div>
+        <div class="quality-cockpit-kpis" aria-label="Métricas calculadas sobre los registros">
+          <div><small>Claves únicas</small><strong id="qualityUniqueIds">0</strong></div>
+          <div><small>IDs conflictivos</small><strong id="qualityConflicts">0</strong></div>
+          <div><small>Duplicados idénticos</small><strong id="qualityExactDuplicates">0</strong></div>
+          <div><small>Atípicos candidatos</small><strong id="qualityOutliers">0</strong></div>
+        </div>
+        <div class="quality-cockpit-sections">
+          <div class="quality-cockpit-subsection">
+            <h4>Completitud por columna</h4>
+            <div id="qualityColumnDetails" class="quality-cockpit-columns"></div>
+            <p>Una celda con contenido puede ser incorrecta; la integridad no mide exactitud.</p>
+          </div>
+          <div class="quality-cockpit-subsection">
+            <h4>Casos para investigar</h4>
+            <div id="qualityInvestigations" class="quality-cockpit-investigations"></div>
+            <p>Selecciona un hallazgo para abrir la primera fila afectada. El cambio siempre requiere guardado explícito.</p>
+          </div>
+          <div class="quality-cockpit-subsection">
+            <h4>Distribución numérica</h4>
+            <div id="qualityNumericBands" class="quality-cockpit-bands"></div>
+            <p id="qualityStatNote">Se mostrarán umbrales solo si hay al menos cinco valores numéricos y suficiente dispersión.</p>
+          </div>
+          <div class="quality-cockpit-subsection">
+            <h4>Impacto sobre la línea base</h4>
+            <p id="qualityDelta" role="status" aria-live="polite">Ejecuta una corrección para comparar métricas entre ejecuciones.</p>
+            <p id="qualityDominant">Aquí aparecerá la causa de bloqueo más repetida.</p>
+          </div>
+        </div>
+        <p class="quality-cockpit-footnote">Datos de simulación. Los atípicos indican una posible revisión, no errores confirmados. Sin ROI, estimación de ahorro ni acciones externas.</p>
+      </section>
       <div class="workbench-change-comparison" id="changeComparison" role="status" aria-live="polite" hidden></div>
       <section class="workbench-r2" id="r2Evidence" aria-labelledby="r2Title" hidden>
         <div class="workbench-r2-head">
