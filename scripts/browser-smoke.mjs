@@ -867,18 +867,6 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotV100RiskHighlights li").count(),3);
   await page.locator("#pilotV100Actions button").first().click();
   assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotFinalReviewHeading");
-  const v100Dl=page.waitForEvent("download");
-  await page.locator("#pilotV100ExportJson").click();
-  const v100File=await v100Dl;
-  assert.equal(v100File.suggestedFilename(),"revops-v100-resumen-ejecutivo.json");
-  const v100Report=JSON.parse(await readFile(await v100File.path(),"utf8"));
-  assert.equal(v100Report.schema,"revops-v100-executive-v1");
-  assert.equal(v100Report.productionGo,false);
-  assert.equal(v100Report.realApprovals,0);
-  assert.equal(v100Report.riskHighlights.length,3);
-  const v100TxtDl=page.waitForEvent("download");
-  await page.locator("#pilotV100ExportTxt").click();
-  assert.match(await readFile(await (await v100TxtDl).path(),"utf8"),/NO AUTORIZADO PARA PRODUCCIÓN/);
   assert.equal(await page.locator("#pilotControlRisks li").count(),10);
   assert.equal(await page.locator("#pilotControlApproval").innerText(),"0");
   assert.equal(await page.locator('[data-evidence-id="E-SIGNOFF"]').isDisabled(),true);
@@ -1050,6 +1038,26 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotAtlasExportJson").isDisabled(),true,
    "PR90 atlas must clear on source change");
   assert.ok(requests.some(u=>u.includes("/pilot-control-center.js")),"PR85 lazy-loaded code missing");
+  // Each export experience is checked in a fresh context to avoid browser
+  // automatic multiple-download protection blocking an unrelated export.
+  const v100Page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+  v100Page.on("pageerror",error=>failures.push("V100: "+error.message));
+  try{
+   await v100Page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+   await v100Page.locator("#pilotControlOpen").click();
+   const v100Dl=v100Page.waitForEvent("download");
+   await v100Page.locator("#pilotV100ExportJson").click();
+   const v100File=await v100Dl;
+   assert.equal(v100File.suggestedFilename(),"revops-v100-resumen-ejecutivo.json");
+   const v100Report=JSON.parse(await readFile(await v100File.path(),"utf8"));
+   assert.equal(v100Report.schema,"revops-v100-executive-v1");
+   assert.equal(v100Report.productionGo,false);
+   assert.equal(v100Report.realApprovals,0);
+   assert.equal(v100Report.riskHighlights.length,3);
+   const v100TxtDl=v100Page.waitForEvent("download");
+   await v100Page.locator("#pilotV100ExportTxt").click();
+   assert.match(await readFile(await (await v100TxtDl).path(),"utf8"),/NO AUTORIZADO PARA PRODUCCIÓN/);
+  }finally{await v100Page.close();}
   // Additional PR98 export uses a fresh context to respect download throttling.
   const a11yPage=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
   a11yPage.on("pageerror",error=>failures.push("PR98: "+error.message));
