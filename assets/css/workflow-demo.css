@@ -943,3 +943,12 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 #pilotGuidedSummary,#pilotGuidedStatus{padding:10px 12px;background:var(--bg-2);border-left:3px solid var(--accent);overflow-wrap:anywhere}
 @media(max-width:680px){.pilot-guided-list{grid-template-columns:minmax(0,1fr)}.pilot-guided-route-head>button{width:100%}}
 @media(forced-colors:active){.pilot-guided-list li{border:1px solid ButtonText}}
+
+/* PR93 · Bounded, client-only interaction journal. */
+.pilot-session-audit{margin:18px 0;padding:clamp(12px,2.5vw,18px);background:var(--panel);border:1px solid var(--line-2);border-radius:12px;min-width:0}
+.pilot-session-audit h4{margin:0 0 8px}
+#pilotSessionAuditCount{border-left:3px solid var(--accent);padding:10px 12px;background:var(--bg-2);overflow-wrap:anywhere}
+.pilot-session-audit-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0;padding:0;list-style:none}
+.pilot-session-audit-list li{min-width:0;padding:11px;border-radius:9px;border:1px solid var(--line);background:var(--bg-2);font:12px/1.5 var(--sans);overflow-wrap:anywhere}
+@media(max-width:620px){.pilot-session-audit-list{grid-template-columns:1fr}}
+@media(forced-colors:active){.pilot-session-audit-list li{border:1px solid ButtonText}}
