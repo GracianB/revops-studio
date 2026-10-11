@@ -302,3 +302,25 @@ test("R1 action-plan download is discoverable, lazy and never submitted with the
   assert.match(file("assets/js/diagnostic-report.js"), /URL\.createObjectURL/);
   assert.match(file("assets/js/diagnostic-report.js"), /URL\.revokeObjectURL/);
 });
+
+
+test("R2 makes before-after rules visible without pretending to execute external actions",()=>{
+ const demoUi=file("assets/js/workflow-demo.js");
+ const demoCss=file("assets/css/workflow-demo.css");
+ const compare=file("assets/js/workflow-comparison.js");
+ for(const id of ["r2Evidence","r2BeforePrepared","r2BeforeBlocked","r2BeforeReview",
+   "r2AfterPrepared","r2AfterBlocked","r2AfterReview","r2Transitions","r2Export"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(demoHtml,/Acciones ejecutadas externamente: <strong>0<\/strong>/);
+ assert.match(demoUi,/baseline=null/);
+ assert.match(demoUi,/compareWorkflow\(baseline,result\)/);
+ assert.match(demoUi,/comparisonReport\(evidence\)/);
+ assert.match(demoUi,/list\.replaceChildren\(items\)/);
+ assert.match(compare,/const RULE_REASONS = new Set/);
+ assert.match(compare,/Regla: /);
+ assert.match(compare,/externalExecuted: 0/);
+ assert.doesNotMatch(compare,/fetch\(|localStorage|sessionStorage/);
+ assert.match(demoCss,/\.workbench-r2-columns\{display:grid/);
+ assert.match(demoCss,/@media\(max-width:740px\)/);
+ assert.match(demoCss, /\.workbench-r2\[hidden\]\{display:none!important\}/);
+});
