@@ -864,6 +864,17 @@ async function auditPilotControlCenter(browser){
   assert.equal(Number(await page.locator("#pilotControlEvidence").innerText()),missing-1);
   await page.locator("#pilotControlRun").click();
   assert.equal(await page.locator("#pilotControlDrills").innerText(),"7/7");
+  assert.ok(await page.locator("#pilotSessionAuditEntries li").count()>=2);
+  const sessionPromise=page.waitForEvent("download");
+  await page.locator("#pilotSessionAuditExport").click();
+  const sessionFile=await sessionPromise;
+  const sessionExport=JSON.parse(await readFile(await sessionFile.path(),"utf8"));
+  assert.equal(sessionExport.schema,"revops-pilot-session-journal-v1");
+  assert.ok(sessionExport.visible>=2);
+  assert.equal(sessionExport.realApprovals,0);
+  assert.equal(sessionExport.externalExecutions,0);
+  assert.doesNotMatch(JSON.stringify(sessionExport),/PED-101|norte@ejemplo\.test|Tienda Norte/);
+
   assert.equal(await page.locator("#pilotControlDrillList li").count(),7);
   await page.locator("#pilotControlFilter").selectOption("critical");
   assert.ok(await page.locator("#pilotControlRisks li").count()>=1);
@@ -957,6 +968,8 @@ async function auditPilotControlCenter(browser){
   assert.match(summary,/NO AUTORIZADO PARA PRODUCCIÓN/);
   assert.doesNotMatch(summary,/PED-101|norte@ejemplo\.test|Tienda Norte/);
   assert.match(await page.locator("#pilotHandoffStatus").innerText(),/sin datos de filas/);
+  await page.locator("#pilotSessionAuditClear").click();
+  assert.equal(await page.locator("#pilotSessionAuditEntries li").count(),0);
   await page.locator("#pilotControlReset").click();
   assert.equal(await page.locator("#pilotControlDrills").innerText(),"Sin ejecutar");
   await page.setViewportSize({width:320,height:844});
