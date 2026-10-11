@@ -31,8 +31,8 @@ test("PR74: preview preserves human review gates, including urgent tickets",()=>
  const input=SCENARIOS.support.sample;
  const preview=previewRecordEdit("support",input,3,{ticket:"TK-999"});
  assert.equal(preview.beforeStatus,"bloqueado");
- assert.equal(preview.afterStatus,"listo"); // This row was nonurgent, unlike TK-200.
- assert.equal(preview.approvalRequired,false);
+ assert.equal(preview.afterStatus,"revisar"); // Urgent duplicate remains human-reviewed after ID correction.
+ assert.equal(preview.approvalRequired,true);
  const urgent=previewRecordEdit("support",input,0,{ticket:"TK-NEW"});
  assert.equal(urgent.afterStatus,"revisar");
  assert.equal(urgent.approvalRequired,true);
@@ -101,7 +101,7 @@ test("PR74: next blocked wraps and uses source indices even when results are fil
  assert.equal(nextBlockedIndex(result,3),2);
  const clean=runWorkflow("orders",editWorkflowRecord("orders",source,2,{pedido:"PED-999"}));
  assert.equal(nextBlockedIndex(clean,3),3);
- const fixed=editWorkflowRecord("orders",clean.scenario?editWorkflowRecord("orders",source,2,{pedido:"PED-999"}):source,3,{email:"ok@ejemplo.test"});
+ const fixed=editWorkflowRecord("orders",editWorkflowRecord("orders",source,2,{pedido:"PED-999"}),3,{email:"ok@ejemplo.test"});
  assert.equal(nextBlockedIndex(runWorkflow("orders",fixed),0),null);
  assert.equal(nextBlockedIndex(null),null);
 });
