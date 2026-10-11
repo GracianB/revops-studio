@@ -9,11 +9,13 @@ import {buildPilotCapacityExplorer,pilotCapacityReportJson} from "./pilot-capaci
 import {buildPilotAuthorizationBoard,pilotAuthorizationJson} from "./pilot-authorization-board.js";
 import {buildPilotHandoffPack,pilotHandoffHtml,pilotHandoffTxt} from "./pilot-handoff-pack.js";
 import {buildPilotStressMatrix,pilotStressMatrixJson} from "./pilot-stress-matrix.js";
+import {mountPilotSectionNavigation} from "./pilot-section-navigation.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
  const $=id=>document.getElementById(id);
  const root=$("pilotControlStudio");
+ const sectionNavigation=mountPilotSectionNavigation(root);
  let scenario=null,source=null,readiness=null,plan=null,risks=null,ledger=null;
  let rehearsed=[],drills=null,atlasReport=null,atlasModule=null,atlasGeneration=0;
  const set=(id,value)=>{$(id).textContent=String(value);};
@@ -295,6 +297,7 @@ export function mountPilotControlCenter({getState}){
  $("pilotControlClose").addEventListener("click",close);
  const api=Object.freeze({
   sync,close,clear(){
+   sectionNavigation.reset();
    rehearsed=[];drills=null;scenario=null;source=null;
    readiness=null;plan=null;risks=null;ledger=null;
    root.hidden=true;
