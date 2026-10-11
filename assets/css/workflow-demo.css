@@ -718,3 +718,40 @@ body[data-experience="simple"] .workbench-p76,body[data-experience="simple"] .wo
 body[data-experience="simple"] .workbench-p79-privacy{display:none!important}
 @media(max-width:560px){.workbench-p79-actions{display:grid;grid-template-columns:minmax(0,1fr)}.workbench-p79-actions button{width:100%}}
 @media(forced-colors:active){.workbench-p79-confirm{border:2px solid ButtonText}.workbench-p79-actions button{border:1px solid ButtonText}}
+
+
+/* PR80 · evidence-based supervised-pilot preflight. States are always written in text. */
+.workbench-p80{margin:32px 0 23px;padding:clamp(18px,3vw,30px);border:1px solid var(--line-2);border-radius:19px;background:var(--panel)}
+.workbench-p80-head{display:flex;justify-content:space-between;align-items:center;gap:17px}
+.workbench-p80-head>div{flex:1 1 300px;min-width:0}
+.workbench-p80-head h2{font:750 clamp(24px,3vw,34px)/1.2 var(--display);letter-spacing:-.035em;margin:9px 0}
+.workbench-p80-head p{font:12px/1.7 var(--sans);color:var(--muted);margin:9px 0}
+.workbench-p80-head .btn{white-space:normal;min-height:46px;flex:0 0 auto}
+.workbench-p80-studio{margin-top:18px;padding:clamp(14px,2.5vw,22px);border:1px solid var(--line);border-radius:14px;background:var(--bg-2)}
+.workbench-p80-studio[hidden]{display:none!important}
+.workbench-p80-result{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;margin:0 0 20px}
+.workbench-p80-result h3{font:750 20px/1.4 var(--display);margin:0 0 8px}
+#pilotOutcome{font:750 13px/1.5 var(--sans);color:var(--text);margin:0}
+.workbench-p80-totals{display:grid;grid-template-columns:repeat(3,minmax(75px,1fr));gap:7px}
+.workbench-p80-totals>div{padding:10px;border-radius:9px;background:var(--panel);border:1px solid var(--line);min-width:0}
+.workbench-p80-totals small{display:block;color:var(--muted);font:11px/1.4 var(--sans)}
+.workbench-p80-totals strong{display:block;font:750 23px/1.25 var(--mono);margin-top:5px}
+.workbench-p80-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));list-style:none;gap:10px;margin:0;padding:0}
+.workbench-p80-checks li{padding:15px;border-radius:11px;background:var(--panel);border:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+.workbench-p80-checks li[data-state="blocked"]{border-left:4px solid var(--accent)}
+.workbench-p80-checks li[data-state="attention"]{border-left:4px solid var(--accent-2)}
+.workbench-p80-checks li[data-state="pass"]{border-left:4px solid var(--ok)}
+.workbench-p80-checks li>div{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.workbench-p80-checks strong{font:750 12px/1.5 var(--sans)}
+.workbench-p80-checks li>div>span{font:750 11px/1.5 var(--sans);color:var(--text);flex-shrink:0}
+.workbench-p80-checks p{font:11px/1.6 var(--sans);color:var(--muted);margin:9px 0}
+.workbench-p80-checks .workbench-p80-next{color:var(--text)}
+.workbench-p80-checks button,.workbench-p80-actions button{min-height:46px;padding:9px 12px;background:var(--bg-2);color:var(--text);border:1px solid var(--line-2);border-radius:8px;font:750 11px/1.45 var(--sans);cursor:pointer;max-width:100%;white-space:normal}
+.workbench-p80-studio h4{font:750 15px/1.5 var(--display);margin:19px 0 7px}
+.workbench-p80-studio>p{font:12px/1.65 var(--sans);color:var(--muted)}
+.workbench-p80-actions{display:flex;flex-wrap:wrap;gap:8px;padding:9px 0}
+.workbench-p80 :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+body[data-experience="simple"] .workbench-p80{display:none!important}
+@media(max-width:900px){.workbench-p80-head{flex-wrap:wrap}.workbench-p80-result{grid-template-columns:1fr}.workbench-p80-checks{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:560px){.workbench-p80-head>.btn{width:100%}.workbench-p80-totals{grid-template-columns:repeat(3,minmax(0,1fr))}.workbench-p80-checks li>div{flex-wrap:wrap}.workbench-p80-actions{display:grid;grid-template-columns:1fr}.workbench-p80-actions button{width:100%}}
+@media(forced-colors:active){.workbench-p80-checks li{border:2px solid ButtonText}.workbench-p80-checks button{border:1px solid ButtonText}}
