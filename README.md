@@ -1,3 +1,17 @@
+## RevOps R1 · Plan de diagnóstico imprimible (rama de desarrollo, sin lanzamiento)
+
+El diagnóstico existente puede descargar un **plan HTML autónomo y listo para imprimir en PDF**, sin registro ni llamadas a red. El documento genera tres fases concretas (delimitar, piloto y validar/entregar), entradas necesarias, criterios de aceptación, riesgos, preguntas pendientes y una modalidad económica *orientativa*, no un presupuesto. Hay 48 combinaciones válidas de problema, herramienta y alcance.
+
+- El archivo se genera **solo** al pulsar «Descargar plan completo», mediante `assets/js/diagnostic-report.js` cargado dinámicamente; no aumenta las peticiones de la primera visita.
+- No incorpora filas, correos, nombres ni textos del formulario. Solo utiliza tres selecciones de un catálogo fijo. El documento no tiene scripts, enlaces a proveedores, fuentes remotas ni seguimiento.
+- Puede abrirse offline o imprimirse con Ctrl+P → «Guardar como PDF». La descarga no implica enviar una consulta ni aceptar una oferta.
+- El mapa breve que se adjunta voluntariamente a la consulta y el laboratorio V40 siguen sin cambios. No hay CRM conectado, automatización en producción ni resultados empresariales medidos.
+- **No publicado deliberadamente:** esta rama no debe fusionarse ni desplegarse hasta revisar el acceso al repositorio y al GitHub Pages. En GitHub el repositorio sigue figurando como público; no confundir un desarrollo no anunciado con código privado.
+
+### Validación R1
+
+`node --test tests/diagnostic-report.test.js` · `npm run verify` · smoke de Chrome y Firefox (descarga local de informe incluida).
+
 ## RevOps Studio · Producto: diagnóstico guiado + web comercial (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
