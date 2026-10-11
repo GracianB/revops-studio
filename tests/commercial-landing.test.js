@@ -379,3 +379,27 @@ test("PR72 import contract is enforced before any data replacement",()=>{
  assert.doesNotMatch(contract,/fetch\(|localStorage|sessionStorage/);
  assert.match(css,/\.workbench-discard-confirm/);
 });
+
+
+test("PR73 quality cockpit uses pure analytical contracts and safe DOM drilldowns",()=>{
+ const demoUi=file("assets/js/workflow-demo.js");
+ const pure=file("assets/js/quality-cockpit.js");
+ const sheet=file("assets/css/workflow-demo.css");
+ for(const id of ["qualityCockpit","qualityCockpitTitle","qualityUniqueIds","qualityConflicts",
+   "qualityExactDuplicates","qualityOutliers","qualityColumnDetails","qualityInvestigations",
+   "qualityNumericBands","qualityStatNote","qualityDelta","qualityDominant","qualityExport"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(demoUi,/buildQualityCockpit\(scenario,\$\("workflowSource"\)\.value,result\)/);
+ assert.match(demoUi,/compareQualityCockpit\(qualityBaseline,current\)/);
+ assert.match(demoUi,/openEditor\(index\)/);
+ assert.match(demoUi,/qualityCockpitReport\(qualityCurrent,qualityEvidence\)/);
+ assert.match(pure,/const percentile=/);
+ assert.match(pure,/conflictingIds/);
+ assert.match(pure,/invalidDates/);
+ assert.match(pure,/outlierIndexes/);
+ assert.match(pure,/Acciones ejecutadas fuera del navegador: 0/);
+ assert.doesNotMatch(pure,/fetch\(|localStorage|sessionStorage/);
+ assert.match(sheet, /\.quality-cockpit-kpis\{display:grid/);
+ assert.match(sheet,/body\[data-experience="simple"\] \.quality-cockpit/);
+ assert.match(sheet,/@media\(max-width:820px\)/);
+});
