@@ -918,6 +918,24 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotAtlasGates").innerText(),"144");
   assert.equal(await page.locator("#pilotAtlasDrills").innerText(),"126");
   assert.equal(await page.locator("#pilotAtlasIssues").innerText(),"0");
+  assert.equal(await page.locator("#pilotFinalReviewList li").count(),12);
+  assert.equal(await page.locator("#pilotFinalExternal").innerText(),"4");
+  assert.equal(await page.locator("#pilotFinalApprovals").innerText(),"0");
+  assert.match(await page.locator("#pilotFinalReviewVerdict").innerText(),/NO AUTORIZADO/);
+  await page.locator("#pilotFinalReviewRefresh").click();
+  const finalDownload=page.waitForEvent("download");
+  await page.locator("#pilotFinalReviewJson").click();
+  const finalFile=await finalDownload;
+  const finalBody=JSON.parse(await readFile(await finalFile.path(),"utf8"));
+  assert.equal(finalBody.schema,"revops-pilot-supervised-review-v1");
+  assert.equal(finalBody.gates.length,12);
+  assert.equal(finalBody.externalRequired,4);
+  assert.equal(finalBody.productionGo,false);
+  assert.equal(finalBody.realApprovals,0);
+  const finalTxtDownload=page.waitForEvent("download");
+  await page.locator("#pilotFinalReviewTxt").click();
+  assert.match(await readFile(await (await finalTxtDownload).path(),"utf8"),/NO AUTORIZADO PARA PRODUCCIÓN/);
+
   assert.match(await page.locator("#pilotAtlasStatus").innerText(),/NO autorizado/);
   const atlasJsonPromise=page.waitForEvent("download");
   await page.locator("#pilotAtlasExportJson").click();
