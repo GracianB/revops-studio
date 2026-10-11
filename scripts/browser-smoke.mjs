@@ -648,7 +648,7 @@ async function auditInclusiveWorkbench(browser){
    const dims=await page.evaluate(()=>({cssWidth:innerWidth,scroll:document.documentElement.scrollWidth}));
    assert.ok(dims.scroll<=dims.cssWidth+3,"PR78 400% CSS reflow "+JSON.stringify(dims));
    const targets=await page.evaluate(()=>["#runWorkflow","#reportOpen","#rulesOpen","#candidateOpen",
-    ".workbench-row:visible .workbench-row-edit"].map(selector=>{
+    ".workbench-row:not([hidden]) .workbench-row-edit"].map(selector=>{
      const el=document.querySelector(selector);
      return {selector,height:el?.getBoundingClientRect().height||0};
    }));
