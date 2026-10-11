@@ -831,6 +831,17 @@ async function auditPilotControlCenter(browser){
   await page.locator("#pilotControlOpen").click();
   await page.locator("#pilotControlStudio").waitFor({state:"visible"});
   assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotControlTitle");
+  assert.equal(await page.locator("#pilotSectionNavigation button").count(),8);
+  await page.locator('[data-pilot-section="pilotControlRiskTitle"]').focus();
+  await page.keyboard.press("End");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.pilotSection),"pilotAtlasHeading");
+  await page.keyboard.press("Home");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.pilotSection),"pilotControlRiskTitle");
+  await page.keyboard.press("ArrowRight");
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.pilotSection),"pilotControlEvidenceTitle");
+  await page.keyboard.press("Enter");
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"pilotControlEvidenceTitle");
+  assert.match(await page.locator("#pilotSectionAnnouncement").innerText(),/Sección 2 de 8/);
   assert.equal(await page.locator("#pilotControlRisks li").count(),10);
   assert.equal(await page.locator("#pilotControlApproval").innerText(),"0");
   assert.equal(await page.locator('[data-evidence-id="E-SIGNOFF"]').isDisabled(),true);
