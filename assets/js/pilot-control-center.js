@@ -18,12 +18,14 @@ import {validatePilotExportJson,validatePilotHtmlHandoff} from "./pilot-export-i
 import {createPilotComputationCache} from "./pilot-computation-cache.js";
 import {runPilotAccessibilityPreflight,pilotAccessibilityJson} from "./pilot-accessibility-protocol.js";
 import {buildPilotV100Snapshot,pilotV100SnapshotJson,pilotV100SnapshotText} from "./pilot-v100-snapshot.js";
+import {mountPilotUX} from "./pilot-ux-progressive.js";
 
 export function mountPilotControlCenter({getState}){
  if(typeof getState!=="function")throw Error("Falta origen de datos del centro de control.");
  const $=id=>document.getElementById(id);
  const root=$("pilotControlStudio");
  const sectionNavigation=mountPilotSectionNavigation(root);
+ const ux=mountPilotUX(root,{onClose:()=>close()});
  let scenario=null,source=null,readiness=null,plan=null,risks=null,ledger=null;
  let rehearsed=[],drills=null,atlasReport=null,atlasModule=null,atlasGeneration=0;
  const sessionJournal=createPilotSessionJournal();
@@ -79,6 +81,7 @@ export function mountPilotControlCenter({getState}){
    readiness,plan,risks,ledger,coverage,drills,capacity,evidenceReview,atlas:atlasReport
   });
   const milestone=buildPilotV100Snapshot({readiness,review:finalReview,risks,capacity,evidenceReview,atlas:atlasReport});
+  ux.setPending(guided.pending);
   set("pilotGuidedSummary",guided.pending+" pasos pendientes; "+guided.blocked+
    " bloqueantes y "+guided.review+" por revisar. Siguiente: "+guided.next.title+".");
   const routeFragment=document.createDocumentFragment();
@@ -295,7 +298,7 @@ export function mountPilotControlCenter({getState}){
  $("pilotGuidedList").addEventListener("click",event=>{
   const button=event.target.closest("button[data-pilot-route-target]");
   if(!button||button.disabled||!ledger)return;
-  try{sectionNavigation.selectById(button.dataset.pilotRouteTarget);remember("route_navigation");}
+  try{ux.showDetails();sectionNavigation.selectById(button.dataset.pilotRouteTarget);remember("route_navigation");}
   catch(error){set("pilotGuidedStatus","No se puede navegar: "+error.message);}
  });
  $("pilotGuidedExport").addEventListener("click",()=>{
@@ -468,7 +471,7 @@ export function mountPilotControlCenter({getState}){
  $("pilotV100Actions").addEventListener("click",event=>{
   const button=event.target.closest("button[data-v100-target]");
   if(!button)return;
-  try{const target=$(button.dataset.v100Target);target?.focus({preventScroll:true});
+  try{ux.showDetails();const target=$(button.dataset.v100Target);target?.focus({preventScroll:true});
    target?.scrollIntoView({block:"start",behavior:"instant"});}
   catch(error){set("pilotV100Summary","Navegación no disponible: "+error.message);}
  });
@@ -583,13 +586,14 @@ export function mountPilotControlCenter({getState}){
   set("pilotControlStatus","Ensayos reiniciados. Los requisitos externos siguen pendientes.");
  });
  const close=()=>{
+  ux.showSummary();
   root.hidden=true;$("pilotControlOpen").setAttribute("aria-expanded","false");
   $("pilotControlOpen").focus();
  };
  $("pilotControlClose").addEventListener("click",close);
  const api=Object.freeze({
   sync,close,clear(){
-   sectionNavigation.reset();
+   sectionNavigation.reset();ux.reset();
    rehearsed=[];drills=null;scenario=null;source=null;
    prepared=null;workCache.clear();
    accessibilityReport=null;
