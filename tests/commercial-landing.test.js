@@ -289,3 +289,16 @@ test("FormSubmit activation: explain rejected delivery without claiming success"
  assert.match(site,/No hay entrega confirmada/);
  assert.match(site,/if \(fallback\) fallback\.focus\(\)/);
 });
+
+
+test("R1 action-plan download is discoverable, lazy and never submitted with the contact form", () => {
+  assert.match(index, /id="diagDownload"[^>]*aria-describedby="diagDownloadHelp"/);
+  assert.match(index, /id="diagDownloadHelp"/);
+  assert.match(index, /Descargar plan completo/);
+  assert.match(site, /import\("\.\/diagnostic-report\.js"\)/);
+  assert.match(site, /downloadPlan\(problem\.value, tools\.value, scope\.value\)/);
+  assert.doesNotMatch(index, /<script[^>]*src="\.\/assets\/js\/diagnostic-report\.js"/);
+  assert.match(file("assets/js/diagnostic-report.js"), /export function buildDiagnosticReport/);
+  assert.match(file("assets/js/diagnostic-report.js"), /URL\.createObjectURL/);
+  assert.match(file("assets/js/diagnostic-report.js"), /URL\.revokeObjectURL/);
+});
