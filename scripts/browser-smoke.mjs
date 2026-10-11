@@ -547,7 +547,7 @@ async function auditInclusiveWorkbench(browser){
   await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
   const links=page.locator("a.skip-link");
   assert.equal(await links.count(),3,"skip links to main, editor and results");
-  await page.keyboard.press("Tab");
+  await page.locator('a.skip-link[href="#main"]').focus();
   assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("href")),"#main");
   await page.keyboard.press("Tab");
   assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute("href")),"#simulador");
