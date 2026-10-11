@@ -458,6 +458,40 @@
         <p>No se transmite el historial ni contiene datos reales en el texto de los pasos. Cambiar los datos de entrada inicia otro historial.</p>
       </section>
     </section>
+    <section class="workbench-p77-shell" aria-labelledby="reportStudioTitle">
+      <div class="workbench-p77-head">
+        <div><span class="workbench-section-index">PR77 · REPORTING STUDIO · 100 % LOCAL</span>
+          <h2 id="reportStudioTitle">Del diagnóstico a un informe que puedes presentar.</h2>
+          <p>PDF A4 real con páginas numeradas, conclusiones explicadas y límites visibles. Sin filas, identificadores, emails ni notas privadas. No convierte resultados de demo en ROI imaginario.</p>
+        </div>
+        <button type="button" id="reportOpen" class="btn btn-primary" aria-expanded="false" aria-controls="reportStudio" disabled>Preparar informe profesional ↗</button>
+      </div>
+      <section id="reportStudio" class="workbench-p77-studio" aria-label="Exportar informe ejecutivo seguro" hidden>
+        <div class="workbench-p77-preview">
+          <div><h3>Vista previa del contenido agregado</h3><p>Esta vista se recompone a partir de las reglas y resultados actuales. No muestra registros de origen ni almacena datos.</p></div>
+          <div class="workbench-p77-counters" aria-label="Datos que figuran en el informe">
+            <div><small>Analizados</small><strong id="reportRows">0</strong></div>
+            <div><small>Propuestas</small><strong id="reportReady">0</strong></div>
+            <div><small>Revisión</small><strong id="reportReview">0</strong></div>
+            <div><small>Bloqueados</small><strong id="reportBlocked">0</strong></div>
+          </div>
+          <ol id="reportOutline" class="workbench-p77-outline" aria-label="Índice del documento">
+            <li>Resumen ejecutivo</li><li>Calidad de datos</li><li>Antes y después</li>
+            <li>Reglas y decisiones humanas</li><li>Escenario alternativo</li>
+            <li>Fases propuestas</li><li>Fuentes y limitaciones</li>
+          </ol>
+        </div>
+        <div class="workbench-p77-actions">
+          <button type="button" class="btn btn-primary" id="reportPdf">Descargar PDF A4 real ↧</button>
+          <button type="button" class="btn btn-secondary" id="reportPrint">Abrir PDF para imprimir ↗</button>
+          <button type="button" class="btn btn-secondary" id="reportTxt">Informe TXT ↧</button>
+          <button type="button" class="btn btn-secondary" id="reportJson">Agregados JSON ↧</button>
+          <button type="button" class="btn btn-secondary" id="reportClose">Cerrar informe</button>
+        </div>
+        <p id="reportStatus" role="status" aria-live="polite">Informe disponible para descarga, sin conexiones externas.</p>
+        <p class="workbench-p77-disclaimer">Solo números, reglas predefinidas y conclusiones del cálculo. Un PDF con datos agregados también debe revisarse antes de enviarlo. Acciones externas: 0. Aprobaciones reales: 0.</p>
+      </section>
+    </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
       <div><p><strong>Listo:</strong> pasa las reglas de esta demostración. Puede ser una acción propuesta o un registro histórico, que no debe volver a ejecutarse.</p><p><strong>Revisar:</strong> necesita una decisión humana, aunque algunos campos sean válidos.</p><p><strong>Bloqueado:</strong> no cumple alguna regla y no puede avanzar hasta corregirse.</p><p><strong>Importante:</strong> ningún registro se introduce en tu CRM ni en otra aplicación. Esta mesa de trabajo es una simulación local.</p></div>
     </details>
