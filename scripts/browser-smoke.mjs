@@ -843,6 +843,14 @@ async function auditPilotControlCenter(browser){
   assert.equal(await page.locator("#pilotControlDrillList li").count(),7);
   await page.locator("#pilotControlFilter").selectOption("critical");
   assert.ok(await page.locator("#pilotControlRisks li").count()>=1);
+  assert.equal(await page.locator("#pilotCapacityRows tr").count(),4,"PR86 four capacities visible");
+  assert.match(await page.locator("#pilotCapacityCritical").innerText(),/SIGNOFF/);
+  assert.ok(await page.locator("#pilotCapacityRoles li").count()>2);
+  assert.equal(await page.locator("#pilotCapacityRoleLimit").inputValue(),"1");
+  const before=await page.locator("#pilotCapacityRows").innerText();
+  await page.locator("#pilotCapacityRoleLimit").selectOption("2");
+  assert.equal(await page.locator("#pilotCapacityRows tr").count(),4);
+  assert.match(await page.locator("#pilotCapacitySummary").innerText(),/unidades relativas/);
   const dl=page.waitForEvent("download");
   await page.locator("#pilotControlExport").click();
   const file=await dl;
@@ -853,6 +861,10 @@ async function auditPilotControlCenter(browser){
   assert.equal(parsed.realApprovals,0);
   assert.equal(parsed.externalExecutions,0);
   assert.equal(parsed.drills.passed,7);
+  assert.equal(parsed.capacity.schema,"revops-pilot-capacity-v1");
+  assert.equal(parsed.capacity.roleConcurrency,2);
+  assert.equal(parsed.capacity.comparisons.length,4);
+  assert.ok(parsed.capacity.criticalPath.tasks.includes("SIGNOFF"));
   assert.doesNotMatch(exported,/PED-101|norte@ejemplo\.test|Tienda Norte/);
   await page.locator("#pilotControlReset").click();
   assert.equal(await page.locator("#pilotControlDrills").innerText(),"Sin ejecutar");
