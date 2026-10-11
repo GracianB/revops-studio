@@ -618,3 +618,72 @@ body[data-experience="simple"] .workbench-p76,body[data-experience="simple"] .wo
 @media(max-width:800px){.workbench-p77-head{flex-wrap:wrap}.workbench-p77-head>.btn{width:100%}.workbench-p77-counters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.workbench-p77-actions{display:grid;grid-template-columns:1fr}.workbench-p77-actions>.btn{width:100%}.workbench-p77-studio{padding:13px}}
 @media(prefers-reduced-motion:reduce){.workbench-p77-shell *{transition:none!important}}
+
+
+/* PR78 · robust focus, readable reflow and assistive-technology navigation. */
+/* Keep scroll position away from the sticky header without trapping focus. */
+.workbench-page :is([id="main"],[id="simulador"],[id="lectura-resultados"],
+ [id="workbench-table-title"],[id="workbench-edit-title"],[id="rulesStudioTitle"],
+ [id="candidateStudioTitle"],[id="reportStudioTitle"],[id="columnMapperTitle"]){scroll-margin-top:105px}
+.workbench-a11y-skip:focus{position:fixed;transform:none;max-width:calc(100vw - 28px)}
+.workbench-a11y-skip[href="#simulador"]:focus{top:63px}
+.workbench-a11y-skip[href="#workbench-table-title"]:focus{top:112px}
+.workbench-p78-help{padding:12px 15px;margin:16px 0;border:1px solid var(--line-2);border-radius:11px;background:var(--bg-2)}
+.workbench-p78-help summary{cursor:pointer;font:750 12px/1.55 var(--sans);color:var(--text);padding:3px 2px;min-height:30px}
+.workbench-p78-help summary::marker{color:var(--accent)}
+.workbench-p78-help p{color:var(--muted);font:12px/1.7 var(--sans);margin:9px 0}
+.workbench-p78-help :focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.workbench-page :is(button,select,textarea,input,summary,a):focus-visible{
+ outline:3px solid var(--accent);outline-offset:3px
+}
+.workbench-page :is(h2,h3,h4)[tabindex="-1"]:focus-visible{
+ outline:3px solid var(--accent);outline-offset:5px;border-radius:3px
+}
+.workbench-page [aria-invalid="true"]{border-color:var(--accent)!important;box-shadow:inset 0 0 0 1px var(--accent)}
+.workbench-page :is(button,input,select,textarea){max-width:100%}
+.workbench-page :is(.workbench-p74-toolbar,.workbench-p74-history,.workbench-p75,
+ .workbench-p76,.workbench-p77-shell,.workbench-insights,.workbench-next){overflow-wrap:anywhere}
+.workbench-page :is(.workbench-p75-head,.workbench-p76-head,.workbench-p77-head,
+ .workbench-p74-preview-head,.workbench-p74-saved) > *{min-width:0}
+.workbench-page :is(#ruleTraceDetail,#humanReviewFeedback,#candidateStatus,#reportStatus,
+ #workflowError,#workflowFilterStatus,#editPreviewWarning){overflow-wrap:anywhere}
+.workbench-page :is(#candidateImportTemplate,#importWorkflow,#importMappingProfile){max-width:100%;min-width:0}
+.workbench-page :is(.workbench-filter,.workbench-p75-review-actions button,
+ .workbench-p76-form-actions button,.workbench-p77-actions .btn,.workbench-row-edit){min-height:44px}
+.workbench-page :is(.workbench-review-toolbar,.workbench-p74-options,.workbench-p76-form-actions){min-width:0}
+@media(max-width:480px){
+ .workbench-header{position:relative;backdrop-filter:none}
+ .workbench-nav{height:auto;min-height:66px;flex-wrap:wrap;padding-block:13px;gap:10px}
+ .workbench-nav-actions{min-width:0;display:flex;flex-wrap:wrap;gap:9px}
+ .workbench-nav .brand{min-width:0}
+ .workbench-nav .brand-text{overflow-wrap:anywhere}
+ .workbench-hero h1{font-size:clamp(35px,10.2vw,48px);line-height:1.09}
+ .workbench-page :is(.workbench-p75-stats,.workbench-p76-stats,.workbench-p77-counters){grid-template-columns:repeat(2,minmax(0,1fr))}
+ .workbench-page :is(.workbench-p77-shell,.workbench-p76,.workbench-p75){padding:14px}
+ .workbench-page .workbench-p74-options{display:grid;grid-template-columns:minmax(0,1fr)}
+ .workbench-page :is(.workbench-p75-layout,.workbench-p76-form,.workbench-p77-preview,
+ .workbench-p77-actions){grid-template-columns:minmax(0,1fr)}
+ .workbench-page .workbench-p75-safety{grid-template-columns:minmax(0,1fr)}
+ .workbench-page .workbench-p75-head .btn,
+ .workbench-page .workbench-p76-head .btn{width:100%}
+ .workbench-page .workbench-p75-review-actions button{width:100%}
+}
+@media(prefers-contrast:more){
+ .workbench-page{--muted:var(--text);--dim:var(--text);--line:currentColor;--line-2:currentColor}
+ .workbench-page :is(button,input,textarea,select,.workbench-row){
+  border-width:2px;border-style:solid
+ }
+}
+@media(forced-colors:active){
+ .workbench-page :is(button,input,select,textarea,.workbench-row,
+ .workbench-p74-history-steps button){border:1px solid ButtonText}
+ .workbench-page :is(.workbench-filter.is-active,.workbench-scenario.is-active,
+ .workbench-p74-history-steps button[aria-current="step"]){outline:2px solid Highlight}
+ .workbench-page :focus-visible{outline:3px solid Highlight!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .workbench-page *, .workbench-page *::before, .workbench-page *::after{
+  animation-duration:.01ms!important;animation-iteration-count:1!important;
+  transition-duration:.01ms!important;scroll-behavior:auto!important
+ }
+}
