@@ -158,7 +158,7 @@ async function auditDiscoveryStudio(browser) {
   await page.locator("#discoveryStudio").waitFor({state:"visible"});
   assert.equal(await page.locator("#diagStudioOpen").getAttribute("aria-expanded"),"true");
   assert.match(await page.locator("#discoveryReadiness").innerText(),/pendientes/);
-  assert.match(await page.locator("#discoveryGaps").innerText(),/responsable/i);
+  assert.match(await page.locator("#discoveryGaps").innerText(),/Designar a quien aprobará/);
   assert.equal(await page.locator("#discoveryPreview").inputValue().then(t=>t.includes("ACEPTACIÓN VERIFICABLE")),true);
   assert.match(await page.locator("#discoveryDemoLink").getAttribute("href"),/scenario=data/);
   await page.locator("#discoveryRole").selectOption("analyst");
