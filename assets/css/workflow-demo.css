@@ -507,3 +507,48 @@ body[data-experience="simple"] .workbench-p74-toolbar,body[data-experience="simp
 @media(prefers-reduced-motion:reduce){.workbench-p74-toolbar *, .workbench-p74-history *, .workbench-p74-preview *{transition:none!important}}
 
 .workbench-row:focus-within{outline:2px solid var(--accent);outline-offset:-2px;background:color-mix(in srgb,var(--accent) 7%,var(--panel))}
+
+
+/* PR75 · Rules and Human Decision Studio: advanced, opt-in audit, no fake "approved" status. */
+.workbench-p75-open{margin:20px 0;min-height:46px;white-space:normal}
+.workbench-p75[hidden]{display:none!important}
+.workbench-p75{margin:20px 0 25px;padding:clamp(18px,3vw,26px);background:var(--panel);border:1px solid var(--line-2);border-radius:17px}
+.workbench-p75-head{display:flex;flex-wrap:wrap;align-items:start;gap:12px}
+.workbench-p75-head>div{flex:1 1 280px;min-width:0}
+.workbench-p75-head h3{font:750 clamp(21px,3vw,30px)/1.15 var(--display);letter-spacing:-.035em;margin:9px 0}
+.workbench-p75-head p,.workbench-p75-section>p{font:12px/1.65 var(--sans);color:var(--muted);margin:9px 0}
+.workbench-p75-head .btn{white-space:normal;min-height:43px}
+.workbench-p75-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:19px 0}
+.workbench-p75-stats>div{padding:15px 12px;border:1px solid var(--line);border-radius:11px;background:var(--bg-2);min-width:0}
+.workbench-p75-stats small{display:block;font:11px/1.4 var(--sans);color:var(--muted)}
+.workbench-p75-stats strong{display:block;font:750 24px/1.4 var(--mono);margin-top:5px}
+.workbench-p75-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.workbench-p75-section{min-width:0;padding:16px;border:1px solid var(--line);border-radius:13px;background:var(--bg-2)}
+.workbench-p75-section h4{font:750 17px/1.4 var(--display);margin:0}
+.workbench-p75-section h5{font:750 12px/1.5 var(--sans);margin:16px 0 8px}
+.workbench-p75-section label{display:block;font:750 12px/1.5 var(--sans);margin:13px 0 7px;color:var(--text)}
+.workbench-p75-section select,.workbench-p75-section textarea{width:100%;min-height:44px;padding:10px;border:1px solid var(--line-2);border-radius:9px;background:var(--panel);color:var(--text);font:12px/1.55 var(--sans)}
+.workbench-p75-section textarea{resize:vertical}
+.workbench-p75-catalog{list-style:none;margin:15px 0 0;padding:0;display:grid;gap:6px}
+.workbench-p75-catalog li{padding:10px;border:1px solid var(--line);border-radius:9px;display:grid;gap:6px}
+.workbench-p75-catalog strong{font:750 11px/1.45 var(--sans)}
+.workbench-p75-catalog span{font:11px/1.5 var(--sans);color:var(--muted)}
+.workbench-p75-catalog .is-unused{opacity:.65}
+.workbench-p75-trace{padding:13px;border:1px solid var(--line-2);background:var(--panel);border-radius:10px;margin-top:9px}
+.workbench-p75-trace strong{font:750 13px var(--mono)}
+.workbench-p75-trace p,.workbench-p75-conflicts p{font:12px/1.6 var(--sans);color:var(--muted);margin:8px 0}
+.workbench-p75-trace button,.workbench-p75-conflicts button,.workbench-p75-review-actions button{min-height:43px;padding:9px 12px;border:1px solid var(--line-2);border-radius:9px;background:var(--panel);color:var(--text);font:750 11px/1.45 var(--sans);cursor:pointer}
+.workbench-p75-conflicts{display:grid;gap:7px}
+.workbench-p75-conflicts>div{padding:10px;border:1px solid var(--line);border-radius:9px}
+.workbench-p75-review-counts,#humanReviewState,#humanReviewFeedback,#rulesPolicyStatus{font:12px/1.6 var(--sans);color:var(--muted)}
+.workbench-p75-review-actions{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0}
+.workbench-p75-review-actions button:disabled{opacity:.45;cursor:not-allowed}
+.workbench-p75-safety{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:14px}
+.workbench-p75-safety>div{padding:11px 8px;border:1px solid var(--line);border-radius:9px}
+.workbench-p75-safety small{font:10px/1.4 var(--sans);color:var(--muted);display:block}
+.workbench-p75-safety strong{font:750 20px var(--mono);display:block;margin-top:7px}
+.workbench-p75 :focus-visible,.workbench-p75-open:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+body[data-experience="simple"] .workbench-p75,body[data-experience="simple"] .workbench-p75-open{display:none!important}
+@media(max-width:900px){.workbench-p75-layout{grid-template-columns:1fr}}
+@media(max-width:560px){.workbench-p75-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.workbench-p75-safety{grid-template-columns:1fr}.workbench-p75-head .btn{width:100%}.workbench-p75-review-actions{display:grid}.workbench-p75-review-actions button{width:100%;min-height:46px}}
+@media(prefers-reduced-motion:reduce){.workbench-p75 *{transition:none!important}}
