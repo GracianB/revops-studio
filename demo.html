@@ -119,6 +119,11 @@
           <label for="importWorkflow" class="workbench-import-label">Importar un CSV del equipo (local)</label>
           <input id="importWorkflow" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" aria-describedby="importHelp">
           <p class="workbench-hint" id="importHelp">Se lee en esta pestaña, no se sube. Solo para datos de prueba o anonimizados. Puedes relacionar columnas con nombres diferentes antes de ejecutar.</p>
+          <div class="workbench-import-audit" id="importAudit" role="status" aria-live="polite">
+            <strong id="importAuditTitle">Contrato de importación</strong>
+            <p id="importAuditSummary">CSV o TSV UTF-8. Hasta 32 KB, 80 registros y 12.000 caracteres. Los datos anteriores se conservan hasta confirmar.</p>
+            <ul id="importAuditFindings"></ul>
+          </div>
           <button class="workbench-map-open" id="openColumnMapper" type="button">Relacionar columnas de los datos pegados ↗</button>
         </div>
         <section class="workbench-mapper" id="columnMapper" aria-labelledby="columnMapperTitle" hidden>
@@ -128,6 +133,16 @@
           </div>
           <div id="columnMappingRows" class="workbench-mapping-list"></div>
           <p id="columnMappingIgnored" class="workbench-mapping-extras"></p>
+          <div class="workbench-mapping-profile">
+            <button type="button" class="btn btn-secondary" id="exportMappingProfile">Descargar perfil de columnas (sin registros) ↧</button>
+            <label for="importMappingProfile">Reutilizar un perfil de columnas (JSON, sin registros)</label>
+            <input type="file" id="importMappingProfile" accept=".json,application/json">
+            <p id="mappingProfileStatus" role="status" aria-live="polite">Un perfil solo contiene los nombres de columnas y el escenario.</p>
+          </div>
+          <label class="workbench-discard-confirm">
+            <input type="checkbox" id="confirmDiscardColumns">
+            Confirmo que las columnas adicionales identificadas se excluirán del resultado, pero no del archivo original.
+          </label>
           <div class="workbench-preview">
             <h5>Vista previa del resultado propuesto</h5>
             <div id="columnMappingPreview" class="workbench-preview-grid"></div>
