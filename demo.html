@@ -269,6 +269,63 @@
         </div>
         <p class="workbench-r2-safety">Acciones ejecutadas externamente: <strong>0</strong>. «Preparada» no significa «enviada». No es una medición de ahorro, rendimiento o ROI real.</p>
       </section>
+      <section id="rulesStudio" class="workbench-p75" aria-labelledby="rulesStudioTitle" hidden>
+        <div class="workbench-p75-head">
+          <div><span class="workbench-section-index">PR75 · RULES & HUMAN DECISION STUDIO</span>
+            <h3 id="rulesStudioTitle">Cada decisión tiene una regla, una prioridad y un límite.</h3>
+            <p>El mismo catálogo que decide el resultado muestra por qué gana una regla y cuáles quedan detrás. Una revisión humana nunca significa envío ni aprobación real.</p></div>
+          <button id="rulesExport" type="button" class="btn btn-secondary" disabled>Descargar auditoría agregada ↧</button>
+        </div>
+        <div class="workbench-p75-stats" aria-label="Indicadores de reglas auditadas">
+          <div><small>Reglas del escenario</small><strong id="rulesCount">0</strong></div>
+          <div><small>Con aplicación efectiva</small><strong id="rulesCovered">0</strong></div>
+          <div><small>Restricciones simultáneas</small><strong id="rulesOverlaps">0</strong></div>
+          <div><small>Casos que necesitan personas</small><strong id="rulesHumanGates">0</strong></div>
+        </div>
+        <div class="workbench-p75-layout">
+          <section class="workbench-p75-section" aria-labelledby="ruleCatalogTitle">
+            <h4 id="ruleCatalogTitle">Catálogo y precedencia ejecutable</h4>
+            <p>Las reglas se comprueban de arriba abajo. La primera que coincide determina el resultado. Las demás restricciones se mantienen visibles.</p>
+            <ol id="ruleCatalogList" class="workbench-p75-catalog"></ol>
+          </section>
+          <section class="workbench-p75-section" aria-labelledby="ruleTraceTitle">
+            <h4 id="ruleTraceTitle">Explicación de un registro</h4>
+            <label for="ruleTraceRow">Elige una fila para auditarla</label>
+            <select id="ruleTraceRow" aria-controls="ruleTraceDetail"></select>
+            <div id="ruleTraceDetail" class="workbench-p75-trace" role="status" aria-live="polite">
+              <p>Ejecuta un escenario para consultar su trazabilidad.</p>
+            </div>
+            <h5>Reglas que compiten por prioridad</h5>
+            <div id="ruleConflicts" class="workbench-p75-conflicts"><p>Se mostrarán coincidencias múltiples cuando existan.</p></div>
+          </section>
+          <section class="workbench-p75-section" aria-labelledby="humanReviewTitle">
+            <h4 id="humanReviewTitle">Bandeja de decisiones humanas</h4>
+            <p>Solo admite filas que el motor ha marcado como «revisar». Las aprobaciones y rechazos son anotaciones de prueba, nunca autorizaciones reales.</p>
+            <div id="humanReviewCounters" class="workbench-p75-review-counts" role="status" aria-live="polite">Sin decisiones registradas.</div>
+            <label for="humanReviewRow">Excepción que deseas estudiar</label>
+            <select id="humanReviewRow" aria-controls="humanReviewState"></select>
+            <p id="humanReviewState" role="status" aria-live="polite">Selecciona una excepción.</p>
+            <label for="humanReviewNote">Justificación local (mínimo 12 caracteres para aprobar o rechazar)</label>
+            <textarea id="humanReviewNote" rows="3" maxlength="240" placeholder="Describe el criterio, sin datos personales ni nombres de clientes."></textarea>
+            <div class="workbench-p75-review-actions">
+              <button type="button" id="humanReviewStart">Marcar en revisión</button>
+              <button type="button" id="humanReviewApprove">Aprobación simulada</button>
+              <button type="button" id="humanReviewReject">Rechazar en simulación</button>
+            </div>
+            <p id="humanReviewFeedback" role="status" aria-live="polite"></p>
+          </section>
+          <section class="workbench-p75-section" aria-labelledby="rulesSafetyTitle">
+            <h4 id="rulesSafetyTitle">Límites y seguridad del recorrido</h4>
+            <div class="workbench-p75-safety">
+              <div><small>Aprobaciones reales verificadas</small><strong>0</strong></div>
+              <div><small>Acciones externas ejecutadas</small><strong>0</strong></div>
+              <div><small>Datos enviados por esta consola</small><strong>0</strong></div>
+            </div>
+            <p>Editar datos o cambiar de escenario invalida todas las anotaciones de revisión. El TXT contiene únicamente recuentos y reglas predefinidas, nunca justificaciones o valores de filas.</p>
+            <p id="rulesPolicyStatus" role="status" aria-live="polite">Las decisiones se analizan localmente.</p>
+          </section>
+        </div>
+      </section>
       <div class="workbench-insight-note">Recomendaciones basadas en las reglas visibles de esta demo. No se comprueban fuentes externas ni se calculan ahorros.</div>
     </section>
     <section class="workbench-rows" aria-labelledby="workbench-table-title">
