@@ -1,3 +1,11 @@
+## RevOps PR75 · Rules & Human Decision Studio (desarrollo sin publicación)
+
+La demo avanzada ofrece una consola de auditoría opcional y de carga diferida. **El motor y la auditoría comparten exactamente el mismo catálogo de reglas ordenadas** (`assets/js/workflow-policy.js`), en vez de mantener explicaciones duplicadas. Cada resultado se acompaña de un identificador estable de regla, precedencia, restricciones adicionales ocultas por reglas prioritarias, recuentos de aplicación y análisis de conflictos por fila. Si el resultado y la regla descrita no coinciden, la consola se niega a presentar una trazabilidad falsa.
+
+La bandeja de revisión humana (`assets/js/human-decision.js`) solo permite anotaciones de prueba en las filas que realmente tengan estado «revisar»: pendiente, en revisión, aprobación simulada o rechazo simulado. Requiere una justificación para aprobar/rechazar en la demo, no finge identidad verificable, y **no cambia el motor ni habilita la cola de acciones**. Toda anotación se borra al cambiar el archivo o escenario. El TXT de auditoría solo contiene reglas predefinidas y totales, nunca filas, IDs, emails o notas. No se ejecuta ni aprueba nada externamente.
+
+Contrato, límites y aceptación: `docs/PR75-DECISIONES.md`. Pruebas: `tests/decision-studio.test.js`, smoke de Chrome/Firefox/móvil y regresión V40. Mantener rama apilada en borrador, no fusionar ni desplegar.
+
 ## RevOps PR74 · Mesa de correcciones profesional (sin lanzamiento)
 
 La mesa de trabajo añade **previsualización local del cambio antes de guardarlo**, recálculo real de estados, diferencias por campo, avisos de revisión humana, validaciones del motor existentes y botón inactivo cuando no existen diferencias. `assets/js/correction-workbench.js` proporciona una línea temporal acotada a 20 correcciones: múltiples deshacer/rehacer, salto entre estados, eliminación de futuras correcciones al ramificar e historial sin filas ni identificadores en etiquetas.
