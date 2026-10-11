@@ -296,6 +296,76 @@ async function auditCorrectionWorkbench(browser){
  }finally{await page.close();}
 }
 
+async function auditDecisionStudio(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true,reducedMotion:"reduce"});
+ const errors=[],requests=[];
+ page.on("pageerror",e=>errors.push(e.message));
+ page.on("request",r=>requests.push(r.url()));
+ try{
+  await page.goto(base+"/demo.html?scenario=orders&view=advanced",{waitUntil:"load"});
+  assert.equal(await page.locator("#rulesStudio").isHidden(),true);
+  assert.equal(requests.some(url=>url.includes("/decision-console.js")),false,"PR75 audit should load on demand");
+  await page.locator("#rulesOpen").click();
+  await page.locator("#rulesStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#rulesOpen").getAttribute("aria-expanded"),"true");
+  assert.equal(await page.locator("#rulesCount").innerText(),"9");
+  assert.equal(await page.locator("#rulesCovered").innerText(),"5");
+  assert.equal(await page.locator("#rulesHumanGates").innerText(),"1");
+  assert.match(await page.locator("#ruleCatalogList").innerText(),/ID-001/);
+  assert.match(await page.locator("#ruleCatalogList").innerText(),/ORD-201/);
+  await page.locator("#ruleTraceRow").selectOption("2");
+  assert.match(await page.locator("#ruleTraceDetail").innerText(),/ID-002/);
+  assert.match(await page.locator("#ruleTraceDetail").innerText(),/Ninguna restricción adicional/);
+  await page.locator("#humanReviewApprove").click();
+  assert.match(await page.locator("#humanReviewFeedback").innerText(),/12 caracteres/);
+  await page.locator("#humanReviewNote").fill("Revisión local con justificante de ejemplo, sin datos reales.");
+  await page.locator("#humanReviewApprove").click();
+  assert.match(await page.locator("#humanReviewCounters").innerText(),/Aprobación simulada: 1/);
+  assert.match(await page.locator("#humanReviewFeedback").innerText(),/no una aprobación verificable/);
+  assert.equal(await page.locator("#countReview").innerText(),"1","simulated approval must not change engine status");
+  const queuePromise=page.waitForEvent("download");
+  await page.locator("#exportActionQueue").click();
+  const queueFile=await queuePromise;
+  const queueText=await readFile(await queueFile.path(),"utf8");
+  assert.doesNotMatch(queueText,/PED-104/,"pending human row never enters action queue");
+  const reportPromise=page.waitForEvent("download");
+  await page.locator("#rulesExport").click();
+  const report=await reportPromise;
+  assert.match(report.suggestedFilename(),/revops-reglas-pr75-orders\.txt/);
+  const content=await readFile(await report.path(),"utf8");
+  assert.match(content,/Aprobaciones reales verificadas: 0/);
+  assert.match(content,/Anotaciones de aprobación simulada: 1/);
+  assert.doesNotMatch(content,/Revisión local con justificante|PED-104|norte@ejemplo\.test|Tienda Norte/);
+  await page.locator("#rulesClose").click();
+  assert.equal(await page.locator("#rulesStudio").isHidden(),true);
+  assert.equal(await page.locator("#rulesOpen").getAttribute("aria-expanded"),"false");
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),"rulesOpen");
+  // Changing input invalidates all previous annotations and rule snapshots.
+  await page.locator("#workflowSource").fill(
+   "pedido;cliente;email;total;estado\n0001;Acme;a@ejemplo.test;10;nuevo\n0001;;invalid;-2;???");
+  await page.locator("#runWorkflow").click();
+  assert.equal(await page.locator("#countTotal").innerText(),"2");
+  await page.locator("#rulesOpen").click();
+  await page.locator("#rulesStudio").waitFor({state:"visible"});
+  assert.equal(await page.locator("#rulesOverlaps").innerText(),"1");
+  assert.match(await page.locator("#ruleConflicts").innerText(),/ID-002/);
+  assert.match(await page.locator("#ruleConflicts").innerText(),/ORD-102/);
+  assert.match(await page.locator("#humanReviewCounters").innerText(),/Aprobación simulada: 0/);
+  assert.equal(await page.locator("#humanReviewApprove").isDisabled(),true);
+  await page.locator("#ruleConflicts button").first().click();
+  assert.equal(await page.locator("#ruleTraceRow").inputValue(),"1");
+  assert.match(await page.locator("#ruleTraceDetail").innerText(),/Restricciones adicionales/);
+  await page.locator("#ruleTraceDetail button").click();
+  assert.equal(await page.locator("#workflowEditForm").isVisible(),true);
+  await page.locator("#cancelWorkflowEdit").click();
+  const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(dimensions.scroll<=dimensions.width+3,"PR75 mobile overflow "+JSON.stringify(dimensions));
+  assert.deepEqual(errors,[],"PR75 runtime errors");
+  assert.ok(requests.some(url=>url.includes("/decision-console.js")));
+  console.log("PR75 DECISION STUDIO PASS ("+engineName+"): real rule engine parity, precedence, human gate, safe report, invalidation, mobile");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -655,6 +725,7 @@ try {
   await auditClientFirstVisit(browser);
   await auditProductWorkbench(browser);
   await auditCorrectionWorkbench(browser);
+  await auditDecisionStudio(browser);
   const page=await browser.newPage({viewport:{width:1366,height:840},reducedMotion:"reduce"});
   page.on("pageerror",describe);
   page.on("console",message=>{if(message.type()==="error")console.log("CONSOLE_ERROR:",message.text())});
