@@ -886,3 +886,17 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
 #pilotHandoffStatus{font:12px/1.65 var(--sans);padding:12px;border-left:3px solid var(--accent);color:var(--text);background:var(--bg-2);overflow-wrap:anywhere}
 @media(max-width:550px){.pilot-handoff .workbench-p85-actions{display:grid;grid-template-columns:1fr}.pilot-handoff .workbench-p85-actions button{width:100%}}
 @media(forced-colors:active){.pilot-handoff{border:1px solid ButtonText}}
+
+/* PR89 · Safe synthetic fixture comparison, not production load testing. */
+.pilot-stress{margin:18px 0;padding:clamp(12px,2.5vw,20px);max-width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--line-2);border-radius:12px;background:var(--panel)}
+.pilot-stress h4{margin:0 0 9px}
+.pilot-stress label{display:grid;gap:7px;max-width:350px;min-width:0;margin:13px 0;font:750 12px/1.5 var(--sans)}
+#pilotStressFilter{min-width:0;width:100%;max-width:100%;box-sizing:border-box;min-height:46px;border:1px solid var(--line-2);border-radius:9px;padding:10px;background:var(--bg-2);color:var(--text)}
+.pilot-stress-scroll{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow-x:auto;overscroll-behavior-inline:contain;border:1px solid var(--line);border-radius:9px}
+#pilotStressTable{border-collapse:collapse;width:100%;min-width:700px;font:12px/1.55 var(--sans)}
+#pilotStressTable caption{text-align:left;font:750 12px/1.5 var(--sans);padding:11px;color:var(--text)}
+#pilotStressTable th,#pilotStressTable td{padding:11px;border-top:1px solid var(--line);vertical-align:top;text-align:left}
+#pilotStressTable thead th{font-weight:750}
+#pilotStressTable tbody tr:nth-child(odd){background:var(--bg-2)}
+#pilotStressStatus,#pilotStressCurrent{padding:11px;background:var(--bg-2);border-left:3px solid var(--accent);overflow-wrap:anywhere}
+@media(forced-colors:active){.pilot-stress-scroll{border:1px solid ButtonText}}
