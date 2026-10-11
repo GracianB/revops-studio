@@ -22,7 +22,7 @@ let scenario=allowed.includes(query)?query:"orders";
 let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
 let correctionTimeline=null, editPreview=null, editorTrigger=null, editorDirty=false;
-let decisionConsole=null;
+let decisionConsole=null,candidateConsole=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
@@ -38,6 +38,9 @@ function invalidate(message){
   correctionTimeline=null;editPreview=null;
   $("r2Evidence").hidden=true;
   $("rulesStudio").hidden=true;
+  $("candidateStudio").hidden=true;
+  $("candidateOpen").setAttribute("aria-expanded","false");
+  $("candidateOpen").disabled=true;
   $("rulesOpen").setAttribute("aria-expanded","false");
   $("rulesOpen").disabled=true;
   $("qualityCockpit").hidden=true;
@@ -625,6 +628,8 @@ function render(result){
   renderQualityCockpit(result);
   renderInsights(result);
   $("rulesOpen").disabled=false;
+  $("candidateOpen").disabled=false;
+  if(candidateConsole&&!$("candidateStudio").hidden)candidateConsole.sync();
   if(decisionConsole&&!$("rulesStudio").hidden)
     decisionConsole.sync(scenario,$("workflowSource").value,result);
   applyFilter();
@@ -1104,6 +1109,22 @@ $("r2Export").addEventListener("click",()=>{
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(uri),1000);
   setText("workflowStatus","Comparativa R2 descargada. Sin filas, contactos ni ejecución externa.");
+});
+$("candidateOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(candidateConsole)candidateConsole.sync();
+  else{
+   const module=await import("./scenario-console.js");
+   if(!latest)return;
+   candidateConsole=module.mountCandidateStudio({
+    getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null
+   });
+  }
+  $("candidateStudio").scrollIntoView({behavior:"instant",block:"start"});
+ }catch(error){
+  errorText("No se pudo abrir Scenario Builder: "+(error?.message||"error desconocido"));
+ }
 });
 $("rulesOpen").addEventListener("click",async()=>{
   if(!latest)return;
