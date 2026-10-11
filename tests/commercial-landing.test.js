@@ -328,6 +328,7 @@ test("R2 makes before-after rules visible without pretending to execute external
 
 test("PR71 is one complete discovery workflow, lazy-loaded and consent-first",()=>{
  const ui=file("assets/js/discovery-ui.js"),engine=file("assets/js/discovery-engine.js");
+ const template=file("assets/js/discovery-view.js");
  const design=file("assets/css/discovery-studio.css");
  for(const id of ["discoveryStudio","discoveryRole","discoveryOutcome","discoveryUrgency",
    "discoveryStage","discoveryOwner","discoverySample","discoveryIntegration",
@@ -335,7 +336,7 @@ test("PR71 is one complete discovery workflow, lazy-loaded and consent-first",()
    "discoveryReadiness","discoveryGaps","discoveryRisks","discoveryPreview",
    "discoveryRegenerate","discoveryCopy","discoveryDownloadTxt","discoveryDownloadJson",
    "discoveryDemoLink","discoveryAttach","discoveryClose","discoveryStatus"]){
-   assert.match(index,new RegExp('id="'+id+'"'),"missing discovery control "+id);
+   assert.match(template,new RegExp('id=\\"'+id+'\\"'),"missing lazy discovery control "+id);
  }
  assert.match(index,/id="discoveryStudio"[^>]*hidden/);
  assert.match(index,/id="diagStudioOpen"[^>]+aria-controls="discoveryStudio"/);
@@ -343,6 +344,7 @@ test("PR71 is one complete discovery workflow, lazy-loaded and consent-first",()
  assert.doesNotMatch(index,/<script[^>]+src="[^"]*discovery-ui\.js/);
  assert.doesNotMatch(index,/<link[^>]+href="[^"]*discovery-studio\.css/);
  assert.match(ui,/css.href="\.\/assets\/css\/discovery-studio\.css"/);
+ assert.match(ui,/root.innerHTML=DISCOVERY_VIEW_HTML/);
  assert.match(ui,/attachedValue/);
  assert.match(ui,/if\(edited\)/);
  assert.match(ui,/preview.value=formatDiscoveryBrief\(current\)/);
