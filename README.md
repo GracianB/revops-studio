@@ -1,3 +1,11 @@
+## RevOps PR78 · Accesibilidad y reflujo, sin publicación
+
+La experiencia avanzada incorpora **navegación de registros exclusivamente por teclado**: flechas arriba/abajo, Inicio y Fin actúan sobre filas actualmente visibles sin modificar datos, mientras Intro/Espacio mantienen la acción nativa. Se incorporan enlaces para saltar al editor o resultados, ayuda de teclado en la propia página, resumen corto para lectores de pantalla, etiquetas de fila que explican estado y motivo, asociaciones entre cada campo problemático y su explicación, errores relacionados con el textarea e indicación `aria-invalid` coherente con el resultado de la validación. Los paneles de reglas, variantes, mapping e informes reciben foco en su título al abrirse; Escape cierra el panel correspondiente devolviendo el foco. El aviso de cambio de escenario atrapa temporalmente Tab y Mayús+Tab entre sus dos decisiones y puede cancelarse con Escape.
+
+La tabla móvil conserva identificación y acciones a ancho de 320 px, con objetivos táctiles de al menos 44 px para controles principales, cabecera menos invasiva a zoom elevado, desbordamientos de texto seguros, estado textual además del color, foco de alto contraste, soporte para colores forzados, `prefers-contrast: more` y movimiento reducido. **Las pruebas automáticas no equivalen a certificar WCAG ni sustituyen una auditoría manual con lectores de pantalla reales**. La CI incorpora pruebas de teclado, foco, reflujo equivalente a 400 % sobre pantalla de 1280 px y barridos axe de modos claro/oscuro.
+
+Código: `assets/js/a11y-workbench.js`, `assets/js/workflow-demo.js`, `assets/css/workflow-demo.css`; pruebas: `tests/a11y-workbench.test.js` y smoke Chrome/Firefox. Detalles: `docs/PR78-ACCESIBILIDAD.md`. PR draft sobre PR77, sin desplegar ni fusionar.
+
 ## RevOps PR77 · Informes profesionales con PDF A4 real (NO PUBLICAR)
 
 La demo integra **Reporting Studio**: prepara a petición un informe ejecutivo PDF auténtico (`%PDF-1.4`, catálogo de objetos, referencias cruzadas, fuentes Helvetica/Helvetica-Bold con WinAnsi, páginas A4 numeradas y saltos de página). No se renombra HTML como PDF ni se utilizan proveedores externos. Además ofrece vista PDF en otra pestaña para imprimir con el visor del navegador, resumen TXT y JSON estructurado.
