@@ -1176,6 +1176,51 @@ async function auditPilotPlan(browser){
  }finally{await page.close();}
 }
 
+async function auditIntegrationReview(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce"});
+ const errors=[],external=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ page.on("request",request=>{
+  if(request.url().includes("api.github.com"))external.push(request.url());
+ });
+ try{
+  await page.goto(base+"/revision.html",{waitUntil:"load"});
+  await page.waitForFunction(()=>document.querySelector("#chainList")?.children.length===35);
+  assert.equal(await page.locator("#chainCount").innerText(),"35");
+  assert.equal(await page.locator("#chainBehind").innerText(),"1");
+  assert.match(await page.locator("#chainStatus").innerText(),/Integración NO-GO/);
+  assert.match(await page.locator("#chainTimestamp").innerText(),/Fotografía técnica/);
+  assert.match(await page.locator("#chainBoundary").innerText(),/NO AUTORIZADA/);
+  assert.equal(await page.locator("#chainList li").count(),35);
+  assert.equal(await page.locator("#chainList li[data-issue='true']").count(),1);
+  assert.equal(await page.locator("#chainList li[data-issue='true'] a").getAttribute("href"),
+   "https://github.com/GracianB/revops-studio/pull/79");
+  await page.locator('[data-chain-stage="issues"]').click();
+  assert.equal(await page.locator("#chainList li").count(),1);
+  assert.equal(await page.locator("#chainList li strong").innerText().then(x=>x.includes("#79")),true);
+  await page.locator('[data-chain-stage="acceptance"]').click();
+  assert.equal(await page.locator("#chainList li").count(),3);
+  assert.match(await page.locator("#chainResultCount").innerText(),/3 de 35/);
+  await page.locator('[data-chain-stage="all"]').click();
+  await page.locator("#chainSearch").fill("100");
+  assert.equal(await page.locator("#chainList li").count(),1);
+  assert.match(await page.locator("#chainList li strong").innerText(),/#100/);
+  await page.locator("#chainSearch").fill("");
+  assert.equal(await page.locator("#chainList li").count(),35);
+  await page.setViewportSize({width:320,height:760});
+  const dims=await page.evaluate(()=>({
+   width:innerWidth,scroll:document.documentElement.scrollWidth
+  }));
+  assert.ok(dims.scroll<=dims.width+3,
+   "PR104 revision at 320px horizontal overflow "+JSON.stringify(dims));
+  await auditAccessibility(page,"PR104 integration review");
+  assert.deepEqual(external,[],"review UI must not call GitHub or external services");
+  assert.deepEqual(errors,[],"PR104 review errors");
+  console.log("PR104 INTEGRATION REVIEW PASS ("+engineName+
+   "): 35 PR, 1 blocked ancestor, filters, 320px, non-live honest evidence");
+ }finally{await page.close();}
+}
+
 async function auditHumanUat(browser){
  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
  const faults=[];
@@ -1613,6 +1658,7 @@ try {
   await auditDiscoveryStudio(browser);
   await auditClientFirstVisit(browser);
   await auditHumanUat(browser);
+  await auditIntegrationReview(browser);
   await auditProductWorkbench(browser);
   await auditCorrectionWorkbench(browser);
   await auditDecisionStudio(browser);
