@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: validate-\${{ github.workflow }}-\${{ github.ref }}
@@ -54,7 +55,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
-      - name: V100 five-surface usability structure audit
+      - name: V100 seven-surface usability structure audit
         run: node scripts/ux-audit.mjs
 
       - name: Archive V100 UX audit observations
@@ -75,6 +76,22 @@ jobs:
         with:
           name: revops-pr103-uat-protocol-${{ github.run_id }}
           path: .ci-artifacts/pr103-uat-preparation.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: PR104 live 35-PR dependency audit (release NO-GO)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/pr104-integration-chain.mjs --live
+
+      - name: Archive PR104 chain and release blockers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr104-integration-${{ github.run_id }}
+          path: |
+            .ci-artifacts/pr104-chain-report.json
+            .ci-artifacts/pr104-chain-report.md
           if-no-files-found: ignore
           retention-days: 30
 
