@@ -60,6 +60,7 @@ export function createUatSession(){
   const unsupported=observed.filter(t=>t.outcome==="failed"||t.outcome==="blocked");
   const overTime=observed.filter(t=>!t.withinTarget);
   const assisted=observed.filter(t=>t.assistance!=="none");
+  const friction=observed.filter(t=>t.assistance!=="none"||!t.withinTarget);
   const profiles=UAT_PROFILES.map(profile=>{
    const rows=tasks.filter(t=>t.profile===profile.id);
    return Object.freeze({id:profile.id,total:rows.length,observed:rows.filter(t=>t.outcome!=="pending").length,
@@ -72,6 +73,7 @@ export function createUatSession(){
    total:tasks.length,observed:observed.length,pending:tasks.length-observed.length,
    reportedCompleted:completed.length,reportedIssues:unsupported.length,
    reportedOverTarget:overTime.length,reportedAssisted:assisted.length,
+   reportedFriction:friction.length,
    profiles:Object.freeze(profiles),tasks:Object.freeze(tasks),
    manualObservationsSelfReported:true,independentVerification:false,
    manualAccessibilityVerified:0,realApprovals:0,externalExecutions:0,productionGo:false,
