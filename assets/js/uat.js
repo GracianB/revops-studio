@@ -24,7 +24,7 @@ function refreshOverview(message){
  $("uatObserved").textContent=state.observed+" / "+state.total;
  $("uatPassed").textContent=String(state.reportedCompleted);
  $("uatIssues").textContent=String(state.reportedIssues);
- $("uatFriction").textContent=String(state.reportedAssisted+state.reportedOverTarget);
+ $("uatFriction").textContent=String(state.reportedFriction);
  $("uatExportJson").disabled=state.observed===0;
  $("uatExportTxt").disabled=state.observed===0;
  $("uatStatus").textContent=message||(
