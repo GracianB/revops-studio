@@ -5,7 +5,7 @@ import {resolve,join} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 
 export const UX_PUBLIC_PAGES=Object.freeze([
- "index.html","demo.html","laboratorio.html","privacidad.html","gracias.html","evaluacion.html"
+ "index.html","demo.html","laboratorio.html","privacidad.html","gracias.html","evaluacion.html,"revision.html"
 ]);
 const rootPath=resolve(fileURLToPath(new URL("../",import.meta.url)));
 const detailBlocks=["pilotUXToggle","pilotUXClose","pilotUXStatus",
@@ -91,6 +91,15 @@ export function auditV100UX(root=rootPath,{read=(path)=>readFileSync(path,"utf8"
   if(!uatContent.includes('NO AUTORIZADO PARA PRODUCCIÓN'))
    problems.push("PR103_UAT_MISSING_NO_GO");
  }
+ const chainPage=join(root,"revision.html");
+ if(exists(chainPage)){
+  const chainHtml=String(read(chainPage));
+  if(!chainHtml.includes('id="chainBoundary"')||
+    !chainHtml.includes('id="chainList"')||
+    !chainHtml.includes('href="https://github.com/GracianB/revops-studio/pull/79"')||
+    !chainHtml.includes('NO AUTORIZADA'))
+   problems.push("PR104_REVIEW_BOUNDARY_MISSING");
+ }
  if(!demo.includes("NO AUTORIZADO PARA PRODUCCIÓN"))
   problems.push("AVISO_NO_GO_AUSENTE");
  if(!demo.includes('data-client-step="problem"')||
@@ -111,7 +120,7 @@ export function auditV100UX(root=rootPath,{read=(path)=>readFileSync(path,"utf8"
   pagesReviewed:Object.keys(pages).length,
   localLinksReviewed:Object.values(pages).reduce((a,p)=>a+p.links.length,0),
   sections:{landing:"index.html",firstVisit:"demo.html",
-   technical:"laboratorio.html",privacy:"privacidad.html",contactStatus:"gracias.html",humanAcceptance:"evaluacion.html"},
+   technical:"laboratorio.html",privacy:"privacidad.html",contactStatus:"gracias.html",humanAcceptance:"evaluacion.html",integrationReview:"revision.html"},
   progressivePilot:"summary-by-default / accessible details on demand",
   reportedProblems:Object.freeze(problems),
   observations:Object.freeze(warnings),
