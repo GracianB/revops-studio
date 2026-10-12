@@ -1402,6 +1402,8 @@ async function auditProductWorkbench(browser) {
       name:"pedidos.tsv",mimeType:"text/tab-separated-values",
       buffer:Buffer.from("pedido\tcliente\temail\ttotal\testado\n0007\tEmpresa\tx@ejemplo.test\t34\tnuevo")
     });
+    await page.waitForFunction(()=>document.getElementById("countTotal")?.textContent==="1" &&
+      /TSV/.test(document.getElementById("importAuditTitle")?.textContent||""),null,{timeout:12000});
     assert.equal(await page.locator("#countTotal").innerText(),"1");
     assert.equal(await page.locator("#workflowRows .workbench-row").first().getAttribute("data-status"),"listo");
     assert.match(await page.locator("#importAuditTitle").innerText(),/TSV/);
