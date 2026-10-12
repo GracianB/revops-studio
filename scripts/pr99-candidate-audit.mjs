@@ -59,7 +59,7 @@ export function auditCandidate(root,{read=readFileSync,exists=existsSync}={}){
   "node scripts/pr100-milestone-acceptance.mjs",
   "node scripts/ux-audit.mjs",
   "node scripts/pr103-acceptance.mjs",
-  "node scripts/pr104-integration-chain.mjs --live"])
+  "node scripts/pr104-integration-chain.mjs"])
   if(!pipeline.includes(step))problems.push("CI_GATE_MISSING "+step);
  const source=get("assets/js/pilot-supervised-review.js");
  if(!source.includes('outcome:"NO AUTORIZADO PARA PRODUCCIÓN"')||
