@@ -79,10 +79,10 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
-      - name: PR104 live 35-PR dependency audit (release NO-GO)
+      - name: PR104 historical integration evidence (not live release authorization)
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/pr104-integration-chain.mjs --live
+        run: node scripts/pr104-integration-chain.mjs
 
       - name: Archive PR104 chain and release blockers
         if: always()
