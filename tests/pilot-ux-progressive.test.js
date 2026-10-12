@@ -72,7 +72,7 @@ test("UX V100: progressive HTML wraps advanced navigator and the real controls",
  assert.match(js,/ux\.showDetails\(\);sectionNavigation\.selectById/);
  assert.match(js,/ux\.showDetails\(\);const target=/);
  assert.match(js,/ux\.reset\(\)/);
- assert.match(css,/\.pilot-ux-details\[hidden\]\{display:none!important\}/);
+ assert.match(css,/\.pilot-ux-details\[hidden\],\.pilot-ux-more\[hidden\]\{display:none!important\}/);
  assert.match(css,/#pilotGuidedList>li:nth-child\(n\+4\)/);
  assert.doesNotMatch(read("assets/js/pilot-ux-progressive.js"),
   /fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
