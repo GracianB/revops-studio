@@ -77,6 +77,12 @@ export function auditV100UX(root=rootPath,{read=(path)=>readFileSync(path,"utf8"
   if(!demo.includes('id="'+id+'"'))problems.push("CONTROLES_UX "+id);
  if(!/<div id="pilotUXDetails"[^>]*\bhidden\b/.test(demo))
   problems.push("DETALLE_NO_PLEGADO");
+ for(const id of ["clientOutcomeProof","clientOutcomeBlocked","clientOutcomeReview","clientOutcomePrepared"]){
+  if(!demo.includes('id="'+id+'"'))problems.push("PR102_COMPARACION_AUSENTE "+id);
+ }
+ const guided=join(root,"assets/js/client-journey.js");
+ if(!exists(guided)||!String(read(guided)).includes("buildGuidedOutcome"))
+  problems.push("PR102_COMPARACION_NO_CONECTADA");
  if(!demo.includes("NO AUTORIZADO PARA PRODUCCIÓN"))
   problems.push("AVISO_NO_GO_AUSENTE");
  if(!demo.includes('data-client-step="problem"')||
