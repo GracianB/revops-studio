@@ -1187,6 +1187,7 @@ async function auditClientFirstVisit(browser){
     assert.equal(await page.locator(".workbench-recipes").isVisible(),false,"a novice should not see 18 raw datasets");
     assert.equal(await page.locator(".workbench-editor-grid").isVisible(),false,"CSV editing is optional, not compulsory");
     assert.equal(await page.locator("#clientStepTitle").innerText(),"Empecemos con un problema de tu día a día.");
+    assert.equal(await page.locator("#clientOutcomeProof").isHidden(),true);
     assert.equal(await page.locator('[data-client-problem="orders"]').getAttribute("aria-pressed"),"true");
     // Business problem, not a file type, is the first action.
     await page.locator('[data-client-problem="support"]').click();
@@ -1211,6 +1212,12 @@ async function auditClientFirstVisit(browser){
     assert.equal(await page.locator('body').getAttribute("data-guide-stage"),"finished");
     assert.equal(await page.locator("#clientPrepared").innerText(),"3");
     assert.equal(await page.locator("#clientDetected").innerText(),"1");
+    assert.equal(await page.locator("#clientOutcomeProof").isVisible(),true);
+    assert.match(await page.locator("#clientOutcomeClaim").innerText(),/corregido 1 bloqueo/);
+    assert.equal(await page.locator("#clientOutcomeBlocked").innerText(),"2 → 1 (-1)");
+    assert.equal(await page.locator("#clientOutcomeReview").innerText(),"1 → 1 (0)");
+    assert.equal(await page.locator("#clientOutcomePrepared").innerText(),"2 → 3 (+1)");
+    assert.equal(await page.locator("#clientOutcomeBlocked").getAttribute("data-trend"),"better");
     assert.match(await page.locator("#clientStepDescription").innerText(),/Antes había 2 bloqueos/);
     assert.equal(await page.locator("#clientContactAction").isVisible(),true);
     assert.equal(await page.locator("#workflowEditForm").isVisible(),false);
