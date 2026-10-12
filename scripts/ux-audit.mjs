@@ -5,7 +5,7 @@ import {resolve,join} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 
 export const UX_PUBLIC_PAGES=Object.freeze([
- "index.html","demo.html","laboratorio.html","privacidad.html","gracias.html"
+ "index.html","demo.html","laboratorio.html","privacidad.html","gracias.html","evaluacion.html"
 ]);
 const rootPath=resolve(fileURLToPath(new URL("../",import.meta.url)));
 const detailBlocks=["pilotUXToggle","pilotUXClose","pilotUXStatus",
@@ -83,6 +83,14 @@ export function auditV100UX(root=rootPath,{read=(path)=>readFileSync(path,"utf8"
  const guided=join(root,"assets/js/client-journey.js");
  if(!exists(guided)||!String(read(guided)).includes("buildGuidedOutcome"))
   problems.push("PR102_COMPARACION_NO_CONECTADA");
+ const uat=join(root,"evaluacion.html");
+ if(exists(uat)){
+  const uatContent=String(read(uat));
+  for(const id of ["uatTasks","uatObserved","uatExportJson","uatResetWarning","uatBoundary"])
+   if(!uatContent.includes('id="'+id+'"'))problems.push("PR103_UAT_UI_MISSING "+id);
+  if(!uatContent.includes('NO AUTORIZADO PARA PRODUCCIÓN'))
+   problems.push("PR103_UAT_MISSING_NO_GO");
+ }
  if(!demo.includes("NO AUTORIZADO PARA PRODUCCIÓN"))
   problems.push("AVISO_NO_GO_AUSENTE");
  if(!demo.includes('data-client-step="problem"')||
@@ -103,7 +111,7 @@ export function auditV100UX(root=rootPath,{read=(path)=>readFileSync(path,"utf8"
   pagesReviewed:Object.keys(pages).length,
   localLinksReviewed:Object.values(pages).reduce((a,p)=>a+p.links.length,0),
   sections:{landing:"index.html",firstVisit:"demo.html",
-   technical:"laboratorio.html",privacy:"privacidad.html",contactStatus:"gracias.html"},
+   technical:"laboratorio.html",privacy:"privacidad.html",contactStatus:"gracias.html",humanAcceptance:"evaluacion.html"},
   progressivePilot:"summary-by-default / accessible details on demand",
   reportedProblems:Object.freeze(problems),
   observations:Object.freeze(warnings),
