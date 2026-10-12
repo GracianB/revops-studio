@@ -5,10 +5,10 @@ import {resolve} from "node:path";
 import {auditV100UX,UX_PUBLIC_PAGES} from "../scripts/ux-audit.mjs";
 const root=resolve(new URL("../",import.meta.url).pathname);
 const read=(path)=>readFileSync(path,"utf8");
-test("UX audit: all five public pages and local destinations are structurally valid",()=>{
+test("UX audit: all seven public pages and local destinations are structurally valid",()=>{
  const first=auditV100UX(root),second=auditV100UX(root);
- assert.equal(first.pagesReviewed,6);
- assert.equal(UX_PUBLIC_PAGES.length,6);
+ assert.equal(first.pagesReviewed,7);
+ assert.equal(UX_PUBLIC_PAGES.length,7);
  assert.equal(first.technicalPass,true,first.reportedProblems.join("; "));
  assert.equal(first.reportedProblems.length,0);
  assert.ok(first.localLinksReviewed>10);
