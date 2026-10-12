@@ -8,7 +8,7 @@ test("PR99: complete candidate audit is reproducible and does not authorize laun
  const a=auditCandidate(root),b=auditCandidate(root);
  assert.equal(a.technicalPass,true,a.problems.join("; "));
  assert.equal(a.problems.length,0);
- assert.equal(a.modules,21);
+ assert.equal(a.modules,22);
  assert.ok(a.expectedFiles>37);
  assert.equal(a.expectedFiles,a.examinedFiles);
  assert.equal(a.fingerprint,b.fingerprint);
@@ -17,7 +17,7 @@ test("PR99: complete candidate audit is reproducible and does not authorize laun
  assert.equal(a.realApprovals,0);
  assert.equal(a.productionGo,false);
  assert.equal(a.externalExecutions,0);
- assert.equal(CANDIDATE_MODULES.length,21);
+ assert.equal(CANDIDATE_MODULES.length,22);
 });
 test("PR99: missing modules and unapproved network API trigger fail-closed",()=>{
  const exists=path=>!path.endsWith("/pilot-readiness.js");
