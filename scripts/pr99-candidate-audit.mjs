@@ -24,6 +24,9 @@ const SUPPORT=Object.freeze([
  "assets/js/guided-outcome.js","tests/guided-outcome.test.js","docs/PR102-GUIDED-PROOF.md",
  "evaluacion.html","assets/js/uat.js","assets/css/uat.css",
  "tests/pr103-acceptance.test.js","docs/PR103-UAT-AND-RELEASE-RUNBOOK.md",
+ "revision.html","assets/js/review-chain.js","assets/css/revision.css",
+ "docs/pr104-integration-snapshot.json","scripts/pr104-integration-chain.mjs",
+ "tests/pr104-integration-chain.test.js","docs/PR104-CHAIN-RELEASE-REVIEW.md",
  "scripts/pr103-acceptance.mjs"
 ]);
 const FORBIDDEN=/\b(?:eval|fetch)\s*\(|\bnew\s+Function\b|\blocalStorage\b|\bsessionStorage\b|\bXMLHttpRequest\b/;
@@ -55,7 +58,8 @@ export function auditCandidate(root,{read=readFileSync,exists=existsSync}={}){
   "node scripts/pr99-candidate-audit.mjs",
   "node scripts/pr100-milestone-acceptance.mjs",
   "node scripts/ux-audit.mjs",
-  "node scripts/pr103-acceptance.mjs"])
+  "node scripts/pr103-acceptance.mjs",
+  "node scripts/pr104-integration-chain.mjs --live"])
   if(!pipeline.includes(step))problems.push("CI_GATE_MISSING "+step);
  const source=get("assets/js/pilot-supervised-review.js");
  if(!source.includes('outcome:"NO AUTORIZADO PARA PRODUCCIÓN"')||
