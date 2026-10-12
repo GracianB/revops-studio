@@ -66,6 +66,18 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      - name: PR103 human UAT apparatus (zero tests claimed)
+        run: node scripts/pr103-acceptance.mjs
+
+      - name: Archive PR103 manual UAT preparation only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr103-uat-protocol-${{ github.run_id }}
+          path: .ci-artifacts/pr103-uat-preparation.json
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Install lightweight browser smoke dependency
         run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0 axe-core@4.10.3
 
