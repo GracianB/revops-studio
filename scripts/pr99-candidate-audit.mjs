@@ -20,7 +20,8 @@ const SUPPORT=Object.freeze([
  "docs/PR96-INTEGRIDAD-EXPORTACIONES.md","docs/PR97-RENDIMIENTO-LOCAL.md",
  "docs/PR98-ACCESIBILIDAD-PENDIENTE.md",
  "docs/PR100-REVOPS-MILESTONE.md","scripts/pr100-milestone-acceptance.mjs",
- "docs/V100-UX-AUDIT.md","scripts/ux-audit.mjs"
+ "docs/V100-UX-AUDIT.md","scripts/ux-audit.mjs",
+ "assets/js/guided-outcome.js","tests/guided-outcome.test.js","docs/PR102-GUIDED-PROOF.md"
 ]);
 const FORBIDDEN=/\b(?:eval|fetch)\s*\(|\bnew\s+Function\b|\blocalStorage\b|\bsessionStorage\b|\bXMLHttpRequest\b/;
 export function auditCandidate(root,{read=readFileSync,exists=existsSync}={}){
