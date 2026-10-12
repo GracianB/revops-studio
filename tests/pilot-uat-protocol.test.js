@@ -50,6 +50,7 @@ test("PR103: manual observations track blocking, help and duration without promo
  assert.equal(x.reportedIssues,2);
  assert.equal(x.reportedOverTarget,2);
  assert.equal(x.reportedAssisted,2);
+ assert.equal(x.reportedFriction,2);
  assert.deepEqual(x.profiles.map(p=>p.observed),[1,1,1]);
  assert.equal(x.productionGo,false);
  assert.equal(x.independentVerification,false);
