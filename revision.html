@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="color-scheme" content="dark light">
+ <meta name="robots" content="noindex,nofollow">
+ <meta name="description" content="Revisión de las 35 solicitudes de integración de RevOps Studio, con bloqueos verificables y ninguna autorización de lanzamiento.">
+ <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+ <script>try{const t=localStorage.getItem("revops-theme");document.documentElement.dataset.theme=t==="dark"||t==="light"?t:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch{document.documentElement.dataset.theme="dark"}</script>
+ <link rel="stylesheet" href="./assets/css/commercial.css">
+ <link rel="stylesheet" href="./assets/css/revision.css">
+ <script defer src="./assets/js/theme.js"></script>
+ <script type="module" src="./assets/js/review-chain.js"></script>
+ <title>Revisión de integración · RevOps Studio</title>
+</head>
+<body class="chain-page">
+ <a class="skip-link" href="#main">Saltar al contenido</a>
+ <header class="nav-wrap">
+  <nav class="nav shell" aria-label="Navegación de revisión">
+   <a class="brand" href="./" aria-label="RevOps Studio, inicio"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">REVOPS<span>STUDIO</span></span></a>
+   <div class="nav-actions"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Cambiar tema" aria-pressed="false"><span aria-hidden="true" data-theme-icon>◐</span><span class="theme-label">Tema</span></button><a class="nav-cta" href="./evaluacion.html">Evaluación de uso ↗</a></div>
+  </nav>
+ </header>
+ <main class="shell chain-main" id="main" tabindex="-1">
+  <span class="chain-kicker">PR104 / INVENTARIO DE REVISIÓN, SIN DESPLIEGUE</span>
+  <h1>35 cambios pendientes. Un orden que no conviene romper.</h1>
+  <p class="chain-lead">Inventario técnico de las solicitudes de integración. Las fechas, ramas y resultados son una <strong>fotografía de GitHub</strong>, no una consulta en tiempo real. Sigue el enlace de cada PR para consultar su estado actual.</p>
+  <p class="chain-boundary" id="chainBoundary">PRODUCCIÓN: NO AUTORIZADA · Integración detenida por antecesor ausente y verificaciones humanas pendientes.</p>
+  <section aria-labelledby="chainStatusTitle" class="chain-card">
+   <h2 id="chainStatusTitle">Estado de la cadena</h2>
+   <p role="status" id="chainStatus" aria-live="polite" aria-atomic="true">Cargando instantánea de revisión…</p>
+   <div class="chain-metrics" role="group" aria-label="Estado de la instantánea">
+    <div><small>PR en revisión</small><strong id="chainCount">35</strong></div>
+    <div><small>Antecesores desalineados</small><strong id="chainBehind">1</strong></div>
+    <div><small>Autorizaciones reales</small><strong>0</strong></div>
+    <div><small>Estado de publicación</small><strong>NO-GO</strong></div>
+   </div>
+   <p id="chainTimestamp">Datos congelados para revisión técnica.</p>
+   <p class="chain-small">La validación automática comprueba estructura y dependencias, no seguridad externa, pruebas con usuarios ni autorización empresarial.</p>
+  </section>
+  <section class="chain-card" aria-labelledby="chainBlockerTitle">
+   <h2 id="chainBlockerTitle">Incidencia prioritaria: PR79</h2>
+   <p>La PR79 se basa en PR78, pero no incluye el último commit de esta: una corrección de selector DOM en la prueba de navegador. Antes de integrar, hace falta reconciliar el commit y comprobar el resultado en las versiones descendientes. No se resolverá ocultando la prueba.</p>
+   <p class="chain-code">Antecesor ausente: <code id="chainMissingSha">56a96b1a4514782abdca8bd9184201a5fd29ee4e</code></p>
+   <a href="https://github.com/GracianB/revops-studio/pull/79" target="_blank" rel="noopener noreferrer">Examinar PR79 en GitHub ↗</a>
+  </section>
+  <section class="chain-card" aria-labelledby="chainListHeading">
+   <h2 id="chainListHeading">Explorar las solicitudes</h2>
+   <p>Selecciona un bloque o busca una versión. Esta lista conserva el orden real desde la rama principal, no el orden de creación de las tarjetas.</p>
+   <div class="chain-toolbar">
+    <div id="chainStages" class="chain-filters" role="group" aria-label="Filtrar grupo de cambios">
+     <button type="button" data-chain-stage="all" aria-pressed="true">Todas</button>
+     <button type="button" data-chain-stage="product" aria-pressed="false">Experiencia</button>
+     <button type="button" data-chain-stage="pilot" aria-pressed="false">Piloto</button>
+     <button type="button" data-chain-stage="controls" aria-pressed="false">Controles</button>
+     <button type="button" data-chain-stage="acceptance" aria-pressed="false">Aceptación</button>
+     <button type="button" data-chain-stage="issues" aria-pressed="false">Solo desalineadas</button>
+    </div>
+    <label for="chainSearch">Buscar número o nombre de rama
+     <input id="chainSearch" type="search" placeholder="Ej.: 79, privacidad, V100" autocomplete="off" aria-describedby="chainResultCount">
+    </label>
+   </div>
+   <p id="chainResultCount" role="status" aria-live="polite"></p>
+   <ol id="chainList" class="chain-list"></ol>
+  </section>
+  <section class="chain-card" aria-labelledby="chainExternalHeading">
+   <h2 id="chainExternalHeading">Condiciones externas todavía pendientes</h2>
+   <ul class="chain-pending">
+    <li>Pruebas con participantes reales y revisión independiente de resultados</li>
+    <li>Ocho verificaciones manuales de accesibilidad</li>
+    <li>Evaluación independiente de seguridad y privacidad</li>
+    <li>Integración real controlada y ensayo de reversión</li>
+    <li>Aprobación explícita de responsables empresariales</li>
+   </ul>
+   <p>Una PR fusionable y una CI verde no satisfacen estas condiciones. La integración tampoco supone permiso para desplegar.</p>
+   <a href="./evaluacion.html">Consultar el protocolo de evaluación humana ↗</a>
+  </section>
+ </main>
+ <footer class="shell chain-footer"><span>REVOPS STUDIO · GRAFO DE INTEGRACIÓN, SIN PERMISOS EXTERNOS</span><a href="./demo.html">Volver a la demostración ↗</a></footer>
+</body>
+</html>
