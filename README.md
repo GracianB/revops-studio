@@ -1,3 +1,119 @@
+## RevOps PR81 · Planificación operativa supervisada, con dependencias reales (NO PUBLICAR)
+
+Tras las ocho comprobaciones de PR80, **Pilot Planning Studio** transforma los riesgos identificados en una lista determinista de tareas de preparación, gobernanza y ensayo técnico. Incluye roles por función (sin asignar personas), criterios de aceptación concretos, dependencias verificadas mediante un grafo sin ciclos y capacidad configurable de **2 a 5 tareas simultáneas por ola**. Esta capacidad es una herramienta de ordenación, **no horas o fechas inventadas**.
+
+El visitante puede marcar tareas **ensayadas dentro de la simulación**, respetando sus requisitos previos; no puede eliminar un prerrequisito marcado si de él dependen otras tareas ya ensayadas. La actividad final de autorización externa **permanece bloqueada**, incluso cuando todo lo demás esté ensayado. Existen controles para reiniciar, comparar distintos niveles de capacidad, abrir PR80 y exportar TXT/JSON con tareas y recuentos, pero sin CSV, identificadores, correos, notas ni aprobaciones reales.
+
+La consola avanzada se carga solo al abrirla y se limpia al cambiar los datos o pulsar el borrado de PR79. Pruebas unitarias sobre 18 recetas, dependencias, privacidad, restricciones de firma externa y E2E en Chrome y Firefox. Contrato en `docs/PR81-PLAN-PILOTO.md`. PR apilada sobre PR80, borrador, sin fusión ni despliegue.
+
+## RevOps PR80 · Evaluación integrada para un piloto supervisado (NO PUBLICAR)
+
+**Un flujo completo y verificable:** la demo avanzada puede evaluar una muestra local desde el CSV hasta el resultado, la calidad, la trazabilidad PR75 y el análisis de privacidad PR79. Ocho comprobaciones independientes muestran bloqueos de validación, revisión humana, datos sensibles, celdas vacías, propuestas disponibles, conflictos de IDs y ausencia de ejecuciones reales. Cada aviso enlaza a una función existente de corrección, reglas o privacidad.
+
+El visitante puede exportar evidencia TXT o JSON agregada, sin filas, nombres, emails, identificadores ni notas. Una muestra ficticia válida se marca exclusivamente como *apta para ensayo supervisado*, nunca aprobada para producción. El panel es de carga diferida, accesible en móvil y se invalida al cambiar los datos.
+
+Nuevo comando de aceptación: `npm run pr80:check`, ejecutado como paso obligatorio separado en GitHub Actions después de `npm run verify` para conservar el contrato V40. Cruza 3 motores, 18 ejemplos, reglas, calidad, privacidad, escenarios conservadores, PDFs y correcciones, además de pruebas E2E Chrome y Firefox. Documentación: `docs/PR80-EVALUACION-PILOTO.md`.
+
+V40 sigue siendo la rama `main` sin modificar; PR69-PR80 permanecen en borrador, sin fusión ni despliegue. El repositorio GitHub es público aunque estas funciones aún no se hayan publicado.
+
+## RevOps PR79 · Privacidad, seguridad y rendimiento (sin publicación)
+
+**Frontera de datos explícita:** el motor y la importación comparten `validateTextBoundary` y rechazan caracteres invisibles, controles Unicode maliciosos, columnas superiores a 24, celdas superiores a 400 caracteres y cabeceras superiores a 128. Los tres CSV de salida pasan por el mismo `secureCsvCell`: protegen del inicio de fórmulas `= + - @`, equivalentes de anchura completa y prefijos invisibles. Las comillas y delimitadores continúan escapándose correctamente. Los CSV detallados **incluyen los valores de las filas** y la aplicación advierte antes de compartirlos.
+
+**Control de privacidad utilizable:** la demo avanzada muestra un recuento agregado de campos que parecen emails, direcciones externas a dominios de ejemplo, celdas que parecen fórmulas, celdas largas y revisiones pendientes. No devuelve ni registra los valores inspeccionados. Un segundo control permite eliminar intencionalmente las entradas, correcciones, búsquedas y estados temporales, las anotaciones humanas y configuraciones de escenarios e informes. La limpieza de `sessionStorage` se limita a las dos claves de RevOps identificadas; no elimina opciones de otros sitios. Después se cargan ejemplos ficticios. **No puede revocar archivos ya descargados ni vaciar el portapapeles del usuario**.
+
+Se han añadido pruebas adversariales de CSV, Unicode bidireccional, límites, aislamiento de datos, 18 juegos de ejemplo, recursos web de primera parte y ciclos Chrome/Firefox de exportación y limpieza. El módulo nuevo `assets/js/privacy-security.js` no usa red, dependencias, almacenamiento ni telemetría.
+
+Ver contrato y resultados: `docs/PR79-PRIVACIDAD-SEGURIDAD.md`. PR79 draft y apilada sobre PR78, sin fusión ni despliegue.
+
+## RevOps PR78 · Accesibilidad y reflujo, sin publicación
+
+La experiencia avanzada incorpora **navegación de registros exclusivamente por teclado**: flechas arriba/abajo, Inicio y Fin actúan sobre filas actualmente visibles sin modificar datos, mientras Intro/Espacio mantienen la acción nativa. Se incorporan enlaces para saltar al editor o resultados, ayuda de teclado en la propia página, resumen corto para lectores de pantalla, etiquetas de fila que explican estado y motivo, asociaciones entre cada campo problemático y su explicación, errores relacionados con el textarea e indicación `aria-invalid` coherente con el resultado de la validación. Los paneles de reglas, variantes, mapping e informes reciben foco en su título al abrirse; Escape cierra el panel correspondiente devolviendo el foco. El aviso de cambio de escenario atrapa temporalmente Tab y Mayús+Tab entre sus dos decisiones y puede cancelarse con Escape.
+
+La tabla móvil conserva identificación y acciones a ancho de 320 px, con objetivos táctiles de al menos 44 px para controles principales, cabecera menos invasiva a zoom elevado, desbordamientos de texto seguros, estado textual además del color, foco de alto contraste, soporte para colores forzados, `prefers-contrast: more` y movimiento reducido. **Las pruebas automáticas no equivalen a certificar WCAG ni sustituyen una auditoría manual con lectores de pantalla reales**. La CI incorpora pruebas de teclado, foco, reflujo equivalente a 400 % sobre pantalla de 1280 px y barridos axe de modos claro/oscuro.
+
+Código: `assets/js/a11y-workbench.js`, `assets/js/workflow-demo.js`, `assets/css/workflow-demo.css`; pruebas: `tests/a11y-workbench.test.js` y smoke Chrome/Firefox. Detalles: `docs/PR78-ACCESIBILIDAD.md`. PR draft sobre PR77, sin desplegar ni fusionar.
+
+## RevOps PR77 · Informes profesionales con PDF A4 real (NO PUBLICAR)
+
+La demo integra **Reporting Studio**: prepara a petición un informe ejecutivo PDF auténtico (`%PDF-1.4`, catálogo de objetos, referencias cruzadas, fuentes Helvetica/Helvetica-Bold con WinAnsi, páginas A4 numeradas y saltos de página). No se renombra HTML como PDF ni se utilizan proveedores externos. Además ofrece vista PDF en otra pestaña para imprimir con el visor del navegador, resumen TXT y JSON estructurado.
+
+El informe reúne un resumen ejecutivo, indicadores, calidad por columna, evidencia antes/después de la misma muestra, cobertura de reglas de PR75, anotaciones humanas *solo como recuentos*, escenarios PR76 compatibles, fases sugeridas, fuentes y límites. El documento **nunca incorpora filas, IDs, nombres, emails, notas de aprobación ni valores introducidos**: se construye sobre una instantánea de contadores y textos predefinidos, validada antes de codificar o descargar. Las aprobaciones reales y las ejecuciones externas se mantienen en cero. Revisa cualquier informe antes de compartirlo.
+
+Código: `assets/js/executive-pdf.js` y `assets/js/report-console.js`, cargados solo tras abrir el panel; pruebas PDF y navegador: `tests/executive-pdf.test.js`, `scripts/browser-smoke.mjs`; detalles y alcance: `docs/PR77-INFORMES-PDF.md`. Rama apilada sobre PR76, sin cambiar el motor V40 ni el despliegue.
+
+## RevOps PR76 · Scenario Builder (sin fusión ni lanzamiento)
+
+El modo avanzado incorpora un **Scenario Builder** opcional, descargado al abrirlo. Permite ensayar tres variantes *conservadoras* de la política de pedidos, soporte y datos sobre **el mismo CSV**, sin modificar el original: umbral de revisión para pedidos, escalado de prioridad media en soporte y umbral de valores elevados en conciliación. Incluye presets base/prudente/estricto, controles personalizados con límites, resumen antes/después, explicación por grupo de incidencias, protección de históricos, bloques y revisión existente, reversión explícita y plantillas JSON reutilizables sin registros.
+
+**Contrato de seguridad:** solo se permiten nuevas revisiones humanas de filas que el motor original daba por listas. Se preservan todos los bloqueos, revisiones humanas anteriores e históricos, y ningún candidato puede aprobar, desbloquear o ejecutar acciones reales. El TXT de comparación contiene únicamente agregados. La configuración JSON incluye solamente versión, tipo de escenario, un ajuste validado y la marca NOT_EXECUTED. No hay datos sensibles persistidos ni envío externo.
+
+Código: `assets/js/scenario-builder.js`, `assets/js/scenario-console.js`; pruebas: `tests/scenario-builder.test.js`, smoke Chrome/Firefox/320px; contrato: `docs/PR76-ESCENARIOS.md`. Rama apilada sobre PR75, borrador y fuera de `main`.
+
+## RevOps PR75 · Rules & Human Decision Studio (desarrollo sin publicación)
+
+La demo avanzada ofrece una consola de auditoría opcional y de carga diferida. **El motor y la auditoría comparten exactamente el mismo catálogo de reglas ordenadas** (`assets/js/workflow-policy.js`), en vez de mantener explicaciones duplicadas. Cada resultado se acompaña de un identificador estable de regla, precedencia, restricciones adicionales ocultas por reglas prioritarias, recuentos de aplicación y análisis de conflictos por fila. Si el resultado y la regla descrita no coinciden, la consola se niega a presentar una trazabilidad falsa.
+
+La bandeja de revisión humana (`assets/js/human-decision.js`) solo permite anotaciones de prueba en las filas que realmente tengan estado «revisar»: pendiente, en revisión, aprobación simulada o rechazo simulado. Requiere una justificación para aprobar/rechazar en la demo, no finge identidad verificable, y **no cambia el motor ni habilita la cola de acciones**. Toda anotación se borra al cambiar el archivo o escenario. El TXT de auditoría solo contiene reglas predefinidas y totales, nunca filas, IDs, emails o notas. No se ejecuta ni aprueba nada externamente.
+
+Contrato, límites y aceptación: `docs/PR75-DECISIONES.md`. Pruebas: `tests/decision-studio.test.js`, smoke de Chrome/Firefox/móvil y regresión V40. Mantener rama apilada en borrador, no fusionar ni desplegar.
+
+## RevOps PR74 · Mesa de correcciones profesional (sin lanzamiento)
+
+La mesa de trabajo añade **previsualización local del cambio antes de guardarlo**, recálculo real de estados, diferencias por campo, avisos de revisión humana, validaciones del motor existentes y botón inactivo cuando no existen diferencias. `assets/js/correction-workbench.js` proporciona una línea temporal acotada a 20 correcciones: múltiples deshacer/rehacer, salto entre estados, eliminación de futuras correcciones al ramificar e historial sin filas ni identificadores en etiquetas.
+
+La interfaz añade siguiente bloqueo, conservación de modificaciones al intentar navegar, restauración del foco, atajos Ctrl/Cmd+Z e Y fuera de campos editables, presets de filtros, orden y visibilidad de columnas. Las vistas guardadas por acción explícita en `sessionStorage` contienen **solo filtros/orden/densidad y dos opciones booleanas**, nunca registros ni texto de búsqueda; incluyen borrado. En móvil, los registros se leen como fichas con etiquetas, en vez de forzar una tabla desbordada. Los tres escenarios siguen usando el motor local V40 sin conexión a CRM.
+
+Pruebas y aceptación: `tests/correction-workbench.test.js`, los smoke de Chrome/Firefox y `docs/PR74-CORRECCIONES.md`. Esta rama depende de PR73 y permanece en borrador: no fusionar ni desplegar.
+
+## RevOps PR73 · Data Quality Cockpit (desarrollo sin lanzamiento)
+
+La demo añade un panel de análisis de calidad accesible en modo avanzado. El motor puro `assets/js/quality-cockpit.js` calcula campos vacíos, completitud, claves únicas, duplicados exactos, IDs contradictorios, distribución numérica, fechas inválidas, negativos, números inválidos y candidatos a valor atípico con IQR **solo cuando hay al menos cinco observaciones y dispersión suficiente**. Permite abrir la primera fila asociada a cada hallazgo, identifica el bloqueo más frecuente, mantiene la línea base de la ejecución y compara cambios tras corregir, deshacer o rehacer.
+
+La exportación TXT **solo contiene agregados**, sin filas, identificadores, emails ni valores originales. No hay ahorros simulados, ni envío a sistemas reales, ni cifras empresariales atribuidas a clientes. Integridad de celdas no equivale a exactitud, y un atípico no demuestra un error. Las comparaciones requieren mismo escenario y número de registros. Las mejoras y criterios de aceptación están en `docs/PR73-CALIDAD.md`.
+
+## RevOps PR72 · Importación profesional (rama acumulativa, NO PUBLICAR)
+
+La demo `demo.html` ahora valida archivos con el contrato puro `assets/js/import-contract.js` antes de tocar el editor: bytes UTF-8 estrictos (incluido BOM), rechazo de UTF-16/bytes ilegibles, límite de 32 KB/12.000 caracteres/80 filas, detección CSV/TSV, validación de columnas y reportes específicos de duplicados idénticos frente a IDs en conflicto. Importes con separadores regionales ambiguos se rechazan sin adivinar la conversión.
+
+El mapeador presenta un resumen de formato, filas, errores y decisiones; las columnas adicionales **requieren confirmación explícita** antes de descartarse del resultado. Se pueden descargar e importar perfiles JSON con escenario y nombres de columnas, sin filas, IDs de cliente ni valores. Los perfiles inválidos, de otro escenario o con campos repetidos se rechazan y el CSV anterior se conserva hasta que todo haya sido confirmado. La importación sigue siendo local y nunca ejecuta acciones en un CRM.
+
+Pruebas: `tests/import-contract.test.js` y smoke Chrome/Firefox/móvil. Alcance detallado en `docs/PR72-IMPORTACION.md`. No modifica el laboratorio V40 ni fusiona/despliega esta rama.
+
+## RevOps PR71 · Discovery Studio (desarrollo sin lanzamiento)
+
+La portada incorpora ahora un **Discovery Studio opcional** detrás del diagnóstico existente, cargado solo cuando se pulsa «Preparar brief de proyecto». El visitante puede definir perfil, objetivo a medir, prioridad, madurez del proceso, responsable, muestra disponible, dependencia de sistemas, sensibilidad y tres notas editables. El motor puro `assets/js/discovery-engine.js` produce una lectura de viabilidad y riesgos, fases, criterios de aceptación y una propuesta verificable sin prometer ejecución ni ROI.
+
+La salida es un **brief editable** que puede copiarse, descargarse como TXT o JSON y asociarse **voluntariamente** como extracto a la consulta. Si cambian las condiciones después de editar el texto, se avisa de que está desactualizado y se conservan las ediciones hasta regenerar expresamente. Solo el envío voluntario del formulario existente, con consentimiento, transmite el extracto al proveedor; ninguna opción lo envía por sí sola.
+
+Documentación detallada y criterios de aceptación: [PR71 · Discovery Studio](docs/PR71-DISCOVERY-STUDIO.md). Mantener en borrador y sin fusionar/desplegar. **El repositorio sigue siendo público** a pesar de estar en desarrollo.
+
+## RevOps R2 · Evidencia explicable «antes → después» (rama acumulada de desarrollo)
+
+La simulación local `demo.html` ahora presenta una comparación visual a dos columnas entre el **punto de partida real** y los resultados tras corregir un registro. `assets/js/workflow-comparison.js` calcula métricas agregadas, cambios de estado por posición y motivos de reglas reconocidas, sin exportar valores ni identificadores de clientes. En la vista guiada aparece junto al resultado; en herramientas avanzadas permanece visible durante las correcciones.
+
+- **Antes:** primer resultado del conjunto actual, procedente del motor determinista y no de métricas inventadas.
+- **Después:** la misma ejecución repetida sobre las filas modificadas, con propuestas preparadas, bloqueos y revisiones humanas, además de motivos «regla anterior → regla nueva».
+- **Control de cambios:** una corrección conserva el primer punto de partida; deshacer/rehacer recalcula la comparación. Cambiar de ejemplo, importar CSV, mapear columnas o editar el CSV manualmente reinicia ese punto de partida para evitar mezclas de datos.
+- **Salida responsable:** el botón «Descargar comparativa sin filas» genera un TXT exclusivamente agregado. «Preparadas» son propuestas sin ejecución, y las revisiones siguen siendo humanas. Acciones enviadas a sistemas externos: **cero**. No se indica ahorro, causalidad real, ni ROI.
+- **Límites:** se comparan las mismas posiciones del mismo escenario. El motor se niega a presentar comparaciones de escenarios o conjuntos con un número distinto de registros, en vez de fabricar resultados. Tampoco se guarda una historia de 20 cambios.
+
+**R2 se desarrolla encima de R1**, sin modificar el laboratorio V40 ni fusionar a `main`. La entrega es una fase de producto en desarrollo, no un anuncio de lanzamiento; la configuración de visibilidad GitHub permanece pendiente de decisión.
+
+## RevOps R1 · Plan de diagnóstico imprimible (rama de desarrollo, sin lanzamiento)
+
+El diagnóstico existente puede descargar un **plan HTML autónomo y listo para imprimir en PDF**, sin registro ni llamadas a red. El documento genera tres fases concretas (delimitar, piloto y validar/entregar), entradas necesarias, criterios de aceptación, riesgos, preguntas pendientes y una modalidad económica *orientativa*, no un presupuesto. Hay 48 combinaciones válidas de problema, herramienta y alcance.
+
+- El archivo se genera **solo** al pulsar «Descargar plan completo», mediante `assets/js/diagnostic-report.js` cargado dinámicamente; no aumenta las peticiones de la primera visita.
+- No incorpora filas, correos, nombres ni textos del formulario. Solo utiliza tres selecciones de un catálogo fijo. El documento no tiene scripts, enlaces a proveedores, fuentes remotas ni seguimiento.
+- Puede abrirse offline o imprimirse con Ctrl+P → «Guardar como PDF». La descarga no implica enviar una consulta ni aceptar una oferta.
+- El mapa breve que se adjunta voluntariamente a la consulta y el laboratorio V40 siguen sin cambios. No hay CRM conectado, automatización en producción ni resultados empresariales medidos.
+- **No publicado deliberadamente:** esta rama no debe fusionarse ni desplegarse hasta revisar el acceso al repositorio y al GitHub Pages. En GitHub el repositorio sigue figurando como público; no confundir un desarrollo no anunciado con código privado.
+
+### Validación R1
+
+`node --test tests/diagnostic-report.test.js` · `npm run verify` · smoke de Chrome y Firefox (descarga local de informe incluida).
+
 ## RevOps Studio · Producto: diagnóstico guiado + web comercial (motor técnico V40)
 
 La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.

@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: validate-\${{ github.workflow }}-\${{ github.ref }}
@@ -26,6 +27,73 @@ jobs:
 
       - name: Run full verification gate
         run: npm run verify
+
+      - name: PR80 integrated synthetic acceptance
+        run: npm run pr80:check
+
+      - name: PR99 candidate integrity and release boundary
+        run: node scripts/pr99-candidate-audit.mjs
+
+      - name: Upload PR99 technical inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr99-inventory-${{ github.run_id }}
+          path: .ci-artifacts/pr99-candidate-inventory.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: PR100 milestone 18-scenario acceptance
+        run: node scripts/pr100-milestone-acceptance.mjs
+
+      - name: Upload PR100 technical acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr100-acceptance-${{ github.run_id }}
+          path: .ci-artifacts/pr100-acceptance.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: V100 seven-surface usability structure audit
+        run: node scripts/ux-audit.mjs
+
+      - name: Archive V100 UX audit observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-v100-ux-audit-${{ github.run_id }}
+          path: .ci-artifacts/v100-ux-audit.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: PR103 human UAT apparatus (zero tests claimed)
+        run: node scripts/pr103-acceptance.mjs
+
+      - name: Archive PR103 manual UAT preparation only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr103-uat-protocol-${{ github.run_id }}
+          path: .ci-artifacts/pr103-uat-preparation.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: PR104 historical integration evidence (not live release authorization)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/pr104-integration-chain.mjs
+
+      - name: Archive PR104 chain and release blockers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revops-pr104-integration-${{ github.run_id }}
+          path: |
+            .ci-artifacts/pr104-chain-report.json
+            .ci-artifacts/pr104-chain-report.md
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Install lightweight browser smoke dependency
         run: npm install --no-save --package-lock=false playwright-core@1.58.2 eslint@9.39.1 globals@16.5.0 axe-core@4.10.3

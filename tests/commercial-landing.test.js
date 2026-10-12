@@ -289,3 +289,370 @@ test("FormSubmit activation: explain rejected delivery without claiming success"
  assert.match(site,/No hay entrega confirmada/);
  assert.match(site,/if \(fallback\) fallback\.focus\(\)/);
 });
+
+
+test("R1 action-plan download is discoverable, lazy and never submitted with the contact form", () => {
+  assert.match(index, /id="diagDownload"[^>]*aria-describedby="diagDownloadHelp"/);
+  assert.match(index, /id="diagDownloadHelp"/);
+  assert.match(index, /Descargar plan completo/);
+  assert.match(site, /import\("\.\/diagnostic-report\.js"\)/);
+  assert.match(site, /downloadPlan\(problem\.value, tools\.value, scope\.value\)/);
+  assert.doesNotMatch(index, /<script[^>]*src="\.\/assets\/js\/diagnostic-report\.js"/);
+  assert.match(file("assets/js/diagnostic-report.js"), /export function buildDiagnosticReport/);
+  assert.match(file("assets/js/diagnostic-report.js"), /URL\.createObjectURL/);
+  assert.match(file("assets/js/diagnostic-report.js"), /URL\.revokeObjectURL/);
+});
+
+
+test("R2 makes before-after rules visible without pretending to execute external actions",()=>{
+ const demoUi=file("assets/js/workflow-demo.js");
+ const demoCss=file("assets/css/workflow-demo.css");
+ const compare=file("assets/js/workflow-comparison.js");
+ for(const id of ["r2Evidence","r2BeforePrepared","r2BeforeBlocked","r2BeforeReview",
+   "r2AfterPrepared","r2AfterBlocked","r2AfterReview","r2Transitions","r2Export"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(demoHtml,/Acciones ejecutadas externamente: <strong>0<\/strong>/);
+ assert.match(demoUi,/baseline=null/);
+ assert.match(demoUi,/compareWorkflow\(baseline,result\)/);
+ assert.match(demoUi,/comparisonReport\(evidence\)/);
+ assert.match(demoUi,/list\.replaceChildren\(items\)/);
+ assert.match(compare,/const RULE_REASONS = new Set/);
+ assert.match(compare,/Regla: /);
+ assert.match(compare,/externalExecuted: 0/);
+ assert.doesNotMatch(compare,/fetch\(|localStorage|sessionStorage/);
+ assert.match(demoCss,/\.workbench-r2-columns\{display:grid/);
+ assert.match(demoCss,/@media\(max-width:740px\)/);
+ assert.match(demoCss, /\.workbench-r2\[hidden\]\{display:none!important\}/);
+});
+
+
+test("PR71 is one complete discovery workflow, lazy-loaded and consent-first",()=>{
+ const ui=file("assets/js/discovery-ui.js"),engine=file("assets/js/discovery-engine.js");
+ const template=file("assets/js/discovery-view.js");
+ const templateMarkup=JSON.parse(template.split("export const DISCOVERY_VIEW_HTML=")[1].trim().replace(/;$/,""));
+ const design=file("assets/css/discovery-studio.css");
+ for(const id of ["discoveryRole","discoveryOutcome","discoveryUrgency",
+   "discoveryStage","discoveryOwner","discoverySample","discoveryIntegration",
+   "discoverySensitivity","discoveryGoal","discoveryConstraint","discoveryExclusion",
+   "discoveryReadiness","discoveryGaps","discoveryRisks","discoveryPreview",
+   "discoveryRegenerate","discoveryCopy","discoveryDownloadTxt","discoveryDownloadJson",
+   "discoveryDemoLink","discoveryAttach","discoveryClose","discoveryStatus"]){
+   assert.match(templateMarkup,new RegExp('id="'+id+'"'),"missing lazy discovery control "+id);
+ }
+ assert.match(index,/id="discoveryStudio"[^>]*hidden/);
+ assert.match(index,/id="diagStudioOpen"[^>]+aria-controls="discoveryStudio"/);
+ assert.match(site,/import\("\.\/discovery-ui\.js"\)/);
+ assert.doesNotMatch(index,/<script[^>]+src="[^"]*discovery-ui\.js/);
+ assert.doesNotMatch(index,/<link[^>]+href="[^"]*discovery-studio\.css/);
+ assert.match(ui,/css.href="\.\/assets\/css\/discovery-studio\.css"/);
+ assert.match(ui,/root.innerHTML=DISCOVERY_VIEW_HTML/);
+ assert.match(ui,/attachedValue/);
+ assert.match(ui,/if\(edited\)/);
+ assert.match(ui,/preview.value=formatDiscoveryBrief\(current\)/);
+ assert.match(ui,/JSON\.parse\(discoveryJson\(current\)\)/);
+ assert.match(ui,/field\.value=attachedValue/);
+ assert.match(ui,/form.dispatchEvent\(new Event\("input"/);
+ assert.match(engine,/readiness=/);
+ assert.match(engine,/const acceptance=/);
+ assert.doesNotMatch(engine,/fetch\(|localStorage|sessionStorage|mailto:/);
+ assert.match(design,/@media\(max-width:700px\)/);
+});
+
+
+test("PR72 import contract is enforced before any data replacement",()=>{
+ const ui=file("assets/js/workflow-demo.js");
+ const contract=file("assets/js/import-contract.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["importAudit","importAuditTitle","importAuditSummary","importAuditFindings",
+   "exportMappingProfile","importMappingProfile","confirmDiscardColumns","mappingProfileStatus"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(ui,/decodeImportBytes\(bytes\)/);
+ assert.match(ui,/inspectImport\(scenario,text\)/);
+ assert.match(ui,/ensureImportReady\(validation,\$\("confirmDiscardColumns"\)\.checked\)/);
+ assert.match(ui,/readMappingProfile\(await file\.text\(\)/);
+ assert.match(ui,/makeMappingProfile\(scenario,currentMapping\(\)\)/);
+ assert.match(contract,/TextDecoder\("utf-8",\{fatal:true/);
+ assert.match(contract,/regional_ambiguous/);
+ assert.match(contract,/duplicado idéntico/);
+ assert.match(contract,/conflicto de identificador/);
+ assert.match(contract,/revops-mapping-profile-v1/);
+ assert.doesNotMatch(contract,/fetch\(|localStorage|sessionStorage/);
+ assert.match(css,/\.workbench-discard-confirm/);
+});
+
+
+test("PR73 quality cockpit uses pure analytical contracts and safe DOM drilldowns",()=>{
+ const demoUi=file("assets/js/workflow-demo.js");
+ const pure=file("assets/js/quality-cockpit.js");
+ const sheet=file("assets/css/workflow-demo.css");
+ for(const id of ["qualityCockpit","qualityCockpitTitle","qualityUniqueIds","qualityConflicts",
+   "qualityExactDuplicates","qualityOutliers","qualityColumnDetails","qualityInvestigations",
+   "qualityNumericBands","qualityStatNote","qualityDelta","qualityDominant","qualityExport"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(demoUi,/buildQualityCockpit\(scenario,\$\("workflowSource"\)\.value,result\)/);
+ assert.match(demoUi,/compareQualityCockpit\(qualityBaseline,current\)/);
+ assert.match(demoUi,/openEditor\(index\)/);
+ assert.match(demoUi,/qualityCockpitReport\(qualityCurrent,qualityEvidence\)/);
+ assert.match(pure,/const percentile=/);
+ assert.match(pure,/conflictingIds/);
+ assert.match(pure,/invalidDates/);
+ assert.match(pure,/outlierIndexes/);
+ assert.match(pure,/Acciones ejecutadas fuera del navegador: 0/);
+ assert.doesNotMatch(pure,/fetch\(|localStorage|sessionStorage/);
+ assert.match(sheet, /\.quality-cockpit-kpis\{display:grid/);
+ assert.match(sheet,/body\[data-experience="simple"\] \.quality-cockpit/);
+ assert.match(sheet,/@media\(max-width:820px\)/);
+});
+
+
+test("PR74 delivers live preview, bounded edit timeline and privacy-safe workbench views",()=>{
+ const ui=file("assets/js/workflow-demo.js");
+ const engine=file("assets/js/correction-workbench.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["workbenchP74Title","workbenchViewPreset","workbenchDensity","workbenchShowReason",
+  "workbenchShowAction","workbenchSaveView","workbenchRestoreView","workbenchClearView",
+  "editPreview","editPreviewStatus","editPreviewImpact","editPreviewDiff","editPreviewWarning",
+  "editNextIssue","editDirtyStatus","correctionHistory","correctionHistorySteps","correctionHistoryStatus"]){
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ }
+ assert.match(ui,/previewRecordEdit\(scenario,old,editIndex,currentEdits\(\)\)/);
+ assert.match(ui,/correctionTimeline\.push\(preview\)/);
+ assert.match(ui,/correctionTimeline\?\.undo\(\)/);
+ assert.match(ui,/correctionTimeline\?\.redo\(\)/);
+ assert.match(ui,/correctionTimeline\.jump\(index\)/);
+ assert.match(ui,/nextBlockedIndex\(latest,editIndex\)/);
+ assert.match(ui,/sessionStorage\.setItem\(savedViewKey,JSON\.stringify\(readWorkbenchView\(\)\)\)/);
+ assert.match(ui,/const focus=editorTrigger/);
+ assert.match(ui,/input,textarea,select/);
+ assert.match(engine,/maximum=20/);
+ assert.match(engine,/previewRecordEdit/);
+ assert.match(engine,/safeViewPreset/);
+ assert.doesNotMatch(engine,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.match(css,/\.workbench-p74-preview/);
+ assert.match(css,/@media\(max-width:700px\)/);
+ assert.match(css,/\.workbench-table \.workbench-row\{display:grid/);
+});
+
+
+test("PR75 uses one source of policy truth, with local human review and lazy safe evidence",()=>{
+ const workflow=file("assets/js/workflow-engine.js");
+ const policy=file("assets/js/workflow-policy.js");
+ const consoleUi=file("assets/js/decision-console.js");
+ const human=file("assets/js/human-decision.js");
+ const ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["rulesOpen","rulesClose","rulesStudio","rulesStudioTitle",
+  "rulesCount","rulesCovered","rulesOverlaps","rulesHumanGates","ruleCatalogList",
+  "ruleTraceRow","ruleTraceDetail","ruleConflicts","humanReviewCounters",
+  "humanReviewRow","humanReviewState","humanReviewNote","humanReviewStart",
+  "humanReviewApprove","humanReviewReject","humanReviewFeedback","rulesPolicyStatus","rulesExport"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(workflow,/import \{evaluatePolicy\} from "\.\/workflow-policy\.js"/);
+ assert.match(workflow,/const decision=evaluatePolicy\(type,row,\{duplicate\}\)/);
+ assert.doesNotMatch(workflow,/function classify\(type,row\)/);
+ assert.match(policy,/Las reglas visibles no coinciden con el motor/);
+ assert.match(policy,/competingRestrictions:material.length>1/);
+ assert.match(consoleUi,/describePolicy\(type,source,result,parseDelimited\)/);
+ assert.match(consoleUi,/createHumanReviewLedger\(result\)/);
+ assert.match(consoleUi,/humanDecisionReport\(policy,ledger\)/);
+ assert.match(ui,/import\("\.\/decision-console\.js"\)/);
+ assert.match(ui,/\$\("rulesStudio"\)\.hidden=true/);
+ assert.match(human,/realApprovals:0/);
+ assert.match(human,/engineReviewCount:allowed.size/);
+ assert.doesNotMatch(policy,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.doesNotMatch(human,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.match(css,/\.workbench-p75-layout/);
+ assert.match(css,/@media\(max-width:560px\)/);
+});
+
+
+test("PR76 candidate studio is safe, reversible, lazy and does not mutate source workflow",()=>{
+ const pure=file("assets/js/scenario-builder.js");
+ const interactive=file("assets/js/scenario-console.js");
+ const ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["candidateOpen","candidateClose","candidateStudio","candidateStudioTitle",
+   "candidatePreset","candidateThreshold","candidateEscalate","candidateApply",
+   "candidateRollback","candidateOriginalReady","candidateNewReady","candidateOriginalReview",
+   "candidateNewReview","candidateDelta","candidateAffected","candidateSafety",
+   "candidateExportTemplate","candidateImportTemplate","candidateDownloadReport",
+   "candidateTemplateStatus","candidateStatus"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(pure,/baseline=runWorkflow\(type,source\)/);
+ assert.match(pure,/if\(row\.status!=="listo"/);
+ assert.match(pure,/Regla insegura: el candidato intentó evitar un bloqueo/);
+ assert.match(pure,/revops-scenario-settings-v1/);
+ assert.match(pure,/Cambios externos ejecutados: 0/);
+ assert.match(ui,/import\("\.\/scenario-console\.js"\)/);
+ assert.match(ui,/\$\("candidateStudio"\)\.hidden=true/);
+ assert.match(interactive,/decodeScenarioTemplate\(await file\.text\(\),type\)/);
+ assert.match(interactive,/scenarioComparisonReport\(current\)/);
+ assert.match(interactive,/presetFor\(type,"base"\)/);
+ assert.doesNotMatch(pure,/fetch\(|sessionStorage|localStorage|XMLHttpRequest/);
+ assert.doesNotMatch(interactive,/fetch\(|sessionStorage|localStorage|XMLHttpRequest/);
+ assert.match(css,/\.workbench-p76-stats/);
+ assert.match(css,/@media\(max-width:720px\)/);
+});
+
+
+test("PR77 genuine local PDF export is lazy and avoids HTML-as-PDF or private rows",()=>{
+ const pdf=file("assets/js/executive-pdf.js"),consoleUi=file("assets/js/report-console.js");
+ const ui=file("assets/js/workflow-demo.js"),sheet=file("assets/css/workflow-demo.css");
+ for(const id of ["reportStudioTitle","reportOpen","reportStudio","reportRows",
+  "reportReady","reportReview","reportBlocked","reportPdf","reportPrint",
+  "reportTxt","reportJson","reportStatus","reportClose","reportOutline"])
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(ui,/import\("\.\/report-console\.js"\)/);
+ assert.match(ui,/\$\("reportStudio"\)\.hidden=true/);
+ assert.match(ui,/reviewSummary:decisionConsole\?\.reviewSummary/);
+ assert.match(ui,/candidate:candidateConsole\?\.candidateSummary/);
+ assert.match(consoleUi,/generateReportPdf\(documentModel\)/);
+ assert.match(consoleUi,/type:"application\/pdf"/);
+ assert.match(consoleUi,/window\.open\("about:blank","_blank"\)/);
+ assert.match(consoleUi,/executiveReportJson\(documentModel\)/);
+ assert.match(pdf,/raw="%PDF-1\.4/);
+ assert.match(pdf,/\/MediaBox \[0 0 /);
+ assert.match(pdf,/\/BaseFont \/Helvetica-Bold/);
+ assert.match(pdf,/\/Encoding \/WinAnsiEncoding/);
+ assert.match(pdf,/startxref/);
+ assert.match(pdf,/realApprovals:0/);
+ assert.doesNotMatch(pdf,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.doesNotMatch(consoleUi,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.match(sheet,/\.workbench-p77-counters/);
+ assert.match(sheet,/@media\(max-width:520px\)/);
+});
+
+
+test("PR78 accessible workbench delivers focus, status, error and 400%-equivalent mobile reflow",()=>{
+ const ui=file("assets/js/workflow-demo.js"),a11y=file("assets/js/a11y-workbench.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["workbenchA11yAnnounce","workbenchKeyboardGuide","workbenchKeyboardHelp",
+  "workbench-table-title","workflowError","workflowEditForm","scenarioDiscard"]){
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ }
+ assert.match(demoHtml,/href="#simulador">Saltar al editor/);
+ assert.match(demoHtml,/href="#workbench-table-title">Saltar a los resultados/);
+ assert.match(demoHtml,/aria-describedby="sourceHelp workflowError"/);
+ assert.match(demoHtml,/aria-describedby="workbenchKeyboardHelp"/);
+ assert.match(demoHtml,/id="workflowError"[^>]*aria-atomic="true"/);
+ assert.match(ui,/installAccessibleNavigation\(/);
+ assert.match(ui,/focusHeading\(document,"rulesStudio","rulesStudioTitle"\)/);
+ assert.match(ui,/focusHeading\(document,"candidateStudio","candidateStudioTitle"\)/);
+ assert.match(ui,/focusHeading\(document,"reportStudio","reportStudioTitle"\)/);
+ assert.match(ui,/focusHeading\(document,"columnMapper","columnMapperTitle"\)/);
+ assert.match(ui,/trigger\.setAttribute\("aria-keyshortcuts","ArrowDown ArrowUp Home End"\)/);
+ assert.match(ui,/input\.setAttribute\("aria-describedby",hint\.id\+" "\+msg\.id\)/);
+ assert.match(ui,/announceWorkbench\("Proceso analizado:/);
+ assert.match(a11y,/nextVisibleRow\(/);
+ assert.match(a11y,/getFocusableIn\(/);
+ assert.match(a11y,/event\.key==="Escape"/);
+ assert.match(a11y,/closePanels\(\)/);
+ assert.match(css,/@media\(max-width:480px\)/);
+ assert.match(css,/@media\(forced-colors:active\)/);
+ assert.match(css,/@media\(prefers-contrast:more\)/);
+ assert.match(css,/min-height:44px/);
+ assert.doesNotMatch(a11y,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+});
+
+
+test("PR79 privacy/security boundary scrubs only RevOps state and hardens all CSV outputs",()=>{
+ const privacy=file("assets/js/privacy-security.js");
+ const engine=file("assets/js/workflow-engine.js");
+ const ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ const report=file("assets/js/report-console.js");
+ const review=file("assets/js/decision-console.js");
+ const scenario=file("assets/js/scenario-console.js");
+ for(const id of ["privacyBoundary","privacyBoundaryTitle","privacyInspect",
+   "privacyRiskStatus","privacyClearOpen","privacyClearConfirm",
+   "privacyClearTitle","privacyClearCancel","privacyClearConfirmButton",
+   "privacyClearStatus"]){
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ }
+ assert.match(engine,/import \{secureCsvCell,validateTextBoundary\} from "\.\/privacy-security\.js"/);
+ assert.match(engine,/const csvCell=secureCsvCell/);
+ assert.match(engine,/Máximo 24 columnas por importación/);
+ assert.match(engine,/Cada celda admite un máximo de 400/);
+ assert.match(file("assets/js/import-contract.js"),/validateTextBoundary/);
+ assert.match(privacy,/REVOPS_SESSION_KEYS=Object\.freeze/);
+ assert.match(privacy,/RISK_LEADING=/);
+ assert.match(privacy,/EXAMPLE_SUFFIX=/);
+ assert.match(privacy,/fullCsvContainsRows:true/);
+ assert.match(privacy,/externallyTransmitted:0,telemetryRecorded:0/);
+ assert.match(ui,/decisionConsole\?\.clear\?\.\(\)/);
+ assert.match(ui,/clearRevopsSession\(store\)/);
+ assert.match(ui,/inspectDataExposure\(result\)/);
+ assert.match(ui,/chooseScenario\(scenario,true\)/);
+ assert.match(ui,/confirmPrivacyClear|privacyClearConfirmButton/);
+ assert.match(report,/documentModel=null/);
+ assert.match(review,/policy=null;ledger=null/);
+ assert.match(scenario,/current=null;source=null;type=null;settings=null/);
+ assert.match(css,/\.workbench-p79-privacy/);
+ assert.doesNotMatch(privacy,/fetch\(|XMLHttpRequest|navigator|localStorage/);
+});
+
+
+test("PR80 pilot readiness integrates source truth, privacy, quality and safe outcomes",()=>{
+ const pure=file("assets/js/pilot-readiness.js");
+ const panel=file("assets/js/pilot-console.js"),ui=file("assets/js/workflow-demo.js");
+ const css=file("assets/css/workflow-demo.css");
+ for(const id of ["pilotReadinessTitle","pilotOpen","pilotStudio","pilotStudioTitle",
+  "pilotOutcome","pilotPassed","pilotWarnings","pilotBlockers","pilotChecks",
+  "pilotExportTxt","pilotExportJson","pilotRefresh","pilotClose","pilotStatus"])
+  assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(pure,/runWorkflow\(type,source\)/);
+ assert.match(pure,/buildQualityCockpit\(type,source,actual\)/);
+ assert.match(pure,/describePolicy\(type,source,actual,parseDelimited\)/);
+ assert.match(pure,/inspectDataExposure\(actual\)/);
+ assert.match(pure,/No certifica software de producción/);
+ assert.match(pure,/realApprovals:0,remoteConnections:0/);
+ assert.match(panel,/assessPilotReadiness\(state\.scenario,state\.source,state\.result\)/);
+ assert.match(panel,/pilotReadinessText/);
+ assert.match(panel,/pilotReadinessJson/);
+ assert.match(panel,/replaceChildren\(frag\)/);
+ assert.match(ui,/import\("\.\/pilot-console\.js"\)/);
+ assert.match(ui,/pilotConsole\?\.clear\?\.\(\)/);
+ assert.match(ui,/focusHeading\(document,"pilotStudio","pilotStudioTitle"\)/);
+ assert.match(css,/\.workbench-p80-checks/);
+ assert.match(css,/@media\(max-width:560px\)/);
+ assert.doesNotMatch(pure,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+ assert.doesNotMatch(panel,/fetch\(|localStorage|sessionStorage|XMLHttpRequest/);
+});
+
+
+test("PR81 planning is a deterministic dependency DAG and never a real production authorization",()=>{
+ const model=file("assets/js/pilot-plan.js"),panel=file("assets/js/pilot-plan-console.js");
+ const app=file("assets/js/workflow-demo.js"),styles=file("assets/css/workflow-demo.css");
+ for(const id of ["pilotPlanHeading","pilotPlanOpen","pilotPlanStudio","pilotPlanStudioTitle",
+  "pilotPlanSummary","pilotPlanCapacity","pilotPlanTasks","pilotPlanWaves",
+  "pilotPlanTried","pilotPlanApproved","pilotPlanWavesList","pilotPlanStatus",
+  "pilotPlanExportTxt","pilotPlanExportJson","pilotPlanReset","pilotPlanReview","pilotPlanClose"])
+   assert.match(demoHtml,new RegExp('id="'+id+'"'));
+ assert.match(model,/createPilotExecutionPlan/);
+ assert.match(model,/simulatePlanProgress/);
+ assert.match(model,/La autorización externa no puede marcarse/);
+ assert.match(model,/externalExecutions:0,realApprovals:0/);
+ assert.match(model,/Ola /);
+ assert.match(panel,/assessPilotReadiness\(current\.scenario,current\.source,current\.result\)/);
+ assert.match(panel,/data\.startsWith|pilotPlanText/);
+ assert.match(panel,/replaceChildren\(frag\)/);
+ assert.match(app,/import\("\.\/pilot-plan-console\.js"\)/);
+ assert.match(app,/pilotPlanConsole\?\.clear\?\.\(\)/);
+ assert.match(app,/focusHeading\(document,"pilotPlanStudio","pilotPlanStudioTitle"\)/);
+ assert.match(styles,/\.workbench-p81-wave/);
+ assert.match(styles,/@media\(max-width:540px\)/);
+ assert.doesNotMatch(model,/fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
+ assert.doesNotMatch(panel,/fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
+});
+
+
+test("PR80-PR81 release guard preserves V40 verify and separately requires integrated acceptance",()=>{
+ const pkg=JSON.parse(file("package.json"));
+ const ci=file(".github/workflows/validate.yml");
+ assert.equal(pkg.scripts.verify,"npm run verify:pre-release && npm run release:check");
+ assert.equal(pkg.scripts["pr80:check"],"node scripts/pr80-acceptance.mjs");
+ assert.match(ci,/name: Run full verification gate\s+run: npm run verify/);
+ assert.match(ci,/name: PR80 integrated synthetic acceptance\s+run: npm run pr80:check/);
+ assert.ok(ci.indexOf("name: Run full verification gate")<
+  ci.indexOf("name: PR80 integrated synthetic acceptance"));
+});

@@ -1,8 +1,14 @@
 import { SCENARIOS, runWorkflow, exportResultCsv, editWorkflowRecord, exportActionQueueCsv, exportVisibleRowsCsv } from "./workflow-engine.js";
 import { suggestMapping, normalizeMappedCsv } from "./column-mapper.js";
+import {decodeImportBytes,inspectImport,ensureImportReady,makeMappingProfile,readMappingProfile} from "./import-contract.js";
 import { analyzeWorkflow, insightsReport } from "./workflow-insights.js";
 import {RECIPE_LABELS,recipe,fieldGuide,issueColumn,orderRows,qualitySnapshot} from "./workflow-product-kit.js";
 import {createClientJourney} from "./client-journey.js";
+import {compareWorkflow,comparisonReport} from "./workflow-comparison.js";
+import {buildQualityCockpit,compareQualityCockpit,qualityCockpitReport} from "./quality-cockpit.js";
+import {previewRecordEdit,createCorrectionTimeline,nextBlockedIndex,safeViewPreset} from "./correction-workbench.js";
+import {installAccessibleNavigation,focusHeading} from "./a11y-workbench.js";
+import {inspectDataExposure,clearRevopsSession} from "./privacy-security.js";
 
 const $=id=>document.getElementById(id);
 const buttons=[...document.querySelectorAll("[data-scenario]")];
@@ -15,20 +21,48 @@ const initialMode=urlParams.get("view")==="simple"?"simple":
   urlParams.has("scenario")?"advanced":"simple";
 let guide=null;
 let scenario=allowed.includes(query)?query:"orders";
-let latest=null;
+let latest=null, baseline=null, evidence=null, qualityBaseline=null, qualityCurrent=null, qualityEvidence=null;
 let activeFilter="all",editIndex=null,undoSource=null,redoSource=null;
+let correctionTimeline=null, editPreview=null, editorTrigger=null, editorDirty=false;
+let decisionConsole=null,candidateConsole=null,reportConsole=null,pilotConsole=null,pilotPlanConsole=null,pilotControlConsole=null;
 let mappingSource=null,mappingScenario=null;
 let modifiedSource=false,pendingScenario=null;
 function setText(id,text){const element=$(id);if(element)element.textContent=String(text);}
+function announceWorkbench(text){setText("workbenchA11yAnnounce",String(text).slice(0,190));}
 function errorText(message){
   const element=$("workflowError");
   if(!element)return;
   element.hidden=!message;
   element.textContent=message||"";
+  $("workflowSource").setAttribute("aria-invalid",String(Boolean(message)));
   if(message)element.focus();
 }
 function invalidate(message){
-  latest=null;
+  latest=null;baseline=null;evidence=null;qualityBaseline=null;qualityCurrent=null;qualityEvidence=null;
+  correctionTimeline=null;editPreview=null;
+  decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();pilotControlConsole?.clear?.();
+  $("pilotStudio").hidden=true;$("pilotOpen").disabled=true;
+  $("pilotPlanStudio").hidden=true;$("pilotPlanOpen").disabled=true;
+  $("pilotControlStudio").hidden=true;$("pilotControlOpen").disabled=true;
+  $("pilotControlOpen").setAttribute("aria-expanded","false");
+  $("pilotPlanOpen").setAttribute("aria-expanded","false");
+  $("pilotOpen").setAttribute("aria-expanded","false");
+  $("privacyInspect").disabled=true;
+  $("privacyClearConfirm").hidden=true;
+  $("r2Evidence").hidden=true;
+  $("rulesStudio").hidden=true;
+  $("candidateStudio").hidden=true;
+  $("reportStudio").hidden=true;
+  $("reportOpen").disabled=true;
+  $("reportOpen").setAttribute("aria-expanded","false");
+  announceWorkbench("Datos modificados. Debes ejecutar el proceso para recuperar informes y resultados.");
+  $("candidateOpen").setAttribute("aria-expanded","false");
+  $("candidateOpen").disabled=true;
+  $("rulesOpen").setAttribute("aria-expanded","false");
+  $("rulesOpen").disabled=true;
+  $("qualityCockpit").hidden=true;
+  $("qualityExport").disabled=true;
+  $("r2Export").disabled=true;
   $("exportWorkflow").disabled=true;
   $("copyWorkflow").disabled=true;
   $("exportActionQueue").disabled=true;
@@ -48,7 +82,39 @@ function closeColumnMapper(){
   $("columnMappingRows").replaceChildren();
   $("columnMappingPreview").replaceChildren();
   setText("columnMappingStatus","");
+  $("confirmDiscardColumns").checked=false;
+  setText("mappingProfileStatus","Un perfil solo contiene los nombres de columnas y el escenario.");
 }
+function auditImport(check){
+  setText("importAuditTitle","Contrato: "+check.format+" · "+check.rows+" registro(s)");
+  setText("importAuditSummary","Estado: "+({
+    ready:"Listo para validar",confirm_discards:"Confirma columnas adicionales",
+    mapping_required:"Relaciona campos obligatorios",mapping_conflict:"Corrige columnas repetidas",
+    regional_ambiguous:"Corrige separadores regionales ambiguos"
+  }[check.status]||"Requiere revisión")+". No se ha sustituido el archivo anterior.");
+  const list=$("importAuditFindings"),frag=document.createDocumentFragment();
+  const info=[
+    ...(check.ignored.length?["Columnas extras: "+check.ignored.join(", ")]:[]),
+    ...(check.missing.length?["Campos sin correspondencia: "+check.missing.join(", ")]:[]),
+    ...(check.conflicts.length?["IDs repetidos: "+check.conflicts.map(v=>"fila "+v.line+" ("+v.kind+")").join("; ")]:[]),
+    ...(check.ambiguousLines.length?["Importes ambiguos en filas "+check.ambiguousLines.join(", ")+": revisa puntos y comas antes de aplicar."]:[]),
+    ...(check.counts?["Simulación: "+check.counts.listo+" listos, "+check.counts.revisar+" revisiones, "+check.counts.bloqueado+" bloqueados."]:[])
+  ];
+  for(const item of info.length?info:["Cabeceras y contenido estructural válidos."]){
+    const li=document.createElement("li");li.textContent=item;frag.append(li);
+  }
+  list.replaceChildren(frag);
+}
+function currentMapping(){
+  return Object.fromEntries([...$("columnMappingRows").querySelectorAll("select")].map(select=>
+    [select.dataset.target,select.value]));
+}
+function downloadMappingFile(filename,body){
+  const url=URL.createObjectURL(new Blob([body],{type:"application/json;charset=utf-8"}));
+  const link=document.createElement("a");link.href=url;link.download=filename;
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+
 function mappingStatus(message,isError=false){
   const element=$("columnMappingStatus");
   element.textContent=message;
@@ -63,6 +129,9 @@ function renderMappingPreview(){
   const heading=document.createElement("p");
   preview.append(heading);
   try{
+    const validation=inspectImport(scenario,mappingSource,mapping);
+    auditImport(validation);
+    ensureImportReady(validation,true); // Preview is not applying or discarding rows.
     const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
     const result=runWorkflow(scenario,converted);
     heading.textContent="VISTA PREVIA DE DESTINO · "+result.counts.total+" filas. "+
@@ -131,10 +200,13 @@ function openColumnMapper(text){
     container.append(row);
   }
   const other=guess.ignored.length?guess.ignored.join(", "):"ninguna";
+  auditImport(inspectImport(scenario,text));
+  $("confirmDiscardColumns").checked=false;
   setText("columnMappingIgnored","Columnas adicionales que no se usarán: "+other+". Las originales se conservarán hasta confirmar.");
   $("columnMapper").hidden=false;
   renderMappingPreview();
   $("columnMapper").scrollIntoView({block:"nearest",behavior:"instant"});
+  focusHeading(document,"columnMapper","columnMapperTitle");
 }
 function chooseScenario(next,force=false){
   if(!SCENARIOS[next])return;
@@ -293,6 +365,7 @@ function loadWorkflowExample(){
     closeColumnMapper();errorText("");
     activeFilter="all";syncFilterButtons();
     $("workflowSort").value="source";$("workflowSearch").value="";
+    baseline=null;
     render(parsed);
     $("changeComparison").hidden=true;
     setText("workflowStatus","Ejemplo «"+RECIPE_LABELS[name].label+"» procesado. Puedes editar sus filas.");
@@ -322,12 +395,219 @@ function cell(tr,text,className){
   td.textContent=String(text);
   tr.append(td);return td;
 }
+function renderR2(result){
+  if(!baseline){baseline=result;qualityBaseline=null;}
+  evidence=compareWorkflow(baseline,result);
+  const a=evidence.before,b=evidence.after,d=evidence.delta;
+  for(const [id,value] of Object.entries({
+    r2BeforePrepared:a.prepared,r2BeforeBlocked:a.blocked,r2BeforeReview:a.reviewing,
+    r2AfterPrepared:b.prepared,r2AfterBlocked:b.blocked,r2AfterReview:b.reviewing
+  }))setText(id,value);
+  setText("r2Summary",evidence.summary);
+  const signed=n=>n>0?"+"+n:String(n);
+  setText("r2Delta","Cambios del cálculo: "+signed(d.prepared)+" propuestas, "+
+    signed(d.blocked)+" bloqueos y "+signed(d.reviewing)+" revisiones humanas. "+
+    "Acciones externas ejecutadas: 0.");
+  const list=$("r2Transitions"),items=document.createDocumentFragment();
+  if(evidence.transitions.length){
+    for(const item of evidence.transitions){
+      const li=document.createElement("li");
+      li.textContent=item.description;
+      items.append(li);
+    }
+  }else{
+    const li=document.createElement("li");
+    li.textContent="Sin diferencias en decisiones o motivos entre las ejecuciones comparadas.";
+    items.append(li);
+  }
+  list.replaceChildren(items);
+  setText("r2Rules",evidence.rule+" "+evidence.limitation);
+  $("r2Evidence").hidden=false;
+  $("r2Export").disabled=!evidence.comparable;
+}
+
+function renderQualityCockpit(result){
+  const current=buildQualityCockpit(scenario,$("workflowSource").value,result);
+  if(!qualityBaseline)qualityBaseline=current;
+  qualityCurrent=current;
+  qualityEvidence=compareQualityCockpit(qualityBaseline,current);
+  const idCounts={
+    qualityUniqueIds:current.uniqueIds,qualityConflicts:current.flags.conflictingIds.count,
+    qualityExactDuplicates:current.flags.exactDuplicates.count,qualityOutliers:current.flags.outliers.count
+  };
+  for(const [name,value] of Object.entries(idCounts))setText(name,value);
+  const make=(name,content)=>{
+    const el=document.createElement(name);el.textContent=content;return el;
+  };
+  const columns=document.createDocumentFragment();
+  for(const [field,state] of Object.entries(current.blanks)){
+    const row=document.createElement("div");row.className="quality-cockpit-row";
+    row.append(make("strong",field),make("span",state.count+" vacío(s)"));
+    if(state.count){
+      const button=make("button","Abrir fila "+(state.indexes[0]+1)+" ↗");
+      button.type="button";button.dataset.qualityIndex=String(state.indexes[0]);row.append(button);
+    }
+    columns.append(row);
+  }
+  $("qualityColumnDetails").replaceChildren(columns);
+  const descriptions={
+    exactDuplicates:"Duplicados idénticos",conflictingIds:"Claves con información contradictoria",
+    invalidDates:"Fechas inválidas",invalidNumbers:"Valores numéricos inválidos",
+    negatives:"Importes negativos",outliers:"Candidatos a valor atípico",
+    blocked:"Registros bloqueados",reviewing:"Pendientes de revisión humana",
+    missing:"Filas con campos vacíos"
+  };
+  const issues=document.createDocumentFragment();
+  for(const [name,title] of Object.entries(descriptions)){
+    const state=current.flags[name];
+    if(!state.count)continue;
+    const button=make("button",title+" · "+state.count+" · revisar ↗");
+    button.type="button";button.dataset.qualityIndex=String(state.indexes[0]);
+    button.className="quality-cockpit-issue";
+    issues.append(button);
+  }
+  if(!issues.childNodes.length)issues.append(make("p","No se han detectado incidencias por estas reglas."));
+  $("qualityInvestigations").replaceChildren(issues);
+  const bands=document.createDocumentFragment();
+  for(const band of current.bands){
+    const row=document.createElement("div");row.className="quality-cockpit-band";
+    row.append(make("span",band.label),make("strong",String(band.count)));
+    bands.append(row);
+  }
+  if(!current.bands.length)bands.append(make("p","Este proceso no tiene un campo numérico de negocio."));
+  $("qualityNumericBands").replaceChildren(bands);
+  setText("qualityStatNote",current.stats.insufficient?
+    "Sin muestra o variación suficiente para detectar candidatos estadísticos. Se necesitan al menos cinco valores y dispersión.":
+    "Candidatos calculados con regla IQR (1,5 × rango intercuartílico); requieren verificación humana.");
+  const d=qualityEvidence.delta,sgn=n=>n>0?"+"+n:String(n);
+  setText("qualityDelta","Desde la primera ejecución: "+sgn(d.completeness)+" puntos de integridad, "+
+    sgn(d.missingCells)+" celdas vacías, "+sgn(d.conflictingIds)+" conflictos de ID, "+
+    sgn(d.blocked)+" bloqueos. Sin acciones externas.");
+  setText("qualityDominant",current.dominant?
+    "Bloqueo más repetido: "+current.dominant.reason+" ("+current.dominant.count+" registro(s)).":
+    "No hay bloqueos registrados en este conjunto.");
+  $("qualityCockpit").hidden=false;
+  $("qualityExport").disabled=false;
+}
+
+function historyEntry(button,label,active,index){
+  button.type="button";
+  button.dataset.historyIndex=String(index);
+  button.setAttribute("aria-current",active?"step":"false");
+  button.textContent=label+(active?" · actual":"");
+  return button;
+}
+function updateCorrectionHistory(){
+  const view=correctionTimeline?.state(),list=$("correctionHistorySteps");
+  if(!list)return;
+  const frag=document.createDocumentFragment();
+  for(const step of view?.operations||[]){
+    const li=document.createElement("li");
+    const button=document.createElement("button");
+    li.append(historyEntry(button,step.label,step.active,step.index));
+    frag.append(li);
+  }
+  list.replaceChildren(frag);
+  setText("correctionHistoryStatus",view?
+    (view.index+" de "+(view.states-1)+" correcciones activas · "+(view.states-1)+" estados reversibles. Solo en esta pestaña."):
+    "Aún no hay correcciones. Ejecuta un escenario para comenzar.");
+  $("undoCorrection").disabled=!view?.canUndo;
+  $("redoCorrection").disabled=!view?.canRedo;
+}
+function applyWorkbenchPresentation(){
+  const reason=$("workbenchShowReason").checked,action=$("workbenchShowAction").checked;
+  const head=$("workflowRows").closest("table");
+  head.classList.toggle("workbench-p74-hide-reason",!reason);
+  head.classList.toggle("workbench-p74-hide-action",!action);
+  head.classList.toggle("workbench-p74-density-compact",$("workbenchDensity").value==="compact");
+}
+function readWorkbenchView(){
+ return {
+  filter:activeFilter,sort:$("workflowSort").value,density:$("workbenchDensity").value,
+  reason:$("workbenchShowReason").checked,action:$("workbenchShowAction").checked
+ };
+}
+function applyWorkbenchView(config){
+ const filters=["all","bloqueado","revisar","listo"];
+ const sorts=["source","risk","identifier","status"];
+ if(!config||!filters.includes(config.filter)||!sorts.includes(config.sort)||
+   !["compact","comfortable"].includes(config.density)||
+   typeof config.reason!=="boolean"||typeof config.action!=="boolean")return false;
+ activeFilter=config.filter;
+ $("workflowSort").value=config.sort;
+ $("workbenchDensity").value=config.density;
+ $("workbenchShowReason").checked=config.reason;
+ $("workbenchShowAction").checked=config.action;
+ $("workflowSearch").value="";
+ $("workbenchViewPreset").value="all";
+ syncFilterButtons();
+ sortResults();applyWorkbenchPresentation();applyFilter();
+ return true;
+}
+function currentEdits(){
+ return Object.fromEntries([...$("workflowEditFields").querySelectorAll("input")].map(input=>[input.name,input.value]));
+}
+function paintEditPreview(){
+ if(editIndex===null||!latest)return;
+ const old=$("workflowSource").value,container=$("editPreviewDiff"),warning=$("editPreviewWarning");
+ container.replaceChildren();editPreview=null;
+ try{
+  const check=previewRecordEdit(scenario,old,editIndex,currentEdits());
+  editPreview=check;
+  editorDirty=check.changed;
+  $("saveWorkflowEdit").disabled=!check.valid;
+  setText("editDirtyStatus",check.changed?
+   "Tienes cambios sin guardar. Guarda o cancela antes de navegar a otra incidencia.":
+   "No hay modificaciones pendientes.");
+  if(!check.valid){
+   setText("editPreviewStatus","Sin cambios");
+   setText("editPreviewImpact",check.message);
+   warning.textContent="";return;
+  }
+  for(const input of $("workflowEditFields").querySelectorAll("input[aria-invalid]")){
+   if(check.afterReason!==latest.rows[editIndex].reason)input.setAttribute("aria-invalid","false");
+  }
+  setText("editPreviewStatus",check.beforeStatus+" → "+check.afterStatus);
+  setText("editPreviewImpact","Reglas recalculadas sobre "+check.counts.after.total+" registros: "+
+   (check.counts.actionableDelta>0?"+":"")+check.counts.actionableDelta+" propuestas preparadas, "+
+   (check.counts.blockedDelta>0?"+":"")+check.counts.blockedDelta+" bloqueos y "+
+   (check.counts.reviewDelta>0?"+":"")+check.counts.reviewDelta+" revisiones. No se ha guardado.");
+  for(const change of check.diff){
+   const row=document.createElement("div");row.className="workbench-p74-diff-row";
+   const label=document.createElement("strong");label.textContent=change.field;
+   const left=document.createElement("span");left.textContent="Antes: "+(change.before||"(vacío)");
+   const right=document.createElement("span");right.textContent="Propuesto: "+(change.after||"(vacío)");
+   row.append(label,left,right);container.append(row);
+  }
+  warning.textContent=check.approvalRequired?
+   "Este registro sigue requiriendo revisión humana. Guardar no equivale a aprobar ni a ejecutar.":
+   check.afterStatus==="bloqueado"?"El registro seguiría bloqueado. La corrección puede guardarse, pero no se ejecutará.":check.message;
+ }catch(error){
+  editorDirty=true;
+  $("saveWorkflowEdit").disabled=true;
+  setText("editDirtyStatus","Hay cambios sin guardar; revisa el error.");
+  setText("editPreviewStatus","No se puede calcular");
+  setText("editPreviewImpact","Corrige el formato del registro antes de continuar.");
+  warning.textContent=error?.message||"Error al recalcular.";
+ }
+}
+
 function render(result){
   latest=result;
+  if(!correctionTimeline||correctionTimeline.state().source!==$("workflowSource").value){
+    correctionTimeline=createCorrectionTimeline(scenario,$("workflowSource").value);
+  }
+  updateCorrectionHistory();
+  renderR2(result);
   setText("countTotal",result.counts.total);
   setText("countReady",result.counts.listo);
   setText("countReview",result.counts.revisar);
   setText("countBlocked",result.counts.bloqueado);
+  $("privacyInspect").disabled=false;
+  const exposure=inspectDataExposure(result);
+  setText("privacyRiskStatus",exposure.records+" registros en memoria · "+exposure.emails+" apariciones de email ("+
+   exposure.nonExampleEmails+" fuera de dominios de ejemplo) · "+exposure.formulaLike+
+   " celda(s) con fórmulas potenciales. CSV detallado: puede contener datos privados. Los informes agregados no contienen filas.");
   const list=$("workflowPipeline").querySelectorAll("li");
   result.steps.forEach((step,index)=>{
     const li=list[index];
@@ -343,34 +623,52 @@ function render(result){
   const frag=document.createDocumentFragment();
   for(const [index,row] of result.rows.entries()){
     const tr=document.createElement("tr");
-    cell(tr,row.id);
-    const status=cell(tr,"");
+    const idCell=cell(tr,row.id);idCell.dataset.label="Registro";
+    const status=cell(tr,"");status.dataset.label="Resultado";
     const label=document.createElement("span");
     label.className="workbench-result-pill";
     label.dataset.state=row.status;
     label.textContent=row.status;
     status.append(label);
-    cell(tr,row.reason);
-    cell(tr,row.action);
+    const reasonCell=cell(tr,row.reason);reasonCell.dataset.label="Motivo";reasonCell.classList.add("workbench-optional-reason");
+    const actionCell=cell(tr,row.action);actionCell.dataset.label="Siguiente acción";actionCell.classList.add("workbench-optional-action");
     tr.className="workbench-row";
     tr.dataset.status=row.status;
     tr.dataset.editIndex=String(index);
     tr.dataset.search=normalizeSearch([row.id,...Object.values(row.values),row.reason,row.action].join(" "));
-    const edit=cell(tr,"");
+    const edit=cell(tr,"");edit.dataset.label="Corregir";
     const trigger=document.createElement("button");
     trigger.type="button";
     trigger.className="workbench-row-edit";
     trigger.dataset.editIndex=String(index);
-    trigger.setAttribute("aria-label","Editar registro "+row.id);
+    trigger.setAttribute("aria-label","Editar fila "+(index+1)+". "+row.status+". "+row.reason);
+    trigger.setAttribute("aria-describedby","workbenchKeyboardHelp");
+    trigger.setAttribute("aria-keyshortcuts","ArrowDown ArrowUp Home End");
     trigger.textContent="Editar ↗";
     edit.append(trigger);
     frag.append(tr);
   }
   body.replaceChildren(frag);
+  announceWorkbench("Proceso analizado: "+result.counts.total+" registros, "+result.counts.bloqueado+" bloqueados y "+result.counts.revisar+" pendientes de revisión.");
+  applyWorkbenchPresentation();
   guide?.sync(result);
   sortResults();
   renderQuality();
+  renderQualityCockpit(result);
   renderInsights(result);
+  $("rulesOpen").disabled=false;
+  $("candidateOpen").disabled=false;
+  $("reportOpen").disabled=false;
+  $("pilotOpen").disabled=false;
+  $("pilotPlanOpen").disabled=false;
+  $("pilotControlOpen").disabled=false;
+  if(pilotPlanConsole&&!$("pilotPlanStudio").hidden)pilotPlanConsole.sync();
+  if(pilotControlConsole&&!$("pilotControlStudio").hidden)pilotControlConsole.sync();
+  if(pilotConsole&&!$("pilotStudio").hidden)pilotConsole.sync();
+  if(reportConsole&&!$("reportStudio").hidden)reportConsole.sync();
+  if(candidateConsole&&!$("candidateStudio").hidden)candidateConsole.sync();
+  if(decisionConsole&&!$("rulesStudio").hidden)
+    decisionConsole.sync(scenario,$("workflowSource").value,result);
   applyFilter();
   setText("workflowStatus",result.counts.total+" registros analizados. "+result.counts.listo+" listos, "+
     result.counts.revisar+" pendientes de revisión y "+result.counts.bloqueado+" bloqueados. "+
@@ -442,11 +740,16 @@ $("runWorkflow").addEventListener("click",()=>{
     errorText(error?.message||"No se pudo leer el CSV.");
   }
 });
-function closeEditor(){
+function closeEditor(restoreFocus=false){
   const form=$("workflowEditForm");
   if(form)form.hidden=true;
-  editIndex=null;
+  editIndex=null;editPreview=null;editorDirty=false;
   setText("workflowEditStatus","");
+  if(restoreFocus){
+    const focus=editorTrigger?.isConnected && !editorTrigger.closest("[hidden]")?editorTrigger:$("fixFirstIssue");
+    focus?.focus();
+  }
+  editorTrigger=null;
 }
 function syncFilterButtons(){
   document.querySelectorAll("[data-workflow-filter]").forEach(button=>{
@@ -481,11 +784,13 @@ function applyFilter(){
 }
 function openEditor(index){
   if(!latest?.rows[index])return;
+  editorTrigger=document.activeElement;
   const row=latest.rows[index];
   const affected=issueColumn(scenario,row);
   editIndex=index;
   const parent=$("workflowEditFields");
   parent.replaceChildren();
+  editorDirty=false;editPreview=null;
   for(const column of latest.columns){
     const wrap=document.createElement("div");
     wrap.className="workbench-edit-field";
@@ -511,7 +816,9 @@ function openEditor(index){
       input.setAttribute("aria-invalid","true");
       const msg=document.createElement("strong");
       msg.className="workbench-field-problem";
+      msg.id="editIssue-"+column;
       msg.textContent="Revisar: "+row.reason;
+      input.setAttribute("aria-describedby",hint.id+" "+msg.id);
       wrap.append(msg);
     }
     if(guide.options){
@@ -530,25 +837,29 @@ function openEditor(index){
   setText("workbench-edit-title","Corregir registro "+row.id);
   setText("workflowEditHint",row.reason+". Revisa los valores y guarda para volver a procesar todas las filas.");
   $("workflowEditForm").hidden=false;
+  paintEditPreview();
   $("workflowEditForm").scrollIntoView({behavior:"instant",block:"center"});
   (parent.querySelector(".is-problem input")||parent.querySelector("input"))?.focus();
 }
 function commitEdit(event){
   event.preventDefault();
   if(editIndex===null || !latest)return;
-  const inputs=[...$("workflowEditFields").querySelectorAll("input")];
-  const changes=Object.fromEntries(inputs.map(input=>[input.name,input.value]));
   const original=$("workflowSource").value;
   try{
-    const next=editWorkflowRecord(scenario,original,editIndex,changes);
+    const preview=previewRecordEdit(scenario,original,editIndex,currentEdits());
+    if(!preview.valid)throw Error(preview.message);
+    const next=preview.source;
+    // No state mutation until all rules and preview validation have passed.
+    if(!correctionTimeline||correctionTimeline.state().source!==original)
+      correctionTimeline=createCorrectionTimeline(scenario,original);
+    correctionTimeline.push(preview);
     $("workflowSource").value=next;
     modifiedSource=true;
     errorText("");
     const result=runWorkflow(scenario,next);
     const originalResult=latest;
     const before=analyzeWorkflow(originalResult),after=analyzeWorkflow(result);
-    undoSource=original;redoSource=null;
-    $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
+    undoSource=null;redoSource=null;
     closeEditor();
     render(result);
     const compare=$("changeComparison");
@@ -581,7 +892,7 @@ $("fixFirstIssue").addEventListener("click",firstBlocked);
 $("quickDemoAction").addEventListener("click",firstBlocked);
 $("workflowEditForm").addEventListener("submit",commitEdit);
 for(const id of ["cancelWorkflowEdit","cancelWorkflowEditSecondary"]){
-  $(id).addEventListener("click",closeEditor);
+  $(id).addEventListener("click",()=>closeEditor(true));
 }
 document.querySelectorAll("[data-workflow-filter]").forEach(button=>button.addEventListener("click",()=>{
   activeFilter=button.dataset.workflowFilter;
@@ -589,32 +900,39 @@ document.querySelectorAll("[data-workflow-filter]").forEach(button=>button.addEv
   closeEditor();
   applyFilter();
 }));
-$("undoCorrection").addEventListener("click",()=>{
-  if(undoSource===null)return;
-  const oldUndo=undoSource;
-  redoSource=$("workflowSource").value;
-  undoSource=null;
-  $("undoCorrection").disabled=true;$("redoCorrection").disabled=false;
-  closeEditor();
-  $("workflowSource").value=oldUndo;
+function restoreTimeline(snapshot,verb){
+  if(!snapshot)return;
+  const next=snapshot.source;
+  const result=runWorkflow(scenario,next);
+  closeEditor();$("workflowSource").value=next;
   modifiedSource=true;
-  try{render(runWorkflow(scenario,oldUndo));$("changeComparison").hidden=true;
-    if(guide?.state().mode==="simple")guide.transition("result",false);}
-  catch{invalidate("No se pudo restaurar el estado previo.");}
+  render(result);$("changeComparison").hidden=true;
+  if(guide?.state().mode==="simple")guide.transition("result",false);
+  setText("workflowStatus",verb+". Historial y resultados recalculados, sin acciones externas.");
+}
+$("undoCorrection").addEventListener("click",()=>restoreTimeline(correctionTimeline?.undo(),"Corrección deshecha"));
+$("redoCorrection").addEventListener("click",()=>restoreTimeline(correctionTimeline?.redo(),"Corrección rehecha"));
+$("correctionHistorySteps").addEventListener("click",event=>{
+  const button=event.target.closest("button[data-history-index]");
+  if(!button||!correctionTimeline)return;
+  const index=Number(button.dataset.historyIndex);
+  if(!Number.isInteger(index))return;
+  try{restoreTimeline(correctionTimeline.jump(index),"Estado del historial restaurado");}
+  catch(error){errorText(error?.message||"No se pudo restaurar el historial.");}
 });
-$("redoCorrection").addEventListener("click",()=>{
-  if(redoSource===null)return;
-  const next=redoSource;redoSource=null;
-  undoSource=$("workflowSource").value;
-  $("undoCorrection").disabled=false;$("redoCorrection").disabled=true;
-  $("workflowSource").value=next;
-  modifiedSource=true;
-  try{
-    render(runWorkflow(scenario,next));
-    $("changeComparison").hidden=true;
-    if(guide?.state().mode==="simple")guide.transition("result",false);
-    setText("workflowStatus","Corrección rehecha y resultados recalculados.");
-  }catch{invalidate("No se pudo rehacer la corrección.");}
+$("workflowEditFields").addEventListener("input",()=>paintEditPreview());
+$("editNextIssue").addEventListener("click",()=>{
+  if(!latest||editIndex===null)return;
+  if(editorDirty){
+    setText("editDirtyStatus","Primero guarda o cancela los cambios. No se ha perdido ningún dato.");
+    return;
+  }
+  const next=nextBlockedIndex(latest,editIndex);
+  if(next===null){
+    setText("editDirtyStatus","No hay más registros bloqueados.");
+    return;
+  }
+  openEditor(next);
 });
 $("importWorkflow").addEventListener("change",async event=>{
   const input=event.currentTarget;
@@ -626,10 +944,13 @@ $("importWorkflow").addEventListener("change",async event=>{
   try{
     if(!/\.(csv|tsv|txt)$/i.test(file.name))throw Error("Selecciona un archivo CSV, TSV o TXT.");
     if(file.size>32000)throw Error("Archivo demasiado grande. Límite de 32 KB.");
-    const text=await file.text();
+    const bytes=new Uint8Array(await file.arrayBuffer());
     if(selectedScenario!==scenario)throw Error("El escenario cambió durante la lectura. Selecciona el archivo de nuevo.");
-    // A valid file may use entirely different headers. Preview/confirm mapping
-    // before changing any existing input; exact headers remain one-click.
+    const text=decodeImportBytes(bytes);
+    const check=inspectImport(scenario,text);
+    auditImport(check);
+    if(check.ambiguousLines.length)throw Error("Importe ambiguo en las filas "+check.ambiguousLines.join(", ")+". Corrige sus separadores y vuelve a importar.");
+    // Inspect schema first; no file replaces the current work before validation.
     const suggestion=suggestMapping(scenario,text);
     if(suggestion.unassigned.length || suggestion.ignored.length ||
        suggestion.columns.some(name=>suggestion.matches[name]!=="exacta")){
@@ -638,6 +959,7 @@ $("importWorkflow").addEventListener("change",async event=>{
         "Relaciona las columnas que faltan antes de ejecutar. No se han modificado tus datos.":
         "");
     }else{
+      ensureImportReady(check);
       const result=runWorkflow(scenario,text);
       $("workflowSource").value=text;
       modifiedSource=true;
@@ -645,6 +967,7 @@ $("importWorkflow").addEventListener("change",async event=>{
       undoSource=null;redoSource=null;
       $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
       errorText("");
+      baseline=null;
       render(result);
       setText("workflowStatus","Archivo leído localmente ("+result.counts.total+" filas). Revisa y corrige registros sin salir de esta pantalla.");
     }
@@ -668,9 +991,11 @@ for(const id of ["cancelColumnMapper","cancelColumnMapping"]){
 }
 $("applyColumnMapping").addEventListener("click",()=>{
   if(mappingSource===null || mappingScenario!==scenario)return;
-  const mapping=Object.fromEntries([...$("columnMappingRows").querySelectorAll("select")].map(select=>
-    [select.dataset.target,select.value]));
+  const mapping=currentMapping();
   try{
+    const validation=inspectImport(scenario,mappingSource,mapping);
+    auditImport(validation);
+    ensureImportReady(validation,$("confirmDiscardColumns").checked);
     const converted=normalizeMappedCsv(scenario,mappingSource,mapping);
     const result=runWorkflow(scenario,converted);
     $("workflowSource").value=converted;
@@ -678,6 +1003,7 @@ $("applyColumnMapping").addEventListener("click",()=>{
     undoSource=null;redoSource=null;
     $("undoCorrection").disabled=true;$("redoCorrection").disabled=true;
     closeColumnMapper();
+    baseline=null;
     render(result);
     $("changeComparison").hidden=true;
     errorText("");
@@ -686,6 +1012,31 @@ $("applyColumnMapping").addEventListener("click",()=>{
   }catch(error){
     mappingStatus(error?.message||"No se puede aplicar el mapeo.",true);
   }
+});
+$("confirmDiscardColumns").addEventListener("change",()=>renderMappingPreview());
+$("exportMappingProfile").addEventListener("click",()=>{
+  try{
+    if(mappingSource===null)return;
+    const profile=makeMappingProfile(scenario,currentMapping());
+    downloadMappingFile("revops-perfil-columnas-"+scenario+".json",profile);
+    setText("mappingProfileStatus","Perfil descargado: solo escenario y correspondencias, nunca filas.");
+  }catch(error){setText("mappingProfileStatus",error?.message||"No se puede exportar el perfil.");}
+});
+$("importMappingProfile").addEventListener("change",async event=>{
+  const input=event.currentTarget;
+  const file=input.files?.[0];
+  if(!file||mappingSource===null)return;
+  const selectedScenario=scenario;
+  try{
+    if(file.size>3000||!file.name.toLowerCase().endsWith(".json"))throw Error("Elige un perfil JSON de máximo 3 KB.");
+    const profile=readMappingProfile(await file.text(),scenario,suggestMapping(scenario,mappingSource).sourceHeaders);
+    if(selectedScenario!==scenario||mappingSource===null)throw Error("El escenario cambió durante la lectura del perfil.");
+    for(const select of $("columnMappingRows").querySelectorAll("select"))select.value=profile[select.dataset.target];
+    $("confirmDiscardColumns").checked=false;
+    setText("mappingProfileStatus","Perfil cargado en la vista previa. Revisa y confirma antes de aplicar.");
+    renderMappingPreview();
+  }catch(error){setText("mappingProfileStatus",error?.message||"Perfil inválido.");}
+  finally{input.value="";}
 });
 $("columnMappingRows").addEventListener("change",event=>{
   if(event.target.matches("select"))renderMappingPreview();
@@ -715,10 +1066,56 @@ document.addEventListener("keydown",event=>{
   if(!$("columnMapper").hidden){
     closeColumnMapper();$("openColumnMapper").focus();
   }else if(!$("workflowEditForm").hidden){
-    closeEditor();$("fixFirstIssue").focus();
+    closeEditor(true);
   }
 });
 $("workflowSort").addEventListener("change",()=>{sortResults();applyFilter();});
+const savedViewKey="revops-studio:p74:view-v1";
+$("workbenchViewPreset").addEventListener("change",event=>{
+ const preset=safeViewPreset(event.target.value);
+ if(!preset)return;
+ applyWorkbenchView({
+  filter:preset.filter,sort:preset.sort,density:event.target.value==="compact"?"compact":"comfortable",
+  reason:preset.columns.reason,action:preset.columns.action
+ });
+ setText("workbenchViewStatus","Vista "+event.target.selectedOptions[0].textContent+
+  " aplicada localmente. La búsqueda se ha limpiado sin guardar su contenido.");
+});
+$("workbenchDensity").addEventListener("change",applyWorkbenchPresentation);
+for(const name of ["workbenchShowReason","workbenchShowAction"])
+ $(name).addEventListener("change",applyWorkbenchPresentation);
+$("workbenchSaveView").addEventListener("click",()=>{
+ try{
+  // Explicit opt-in. Exact whitelisted keys only: never store the search or any row.
+  sessionStorage.setItem(savedViewKey,JSON.stringify(readWorkbenchView()));
+  setText("workbenchViewStatus","Preferencias de vista guardadas en esta sesión, sin búsqueda ni datos.");
+ }catch{setText("workbenchViewStatus","El navegador impide el almacenamiento: la vista sigue activa solo en memoria.");}
+});
+$("workbenchRestoreView").addEventListener("click",()=>{
+ try{
+  const raw=sessionStorage.getItem(savedViewKey);
+  if(!raw){setText("workbenchViewStatus","No hay ninguna vista guardada.");return;}
+  if(raw.length>240||!applyWorkbenchView(JSON.parse(raw)))throw Error("La vista guardada no es válida.");
+  setText("workbenchViewStatus","Vista restaurada, sin búsquedas ni valores personales.");
+ }catch{setText("workbenchViewStatus","No se puede restaurar esta configuración.");}
+});
+$("workbenchClearView").addEventListener("click",()=>{
+ try{sessionStorage.removeItem(savedViewKey);}catch{}
+ setText("workbenchViewStatus","Configuración guardada borrada. Los registros no se almacenaban allí.");
+});
+document.addEventListener("keydown",event=>{
+ const el=document.activeElement;
+ const editing=el?.matches("input,textarea,select,[contenteditable]")||el?.closest("[contenteditable]");
+ if(editing||!(event.ctrlKey||event.metaKey)||event.altKey)return;
+ if(event.key.toLowerCase()==="z"){
+  event.preventDefault();
+  if(event.shiftKey)$("redoCorrection").click();
+  else $("undoCorrection").click();
+ }else if(event.key.toLowerCase()==="y"){
+  event.preventDefault();$("redoCorrection").click();
+ }
+});
+
 $("cancelScenarioDiscard").addEventListener("click",()=>{
   pendingScenario=null;
   $("scenarioDiscard").hidden=true;
@@ -741,6 +1138,221 @@ $("exportVisible").addEventListener("click",()=>{
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(href),1000);
   setText("workflowStatus","Exportadas "+indices.length+" filas visibles en su orden actual. Incluye valores de esas filas; no se han enviado.");
+});
+$("r2Export").addEventListener("click",()=>{
+  if(!evidence?.comparable)return;
+  const text=comparisonReport(evidence);
+  const uri=URL.createObjectURL(new Blob([text],{type:"text/plain;charset=utf-8"}));
+  const link=document.createElement("a");
+  link.href=uri;link.download="revops-comparativa-r2-"+scenario+".txt";
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(uri),1000);
+  setText("workflowStatus","Comparativa R2 descargada. Sin filas, contactos ni ejecución externa.");
+});
+$("privacyInspect").addEventListener("click",()=>{
+ if(!latest)return;
+ const exposure=inspectDataExposure(latest);
+ setText("privacyRiskStatus",
+  "Auditoría local: "+exposure.records+" registros, "+exposure.cells+" celdas. "+
+  "Emails detectados: "+exposure.emails+"; fuera de dominios de prueba: "+exposure.nonExampleEmails+
+  ". Fórmulas potenciales: "+exposure.formulaLike+
+  ". Controles invisibles: "+exposure.controlCells+
+  ". Textos extensos: "+exposure.longCells+
+  ". Revisiones humanas: "+exposure.manualReview+
+  ". Sin envío, sin telemetría. Los CSV completos o visibles sí incluyen valores; evita compartirlos sin revisarlos.");
+});
+const privacyConfirm=$("privacyClearConfirm");
+function cancelPrivacyClear(){
+ privacyConfirm.hidden=true;
+ $("privacyClearOpen").setAttribute("aria-expanded","false");
+ $("privacyClearOpen").focus();
+}
+$("privacyClearOpen").setAttribute("aria-controls","privacyClearConfirm");
+$("privacyClearOpen").setAttribute("aria-expanded","false");
+$("privacyClearOpen").addEventListener("click",()=>{
+ privacyConfirm.hidden=false;
+ $("privacyClearOpen").setAttribute("aria-expanded","true");
+ $("privacyClearTitle").focus({preventScroll:true});
+ privacyConfirm.scrollIntoView({block:"nearest",behavior:"instant"});
+});
+$("privacyClearCancel").addEventListener("click",cancelPrivacyClear);
+privacyConfirm.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){
+  event.preventDefault();event.stopPropagation();cancelPrivacyClear();return;
+ }
+ if(event.key!=="Tab")return;
+ const a=$("privacyClearCancel"),b=$("privacyClearConfirmButton"),focused=document.activeElement;
+ if(event.shiftKey && (focused===a || !privacyConfirm.contains(focused))){
+  event.preventDefault();b.focus();
+ }else if(!event.shiftKey && focused===b){
+  event.preventDefault();a.focus();
+ }
+});
+$("privacyClearConfirmButton").addEventListener("click",()=>{
+ let store=null;
+ try{store=sessionStorage;}catch{}
+ const summary=clearRevopsSession(store);
+ decisionConsole?.clear?.();candidateConsole?.clear?.();reportConsole?.clear?.();pilotConsole?.clear?.();pilotPlanConsole?.clear?.();pilotControlConsole?.clear?.();
+ $("importAuditFindings").replaceChildren();
+ setText("importAuditTitle","Sin importación pendiente");
+ setText("importAuditSummary","Historial de importaciones de esta demo limpiado.");
+ setText("columnMappingIgnored","");
+ setText("mappingProfileStatus","");
+ setText("humanReviewFeedback","");
+ setText("humanReviewState","");
+ setText("candidateTemplateStatus","");
+ setText("candidateDelta","");
+ setText("reportStatus","");
+ $("workflowSearch").value="";
+ chooseScenario(scenario,true);
+ $("runWorkflow").click();
+ privacyConfirm.hidden=true;
+ $("privacyClearOpen").setAttribute("aria-expanded","false");
+ $("privacyClearOpen").focus();
+ setText("privacyClearStatus","Datos y anotaciones locales descartados. "+
+  (summary.unavailable?"El navegador impidió verificar todas las preferencias de sesión.":
+   "Preferencias de RevOps eliminadas ("+summary.cleared+" claves).")+
+  " Los ejemplos ficticios se han restaurado. Las descargas anteriores y el portapapeles no pueden revocarse.");
+ announceWorkbench("Sesión de trabajo limpiada; ejemplos ficticios restaurados.");
+});
+$("pilotControlOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(pilotControlConsole)pilotControlConsole.sync();
+  else{
+   const module=await import("./pilot-control-center.js");
+   if(!latest)return;
+   pilotControlConsole=module.mountPilotControlCenter({
+    getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null
+   });
+  }
+  $("pilotControlStudio").scrollIntoView({block:"start",behavior:"instant"});
+  focusHeading(document,"pilotControlStudio","pilotControlTitle");
+ }catch(error){errorText("Centro de control no disponible: "+(error?.message||"entrada inválida"));}
+});
+$("pilotPlanOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(pilotPlanConsole)pilotPlanConsole.sync();
+  else{
+   const module=await import("./pilot-plan-console.js");
+   if(!latest)return;
+   pilotPlanConsole=module.mountPilotPlanConsole({
+    getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null,
+    onReview:()=>$("pilotOpen").click()
+   });
+  }
+  $("pilotPlanStudio").scrollIntoView({block:"start",behavior:"instant"});
+  focusHeading(document,"pilotPlanStudio","pilotPlanStudioTitle");
+ }catch(error){errorText("No se pudo crear el plan supervisado: "+(error?.message||"entrada inválida"));}
+});
+$("pilotOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(pilotConsole)pilotConsole.sync();
+  else{
+   const module=await import("./pilot-console.js");
+   if(!latest)return;
+   pilotConsole=module.mountPilotConsole({
+    getState:()=>latest?{
+     scenario,source:$("workflowSource").value,result:latest
+    }:null,
+    onRemediate:action=>{
+     if(action==="blockers"){
+      firstBlocked();
+     }else if(action==="human"){
+      $("rulesOpen").click();
+     }else if(action==="privacy"){
+      $("privacyInspect").click();
+      $("privacyBoundary").scrollIntoView({block:"start",behavior:"instant"});
+      $("privacyInspect").focus({preventScroll:true});
+     }else if(action==="report"){
+      $("reportOpen").click();
+     }else if(action==="result"){
+      const title=$("workbench-table-title");
+      title.tabIndex=-1;title.focus({preventScroll:true});
+      title.scrollIntoView({block:"start",behavior:"instant"});
+     }
+    }
+   });
+  }
+  $("pilotStudio").scrollIntoView({block:"start",behavior:"instant"});
+  focusHeading(document,"pilotStudio","pilotStudioTitle");
+ }catch(error){errorText("No se pudo evaluar la preparación del piloto: "+(error?.message||"error inesperado"));}
+});
+$("reportOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(reportConsole)reportConsole.sync();
+  else{
+   const module=await import("./report-console.js");
+   if(!latest)return;
+   reportConsole=module.mountExecutiveReporting({
+    getState:()=>latest?{
+      scenario,source:$("workflowSource").value,result:latest,quality:qualityCurrent,
+      comparison:evidence,
+      reviewSummary:decisionConsole?.reviewSummary?.(scenario,$("workflowSource").value)||null,
+      candidate:candidateConsole?.candidateSummary?.(scenario,$("workflowSource").value)||null
+    }:null
+   });
+  }
+  $("reportStudio").scrollIntoView({behavior:"instant",block:"start"});
+  focusHeading(document,"reportStudio","reportStudioTitle");
+ }catch(error){errorText("No se pudo preparar el informe ejecutivo: "+(error?.message||"error inesperado"));}
+});
+$("candidateOpen").addEventListener("click",async()=>{
+ if(!latest)return;
+ try{
+  if(candidateConsole)candidateConsole.sync();
+  else{
+   const module=await import("./scenario-console.js");
+   if(!latest)return;
+   candidateConsole=module.mountCandidateStudio({
+    getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null
+   });
+  }
+  $("candidateStudio").scrollIntoView({behavior:"instant",block:"start"});
+  focusHeading(document,"candidateStudio","candidateStudioTitle");
+ }catch(error){
+  errorText("No se pudo abrir Scenario Builder: "+(error?.message||"error desconocido"));
+ }
+});
+$("rulesOpen").addEventListener("click",async()=>{
+  if(!latest)return;
+  try{
+    if(decisionConsole){
+      decisionConsole.sync(scenario,$("workflowSource").value,latest);
+    }else{
+      // Audit UI and its rule history load only on demand.
+      const module=await import("./decision-console.js");
+      if(!latest)return;
+      decisionConsole=module.mountDecisionConsole({
+        getState:()=>latest?{scenario,source:$("workflowSource").value,result:latest}:null,
+        openEditor:index=>openEditor(index)
+      });
+    }
+    $("rulesStudio").scrollIntoView({behavior:"instant",block:"start"});
+    focusHeading(document,"rulesStudio","rulesStudioTitle");
+  }catch(error){
+    errorText("No se pudo abrir la auditoría de reglas: "+(error?.message||"error desconocido"));
+  }
+});
+$("qualityCockpit").addEventListener("click",event=>{
+  const button=event.target.closest("[data-quality-index]");
+  if(!button||!latest)return;
+  const index=Number(button.dataset.qualityIndex);
+  if(!Number.isInteger(index)||index<0||index>=latest.rows.length)return;
+  openEditor(index);
+});
+$("qualityExport").addEventListener("click",()=>{
+  if(!qualityCurrent||!qualityEvidence)return;
+  const report=qualityCockpitReport(qualityCurrent,qualityEvidence);
+  const href=URL.createObjectURL(new Blob([report],{type:"text/plain;charset=utf-8"}));
+  const link=document.createElement("a");link.href=href;
+  link.download="revops-calidad-pr73-"+scenario+".txt";
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),3000);
+  setText("workflowStatus","Informe agregado de calidad descargado. Sin filas, IDs, contactos ni envío externo.");
 });
 $("exportInsights").addEventListener("click",()=>{
   if(!latest)return;
@@ -767,6 +1379,27 @@ $("demoContact").addEventListener("click",event=>{
     location.href="mailto:gracianbaenagonzalez@gmail.com?subject="+encodeURIComponent("RevOps Studio | Demostración "+scenario)+
       "&body="+encodeURIComponent(summary());
   }
+});
+// Keyboard support without trapping ordinary navigation outside the discard confirmation.
+installAccessibleNavigation({
+ document,
+ openRow:index=>openEditor(index),
+ cancelDiscard:()=>$("cancelScenarioDiscard").click(),
+ closePanels:()=>{
+  // Editor and mapping preserve their existing Escape/focus recovery handlers.
+  if(!$("columnMapper").hidden||!$("workflowEditForm").hidden)return false;
+  for(const [panel,close] of [
+   ["pilotControlStudio","pilotControlClose"],
+   ["pilotPlanStudio","pilotPlanClose"],
+   ["pilotStudio","pilotClose"],
+   ["reportStudio","reportClose"],
+   ["candidateStudio","candidateClose"],
+   ["rulesStudio","rulesClose"]
+  ]){
+   if(!$(panel).hidden){$(close).click();return true;}
+  }
+  return false;
+ }
 });
 chooseScenario(scenario);
 // Run the real engine once; guided and advanced views share one result, not two demos.

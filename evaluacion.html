@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="color-scheme" content="dark light">
+ <meta name="description" content="Protocolo local de evaluación humana para el candidato de RevOps Studio. Sin nombres, cuentas ni datos reales.">
+ <meta name="robots" content="noindex,nofollow">
+ <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+ <script>try{const t=localStorage.getItem("revops-theme");document.documentElement.dataset.theme=t==="dark"||t==="light"?t:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch{document.documentElement.dataset.theme="dark"}</script>
+ <link rel="stylesheet" href="./assets/css/commercial.css">
+ <link rel="stylesheet" href="./assets/css/uat.css">
+ <script defer src="./assets/js/theme.js"></script>
+ <script type="module" src="./assets/js/uat.js"></script>
+ <title>Protocolo de aceptación humana · RevOps Studio</title>
+</head>
+<body class="uat-page">
+ <a class="skip-link" href="#main">Saltar al contenido</a>
+ <header class="nav-wrap">
+  <nav class="nav shell" aria-label="Navegación de evaluación">
+   <a class="brand" href="./" aria-label="RevOps Studio, inicio"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">REVOPS<span>STUDIO</span></span></a>
+   <div class="nav-actions"><button type="button" data-theme-toggle class="theme-toggle" aria-label="Cambiar tema" aria-pressed="false"><span aria-hidden="true" data-theme-icon>◐</span><span class="theme-label">Tema</span></button><a class="nav-cta" href="./demo.html">Volver a la demo ↗</a></div>
+  </nav>
+ </header>
+ <main id="main" tabindex="-1" class="shell uat-main">
+  <div class="uat-intro">
+   <span class="uat-eyebrow">PR103 · PROTOCOLO OPERATIVO DE PRUEBAS</span>
+   <h1>Comprobar que se entiende, no solo que funciona.</h1>
+   <p>Guía para una persona que observa pruebas con usuarios. Los pasos se hacen manualmente en la web, y aquí se registran únicamente resultados codificados y duración. <strong>Esto no verifica por sí mismo lo que ocurrió.</strong></p>
+   <p class="uat-warning" id="uatBoundary">CANDIDATO TÉCNICO · NO AUTORIZADO PARA PRODUCCIÓN. Ninguna prueba de usuarios real ni verificación independiente se acredita automáticamente.</p>
+  </div>
+  <section class="uat-card" aria-labelledby="uatProtocolHeading">
+   <h2 id="uatProtocolHeading">Cómo usar esta evaluación</h2>
+   <p>Una persona distinta de quien desarrolló la función observa la tarea sin guiar al participante. Abre el enlace de prueba, mide el tiempo, anota si necesitó ayuda y clasifica el resultado. Repite con los tres perfiles. No introduzcas nombres, correos, comentarios libres ni datos de clientes: los resultados se mantienen solo en esta pestaña y se perderán al cerrarla.</p>
+   <div class="uat-policy"><strong>Condición de salida:</strong> revisar los 15 pasos observados, investigar fallos y bloqueos, y obtener las aprobaciones externas. Incluso 15 resultados satisfactorios no constituyen una autorización de lanzamiento.</div>
+  </section>
+  <section class="uat-card" aria-labelledby="uatOverviewTitle">
+   <div class="uat-heading"><div><h2 id="uatOverviewTitle">Estado de las observaciones</h2><p id="uatStatus" role="status" aria-live="polite" aria-atomic="true">15 tareas pendientes. No se han realizado pruebas reales.</p></div></div>
+   <div class="uat-metrics" role="group" aria-label="Contadores registrados sin verificación">
+    <div><small>Registradas</small><strong id="uatObserved">0 / 15</strong></div>
+    <div><small>Completadas*</small><strong id="uatPassed">0</strong></div>
+    <div><small>Problemas</small><strong id="uatIssues">0</strong></div>
+    <div><small>Con ayuda o fuera de tiempo</small><strong id="uatFriction">0</strong></div>
+   </div>
+   <p class="uat-small">* Declaraciones introducidas por quien evalúa. No hay identidades ni evidencias independientes. Cero aprobaciones de producción.</p>
+   <div class="uat-actions">
+    <button type="button" id="uatExportJson" disabled>Exportar observaciones JSON ↧</button>
+    <button type="button" id="uatExportTxt" disabled>Exportar resumen TXT ↧</button>
+    <button type="button" id="uatReset">Borrar observaciones de esta pestaña</button>
+   </div>
+   <div id="uatResetWarning" class="uat-confirm" role="group" aria-labelledby="uatResetHeading" hidden>
+    <strong id="uatResetHeading">¿Borrar todos los resultados?</strong>
+    <p>Los registros no se pueden recuperar. Los archivos que hayas exportado permanecerán en tu dispositivo.</p>
+    <button type="button" id="uatResetConfirm">Sí, borrar observaciones</button>
+    <button type="button" id="uatResetCancel">Cancelar</button>
+   </div>
+   <p id="uatDownloadStatus" role="status" aria-live="polite"></p>
+  </section>
+  <section class="uat-card" aria-labelledby="uatRoleHeading">
+   <h2 id="uatRoleHeading">Perfil que se va a evaluar</h2>
+   <div class="uat-roles" id="uatRoles" role="group" aria-label="Selecciona un perfil">
+    <button type="button" data-uat-role="operations" aria-pressed="true">Operaciones</button>
+    <button type="button" data-uat-role="analyst" aria-pressed="false">Análisis de datos</button>
+    <button type="button" data-uat-role="mobile" aria-pressed="false">Móvil y accesibilidad</button>
+   </div>
+   <p id="uatRoleDescription">Comprender una decisión sin formación técnica.</p>
+   <p class="uat-small" id="uatRoleProgress">0 de 5 tareas con resultado registrado.</p>
+   <ol id="uatTasks" class="uat-tasks" aria-label="Tareas manuales de este perfil"></ol>
+  </section>
+  <section class="uat-card" aria-labelledby="uatClosureHeading">
+   <h2 id="uatClosureHeading">Antes de solicitar una revisión de lanzamiento</h2>
+   <p>Estos formularios no son un sustituto de sesiones observadas con consentimiento, pruebas con lector de pantalla o una revisión de seguridad y privacidad independiente. Exporta únicamente datos agregados y codificados; las conclusiones cualitativas, los problemas descubiertos y las firmas de responsables se gestionan fuera de la demo mediante un procedimiento autorizado.</p>
+   <a href="./privacidad.html">Consultar información de privacidad ↗</a>
+  </section>
+ </main>
+ <footer class="shell uat-footer"><span>REVOPS STUDIO · CANDIDATO DE EVALUACIÓN, SIN APROBACIÓN REAL</span><a href="./demo.html">Volver a la demo ↗</a></footer>
+</body>
+</html>

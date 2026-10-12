@@ -203,9 +203,14 @@
         <div class="diagnostic-actions" id="diagnosticActions" hidden>
           <a class="btn btn-primary" id="diagToContact" href="#contacto">Añadir este mapa a mi consulta ↗</a>
           <button class="btn btn-secondary" type="button" id="diagCopy">Copiar mi mapa</button>
+          <button class="btn btn-secondary" type="button" id="diagDownload" aria-describedby="diagDownloadHelp">Descargar plan completo ↧</button>
+          <button class="btn btn-secondary" type="button" id="diagStudioOpen" aria-controls="discoveryStudio" aria-expanded="false">Preparar brief de proyecto ↗</button>
           <a class="btn btn-secondary" href="./demo.html?scenario=orders" id="diagTryDemo">Ver ejemplo funcionando ↗</a>
           <button class="diagnostic-reset" type="button" id="diagReset">Empezar de nuevo</button>
         </div>
+
+        <section id="discoveryStudio" class="discovery-studio" aria-labelledby="discoveryTitle" hidden></section>
+        <p class="diagnostic-feedback" id="diagDownloadHelp">Archivo HTML privado en tu dispositivo, listo para guardar o imprimir como PDF. No se envía a servidores.</p>
         <p class="diagnostic-feedback" id="diagnosticStatus" role="status" aria-live="polite"></p>
       </div>
     </div>

@@ -12,6 +12,7 @@
     "css:build": "node scripts/build-commercial-css.mjs",
     "css:check": "node scripts/build-commercial-css.mjs --check",
     "perf:check": "node scripts/performance-budget.mjs",
-    "perf:live": "node scripts/audit-live.mjs"
+    "perf:live": "node scripts/audit-live.mjs",
+    "pr80:check": "node scripts/pr80-acceptance.mjs"
   }
 }

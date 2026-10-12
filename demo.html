@@ -17,13 +17,16 @@
 </head>
 <body class="workbench-page">
 <a class="skip-link" href="#main">Saltar a la demostración</a>
+<a class="skip-link workbench-a11y-skip" href="#simulador">Saltar al editor</a>
+<a class="skip-link workbench-a11y-skip" href="#workbench-table-title">Saltar a los resultados</a>
 <header class="workbench-header">
   <nav class="shell workbench-nav" aria-label="Navegación de demostración">
     <a class="brand" href="./" aria-label="RevOps Studio, portada"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">REVOPS<span>STUDIO</span></span></a>
     <div class="workbench-nav-actions"><a class="workbench-back" href="./#diagnostico">← Volver al diagnóstico</a><button type="button" class="theme-toggle" data-theme-toggle aria-label="Cambiar a modo claro" aria-pressed="false"><span data-theme-icon aria-hidden="true">◐</span><span data-theme-label>Modo claro</span></button></div>
   </nav>
 </header>
-<main id="main">
+<main id="main" tabindex="-1">
+  <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="workbenchA11yAnnounce"></div>
   <section class="shell workbench-hero" aria-labelledby="workbench-title">
     <div class="workbench-eyebrow"><span class="workbench-live-dot" aria-hidden="true"></span> MESA DE PRUEBAS · DEMO INTERACTIVA · 100 % LOCAL</div>
     <div class="workbench-hero-grid"><div><h1 id="workbench-title">De datos desordenados a <em>decisiones claras.</em></h1><p>Importa datos de ejemplo, detecta incidencias y entiende qué merece atención. Corrige una fila, comprueba qué ha cambiado y llévate un informe claro antes de plantear una integración real.</p></div>
@@ -62,6 +65,16 @@
           <div><strong id="clientPrepared">0</strong><span>Acciones que podrían prepararse</span></div>
         </div>
         <p class="workbench-client-change" id="clientChange" hidden role="status" aria-live="polite"></p>
+        <section class="workbench-guided-proof" id="clientOutcomeProof" hidden aria-labelledby="clientOutcomeHeading">
+          <h4 id="clientOutcomeHeading">Lo que cambió de verdad en este ejemplo</h4>
+          <p id="clientOutcomeClaim" role="status" aria-live="polite">Todavía no has realizado una corrección.</p>
+          <div class="workbench-guided-comparison" role="group" aria-label="Antes y después de la corrección">
+            <div><strong>Bloqueados</strong><span id="clientOutcomeBlocked">Sin comparar</span></div>
+            <div><strong>Revisión pendiente</strong><span id="clientOutcomeReview">Sin comparar</span></div>
+            <div><strong>Acciones preparables</strong><span id="clientOutcomePrepared">Sin comparar</span></div>
+          </div>
+          <p class="workbench-guided-caveat">Calculado sobre esta muestra ficticia. No implica ahorro demostrado, conexión a sistemas ni aprobaciones reales.</p>
+        </section>
       </div>
       <div class="workbench-client-buttons">
         <button type="button" id="clientPrimaryAction" class="btn btn-primary">Ver qué pasa con estos pedidos ↗</button>
@@ -79,7 +92,7 @@
       <button type="button" class="workbench-scenario" data-scenario="support" aria-pressed="false"><span>02 / CLIENTES</span><strong>Soporte y escalado</strong><small>Prioridad · incidencias · revisión</small></button>
       <button type="button" class="workbench-scenario" data-scenario="data" aria-pressed="false"><span>03 / DATOS</span><strong>Calidad y conciliación</strong><small>Fechas · cifras · anomalías</small></button>
     </div>
-    <section id="scenarioDiscard" class="workbench-discard" hidden aria-labelledby="scenarioDiscardTitle" role="group">
+    <section id="scenarioDiscard" class="workbench-discard" hidden aria-labelledby="scenarioDiscardTitle" aria-describedby="scenarioDiscardDescription" role="group">
       <div><h3 id="scenarioDiscardTitle">Tienes datos modificados en este proceso</h3><p id="scenarioDiscardDescription">Si cambias de proceso, perderás los cambios que has introducido en esta pestaña. Nada se ha guardado en un servidor.</p></div>
       <div class="workbench-discard-actions"><button type="button" id="cancelScenarioDiscard">Seguir con mis datos</button><button type="button" id="confirmScenarioDiscard">Descartar y cambiar de proceso</button></div>
     </section>
@@ -102,7 +115,7 @@
       </div>
       <p id="recipeHint" class="workbench-recipe-detail" role="status">Ejemplo original con situaciones mezcladas. Cambiar la opción no sustituirá tus datos hasta pulsar cargar.</p>
     </div>
-    <div class="workbench-quickstart" aria-label="Cómo probar esta herramienta">
+    <div class="workbench-quickstart" role="group" aria-label="Cómo probar esta herramienta">
       <div><span>01</span><p><strong>Elige un proceso</strong><small>Los ejemplos ya están listos.</small></p></div>
       <div><span>02</span><p><strong>Explora los resultados</strong><small>Comprueba los errores detectados.</small></p></div>
       <div><span>03</span><p><strong>Corrige y compara</strong><small>Prueba una corrección y exporta.</small></p></div>
@@ -113,12 +126,17 @@
         <div class="workbench-panel-head"><div><span>02 / ENTRADA</span><h3 id="workbench-input-title">Tus registros de prueba</h3></div><span class="workbench-local-label">SIN SUBIR ARCHIVOS</span></div>
         <p id="scenarioDescription" class="workbench-instructions">Valida pedidos, evita duplicados y aparta excepciones.</p>
         <label class="workbench-editor-label" for="workflowSource">Datos separados por punto y coma, coma o tabulación</label>
-        <textarea id="workflowSource" spellcheck="false" rows="10" aria-describedby="sourceHelp" maxlength="12000"></textarea>
+        <textarea id="workflowSource" spellcheck="false" rows="10" aria-describedby="sourceHelp workflowError" maxlength="12000"></textarea>
         <p class="workbench-hint" id="sourceHelp">Puedes editar o pegar datos no sensibles. Admite CSV con comillas. Máximo 80 filas y 12.000 caracteres. Nada sale de tu navegador. Puedes editar un registro desde la tabla sin reescribir el CSV. Atajo: Ctrl + Intro para ejecutar.</p>
         <div class="workbench-import">
           <label for="importWorkflow" class="workbench-import-label">Importar un CSV del equipo (local)</label>
           <input id="importWorkflow" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" aria-describedby="importHelp">
           <p class="workbench-hint" id="importHelp">Se lee en esta pestaña, no se sube. Solo para datos de prueba o anonimizados. Puedes relacionar columnas con nombres diferentes antes de ejecutar.</p>
+          <div class="workbench-import-audit" id="importAudit" role="status" aria-live="polite">
+            <strong id="importAuditTitle">Contrato de importación</strong>
+            <p id="importAuditSummary">CSV o TSV UTF-8. Hasta 32 KB, 80 registros y 12.000 caracteres. Los datos anteriores se conservan hasta confirmar.</p>
+            <ul id="importAuditFindings"></ul>
+          </div>
           <button class="workbench-map-open" id="openColumnMapper" type="button">Relacionar columnas de los datos pegados ↗</button>
         </div>
         <section class="workbench-mapper" id="columnMapper" aria-labelledby="columnMapperTitle" hidden>
@@ -128,6 +146,16 @@
           </div>
           <div id="columnMappingRows" class="workbench-mapping-list"></div>
           <p id="columnMappingIgnored" class="workbench-mapping-extras"></p>
+          <div class="workbench-mapping-profile">
+            <button type="button" class="btn btn-secondary" id="exportMappingProfile">Descargar perfil de columnas (sin registros) ↧</button>
+            <label for="importMappingProfile">Reutilizar un perfil de columnas (JSON, sin registros)</label>
+            <input type="file" id="importMappingProfile" accept=".json,application/json">
+            <p id="mappingProfileStatus" role="status" aria-live="polite">Un perfil solo contiene los nombres de columnas y el escenario.</p>
+          </div>
+          <label class="workbench-discard-confirm">
+            <input type="checkbox" id="confirmDiscardColumns">
+            Confirmo que las columnas adicionales identificadas se excluirán del resultado, pero no del archivo original.
+          </label>
           <div class="workbench-preview">
             <h5>Vista previa del resultado propuesto</h5>
             <div id="columnMappingPreview" class="workbench-preview-grid"></div>
@@ -141,12 +169,12 @@
           <button class="btn btn-secondary" type="button" id="undoCorrection" disabled>Deshacer corrección</button>
           <button class="btn btn-secondary" type="button" id="redoCorrection" disabled>Rehacer corrección</button>
         </div>
-        <p id="workflowError" class="workbench-error" tabindex="-1" role="alert" hidden></p>
+        <p id="workflowError" class="workbench-error" tabindex="-1" role="alert" aria-atomic="true" hidden></p>
       </section>
       <section class="workbench-panel workbench-output" aria-labelledby="workbench-output-title">
         <div class="workbench-panel-head"><div><span>03 / RESULTADO</span><h3 id="workbench-output-title">Trazabilidad en directo</h3></div><span class="workbench-local-label">SOLO SIMULACIÓN</span></div>
         <p class="workbench-results-note" id="workflowStatus" role="status" aria-live="polite">Ejecuta un escenario para ver los resultados.</p>
-        <div class="workbench-kpis" aria-label="Resumen de registros procesados">
+        <div class="workbench-kpis" role="group" aria-label="Resumen de registros procesados">
           <div><small>Analizados</small><strong id="countTotal">0</strong></div>
           <div><small>Listos</small><strong id="countReady">0</strong></div>
           <div><small>Para revisar</small><strong id="countReview">0</strong></div>
@@ -166,6 +194,26 @@
           <button class="btn btn-secondary" type="button" id="exportActionQueue" disabled>Exportar cola lista (sin históricos)</button>
           <p class="workbench-export-warning">Los CSV detallados incluyen valores de las filas mostradas, aunque sean ficticios o anonimizados. El informe explicativo no incluye esas filas.</p>
         </div>
+        <section id="privacyBoundary" class="workbench-p79-privacy" aria-labelledby="privacyBoundaryTitle">
+          <div class="workbench-p79-head"><div><span class="workbench-section-index">PR79 · PRIVACIDAD Y SEGURIDAD DE DATOS</span>
+            <h3 id="privacyBoundaryTitle">Tus datos siguen bajo tu control.</h3>
+            <p>Los CSV completos contienen filas originales. Los TXT, PDF y JSON ejecutivos usan solo cifras y reglas predefinidas. Esta demo no conecta con servicios de CRM ni ejecuta acciones.</p>
+          </div></div>
+          <p id="privacyRiskStatus" role="status" aria-live="polite" aria-atomic="true">Ejecuta una simulación para revisar sus riesgos de exportación.</p>
+          <div class="workbench-p79-actions">
+            <button type="button" id="privacyInspect" disabled>Inspeccionar riesgos del CSV ↗</button>
+            <button type="button" id="privacyClearOpen">Borrar la sesión de trabajo ↶</button>
+          </div>
+          <div id="privacyClearConfirm" class="workbench-p79-confirm" hidden role="group" aria-labelledby="privacyClearTitle" aria-describedby="privacyClearDescription">
+            <h4 id="privacyClearTitle" tabindex="-1">¿Descartar los datos introducidos en esta pestaña?</h4>
+            <p id="privacyClearDescription">Se vaciarán ediciones, búsquedas, historial, vistas guardadas, configuraciones de revisión, auditorías y datos temporales de informes, y se restaurarán los ejemplos ficticios. No es posible borrar archivos que ya hayas descargado ni el contenido del portapapeles.</p>
+            <div class="workbench-p79-actions">
+              <button type="button" id="privacyClearCancel">Conservar mi trabajo</button>
+              <button type="button" id="privacyClearConfirmButton">Sí, limpiar y cargar el ejemplo</button>
+            </div>
+          </div>
+          <p id="privacyClearStatus" role="status" aria-live="polite" aria-atomic="true">La limpieza solo afecta a esta demo y a sus preferencias de sesión identificadas.</p>
+        </section>
       </section>
     </div>
     <section class="workbench-insights" aria-labelledby="insights-title" id="lectura-resultados">
@@ -173,7 +221,7 @@
         <div><span class="workbench-section-index">RESULTADOS EXPLICADOS · DATOS DEL EJEMPLO</span><h2 id="insights-title">Qué nos dicen estos registros.</h2><p id="insightsSummary">Ejecuta el proceso y descubre qué requiere atención y qué puede prepararse para el siguiente paso.</p></div>
         <div class="workbench-insights-ratio"><strong id="insightsRatio">0 %</strong><span>Acciones preparadas respecto al total. No es ahorro ni rendimiento real.</span></div>
       </div>
-      <div class="workbench-distribution" aria-label="Distribución de estados simulados" id="insightsDistribution">
+      <div class="workbench-distribution" role="group" aria-label="Distribución de estados simulados" id="insightsDistribution">
         <span class="workbench-distribution-ready" style="width:0%"></span><span class="workbench-distribution-history" style="width:0%"></span><span class="workbench-distribution-review" style="width:0%"></span><span class="workbench-distribution-blocked" style="width:0%"></span>
       </div>
       <div class="workbench-insight-legend">
@@ -182,14 +230,197 @@
         <span><i class="legend-review"></i><b id="insightsReview">0</b> requieren revisión</span>
         <span><i class="legend-blocked"></i><b id="insightsBlocked">0</b> bloqueados</span>
       </div>
-      <div class="workbench-insight-steps" id="insightsSteps" aria-label="Siguientes pasos recomendados">
+      <div class="workbench-insight-steps" id="insightsSteps" role="group" aria-label="Siguientes pasos recomendados">
         <p class="workbench-empty-insight">Los pasos recomendados aparecerán después de ejecutar el proceso.</p>
       </div>
+      <section class="quality-cockpit" id="qualityCockpit" aria-labelledby="qualityCockpitTitle" hidden>
+        <div class="quality-cockpit-head">
+          <div><span class="workbench-section-index">PR73 · DATA QUALITY COCKPIT · ANÁLISIS LOCAL</span>
+            <h3 id="qualityCockpitTitle">Calidad que se puede investigar.</h3>
+            <p>Revisamos completitud, identificadores, errores de formato y valores sospechosos. No confundimos una tabla rellena con datos verdaderos.</p>
+          </div>
+          <button class="btn btn-secondary" id="qualityExport" type="button" disabled>Descargar resumen agregado ↧</button>
+        </div>
+        <div class="quality-cockpit-kpis" role="group" aria-label="Métricas calculadas sobre los registros">
+          <div><small>Claves únicas</small><strong id="qualityUniqueIds">0</strong></div>
+          <div><small>IDs conflictivos</small><strong id="qualityConflicts">0</strong></div>
+          <div><small>Duplicados idénticos</small><strong id="qualityExactDuplicates">0</strong></div>
+          <div><small>Atípicos candidatos</small><strong id="qualityOutliers">0</strong></div>
+        </div>
+        <div class="quality-cockpit-sections">
+          <div class="quality-cockpit-subsection">
+            <h4>Completitud por columna</h4>
+            <div id="qualityColumnDetails" class="quality-cockpit-columns"></div>
+            <p>Una celda con contenido puede ser incorrecta; la integridad no mide exactitud.</p>
+          </div>
+          <div class="quality-cockpit-subsection">
+            <h4>Casos para investigar</h4>
+            <div id="qualityInvestigations" class="quality-cockpit-investigations"></div>
+            <p>Selecciona un hallazgo para abrir la primera fila afectada. El cambio siempre requiere guardado explícito.</p>
+          </div>
+          <div class="quality-cockpit-subsection">
+            <h4>Distribución numérica</h4>
+            <div id="qualityNumericBands" class="quality-cockpit-bands"></div>
+            <p id="qualityStatNote">Se mostrarán umbrales solo si hay al menos cinco valores numéricos y suficiente dispersión.</p>
+          </div>
+          <div class="quality-cockpit-subsection">
+            <h4>Impacto sobre la línea base</h4>
+            <p id="qualityDelta" role="status" aria-live="polite">Ejecuta una corrección para comparar métricas entre ejecuciones.</p>
+            <p id="qualityDominant">Aquí aparecerá la causa de bloqueo más repetida.</p>
+          </div>
+        </div>
+        <p class="quality-cockpit-footnote">Datos de simulación. Los atípicos indican una posible revisión, no errores confirmados. Sin ROI, estimación de ahorro ni acciones externas.</p>
+      </section>
       <div class="workbench-change-comparison" id="changeComparison" role="status" aria-live="polite" hidden></div>
+      <section class="workbench-r2" id="r2Evidence" aria-labelledby="r2Title" hidden>
+        <div class="workbench-r2-head">
+          <div><span class="workbench-section-index">R2 · EVIDENCIA DEL CAMBIO · MISMAS FILAS</span>
+            <h3 id="r2Title">Antes, después y el porqué.</h3>
+            <p id="r2Summary">Punto de partida: modifica un registro para observar cómo recalculan las reglas.</p>
+          </div>
+          <button class="btn btn-secondary" type="button" id="r2Export" disabled>Descargar comparativa sin filas ↧</button>
+        </div>
+        <div class="workbench-r2-columns" role="group" aria-label="Contadores de la simulación, no resultados reales">
+          <div class="workbench-r2-column">
+            <span class="workbench-r2-kicker">ANTES · PUNTO DE PARTIDA</span>
+            <div><span>Propuestas preparadas</span><strong id="r2BeforePrepared">0</strong></div>
+            <div><span>Bloqueadas</span><strong id="r2BeforeBlocked">0</strong></div>
+            <div><span>Revisión humana</span><strong id="r2BeforeReview">0</strong></div>
+          </div>
+          <div class="workbench-r2-column">
+            <span class="workbench-r2-kicker">DESPUÉS · REGLAS RECALCULADAS</span>
+            <div><span>Propuestas preparadas</span><strong id="r2AfterPrepared">0</strong></div>
+            <div><span>Bloqueadas</span><strong id="r2AfterBlocked">0</strong></div>
+            <div><span>Revisión humana</span><strong id="r2AfterReview">0</strong></div>
+          </div>
+        </div>
+        <p class="workbench-r2-delta" id="r2Delta" role="status" aria-live="polite"></p>
+        <div class="workbench-r2-explain">
+          <h4>Qué cambió en las decisiones</h4>
+          <ul id="r2Transitions"><li>Aún no hay cambios entre los dos cálculos.</li></ul>
+          <p id="r2Rules">Las decisiones proceden de reglas explícitas del ejemplo.</p>
+        </div>
+        <p class="workbench-r2-safety">Acciones ejecutadas externamente: <strong>0</strong>. «Preparada» no significa «enviada». No es una medición de ahorro, rendimiento o ROI real.</p>
+      </section>
+      <button type="button" id="rulesOpen" class="btn btn-secondary workbench-p75-open" aria-controls="rulesStudio" aria-expanded="false">Abrir auditoría de reglas y revisión humana ↗</button>
+      <section id="rulesStudio" class="workbench-p75" aria-labelledby="rulesStudioTitle" hidden>
+        <div class="workbench-p75-head">
+          <div><span class="workbench-section-index">PR75 · RULES & HUMAN DECISION STUDIO</span>
+            <h3 id="rulesStudioTitle">Cada decisión tiene una regla, una prioridad y un límite.</h3>
+            <p>El mismo catálogo que decide el resultado muestra por qué gana una regla y cuáles quedan detrás. Una revisión humana nunca significa envío ni aprobación real.</p></div>
+          <button id="rulesExport" type="button" class="btn btn-secondary" disabled>Descargar auditoría agregada ↧</button>
+          <button id="rulesClose" type="button" class="btn btn-secondary">Cerrar auditoría</button>
+        </div>
+        <div class="workbench-p75-stats" role="group" aria-label="Indicadores de reglas auditadas">
+          <div><small>Reglas del escenario</small><strong id="rulesCount">0</strong></div>
+          <div><small>Con aplicación efectiva</small><strong id="rulesCovered">0</strong></div>
+          <div><small>Restricciones simultáneas</small><strong id="rulesOverlaps">0</strong></div>
+          <div><small>Casos que necesitan personas</small><strong id="rulesHumanGates">0</strong></div>
+        </div>
+        <div class="workbench-p75-layout">
+          <section class="workbench-p75-section" aria-labelledby="ruleCatalogTitle">
+            <h4 id="ruleCatalogTitle">Catálogo y precedencia ejecutable</h4>
+            <p>Las reglas se comprueban de arriba abajo. La primera que coincide determina el resultado. Las demás restricciones se mantienen visibles.</p>
+            <ol id="ruleCatalogList" class="workbench-p75-catalog"></ol>
+          </section>
+          <section class="workbench-p75-section" aria-labelledby="ruleTraceTitle">
+            <h4 id="ruleTraceTitle">Explicación de un registro</h4>
+            <label for="ruleTraceRow">Elige una fila para auditarla</label>
+            <select id="ruleTraceRow" aria-controls="ruleTraceDetail"></select>
+            <div id="ruleTraceDetail" class="workbench-p75-trace" role="status" aria-live="polite">
+              <p>Ejecuta un escenario para consultar su trazabilidad.</p>
+            </div>
+            <h5>Reglas que compiten por prioridad</h5>
+            <div id="ruleConflicts" class="workbench-p75-conflicts"><p>Se mostrarán coincidencias múltiples cuando existan.</p></div>
+          </section>
+          <section class="workbench-p75-section" aria-labelledby="humanReviewTitle">
+            <h4 id="humanReviewTitle">Bandeja de decisiones humanas</h4>
+            <p>Solo admite filas que el motor ha marcado como «revisar». Las aprobaciones y rechazos son anotaciones de prueba, nunca autorizaciones reales.</p>
+            <div id="humanReviewCounters" class="workbench-p75-review-counts" role="status" aria-live="polite">Sin decisiones registradas.</div>
+            <label for="humanReviewRow">Excepción que deseas estudiar</label>
+            <select id="humanReviewRow" aria-controls="humanReviewState"></select>
+            <p id="humanReviewState" role="status" aria-live="polite">Selecciona una excepción.</p>
+            <label for="humanReviewNote">Justificación local (mínimo 12 caracteres para aprobar o rechazar)</label>
+            <textarea id="humanReviewNote" rows="3" maxlength="240" placeholder="Describe el criterio, sin datos personales ni nombres de clientes."></textarea>
+            <div class="workbench-p75-review-actions">
+              <button type="button" id="humanReviewStart">Marcar en revisión</button>
+              <button type="button" id="humanReviewApprove">Aprobación simulada</button>
+              <button type="button" id="humanReviewReject">Rechazar en simulación</button>
+            </div>
+            <p id="humanReviewFeedback" role="status" aria-live="polite" aria-atomic="true"></p>
+          </section>
+          <section class="workbench-p75-section" aria-labelledby="rulesSafetyTitle">
+            <h4 id="rulesSafetyTitle">Límites y seguridad del recorrido</h4>
+            <div class="workbench-p75-safety">
+              <div><small>Aprobaciones reales verificadas</small><strong>0</strong></div>
+              <div><small>Acciones externas ejecutadas</small><strong>0</strong></div>
+              <div><small>Datos enviados por esta consola</small><strong>0</strong></div>
+            </div>
+            <p>Editar datos o cambiar de escenario invalida todas las anotaciones de revisión. El TXT contiene únicamente recuentos y reglas predefinidas, nunca justificaciones o valores de filas.</p>
+            <p id="rulesPolicyStatus" role="status" aria-live="polite">Las decisiones se analizan localmente.</p>
+          </section>
+        </div>
+      </section>
+      <button type="button" id="candidateOpen" class="btn btn-secondary workbench-p76-open" aria-controls="candidateStudio" aria-expanded="false">Probar otro escenario de reglas ↗</button>
+      <section id="candidateStudio" class="workbench-p76" aria-labelledby="candidateStudioTitle" hidden>
+        <div class="workbench-p76-head">
+          <div><span class="workbench-section-index">PR76 · SCENARIO BUILDER · SIN ACCIONES REALES</span>
+            <h3 id="candidateStudioTitle">¿Y si cambiamos el criterio?</h3>
+            <p>Ensaya una regla de revisión más cautelosa sobre el mismo conjunto. El original queda intacto: los candidatos nunca convierten errores o revisiones humanas en acciones listas.</p></div>
+          <button type="button" class="btn btn-secondary" id="candidateClose">Cerrar simulador</button>
+        </div>
+        <div class="workbench-p76-form">
+          <label for="candidatePreset">Punto de partida
+            <select id="candidatePreset">
+              <option value="base">Reglas originales · sin cambios</option>
+              <option value="cautious">Mayor revisión humana</option>
+              <option value="strict">Revisión más estricta</option>
+              <option value="custom">Umbral personalizado</option>
+            </select>
+          </label>
+          <label id="candidateAmountLabel" for="candidateThreshold">Umbral de revisión (0 = desactivado)
+            <input type="number" id="candidateThreshold" min="0" max="5000" step="1" value="0" inputmode="numeric">
+          </label>
+          <label id="candidateEscalateLabel" for="candidateEscalate" hidden><input id="candidateEscalate" type="checkbox"> Enviar tickets abiertos de prioridad media a revisión humana</label>
+          <div class="workbench-p76-form-actions">
+            <button type="button" id="candidateApply">Calcular candidato ↗</button>
+            <button type="button" id="candidateRollback">Volver a reglas originales ↶</button>
+          </div>
+        </div>
+        <p id="candidateControlExplain" class="workbench-p76-explain">Solo se modifican los criterios de revisión del candidato.</p>
+        <p id="candidateStatus" role="status" aria-live="polite" aria-atomic="true">Abre la simulación para comparar.</p>
+        <div class="workbench-p76-stats" role="group" aria-label="Comparación del mismo conjunto, ninguna acción externa">
+          <div><small>Listos · original</small><strong id="candidateOriginalReady">0</strong></div>
+          <div><small>Listos · candidato</small><strong id="candidateNewReady">0</strong></div>
+          <div><small>Revisión · original</small><strong id="candidateOriginalReview">0</strong></div>
+          <div><small>Revisión · candidato</small><strong id="candidateNewReview">0</strong></div>
+        </div>
+        <section class="workbench-p76-impact" aria-labelledby="candidateImpactTitle">
+          <h4 id="candidateImpactTitle">Consecuencias de la variante</h4>
+          <p id="candidateDelta" role="status" aria-live="polite">Sin cambios calculados.</p>
+          <div id="candidateAffected" class="workbench-p76-affected"></div>
+          <p id="candidateSafety">Bloqueos, revisiones anteriores e históricos protegidos por contrato.</p>
+        </section>
+        <section class="workbench-p76-files" aria-labelledby="candidateTemplateTitle">
+          <h4 id="candidateTemplateTitle">Compartir la configuración, no los registros</h4>
+          <div class="workbench-p76-file-actions">
+            <button type="button" id="candidateExportTemplate">Descargar plantilla JSON sin datos ↧</button>
+            <label for="candidateImportTemplate">Abrir plantilla de este escenario (máximo 1,2 KB)
+              <input id="candidateImportTemplate" type="file" accept=".json,application/json"></label>
+            <button type="button" id="candidateDownloadReport">Informe agregado TXT ↧</button>
+          </div>
+          <p id="candidateTemplateStatus" role="status" aria-live="polite">Solo se pueden importar reglas acotadas del escenario actual.</p>
+        </section>
+        <p class="workbench-p76-limits">Simulación local: 0 conexiones CRM/ERP, 0 aprobaciones reales, 0 acciones ejecutadas. No se estiman ahorros, no se cambia la tabla original y las reglas imprescindibles no se pueden desactivar.</p>
+      </section>
       <div class="workbench-insight-note">Recomendaciones basadas en las reglas visibles de esta demo. No se comprueban fuentes externas ni se calculan ahorros.</div>
     </section>
     <section class="workbench-rows" aria-labelledby="workbench-table-title">
       <div class="workbench-section-head"><div><span class="workbench-section-index">04 / AUDITORÍA DE REGISTROS</span><h2 id="workbench-table-title">Cada decisión tiene un motivo.</h2></div><p>Filtra errores, corrige cada registro directamente, compara los resultados y exporta solo las acciones preparadas. Ninguna se ejecuta en sistemas externos.</p></div>
+      <details class="workbench-p78-help" id="workbenchKeyboardGuide">
+        <summary>Accesibilidad: atajos, navegación y ayuda para lectores de pantalla</summary>
+        <div><p>Tab y Mayús+Tab recorren los controles. En los botones de edición de registros, flecha arriba/abajo pasa al anterior/siguiente visible, e Inicio/Fin va al primero/último. Intro o Espacio abre la corrección. Escape cierra paneles secundarios y devuelve el foco al control de apertura.</p><p>Ctrl+Intro ejecuta el CSV desde su editor. Fuera de campos editables, Ctrl/Cmd+Z deshace y Ctrl/Cmd+Y rehace. Las tablas muestran cada resultado también como texto, sin depender del color.</p></div>
+      </details>
       <div class="workbench-review-toolbar" role="group" aria-label="Filtrar registros según el resultado">
         <button type="button" class="workbench-filter is-active" data-workflow-filter="all" aria-pressed="true">Todos</button>
         <button type="button" class="workbench-filter" data-workflow-filter="bloqueado" aria-pressed="false">Bloqueados</button>
@@ -200,7 +431,7 @@
         <div><span class="workbench-section-index">CALIDAD DE LAS ENTRADAS</span><h3 id="quality-title">Estado de los campos</h3>
         <p>La integridad mide celdas rellenadas, no la calidad total ni la exactitud de la información.</p></div>
         <div class="workbench-quality-meter"><strong id="qualityCompleteness">0 %</strong><span>Campos con algún valor</span></div>
-        <div class="workbench-quality-fields" id="qualityFields" aria-label="Campos incompletos"></div>
+        <div class="workbench-quality-fields" id="qualityFields" role="group" aria-label="Campos incompletos"></div>
       </div>
       <div class="workbench-search-row">
         <label for="workflowSearch">Buscar por registro, motivo o acción</label>
@@ -214,16 +445,430 @@
           <option value="status">Estado</option>
         </select>
       </div>
+      <section class="workbench-p74-toolbar" aria-labelledby="workbenchP74Title">
+        <div class="workbench-p74-title"><span class="workbench-section-index">PR74 · MESA DE CORRECCIONES</span><h3 id="workbenchP74Title">Investiga y corrige sin perder el control.</h3></div>
+        <div class="workbench-p74-options">
+          <label for="workbenchViewPreset">Vista rápida
+            <select id="workbenchViewPreset">
+              <option value="all">Todos · origen</option>
+              <option value="errors">Resolver bloqueos</option>
+              <option value="review">Decisiones humanas</option>
+              <option value="compact">Escanear prioridades</option>
+            </select>
+          </label>
+          <label for="workbenchDensity">Densidad de tabla
+            <select id="workbenchDensity"><option value="comfortable">Cómoda</option><option value="compact">Compacta</option></select>
+          </label>
+          <fieldset class="workbench-p74-columns"><legend>Columnas opcionales</legend>
+            <label><input id="workbenchShowReason" type="checkbox" checked> Motivo</label>
+            <label><input id="workbenchShowAction" type="checkbox" checked> Acción</label>
+          </fieldset>
+        </div>
+        <div class="workbench-p74-saved"><button type="button" id="workbenchSaveView">Guardar esta vista sin búsqueda ni registros</button><button type="button" id="workbenchRestoreView">Restaurar vista guardada</button><button type="button" id="workbenchClearView">Borrar vista guardada</button></div>
+        <p class="workbench-p74-help" id="workbenchViewStatus" role="status" aria-live="polite">Las vistas solo guardan filtros, orden y columnas, nunca búsquedas o registros.</p>
+      </section>
       <p class="workbench-filter-status" id="workflowFilterStatus" role="status" aria-live="polite">Elige un escenario para ver los registros.</p>
       <div class="workbench-no-results" id="workflowNoResults" hidden role="status"><strong>No encontramos registros con ese filtro.</strong><span>Prueba otra búsqueda o vuelve a mostrar todos.</span><button type="button" id="resetResultsView">Mostrar todos los registros</button></div>
-      <div class="workbench-table-scroll"><table class="workbench-table"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th><th scope="col">Corregir</th></tr></thead><tbody id="workflowRows"><tr><td colspan="5">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
-      <form id="workflowEditForm" class="workbench-edit" hidden aria-labelledby="workbench-edit-title">
+      <p id="workbenchKeyboardHelp" class="sr-only">Usa Tab para entrar en una fila. En los botones Editar, flecha arriba y abajo, Inicio y Fin navegan por los registros visibles. Pulsa Intro para abrir la corrección. Los estados también se expresan por escrito.</p>
+      <div class="workbench-table-scroll"><table class="workbench-table" aria-describedby="workbenchKeyboardHelp"><caption class="sr-only">Resultado individual y explicación de las reglas aplicadas</caption><thead><tr><th scope="col">Registro</th><th scope="col">Resultado</th><th scope="col">Motivo</th><th scope="col">Siguiente acción</th><th scope="col">Corregir</th></tr></thead><tbody id="workflowRows"><tr><td colspan="5">Elige un escenario y ejecuta el proceso.</td></tr></tbody></table></div>
+      <form id="workflowEditForm" class="workbench-edit" hidden aria-labelledby="workbench-edit-title" aria-describedby="workflowEditHint">
         <div class="workbench-edit-heading"><div><span class="workbench-section-index">CORRECCIÓN LOCAL · SIN ENVÍOS</span><h3 id="workbench-edit-title">Corregir registro</h3><p id="workflowEditHint">Los cambios solo afectan a los datos de esta pestaña. Se vuelve a ejecutar todo el proceso.</p></div><button type="button" class="workbench-edit-close" id="cancelWorkflowEdit">Cerrar ×</button></div>
         <div class="workbench-edit-grid" id="workflowEditFields"></div>
+        <section id="editPreview" class="workbench-p74-preview" aria-labelledby="editPreviewTitle">
+          <div class="workbench-p74-preview-head"><h4 id="editPreviewTitle">Vista previa, todavía sin guardar</h4>
+            <strong id="editPreviewStatus">Modifica un campo para calcular el resultado.</strong></div>
+          <p id="editPreviewImpact" aria-live="off">El estado y las reglas se recalcularán sobre todo el escenario antes de guardar.</p>
+          <div id="editPreviewDiff" class="workbench-p74-diff"></div>
+          <p id="editPreviewWarning" role="status" aria-live="polite" aria-atomic="true"></p>
+        </section>
+        <div class="workbench-p74-navigation">
+          <button type="button" class="btn btn-secondary" id="editNextIssue">Siguiente registro bloqueado ↗</button>
+          <p id="editDirtyStatus" role="status" aria-live="polite"></p>
+        </div>
         <div class="workbench-editor-actions"><button type="submit" class="btn btn-primary" id="saveWorkflowEdit">Guardar y volver a procesar</button><button type="button" class="btn btn-secondary" id="cancelWorkflowEditSecondary">Cancelar</button></div>
         <p class="workbench-edit-status" id="workflowEditStatus" role="status" aria-live="polite"></p>
         <p class="workbench-edit-guide">Los campos marcados se relacionan con el motivo de bloqueo o revisión. Corrige y guarda para recalcular las reglas.</p>
       </form>
+      <section id="correctionHistory" class="workbench-p74-history" aria-labelledby="correctionHistoryTitle">
+        <div><span class="workbench-section-index">HISTORIAL LOCAL · MÁXIMO 20 CORRECCIONES</span><h3 id="correctionHistoryTitle">Tu recorrido de cambios</h3>
+          <p id="correctionHistoryStatus" role="status" aria-live="polite">Punto de partida. Cada corrección guardada añadirá un paso que puedes deshacer.</p></div>
+        <ol id="correctionHistorySteps" class="workbench-p74-history-steps"></ol>
+        <p>No se transmite el historial ni contiene datos reales en el texto de los pasos. Cambiar los datos de entrada inicia otro historial.</p>
+      </section>
+    </section>
+    <section class="workbench-p77-shell" aria-labelledby="reportStudioTitle">
+      <div class="workbench-p77-head">
+        <div><span class="workbench-section-index">PR77 · REPORTING STUDIO · 100 % LOCAL</span>
+          <h2 id="reportStudioTitle">Del diagnóstico a un informe que puedes presentar.</h2>
+          <p>PDF A4 real con páginas numeradas, conclusiones explicadas y límites visibles. Sin filas, identificadores, emails ni notas privadas. No convierte resultados de demo en ROI imaginario.</p>
+        </div>
+        <button type="button" id="reportOpen" class="btn btn-primary" aria-expanded="false" aria-controls="reportStudio" disabled>Preparar informe profesional ↗</button>
+      </div>
+      <section id="reportStudio" class="workbench-p77-studio" aria-label="Exportar informe ejecutivo seguro" hidden>
+        <div class="workbench-p77-preview">
+          <div><h3>Vista previa del contenido agregado</h3><p>Esta vista se recompone a partir de las reglas y resultados actuales. No muestra registros de origen ni almacena datos.</p></div>
+          <div class="workbench-p77-counters" role="group" aria-label="Datos que figuran en el informe">
+            <div><small>Analizados</small><strong id="reportRows">0</strong></div>
+            <div><small>Propuestas</small><strong id="reportReady">0</strong></div>
+            <div><small>Revisión</small><strong id="reportReview">0</strong></div>
+            <div><small>Bloqueados</small><strong id="reportBlocked">0</strong></div>
+          </div>
+          <ol id="reportOutline" class="workbench-p77-outline" aria-label="Índice del documento">
+            <li>Resumen ejecutivo</li><li>Calidad de datos</li><li>Antes y después</li>
+            <li>Reglas y decisiones humanas</li><li>Escenario alternativo</li>
+            <li>Fases propuestas</li><li>Fuentes y limitaciones</li>
+          </ol>
+        </div>
+        <div class="workbench-p77-actions">
+          <button type="button" class="btn btn-primary" id="reportPdf">Descargar PDF A4 real ↧</button>
+          <button type="button" class="btn btn-secondary" id="reportPrint">Abrir PDF para imprimir ↗</button>
+          <button type="button" class="btn btn-secondary" id="reportTxt">Informe TXT ↧</button>
+          <button type="button" class="btn btn-secondary" id="reportJson">Agregados JSON ↧</button>
+          <button type="button" class="btn btn-secondary" id="reportClose">Cerrar informe</button>
+        </div>
+        <p id="reportStatus" role="status" aria-live="polite" aria-atomic="true">Informe disponible para descarga, sin conexiones externas.</p>
+        <p class="workbench-p77-disclaimer">Solo números, reglas predefinidas y conclusiones del cálculo. Un PDF con datos agregados también debe revisarse antes de enviarlo. Acciones externas: 0. Aprobaciones reales: 0.</p>
+      </section>
+    </section>
+    <section class="workbench-p80" aria-labelledby="pilotReadinessTitle">
+      <div class="workbench-p80-head">
+        <div><span class="workbench-section-index">PR80 · EVALUACIÓN INTEGRADA · CANDIDATO DE PILOTO</span>
+          <h2 id="pilotReadinessTitle">¿Qué falta antes de enseñar esto en un piloto?</h2>
+          <p>Conecta los resultados del motor, la calidad de los datos, las reglas, la revisión humana y la privacidad. Obtendrás comprobaciones verificables y acciones siguientes, sin convertir una demo en una aprobación empresarial.</p>
+        </div>
+        <button type="button" id="pilotOpen" class="btn btn-primary" aria-controls="pilotStudio" aria-expanded="false" disabled>Comprobar preparación ↗</button>
+      </div>
+      <section id="pilotStudio" class="workbench-p80-studio" hidden aria-labelledby="pilotStudioTitle">
+        <div class="workbench-p80-result">
+          <div><h3 id="pilotStudioTitle">Resultado de las comprobaciones</h3><p id="pilotOutcome" role="status" aria-live="polite" aria-atomic="true">Preparando evaluación local...</p></div>
+          <div class="workbench-p80-totals" role="group" aria-label="Resultados de preparación">
+            <div><small>Superadas</small><strong id="pilotPassed">0</strong></div>
+            <div><small>Advertencias</small><strong id="pilotWarnings">0</strong></div>
+            <div><small>Bloqueos</small><strong id="pilotBlockers">0</strong></div>
+          </div>
+        </div>
+        <ol id="pilotChecks" class="workbench-p80-checks" aria-label="Comprobaciones del candidato de piloto"></ol>
+        <h4>Condiciones imprescindibles antes de conectar sistemas</h4>
+        <p>Este ensayo local no valida permisos empresariales, contratos, seguridad de un CRM real, identidad de aprobadores, ahorro financiero ni puesta en producción. Una aprobación simulada no sustituye a la firma y autorización de una persona.</p>
+        <div class="workbench-p80-actions">
+          <button type="button" id="pilotExportTxt">Descargar revisión TXT sin registros ↧</button>
+          <button type="button" id="pilotExportJson">Descargar evidencia JSON agregada ↧</button>
+          <button type="button" id="pilotRefresh">Recalcular con esta muestra ↻</button>
+          <button type="button" id="pilotClose">Cerrar revisión</button>
+        </div>
+        <p id="pilotStatus" role="status" aria-live="polite" aria-atomic="true">La preparación se evalúa únicamente en este navegador.</p>
+      </section>
+    </section>
+    <section class="workbench-p81" aria-labelledby="pilotPlanHeading">
+      <div class="workbench-p81-head">
+        <div><span class="workbench-section-index">PR81 · PILOT PLANNING STUDIO · SOLO SIMULACIÓN</span>
+          <h2 id="pilotPlanHeading">De las incidencias a un plan de trabajo que tiene sentido.</h2>
+          <p>Responsables por función, dependencias reales entre tareas, prioridades, olas de capacidad y una simulación reversible de progreso. Sin fechas ficticias, aprobaciones automáticas ni asignar nombres de personas.</p>
+        </div>
+        <button type="button" id="pilotPlanOpen" class="btn btn-primary" aria-controls="pilotPlanStudio" aria-expanded="false" disabled>Construir plan supervisado ↗</button>
+      </div>
+      <section id="pilotPlanStudio" class="workbench-p81-studio" aria-labelledby="pilotPlanStudioTitle" hidden>
+        <div class="workbench-p81-top">
+          <div><h3 id="pilotPlanStudioTitle">Ruta hacia un piloto controlado</h3>
+            <p id="pilotPlanSummary" role="status" aria-live="polite" aria-atomic="true">Calculando prioridades...</p>
+          </div>
+          <label for="pilotPlanCapacity">Tareas simultáneas por ola
+            <select id="pilotPlanCapacity">
+              <option value="2">2 tareas (prudente)</option>
+              <option value="3" selected>3 tareas (equilibrado)</option>
+              <option value="4">4 tareas (ampliado)</option>
+              <option value="5">5 tareas (máximo de la demo)</option>
+            </select>
+          </label>
+        </div>
+        <div class="workbench-p81-progress" role="group" aria-label="Indicadores del plan">
+          <div><small>Acciones propuestas</small><strong id="pilotPlanTasks">0</strong></div>
+          <div><small>Olas de trabajo</small><strong id="pilotPlanWaves">0</strong></div>
+          <div><small>Ensayadas en esta pestaña</small><strong id="pilotPlanTried">0</strong></div>
+          <div><small>Aprobaciones reales</small><strong id="pilotPlanApproved">0</strong></div>
+        </div>
+        <p class="workbench-p81-limits">Las tareas marcadas solo cuentan como <strong>ensayadas en esta simulación</strong>. No hay empleados asignados, conexión con CRM, firmas ni autorizaciones. La última tarea de aprobación siempre queda bloqueada para verificación externa.</p>
+        <div id="pilotPlanWavesList" class="workbench-p81-waves" role="group" aria-label="Tareas por ola y sus dependencias"></div>
+        <p id="pilotPlanStatus" role="status" aria-live="polite" aria-atomic="true">Sin cambios de producción.</p>
+        <div class="workbench-p81-actions">
+          <button type="button" id="pilotPlanExportTxt">Descargar plan TXT agregado ↧</button>
+          <button type="button" id="pilotPlanExportJson">Descargar estructura JSON ↧</button>
+          <button type="button" id="pilotPlanReset">Reiniciar simulación de tareas ↶</button>
+          <button type="button" id="pilotPlanReview">Volver a las comprobaciones PR80 ↗</button>
+          <button type="button" id="pilotPlanClose">Cerrar plan</button>
+        </div>
+      </section>
+    </section>
+    <section class="workbench-p85" aria-labelledby="pilotControlHeading">
+      <div class="workbench-p85-head">
+        <div><span class="workbench-section-index">PR85 · PILOT CONTROL CENTER · ENSAYO SUPERVISADO</span>
+          <h2 id="pilotControlHeading">Control de riesgos, evidencias y fallos en un mismo lugar.</h2>
+          <p>Revisa los riesgos pendientes, ensaya requisitos de evidencia y comprueba siete protecciones del producto. Nada de esto constituye una aprobación, prueba de producción o conexión real.</p>
+        </div>
+        <button type="button" class="btn btn-primary" id="pilotControlOpen" aria-controls="pilotControlStudio" aria-expanded="false" disabled>Abrir centro de control ↗</button>
+      </div>
+      <section id="pilotControlStudio" hidden aria-labelledby="pilotControlTitle">
+        <h3 id="pilotControlTitle" tabindex="-1">Preparación supervisada: vista integrada</h3>
+        <section class="pilot-v100" aria-labelledby="pilotV100Title">
+          <div class="pilot-v100-banner">
+            <div><span class="pilot-v100-eyebrow">REVOPS STUDIO · V100 / CANDIDATO TÉCNICO</span>
+              <h4 id="pilotV100Title">Una decisión clara. Un siguiente paso útil.</h4>
+              <p id="pilotV100Stage">Preparación del piloto sin operaciones externas</p>
+            </div>
+            <p class="pilot-v100-no-go" id="pilotV100Outcome" role="status">NO AUTORIZADO PARA PRODUCCIÓN</p>
+          </div>
+          <div class="pilot-v100-stats" role="group" aria-label="Pulso de la V100">
+            <div><small>Controles técnicos</small><strong id="pilotV100Checks">0/8</strong></div>
+            <div><small>Verificaciones externas</small><strong id="pilotV100External">4</strong></div>
+            <div><small>Riesgos abiertos</small><strong id="pilotV100Risks">10</strong></div>
+            <div><small>Atlas sintético</small><strong id="pilotV100Atlas">Pendiente</strong></div>
+          </div>
+          <div class="pilot-v100-grid">
+            <div><h5>Próximas decisiones</h5><ol id="pilotV100Actions" class="pilot-v100-actions"></ol></div>
+            <div><h5>Riesgos que requieren atención</h5><ol id="pilotV100RiskHighlights" class="pilot-v100-risks"></ol></div>
+          </div>
+          <p id="pilotV100Summary" role="status" aria-live="polite">Ninguna aprobación empresarial registrada.</p>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotV100ExportJson">Resumen ejecutivo JSON ↧</button>
+            <button type="button" id="pilotV100ExportTxt">Resumen ejecutivo TXT ↧</button>
+          </div>
+          <p class="workbench-p85-disclaimer">V100 sintetiza el producto real y su evidencia técnica local. Los permisos, la auditoría externa, las pruebas manuales de accesibilidad y el lanzamiento siguen pendientes.</p>
+          <p class="workbench-p85-disclaimer">Para preparar una revisión con personas y registrar únicamente resultados anónimos, utiliza el <a href="./evaluacion.html">protocolo de aceptación humana (PR103) ↗</a>. No constituye un certificado ni una autorización.</p>
+        </section>
+        <p id="pilotControlSummary" role="status" aria-live="polite">Ejecuta un escenario para comprobar sus señales.</p>
+        <div class="pilot-ux-toolbar" role="group" aria-label="Nivel de detalle de la consola">
+          <div class="pilot-ux-intro">
+            <strong>Empieza por lo importante</strong>
+            <p>Un resumen y tres prioridades. El análisis completo está disponible, sin perder nada.</p>
+          </div>
+          <div class="pilot-ux-actions">
+            <button type="button" id="pilotUXToggle" aria-controls="pilotUXDetails" aria-expanded="false" class="btn btn-primary">Explorar herramientas y evidencias</button>
+            <button type="button" id="pilotUXClose" class="btn btn-secondary">Cerrar consola</button>
+          </div>
+          <p id="pilotUXStatus" class="pilot-ux-status" role="status" aria-live="polite" aria-atomic="true">Vista esencial.</p>
+        </div>
+        <section class="pilot-guided-route" aria-labelledby="pilotGuidedTitle">
+          <div class="pilot-guided-route-head">
+            <div><h4 id="pilotGuidedTitle">Qué revisar a continuación</h4>
+              <p>Ruta priorizada según las incidencias reales de la muestra, los requisitos pendientes y los ensayos locales. No asigna empleados ni ejecuta operaciones.</p>
+            </div>
+            <button type="button" id="pilotGuidedExport">Exportar ruta JSON ↧</button>
+          </div>
+          <p id="pilotGuidedSummary" role="status" aria-live="polite"></p>
+          <ol id="pilotGuidedList" class="pilot-guided-list"></ol>
+          <button type="button" class="pilot-ux-more" id="pilotUXMore">Ver todos los pasos y controles ↗</button>
+          <p id="pilotGuidedStatus" role="status" aria-live="polite">Las autorizaciones reales deben completarse fuera de esta demo.</p>
+        </section>
+        <div id="pilotUXDetails" class="pilot-ux-details" hidden aria-label="Herramientas completas del piloto">
+        <nav id="pilotSectionNavigation" class="pilot-section-navigation" aria-label="Secciones del centro de control">
+          <p>Explora las ocho áreas. Usa flechas, Inicio y Fin sobre los botones para cambiar de opción.</p>
+          <div class="pilot-section-controls" role="group" aria-label="Ir a una sección">
+            <button type="button" data-pilot-section="pilotControlRiskTitle">01 · Riesgos</button>
+            <button type="button" data-pilot-section="pilotControlEvidenceTitle">02 · Evidencias</button>
+            <button type="button" data-pilot-section="pilotControlDrillTitle">03 · Defensas</button>
+            <button type="button" data-pilot-section="pilotCapacityHeading">04 · Capacidad</button>
+            <button type="button" data-pilot-section="pilotAuthorizationHeading">05 · Autorización</button>
+            <button type="button" data-pilot-section="pilotHandoffHeading">06 · Entrega</button>
+            <button type="button" data-pilot-section="pilotStressHeading">07 · Muestras</button>
+            <button type="button" data-pilot-section="pilotAtlasHeading">08 · Validación</button>
+          </div>
+          <p id="pilotSectionAnnouncement" class="pilot-section-live" role="status" aria-live="polite" aria-atomic="true"></p>
+        </nav>
+        <div class="workbench-p85-metrics" role="group" aria-label="Estado de la preparación">
+          <div><small>Riesgos altos o críticos</small><strong id="pilotControlHigh">0</strong></div>
+          <div><small>Requisitos sin ensayar</small><strong id="pilotControlEvidence">0</strong></div>
+          <div><small>Ensayos de rechazo</small><strong id="pilotControlDrills">Sin ejecutar</strong></div>
+          <div><small>Aprobaciones reales</small><strong id="pilotControlApproval">0</strong></div>
+        </div>
+        <div class="workbench-p85-columns">
+          <section aria-labelledby="pilotControlRiskTitle">
+            <h4 id="pilotControlRiskTitle" tabindex="-1">01 · Registro de riesgos</h4>
+            <label for="pilotControlFilter">Filtrar severidad
+              <select id="pilotControlFilter">
+                <option value="all">Todos los riesgos</option>
+                <option value="critical">Crítica</option>
+                <option value="high">Alta</option>
+                <option value="medium">Media</option>
+                <option value="low">Baja</option>
+              </select>
+            </label>
+            <p id="pilotControlRiskCount">Sin datos.</p>
+            <ul id="pilotControlRisks" class="workbench-p85-list"></ul>
+          </section>
+          <section aria-labelledby="pilotControlEvidenceTitle">
+            <h4 id="pilotControlEvidenceTitle" tabindex="-1">02 · Requisitos de evidencia</h4>
+            <p>Marcar una casilla significa solamente ensayar la lista, sin adjuntar ni verificar documentos.</p>
+            <ul id="pilotControlChecklist" class="workbench-p85-list"></ul>
+            <div class="pilot-evidence-review" aria-labelledby="pilotEvidenceReviewHeading">
+              <h5 id="pilotEvidenceReviewHeading">Revisión de trazabilidad · PR94</h5>
+              <p>Consulta función, fase, riesgos vinculados y pruebas todavía por verificar. Una casilla ensayada no es evidencia recibida.</p>
+              <label for="pilotEvidenceReviewFilter">Filtrar función responsable
+                <select id="pilotEvidenceReviewFilter"><option value="all">Todas las funciones</option></select>
+              </label>
+              <p id="pilotEvidenceReviewSummary" role="status" aria-live="polite"></p>
+              <ol id="pilotEvidenceReviewList" class="pilot-evidence-review-list"></ol>
+              <div class="workbench-p85-actions"><button type="button" id="pilotEvidenceReviewExport">Exportar matriz de requisitos JSON ↧</button></div>
+              <p id="pilotEvidenceReviewStatus" role="status" aria-live="polite">0 evidencias reales verificadas.</p>
+            </div>
+          </section>
+        </div>
+        <section aria-labelledby="pilotControlDrillTitle">
+          <h4 id="pilotControlDrillTitle" tabindex="-1">03 · Ensayos de defensas locales</h4>
+          <p>Los siete ensayos fuerzan situaciones inválidas en memoria y comprueban que los validadores las rechazan. No prueban servicios externos.</p>
+          <ul id="pilotControlDrillList" class="workbench-p85-drills"></ul>
+        </section>
+        <section class="pilot-capacity" aria-labelledby="pilotCapacityHeading">
+          <h4 id="pilotCapacityHeading" tabindex="-1">04 · Capacidad, dependencias y cuellos de botella</h4>
+          <p>Compara cuatro capacidades de ejecución y comprueba cómo cambia el número de olas si una función puede atender una o dos tareas a la vez. No representa personas asignadas, plazos ni ahorros.</p>
+          <label for="pilotCapacityRoleLimit">Simultaneidad por función
+            <select id="pilotCapacityRoleLimit">
+              <option value="1" selected>1 tarea simultánea por función (conservador)</option>
+              <option value="2">2 tareas simultáneas por función (hipótesis)</option>
+            </select>
+          </label>
+          <div class="pilot-capacity-scroll" tabindex="0" role="region" aria-label="Tabla comparativa de capacidad">
+            <table id="pilotCapacityTable">
+              <caption>Olas lógicas necesarias según capacidad y restricción de función</caption>
+              <thead><tr><th scope="col">Tareas por ola</th><th scope="col">Sin restricción de función</th><th scope="col">Con límite funcional</th><th scope="col">Olas adicionales</th></tr></thead>
+              <tbody id="pilotCapacityRows"></tbody>
+            </table>
+          </div>
+          <p id="pilotCapacitySummary" role="status" aria-live="polite"></p>
+          <h5>Cadena de dependencias de mayor esfuerzo relativo</h5>
+          <p id="pilotCapacityCritical"></p>
+          <h5>Carga relativa por función</h5>
+          <ol id="pilotCapacityRoles" class="pilot-capacity-roles"></ol>
+          <p class="workbench-p85-disclaimer">Estas olas son unidades lógicas, no semanas, horas, costes o pronósticos. La aprobación final siempre requiere verificación humana externa.</p>
+        </section>
+        <section class="pilot-authorization" aria-labelledby="pilotAuthorizationHeading">
+          <h4 id="pilotAuthorizationHeading" tabindex="-1">05 · Decisión de lanzamiento y condiciones de autorización</h4>
+          <p>La evaluación técnica de muestras no concede permisos empresariales. Este panel explica exactamente qué queda por verificar antes de contemplar un piloto conectado.</p>
+          <p id="pilotAuthorizationOutcome" class="pilot-authorization-verdict" role="status" aria-live="polite">NO AUTORIZADO PARA PRODUCCIÓN</p>
+          <p id="pilotAuthorizationCandidate"></p>
+          <div class="pilot-authorization-grid">
+            <section aria-labelledby="pilotAuthorizationGatesTitle">
+              <h5 id="pilotAuthorizationGatesTitle">Controles de aceptación</h5>
+              <ol id="pilotAuthorizationGates" class="pilot-authorization-list"></ol>
+            </section>
+            <section aria-labelledby="pilotAuthorizationNextTitle">
+              <h5 id="pilotAuthorizationNextTitle">Correcciones detectadas en esta muestra</h5>
+              <ol id="pilotAuthorizationNext" class="pilot-authorization-list"></ol>
+              <p id="pilotAuthorizationChecklist"></p>
+            </section>
+          </div>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotAuthorizationReadiness">Revisar las ocho comprobaciones PR80 ↗</button>
+            <button type="button" id="pilotAuthorizationPlan">Abrir el plan de tareas PR81 ↗</button>
+          </div>
+          <p class="workbench-p85-disclaimer">Un resultado positivo solo puede referirse a muestras sintéticas o ensayos locales. La aprobación de producción, la seguridad de sistemas reales, el tratamiento de riesgos y el plan de reversión requieren evidencia y autorización independientes.</p>
+        </section>
+        <section class="pilot-handoff" aria-labelledby="pilotHandoffHeading">
+          <h4 id="pilotHandoffHeading" tabindex="-1">06 · Paquete de revisión para responsables</h4>
+          <p>Prepara un documento local con los controles de aceptación, riesgos principales, tareas por olas y condiciones que requieren verificación independiente. No incluye las filas del CSV ni autoriza ningún lanzamiento.</p>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotHandoffHtml">Descargar documento imprimible (HTML) ↧</button>
+            <button type="button" id="pilotHandoffTxt">Descargar resumen TXT ↧</button>
+          </div>
+          <p id="pilotHandoffStatus" role="status" aria-live="polite" aria-atomic="true">Informe disponible únicamente con datos agregados y texto predefinido.</p>
+          <p class="workbench-p85-disclaimer">El archivo HTML es autónomo, sin scripts, imágenes, trackers ni conexiones remotas. Abre el documento y utiliza la función de impresión del navegador para generar un PDF si es necesario.</p>
+        </section>
+        <section class="pilot-stress" aria-labelledby="pilotStressHeading">
+          <h4 id="pilotStressHeading" tabindex="-1">07 · Matriz de pruebas funcionales con ejemplos sintéticos</h4>
+          <p>Contrasta la muestra actual con seis patrones ficticios del mismo proceso: original, correcta, duplicados, campos vacíos, revisión humana y casos límite. No modifica los datos que estés editando.</p>
+          <p id="pilotStressCurrent" role="status" aria-live="polite">Muestra actual sin evaluar.</p>
+          <label for="pilotStressFilter">Mostrar ejemplos
+            <select id="pilotStressFilter">
+              <option value="all" selected>Todos los escenarios ficticios</option>
+              <option value="issues">Con bloqueos o advertencias</option>
+              <option value="clear">Sin bloqueos ni advertencias</option>
+            </select>
+          </label>
+          <div class="pilot-stress-scroll" tabindex="0" role="region" aria-label="Matriz de escenarios sintéticos">
+            <table id="pilotStressTable">
+              <caption>Comparación de seis patrones ficticios, sin datos originales ni probabilidades</caption>
+              <thead><tr>
+                <th scope="col">Muestra sintética</th><th scope="col">Registros</th>
+                <th scope="col">Bloqueados</th><th scope="col">Revisión</th>
+                <th scope="col">Controles superados</th><th scope="col">Riesgos altos</th>
+                <th scope="col">Cambio en bloqueos frente a la actual</th>
+              </tr></thead>
+              <tbody id="pilotStressRows"></tbody>
+            </table>
+          </div>
+          <p id="pilotStressStatus" role="status" aria-live="polite">Sin resultados de pruebas.</p>
+          <p class="workbench-p85-disclaimer">Pruebas funcionales deterministas con muestras inventadas. No miden usuarios concurrentes, rendimiento real, fiabilidad de redes o impacto empresarial.</p>
+        </section>
+        <section class="pilot-atlas" aria-labelledby="pilotAtlasHeading">
+          <h4 id="pilotAtlasHeading" tabindex="-1">08 · Verificación transversal PR90</h4>
+          <p>Ejecuta en este navegador las 18 muestras ficticias de los tres procesos con los motores reales: ocho controles de preparación, siete pruebas defensivas y seis invariantes por muestra. No sustituye GitHub Actions ni una auditoría independiente.</p>
+          <div class="pilot-atlas-metrics" role="group" aria-label="Resumen de pruebas sintéticas">
+            <div><small>Muestras comprobadas</small><strong id="pilotAtlasCases">0</strong></div>
+            <div><small>Controles evaluados</small><strong id="pilotAtlasGates">0</strong></div>
+            <div><small>Ensayos defensivos locales</small><strong id="pilotAtlasDrills">0</strong></div>
+            <div><small>Muestras con fallos</small><strong id="pilotAtlasIssues">0</strong></div>
+          </div>
+          <p id="pilotAtlasStatus" role="status" aria-live="polite" aria-atomic="true">Validación transversal pendiente. No existe autorización de producción.</p>
+          <ol id="pilotAtlasResults" class="pilot-atlas-results" aria-label="Resultados de las 18 muestras"></ol>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotAtlasRun">Ejecutar las 18 comprobaciones sintéticas</button>
+            <button type="button" id="pilotAtlasExportJson" disabled>Descargar resultados JSON ↧</button>
+            <button type="button" id="pilotAtlasExportTxt" disabled>Descargar resultados TXT ↧</button>
+          </div>
+          <p class="workbench-p85-disclaimer">La verificación verde solo significa que los invariantes locales han pasado. Producción no autorizada: faltan controles humanos, pruebas independientes, despliegue y aprobación empresarial.</p>
+        </section>
+        <section class="pilot-session-audit" aria-labelledby="pilotSessionAuditHeading">
+          <h4 id="pilotSessionAuditHeading">Registro efímero de interacción · PR93</h4>
+          <p>Solo acciones predefinidas de esta pantalla. No guarda valores, nombres, tiempos de empleados ni decisiones empresariales. Los eventos desaparecen al cambiar los datos o cerrar la pestaña.</p>
+          <p id="pilotSessionAuditCount" role="status" aria-live="polite">Sin interacciones registradas.</p>
+          <ol id="pilotSessionAuditEntries" class="pilot-session-audit-list"></ol>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotSessionAuditExport">Exportar eventos locales JSON ↧</button>
+            <button type="button" id="pilotSessionAuditClear">Vaciar este historial</button>
+          </div>
+        </section>
+        <section class="pilot-final-review" aria-labelledby="pilotFinalReviewHeading">
+          <h4 id="pilotFinalReviewHeading" tabindex="-1">PR95 · Evaluación integrada para revisión independiente</h4>
+          <p>Ocho controles técnicos derivados del producto y cuatro verificaciones externas que nunca aparecen aprobadas en esta demo. Un ensayo correcto no autoriza producción.</p>
+          <p id="pilotFinalReviewVerdict" class="pilot-final-verdict" role="status" aria-live="polite">NO AUTORIZADO PARA PRODUCCIÓN</p>
+          <div class="pilot-final-metrics" role="group" aria-label="Estado integrado">
+            <div><small>Controles locales correctos</small><strong id="pilotFinalLocal">0/8</strong></div>
+            <div><small>Atenciones técnicas</small><strong id="pilotFinalAttention">0</strong></div>
+            <div><small>Revisiones externas</small><strong id="pilotFinalExternal">4</strong></div>
+            <div><small>Aprobaciones reales</small><strong id="pilotFinalApprovals">0</strong></div>
+          </div>
+          <ol id="pilotFinalReviewList" class="pilot-final-list" aria-label="Doce criterios de revisión"></ol>
+          <p id="pilotFinalReviewStatus" role="status" aria-live="polite" aria-atomic="true">Validación de lanzamiento pendiente de revisión humana.</p>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotFinalReviewRefresh">Recalcular revisión integrada ↻</button>
+            <button type="button" id="pilotFinalReviewJson">Exportar criterios JSON ↧</button>
+            <button type="button" id="pilotFinalReviewTxt">Exportar revisión TXT ↧</button>
+          </div>
+          <p class="workbench-p85-disclaimer">Producción: NO-GO. No se simulan permisos, firmas ni verificaciones empresariales. Los informes exportados son para revisión, no para autorizar un lanzamiento.</p>
+        </section>
+        <section class="pilot-a11y" aria-labelledby="pilotA11yHeading">
+          <h4 id="pilotA11yHeading">PR98 · Protocolo de accesibilidad y comprobaciones pendientes</h4>
+          <p>Comprueba seis requisitos verificables del DOM y conserva ocho comprobaciones manuales expresamente pendientes. No equivale a un certificado WCAG.</p>
+          <p id="pilotA11ySummary" role="status" aria-live="polite">Aún no se ha comprobado la estructura de esta vista.</p>
+          <div class="pilot-a11y-columns">
+            <div><h5>Comprobaciones automáticas</h5><ol id="pilotA11yAutomated"></ol></div>
+            <div><h5>Comprobaciones humanas pendientes</h5><ol id="pilotA11yManual"></ol></div>
+          </div>
+          <div class="workbench-p85-actions">
+            <button type="button" id="pilotA11yRun">Analizar accesibilidad estructural</button>
+            <button type="button" id="pilotA11yExport" disabled>Exportar protocolo JSON ↧</button>
+          </div>
+          <p class="workbench-p85-disclaimer">0 comprobaciones manuales verificadas. NVDA, VoiceOver, zoom real, orientación, alto contraste y comprensión necesitan revisión humana independiente.</p>
+        </section>
+        <p id="pilotControlStatus" role="status" aria-live="polite" aria-atomic="true">Sin acciones externas ejecutadas.</p>
+        <div class="workbench-p85-actions">
+          <button type="button" id="pilotControlRun">Ejecutar siete ensayos locales</button>
+          <button type="button" id="pilotControlExport">Exportar revisión agregada JSON ↧</button>
+          <button type="button" id="pilotControlReset">Reiniciar ensayos</button>
+          <button type="button" id="pilotControlClose">Cerrar centro de control</button>
+        </div>
+        <p class="workbench-p85-disclaimer">Riesgos y tareas abiertos hasta verificación humana externa. Ningún resultado de esta pantalla prueba una autorización real, un despliegue, una firma, un CRM o una recuperación técnica.</p>
+        </div>
+      </section>
     </section>
     <details class="workbench-explainer"><summary>¿Qué significa «listo», «revisar» o «bloqueado»?</summary>
       <div><p><strong>Listo:</strong> pasa las reglas de esta demostración. Puede ser una acción propuesta o un registro histórico, que no debe volver a ejecutarse.</p><p><strong>Revisar:</strong> necesita una decisión humana, aunque algunos campos sean válidos.</p><p><strong>Bloqueado:</strong> no cumple alguna regla y no puede avanzar hasta corregirse.</p><p><strong>Importante:</strong> ningún registro se introduce en tu CRM ni en otra aplicación. Esta mesa de trabajo es una simulación local.</p></div>

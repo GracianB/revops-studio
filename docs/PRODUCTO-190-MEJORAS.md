@@ -2,7 +2,7 @@
 
 Cada entrada describe una conducta que puede observarse o verificarse; no se cuentan commits, retoques de padding o pruebas como nuevas funciones comerciales.
 
-**Corte de esta rama:** 77 comportamientos ya implementados/validados o existentes y relevantes; 113 pendientes en cartera. Solo los cambios de código y pruebas de esta PR cuentan como entrega nueva; parte de los implementados pertenecen a las versiones anteriores.
+**Corte de esta rama:** 77 comportamientos identificados en el corte inicial, más implementaciones R1/R2/PR71 documentadas individualmente. Algunas capacidades existentes todavía aparecen como pendientes en este inventario y deberán reconciliarse con evidencia; no usar este texto como contador global exacto. Solo los cambios de código y pruebas de esta PR cuentan como entrega nueva; parte de los implementados pertenecen a las versiones anteriores.
 
 **IMPLEMENTADO** = observable en el producto o cubierto por código de esta línea de desarrollo. **PENDIENTE** = no debe anunciarse como entregado. La lista total es un plan por prioridades, no una afirmación de que las 190 están terminadas.
 
@@ -24,15 +24,15 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 ## 02 · Recorrido comercial
 
 - [   ] **P011** · Rutas de entrada por problema empresarial · PENDIENTE
-- [   ] **P012** · Ruta de comprador que no conoce tecnología · PENDIENTE
-- [   ] **P013** · Ruta de responsable de operaciones · PENDIENTE
-- [   ] **P014** · Ruta de analista de datos · PENDIENTE
-- [   ] **P015** · Ruta de soporte al cliente · PENDIENTE
+- [ x ] **P012** · Ruta de comprador que no conoce tecnología · IMPLEMENTADO (PR71, Discovery Studio)
+- [ x ] **P013** · Ruta de responsable de operaciones · IMPLEMENTADO (PR71, Discovery Studio)
+- [ x ] **P014** · Ruta de analista de datos · IMPLEMENTADO (PR71, Discovery Studio)
+- [ x ] **P015** · Ruta de soporte al cliente · IMPLEMENTADO (PR71, Discovery Studio)
 - [   ] **P016** · CTA contextual tras detectar bloqueos · PENDIENTE
 - [   ] **P017** · CTA contextual tras preparar una cola · PENDIENTE
 - [   ] **P018** · Enlace a caso relacionado con el escenario · PENDIENTE
 - [   ] **P019** · Estimación de alcance basada en requisitos reales · PENDIENTE
-- [   ] **P020** · Revisión final del brief antes del envío · PENDIENTE
+- [ x ] **P020** · Revisión final del brief antes del envío · IMPLEMENTADO (PR71, Discovery Studio)
 
 ## 03 · Ejemplos interactivos
 
@@ -70,7 +70,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P046** · Límite de tamaño antes de leer el archivo · PENDIENTE
 - [   ] **P047** · Conservar archivo anterior cuando falla la carga · PENDIENTE
 - [   ] **P048** · Vigilancia de cambio de escenario durante lectura · PENDIENTE
-- [   ] **P049** · Resaltar encoding no UTF-8 antes de aceptar · PENDIENTE
+- [ x ] **P049** · Resaltar encoding no UTF-8 antes de aceptar · IMPLEMENTADO (PR72, contrato verificable)
 - [ x ] **P050** · Compatibilidad controlada con TSV · IMPLEMENTADO
 
 ## 06 · Mapeo de columnas
@@ -83,8 +83,8 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P056** · Impedir mapear una columna dos veces · PENDIENTE
 - [   ] **P057** · Mantener CSV anterior mientras no se confirme · PENDIENTE
 - [   ] **P058** · Aclarar campos obligatorios sin equivalente · PENDIENTE
-- [   ] **P059** · Perfiles de mapeo descargables sin datos · PENDIENTE
-- [   ] **P060** · Confirmación cuando se descarta una columna adicional · PENDIENTE
+- [ x ] **P059** · Perfiles de mapeo descargables sin datos · IMPLEMENTADO (PR72, contrato verificable)
+- [ x ] **P060** · Confirmación cuando se descarta una columna adicional · IMPLEMENTADO (PR72, contrato verificable)
 
 ## 07 · Validación de filas
 
@@ -96,7 +96,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P066** · Estados cerrados apartados de nuevas acciones · PENDIENTE
 - [   ] **P067** · Escalado humano de tickets urgentes · PENDIENTE
 - [   ] **P068** · Revisión humana de valores negativos · PENDIENTE
-- [   ] **P069** · Diferenciar duplicado idéntico de conflicto · PENDIENTE
+- [ x ] **P069** · Diferenciar duplicado idéntico de conflicto · IMPLEMENTADO (PR72, contrato verificable)
 - [   ] **P070** · Comprobar moneda y separadores regionales · PENDIENTE
 
 ## 08 · Corrección guiada
@@ -122,7 +122,7 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P086** · Ordenar por estado · IMPLEMENTADO
 - [ x ] **P087** · Restaurar el orden original · IMPLEMENTADO
 - [ x ] **P088** · Mostrar estado vacío al no encontrar resultados · IMPLEMENTADO
-- [   ] **P089** · Guardar vistas de filtros sin datos sensibles · PENDIENTE
+- [ x ] **P089** · Guardar vistas de filtros sin datos sensibles · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [ x ] **P090** · Exportar únicamente la vista filtrada · IMPLEMENTADO
 
 ## 10 · Tabla de auditoría
@@ -130,13 +130,13 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P091** · Conservar referencia al índice original al ordenar · IMPLEMENTADO
 - [ x ] **P092** · Editar la fila correcta tras ordenar · IMPLEMENTADO
 - [ x ] **P093** · Mantener encabezados visibles al desplazarse · IMPLEMENTADO
-- [   ] **P094** · Mostrar densidad compacta u holgada · PENDIENTE
-- [   ] **P095** · Permitir personalizar columnas visibles · PENDIENTE
+- [ x ] **P094** · Mostrar densidad compacta u holgada · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
+- [ x ] **P095** · Permitir personalizar columnas visibles · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [   ] **P096** · Mostrar detalles completos de cada registro · PENDIENTE
-- [   ] **P097** · Resaltar filas al navegar con teclado · PENDIENTE
-- [   ] **P098** · Navegar al siguiente bloqueo desde una fila · PENDIENTE
+- [ x ] **P097** · Resaltar filas al navegar con teclado · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
+- [ x ] **P098** · Navegar al siguiente bloqueo desde una fila · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [   ] **P099** · Comparar dos registros adyacentes · PENDIENTE
-- [   ] **P100** · Mostrar acciones sin scroll horizontal en móvil · PENDIENTE
+- [ x ] **P100** · Mostrar acciones sin scroll horizontal en móvil · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 
 ## 11 · Calidad de datos
 
@@ -144,23 +144,23 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P102** · Desglose de campos incompletos · IMPLEMENTADO
 - [ x ] **P103** · Advertir que integridad no equivale a exactitud · IMPLEMENTADO
 - [ x ] **P104** · Mostrar faltantes por columna · IMPLEMENTADO
-- [   ] **P105** · Contar identificadores únicos · PENDIENTE
-- [   ] **P106** · Contar claves conflictivas · PENDIENTE
-- [   ] **P107** · Detectar distribución de valores numéricos · PENDIENTE
-- [   ] **P108** · Comprobar formatos de fecha por columna · PENDIENTE
-- [   ] **P109** · Identificar patrones de valores atípicos · PENDIENTE
-- [   ] **P110** · Medir evolución de calidad entre dos ejecuciones · PENDIENTE
+- [ x ] **P105** · Contar identificadores únicos · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P106** · Contar claves conflictivas · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P107** · Detectar distribución de valores numéricos · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P108** · Comprobar formatos de fecha por columna · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P109** · Identificar patrones de valores atípicos · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
+- [ x ] **P110** · Medir evolución de calidad entre dos ejecuciones · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
 
 ## 12 · Comprensión de resultados
 
 - [   ] **P111** · Separar acciones propuestas e históricos · PENDIENTE
-- [   ] **P112** · Explicar bloqueos y revisiones humanas · PENDIENTE
+- [ x ] **P112** · Explicar bloqueos y revisiones humanas · IMPLEMENTADO (PR75: reglas compartidas, trazas y revisión humana simulada)
 - [   ] **P113** · Mostrar distribución de estados · PENDIENTE
 - [   ] **P114** · Priorizar la corrección más repetida · PENDIENTE
 - [   ] **P115** · Navegar desde recomendación hasta filtro · PENDIENTE
-- [   ] **P116** · Comparación real antes/después de una corrección · PENDIENTE
-- [   ] **P117** · Enseñar qué reglas causaron cada resultado · PENDIENTE
-- [   ] **P118** · Mostrar impacto agregado por tipo de error · PENDIENTE
+- [ x ] **P116** · Comparación real antes/después de una corrección · IMPLEMENTADO (R2: comparación de reglas sobre mismo conjunto y punto de partida)
+- [ x ] **P117** · Enseñar qué reglas causaron cada resultado · IMPLEMENTADO (R2: motivos de regla en transiciones y tabla de decisiones)
+- [ x ] **P118** · Mostrar impacto agregado por tipo de error · IMPLEMENTADO (PR73: análisis puro, vista y pruebas)
 - [   ] **P119** · Comparar dos conjuntos de datos sin guardarlos · PENDIENTE
 - [   ] **P120** · Representar un flujo paso a paso con eventos · PENDIENTE
 
@@ -174,8 +174,8 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P126** · Informe de simulación sin filas ni emails · IMPLEMENTADO
 - [ x ] **P127** · Plantilla descargable con filas ficticias · IMPLEMENTADO
 - [   ] **P128** · Aviso de datos sensibles en exportación completa · PENDIENTE
-- [   ] **P129** · Exportar informe legible como PDF · PENDIENTE
-- [   ] **P130** · Exportar resumen comercial estructurado · PENDIENTE
+- [ x ] **P129** · Exportar informe legible como PDF · IMPLEMENTADO (PR77: PDF 1.4 A4 nativo, paginación real, pruebas estructurales y Chrome/Firefox)
+- [ x ] **P130** · Exportar resumen comercial estructurado · IMPLEMENTADO (R1: documento HTML local imprimible, no PDF directo)
 
 ## 14 · Accesibilidad
 
@@ -184,10 +184,10 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [ x ] **P133** · Enfoque en error de entrada tras fallo · IMPLEMENTADO
 - [ x ] **P134** · Etiquetas específicas de campos de edición · IMPLEMENTADO
 - [ x ] **P135** · Texto de ayuda conectado a cada campo · IMPLEMENTADO
-- [   ] **P136** · Estados erróneos anunciados como texto · PENDIENTE
-- [   ] **P137** · Objetivos táctiles suficientemente grandes · PENDIENTE
-- [   ] **P138** · Probar navegación de teclado sin ratón · PENDIENTE
-- [   ] **P139** · Restaurar foco al cerrar el editor · PENDIENTE
+- [ x ] **P136** · Estados erróneos anunciados como texto · IMPLEMENTADO (PR78: teclado, anuncios, 44px, reflujo y pruebas de navegador)
+- [ x ] **P137** · Objetivos táctiles suficientemente grandes · IMPLEMENTADO (PR78: teclado, anuncios, 44px, reflujo y pruebas de navegador)
+- [ x ] **P138** · Probar navegación de teclado sin ratón · IMPLEMENTADO (PR78: teclado, anuncios, 44px, reflujo y pruebas de navegador)
+- [ x ] **P139** · Restaurar foco al cerrar el editor · IMPLEMENTADO (PR74: mesa de correcciones y pruebas)
 - [   ] **P140** · Revisar contraste en todas las tarjetas claro/oscuro · PENDIENTE
 
 ## 15 · Seguridad y privacidad
@@ -237,8 +237,8 @@ Fuentes de referencia: [NN/g, tareas esenciales de tablas](https://www.nngroup.c
 - [   ] **P174** · Enlazar casos reales con pruebas públicas · PENDIENTE
 - [   ] **P175** · Clarificar el alcance de pruebas gratuitas · PENDIENTE
 - [   ] **P176** · Explicar precio orientativo sin promesas · PENDIENTE
-- [   ] **P177** · Mostrar de forma humana cómo sería la implantación · PENDIENTE
-- [   ] **P178** · Ofrecer un entregable claro después del diagnóstico · PENDIENTE
+- [ x ] **P177** · Mostrar de forma humana cómo sería la implantación · IMPLEMENTADO (R1: fases del plan descargable)
+- [ x ] **P178** · Ofrecer un entregable claro después del diagnóstico · IMPLEMENTADO (R1: plan de trabajo local descargable)
 - [   ] **P179** · Exponer políticas de soporte y mantenimiento · PENDIENTE
 - [   ] **P180** · Confirmar recepción sin confundir envío con lectura · PENDIENTE
 
