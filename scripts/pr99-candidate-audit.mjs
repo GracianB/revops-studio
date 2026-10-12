@@ -11,7 +11,7 @@ export const CANDIDATE_MODULES=Object.freeze([
  "pilot-session-journal","pilot-evidence-review","pilot-supervised-review",
  "pilot-export-integrity","pilot-computation-cache","pilot-accessibility-protocol",
  "pilot-v100-snapshot",
- "pilot-ux-progressive"
+ "pilot-ux-progressive","pilot-uat-protocol"
 ]);
 const SUPPORT=Object.freeze([
  "assets/js/workflow-demo.js","assets/css/workflow-demo.css",
@@ -21,7 +21,10 @@ const SUPPORT=Object.freeze([
  "docs/PR98-ACCESIBILIDAD-PENDIENTE.md",
  "docs/PR100-REVOPS-MILESTONE.md","scripts/pr100-milestone-acceptance.mjs",
  "docs/V100-UX-AUDIT.md","scripts/ux-audit.mjs",
- "assets/js/guided-outcome.js","tests/guided-outcome.test.js","docs/PR102-GUIDED-PROOF.md"
+ "assets/js/guided-outcome.js","tests/guided-outcome.test.js","docs/PR102-GUIDED-PROOF.md",
+ "evaluacion.html","assets/js/uat.js","assets/css/uat.css",
+ "tests/pr103-acceptance.test.js","docs/PR103-UAT-AND-RELEASE-RUNBOOK.md",
+ "scripts/pr103-acceptance.mjs"
 ]);
 const FORBIDDEN=/\b(?:eval|fetch)\s*\(|\bnew\s+Function\b|\blocalStorage\b|\bsessionStorage\b|\bXMLHttpRequest\b/;
 export function auditCandidate(root,{read=readFileSync,exists=existsSync}={}){
@@ -51,7 +54,8 @@ export function auditCandidate(root,{read=readFileSync,exists=existsSync}={}){
   "node scripts/performance-budget.mjs",
   "node scripts/pr99-candidate-audit.mjs",
   "node scripts/pr100-milestone-acceptance.mjs",
-  "node scripts/ux-audit.mjs"])
+  "node scripts/ux-audit.mjs",
+  "node scripts/pr103-acceptance.mjs"])
   if(!pipeline.includes(step))problems.push("CI_GATE_MISSING "+step);
  const source=get("assets/js/pilot-supervised-review.js");
  if(!source.includes('outcome:"NO AUTORIZADO PARA PRODUCCIÓN"')||
