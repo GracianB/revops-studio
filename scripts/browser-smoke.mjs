@@ -1176,6 +1176,76 @@ async function auditPilotPlan(browser){
  }finally{await page.close();}
 }
 
+async function auditHumanUat(browser){
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
+ const faults=[];
+ page.on("pageerror",error=>faults.push(error.message));
+ try{
+  await page.goto(base+"/evaluacion.html",{waitUntil:"load"});
+  assert.match(await page.locator("h1").innerText(),/Comprobar que se entiende/);
+  assert.equal(await page.locator("#uatObserved").innerText(),"0 / 15");
+  assert.equal(await page.locator("#uatExportJson").isDisabled(),true);
+  assert.equal(await page.locator("#uatTasks>li").count(),5);
+  assert.equal(await page.locator('[data-uat-role="operations"]').getAttribute("aria-pressed"),"true");
+  assert.match(await page.locator("#uatBoundary").innerText(),/NO AUTORIZADO PARA PRODUCCIÓN/);
+  const task=page.locator('[data-uat-id="op-find"]');
+  assert.equal(await task.locator("a").getAttribute("target"),"_blank");
+  assert.match(await task.locator("a").getAttribute("rel"),/noopener/);
+  await task.locator('[name="outcome"]').selectOption("completed");
+  await task.locator('[name="assistance"]').selectOption("none");
+  await task.locator('[name="seconds"]').fill("58");
+  await task.locator('[data-uat-save]').click();
+  assert.equal(await page.locator("#uatObserved").innerText(),"1 / 15");
+  assert.equal(await page.locator("#uatPassed").innerText(),"1");
+  assert.equal(await page.locator("#uatIssues").innerText(),"0");
+  await page.locator('[data-uat-role="mobile"]').click();
+  assert.equal(await page.locator('[data-uat-role="mobile"]').getAttribute("aria-pressed"),"true");
+  assert.equal(await page.locator("#uatTasks>li").count(),5);
+  const a11y=page.locator('[data-uat-id="mo-a11y"]');
+  await a11y.locator('[name="outcome"]').selectOption("blocked");
+  await a11y.locator('[name="assistance"]').selectOption("guided");
+  await a11y.locator('[name="seconds"]').fill("400");
+  await a11y.locator('[data-uat-save]').click();
+  assert.equal(await page.locator("#uatObserved").innerText(),"2 / 15");
+  assert.equal(await page.locator("#uatPassed").innerText(),"1");
+  assert.equal(await page.locator("#uatIssues").innerText(),"1");
+  assert.equal(await page.locator("#uatFriction").innerText(),"2");
+  await page.locator('[data-uat-role="operations"]').click();
+  assert.equal(await page.locator('[data-uat-id="op-find"] [name="seconds"]').inputValue(),"58");
+  const download=page.waitForEvent("download");
+  await page.locator("#uatExportJson").click();
+  const file=await download;
+  assert.equal(file.suggestedFilename(),"revops-pr103-observaciones-manuales.json");
+  const report=JSON.parse(await readFile(await file.path(),"utf8"));
+  assert.equal(report.schema,"revops-uat-manual-observations-v1");
+  assert.equal(report.observed,2);
+  assert.equal(report.pending,13);
+  assert.equal(report.productionGo,false);
+  assert.equal(report.realApprovals,0);
+  assert.equal(report.externalExecutions,0);
+  assert.equal(report.independentVerification,false);
+  assert.equal(report.manualAccessibilityVerified,0);
+  assert.doesNotMatch(JSON.stringify(report),/PED-101|norte@ejemplo\\.test/);
+  await page.locator("#uatReset").click();
+  assert.equal(await page.locator("#uatResetWarning").isVisible(),true);
+  await page.locator("#uatResetCancel").click();
+  assert.equal(await page.locator("#uatObserved").innerText(),"2 / 15");
+  await page.locator("#uatReset").click();
+  await page.locator("#uatResetConfirm").click();
+  assert.equal(await page.locator("#uatObserved").innerText(),"0 / 15");
+  assert.equal(await page.locator("#uatExportJson").isDisabled(),true);
+  await page.setViewportSize({width:320,height:760});
+  const metrics=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
+  assert.ok(metrics.scroll<=metrics.viewport+3,
+   "PR103 UAT mobile horizontal overflow: "+JSON.stringify(metrics));
+  await auditAccessibility(page,"PR103 manual UAT surface");
+  await page.reload();
+  assert.equal(await page.locator("#uatObserved").innerText(),"0 / 15");
+  assert.deepEqual(faults,[],"PR103 UAT runtime exceptions");
+  console.log("PR103 UAT APP PASS ("+engineName+"): roles, reports, reset, NO-GO, 320px and keyboard-safe UI");
+ }finally{await page.close();}
+}
+
 async function auditClientFirstVisit(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:"reduce",acceptDownloads:true});
   const errors=[];
@@ -1542,6 +1612,7 @@ try {
   await auditCustomerDiagnostic(browser);
   await auditDiscoveryStudio(browser);
   await auditClientFirstVisit(browser);
+  await auditHumanUat(browser);
   await auditProductWorkbench(browser);
   await auditCorrectionWorkbench(browser);
   await auditDecisionStudio(browser);
