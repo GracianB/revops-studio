@@ -1202,7 +1202,7 @@ async function auditIntegrationReview(browser){
   assert.equal(await page.locator("#chainList li").count(),3);
   assert.match(await page.locator("#chainResultCount").innerText(),/3 de 35/);
   await page.locator('[data-chain-stage="all"]').click();
-  await page.locator("#chainSearch").fill("100");
+  await page.locator("#chainSearch").fill("Executive Milestone");
   assert.equal(await page.locator("#chainList li").count(),1);
   assert.match(await page.locator("#chainList li strong").innerText(),/#100/);
   await page.locator("#chainSearch").fill("");
