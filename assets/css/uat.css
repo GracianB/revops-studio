@@ -1,0 +1,51 @@
+/* PR103 · A disciplined, quiet manual UAT surface; does not simulate approvals. */
+.uat-page{min-height:100vh;background:var(--bg);color:var(--text)}
+.uat-main{padding-top:clamp(40px,6vw,82px);padding-bottom:65px;max-width:1100px}
+.uat-intro{max-width:920px;margin-bottom:28px}
+.uat-eyebrow{font:750 11px/1.5 var(--mono,monospace);letter-spacing:.12em;color:var(--accent)}
+.uat-intro h1{font:750 clamp(35px,5.8vw,63px)/1.07 var(--display,system-ui);letter-spacing:-.052em;margin:15px 0 19px}
+.uat-intro>p{max-width:840px;font:15px/1.75 var(--sans,system-ui);color:var(--muted)}
+.uat-intro strong{color:var(--text)}
+.uat-warning{margin-top:24px!important;border:1px solid var(--line-2);border-left:4px solid var(--accent);padding:12px 15px;border-radius:8px;color:var(--text)!important;background:var(--panel)}
+.uat-card{margin:16px 0;padding:clamp(16px,3vw,28px);border:1px solid var(--line-2);border-radius:17px;background:var(--panel);min-width:0}
+.uat-card h2{font:750 clamp(22px,3.5vw,30px)/1.24 var(--display,system-ui);margin:0 0 13px}
+.uat-card>p,.uat-card .uat-heading p,.uat-policy{font:13px/1.8 var(--sans,system-ui);color:var(--muted);margin:8px 0}
+.uat-policy{padding:13px;background:var(--bg-2);border-radius:9px;margin-top:14px}
+.uat-policy strong{color:var(--text)}
+.uat-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:16px}
+.uat-metrics>div{min-width:0;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:13px}
+.uat-metrics small{display:block;font:11px/1.6 var(--sans);color:var(--muted)}
+.uat-metrics strong{display:block;font:800 clamp(18px,3vw,27px)/1.4 var(--mono,monospace);overflow-wrap:anywhere}
+.uat-actions,.uat-roles{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.uat-actions button,.uat-roles button,.uat-confirm button,.uat-task button{min-height:44px;padding:9px 13px;border:1px solid var(--line-2);border-radius:9px;color:var(--text);background:var(--bg-2);font:700 12px/1.5 var(--sans,system-ui);cursor:pointer}
+.uat-actions button:disabled{opacity:.55;cursor:not-allowed}
+.uat-roles button[aria-pressed="true"]{border-color:var(--accent);background:var(--bg-2);box-shadow:inset 0 -2px 0 var(--accent)}
+.uat-roles button[aria-pressed="false"]{background:var(--panel)}
+.uat-roles button:focus-visible,.uat-actions button:focus-visible,.uat-confirm button:focus-visible,.uat-task button:focus-visible,.uat-task a:focus-visible,.uat-task select:focus-visible,.uat-task input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.uat-tasks{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:14px}
+.uat-task{padding:clamp(13px,2.5vw,22px);border:1px solid var(--line);border-radius:13px;background:var(--bg-2);min-width:0}
+.uat-task-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.uat-task h3{font:750 17px/1.4 var(--sans,system-ui);margin:0 0 8px;color:var(--text)}
+.uat-task p{font:13px/1.65 var(--sans,system-ui);color:var(--muted);margin:6px 0}
+.uat-task .uat-task-success{border-left:3px solid var(--accent);padding:8px 12px;margin:10px 0;background:var(--panel)}
+.uat-task-code{font:750 10px/1.6 var(--mono,monospace);color:var(--muted);padding:4px 8px;border:1px solid var(--line);border-radius:5px}
+.uat-task a{display:inline-flex;align-items:center;margin:8px 0;color:var(--text);font:750 12px/1.6 var(--sans,system-ui);text-decoration:underline;text-underline-offset:4px}
+.uat-task-fieldset{min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;border:none;margin:14px 0 0;padding:0}
+.uat-task-fieldset legend{font:700 12px/1.7 var(--sans);color:var(--text);padding:0 0 7px}
+.uat-task-fieldset label{display:grid;gap:6px;color:var(--muted);font:11px/1.5 var(--sans)}
+.uat-task-fieldset select,.uat-task-fieldset input{height:44px;max-width:100%;width:100%;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--text);padding:9px;font:13px var(--sans);min-width:0}
+.uat-task-footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:11px;margin-top:12px}
+.uat-task-feedback{font:12px/1.6 var(--sans,system-ui);color:var(--muted)}
+.uat-task-feedback[data-outcome="failed"],.uat-task-feedback[data-outcome="blocked"]{font-weight:750;color:var(--text)}
+.uat-confirm{margin-top:16px;border:1px solid var(--line-2);border-radius:11px;padding:15px;background:var(--bg-2)}
+.uat-confirm[hidden]{display:none!important}
+.uat-confirm p{font:12px/1.7 var(--sans);color:var(--muted)}
+.uat-confirm button{margin:6px 7px 0 0}
+.uat-small{font:11px/1.65 var(--sans);color:var(--muted)}
+.uat-footer{padding:25px 0 38px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid var(--line);font:11px/1.6 var(--sans);color:var(--muted)}
+.uat-footer a{color:var(--text)}
+@media(max-width:780px){.uat-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.uat-task-fieldset{grid-template-columns:1fr}.uat-task-header{flex-direction:column}.uat-actions button,.uat-roles button{flex:1 1 100%}.uat-main{padding-top:25px}}
+@media(max-width:350px){.uat-metrics{grid-template-columns:1fr}}
+@media(forced-colors:active){.uat-card,.uat-task,.uat-metrics>div,.uat-roles button[aria-pressed="true"]{border:1px solid ButtonText}}
+@media(prefers-reduced-motion:reduce){.uat-page *, .uat-page *::before,.uat-page *::after{scroll-behavior:auto!important;transition-duration:0s!important;animation-duration:.01ms!important}}
