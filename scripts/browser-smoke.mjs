@@ -1209,7 +1209,7 @@ async function auditHumanUat(browser){
   assert.equal(await page.locator("#uatObserved").innerText(),"2 / 15");
   assert.equal(await page.locator("#uatPassed").innerText(),"1");
   assert.equal(await page.locator("#uatIssues").innerText(),"1");
-  assert.equal(await page.locator("#uatFriction").innerText(),"2");
+  assert.equal(await page.locator("#uatFriction").innerText(),"1");
   await page.locator('[data-uat-role="operations"]').click();
   assert.equal(await page.locator('[data-uat-id="op-find"] [name="seconds"]').inputValue(),"58");
   const download=page.waitForEvent("download");
