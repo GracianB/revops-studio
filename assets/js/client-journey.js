@@ -1,5 +1,6 @@
 import {analyzeWorkflow} from "./workflow-insights.js";
 import {issueColumn,fieldGuide} from "./workflow-product-kit.js";
+import {buildGuidedOutcome} from "./guided-outcome.js";
 
 // Four real user tasks, all deriving their numbers from the workflow engine.
 // No fake animations, no saved personal data, no remote requests.
@@ -55,6 +56,24 @@ export function createClientJourney({mode,onMode,onChoose,onFix,onDownload,onCon
     $("clientStepTitle").textContent=TITLE[stage];
     $("clientEvidence").hidden=stage==="problem"||!result;
     $("clientChange").hidden=stage!=="finished"||!comparison;
+    const outcome=stage==="finished"&&comparison?
+      buildGuidedOutcome(comparison.before,comparison.after):null;
+    $("clientOutcomeProof").hidden=!outcome;
+    if(outcome){
+      $("clientOutcomeClaim").textContent=outcome.claim;
+      for(const [idx,id] of ["clientOutcomeBlocked","clientOutcomeReview","clientOutcomePrepared"].entries()){
+        const change=outcome.metrics[idx];
+        const sign=change.delta>0?"+":"";
+        $(id).textContent=change.before+" → "+change.after+
+          " ("+sign+change.delta+")";
+        $(id).dataset.trend=change.trend;
+      }
+    }else{
+      $("clientOutcomeClaim").textContent="Todavía no has realizado una corrección.";
+      for(const id of ["clientOutcomeBlocked","clientOutcomeReview","clientOutcomePrepared"]){
+        $(id).textContent="Sin comparar";delete $(id).dataset.trend;
+      }
+    }
     contact.hidden=stage!=="finished";
     secondary.hidden=stage==="problem";
     secondary.textContent=stage==="finished"&&numbers.blockedCount?
