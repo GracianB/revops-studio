@@ -7,8 +7,8 @@ const root=resolve(new URL("../",import.meta.url).pathname);
 const read=(path)=>readFileSync(path,"utf8");
 test("UX audit: all five public pages and local destinations are structurally valid",()=>{
  const first=auditV100UX(root),second=auditV100UX(root);
- assert.equal(first.pagesReviewed,5);
- assert.equal(UX_PUBLIC_PAGES.length,5);
+ assert.equal(first.pagesReviewed,6);
+ assert.equal(UX_PUBLIC_PAGES.length,6);
  assert.equal(first.technicalPass,true,first.reportedProblems.join("; "));
  assert.equal(first.reportedProblems.length,0);
  assert.ok(first.localLinksReviewed>10);
