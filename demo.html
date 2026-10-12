@@ -65,6 +65,16 @@
           <div><strong id="clientPrepared">0</strong><span>Acciones que podrían prepararse</span></div>
         </div>
         <p class="workbench-client-change" id="clientChange" hidden role="status" aria-live="polite"></p>
+        <section class="workbench-guided-proof" id="clientOutcomeProof" hidden aria-labelledby="clientOutcomeHeading">
+          <h4 id="clientOutcomeHeading">Lo que cambió de verdad en este ejemplo</h4>
+          <p id="clientOutcomeClaim" role="status" aria-live="polite">Todavía no has realizado una corrección.</p>
+          <div class="workbench-guided-comparison" role="group" aria-label="Antes y después de la corrección">
+            <div><strong>Bloqueados</strong><span id="clientOutcomeBlocked">Sin comparar</span></div>
+            <div><strong>Revisión pendiente</strong><span id="clientOutcomeReview">Sin comparar</span></div>
+            <div><strong>Acciones preparables</strong><span id="clientOutcomePrepared">Sin comparar</span></div>
+          </div>
+          <p class="workbench-guided-caveat">Calculado sobre esta muestra ficticia. No implica ahorro demostrado, conexión a sistemas ni aprobaciones reales.</p>
+        </section>
       </div>
       <div class="workbench-client-buttons">
         <button type="button" id="clientPrimaryAction" class="btn btn-primary">Ver qué pasa con estos pedidos ↗</button>
