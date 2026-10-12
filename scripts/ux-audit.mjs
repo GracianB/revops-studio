@@ -5,7 +5,7 @@ import {resolve,join} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 
 export const UX_PUBLIC_PAGES=Object.freeze([
- "index.html","demo.html","laboratorio.html","privacidad.html","gracias.html","evaluacion.html,"revision.html"
+ "index.html","demo.html","laboratorio.html","privacidad.html","gracias.html","evaluacion.html","revision.html"
 ]);
 const rootPath=resolve(fileURLToPath(new URL("../",import.meta.url)));
 const detailBlocks=["pilotUXToggle","pilotUXClose","pilotUXStatus",
