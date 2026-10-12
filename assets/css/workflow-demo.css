@@ -1050,3 +1050,18 @@ body[data-experience="simple"] .workbench-p85{display:none!important}
  .pilot-ux-toolbar{padding:13px}
 }
 @media(forced-colors:active){.pilot-ux-toolbar,.pilot-ux-more{border:1px solid ButtonText}}
+
+/* PR102 · Readable, data-derived proof, never a decorative ROI percentage. */
+.workbench-guided-proof{margin-top:17px;padding:clamp(13px,2vw,20px);background:var(--bg-2);border:1px solid var(--line-2);border-radius:15px;min-width:0}
+.workbench-guided-proof[hidden]{display:none!important}
+.workbench-guided-proof h4{margin:0;font:750 clamp(17px,2vw,22px)/1.3 var(--display);color:var(--text)}
+#clientOutcomeClaim{margin:10px 0 12px;font:650 13px/1.7 var(--sans);color:var(--text)}
+.workbench-guided-comparison{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.workbench-guided-comparison>div{display:grid;gap:7px;min-width:0;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.workbench-guided-comparison strong{font:700 11px/1.5 var(--sans);color:var(--muted)}
+.workbench-guided-comparison span{font:750 clamp(13px,1.9vw,18px)/1.5 var(--mono);color:var(--text);overflow-wrap:anywhere}
+.workbench-guided-comparison span[data-trend="better"]{border-inline-start:3px solid var(--ok);padding-inline-start:9px}
+.workbench-guided-comparison span[data-trend="attention"]{border-inline-start:3px solid var(--accent);padding-inline-start:9px}
+.workbench-guided-caveat{font:11px/1.65 var(--sans);color:var(--muted);margin:11px 0 0}
+@media(max-width:680px){.workbench-guided-comparison{grid-template-columns:minmax(0,1fr)}}
+@media(forced-colors:active){.workbench-guided-comparison>div{border:1px solid ButtonText}}
