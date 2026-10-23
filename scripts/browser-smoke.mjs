@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { readFile, access } from "node:fs/promises";
 import path from "node:path";
 import { chromium, firefox } from "playwright-core";
+import { chromeLaunchSelection } from "./chromium-binary.mjs";
 
 const root = process.cwd();
 const mime = {".html":"text/html", ".js":"text/javascript", ".css":"text/css", ".svg":"image/svg+xml", ".json":"application/json"};
@@ -1651,7 +1652,7 @@ async function auditProductWorkbench(browser) {
 
 try {
   browser=await browserEngine.launch(engineName==="chrome"?
-    {channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]}:
+    {...chromeLaunchSelection(),headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]}:
     {headless:true});
   await auditCommercialCssParity(browser);
   await auditCustomerDiagnostic(browser);
