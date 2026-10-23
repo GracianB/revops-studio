@@ -2,6 +2,7 @@
 // The CI runner is a single synthetic observer, so timings are descriptive rather than release gates.
 import assert from "node:assert/strict";
 import { chromium } from "playwright-core";
+import { chromeLaunchSelection } from "./chromium-binary.mjs";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -40,7 +41,7 @@ const report={
 mkdirSync(output,{recursive:true});
 let browser;
 try{
-  browser=await chromium.launch({channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
+  browser=await chromium.launch({...chromeLaunchSelection(),headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
   const request=await browser.newContext({ignoreHTTPSErrors:false});
   try{
     // Pages deploy is asynchronous after a push; wait until its CDN serves the checked-out assets.
