@@ -1,5 +1,7 @@
 # PR73 · Data Quality Cockpit
 
+> **Contexto histórico anterior a V104.** Este documento conserva el diseño y las condiciones de su PR original. Su contenido quedó integrado en la rama principal con `90371736c2636f1807382ddbd077baff9b9a019c`; las menciones a borrador, bloqueo de integración o ausencia de publicación corresponden a aquella etapa. Consulta [Publicación V104](V104-PUBLICACION-SITIO.md) para el alcance vigente. Los límites sobre integraciones reales, datos de clientes y aprobaciones externas siguen vigentes. El despliegue público actual requiere su propia comprobación HTTPS.
+
 **Estado:** desarrollo en borrador, basado en la rama PR72. No fusionar ni desplegar.
 
 ## 12+ comportamientos implementados
