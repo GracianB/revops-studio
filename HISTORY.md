@@ -1,0 +1,864 @@
+# RevOps Studio · Histórico documental de iteraciones V40–PR104
+
+> **Archivo histórico preservado al cierre V104, 23 de octubre de 2026.** Los avisos «NO PUBLICAR», «borrador» y «V40 permanece en main» que aparecen a continuación corresponden al estado **en la fecha de cada PR**, no al estado actual. La [PR #105](https://github.com/GracianB/revops-studio/pull/105) integró después el candidato V104 en `main` (merge `90371736`). La demo está publicada como sitio estático; la autorización de uso empresarial real, CRM/ERP y datos de clientes **no existe**. Véase [README actual](README.md) y [registro de publicación V104](docs/V104-PUBLICACION-SITIO.md).
+
+---
+
+## RevOps PR81 · Planificación operativa supervisada, con dependencias reales (NO PUBLICAR)
+
+Tras las ocho comprobaciones de PR80, **Pilot Planning Studio** transforma los riesgos identificados en una lista determinista de tareas de preparación, gobernanza y ensayo técnico. Incluye roles por función (sin asignar personas), criterios de aceptación concretos, dependencias verificadas mediante un grafo sin ciclos y capacidad configurable de **2 a 5 tareas simultáneas por ola**. Esta capacidad es una herramienta de ordenación, **no horas o fechas inventadas**.
+
+El visitante puede marcar tareas **ensayadas dentro de la simulación**, respetando sus requisitos previos; no puede eliminar un prerrequisito marcado si de él dependen otras tareas ya ensayadas. La actividad final de autorización externa **permanece bloqueada**, incluso cuando todo lo demás esté ensayado. Existen controles para reiniciar, comparar distintos niveles de capacidad, abrir PR80 y exportar TXT/JSON con tareas y recuentos, pero sin CSV, identificadores, correos, notas ni aprobaciones reales.
+
+La consola avanzada se carga solo al abrirla y se limpia al cambiar los datos o pulsar el borrado de PR79. Pruebas unitarias sobre 18 recetas, dependencias, privacidad, restricciones de firma externa y E2E en Chrome y Firefox. Contrato en `docs/PR81-PLAN-PILOTO.md`. PR apilada sobre PR80, borrador, sin fusión ni despliegue.
+
+## RevOps PR80 · Evaluación integrada para un piloto supervisado (NO PUBLICAR)
+
+**Un flujo completo y verificable:** la demo avanzada puede evaluar una muestra local desde el CSV hasta el resultado, la calidad, la trazabilidad PR75 y el análisis de privacidad PR79. Ocho comprobaciones independientes muestran bloqueos de validación, revisión humana, datos sensibles, celdas vacías, propuestas disponibles, conflictos de IDs y ausencia de ejecuciones reales. Cada aviso enlaza a una función existente de corrección, reglas o privacidad.
+
+El visitante puede exportar evidencia TXT o JSON agregada, sin filas, nombres, emails, identificadores ni notas. Una muestra ficticia válida se marca exclusivamente como *apta para ensayo supervisado*, nunca aprobada para producción. El panel es de carga diferida, accesible en móvil y se invalida al cambiar los datos.
+
+Nuevo comando de aceptación: `npm run pr80:check`, ejecutado como paso obligatorio separado en GitHub Actions después de `npm run verify` para conservar el contrato V40. Cruza 3 motores, 18 ejemplos, reglas, calidad, privacidad, escenarios conservadores, PDFs y correcciones, además de pruebas E2E Chrome y Firefox. Documentación: `docs/PR80-EVALUACION-PILOTO.md`.
+
+V40 sigue siendo la rama `main` sin modificar; PR69-PR80 permanecen en borrador, sin fusión ni despliegue. El repositorio GitHub es público aunque estas funciones aún no se hayan publicado.
+
+## RevOps PR79 · Privacidad, seguridad y rendimiento (sin publicación)
+
+**Frontera de datos explícita:** el motor y la importación comparten `validateTextBoundary` y rechazan caracteres invisibles, controles Unicode maliciosos, columnas superiores a 24, celdas superiores a 400 caracteres y cabeceras superiores a 128. Los tres CSV de salida pasan por el mismo `secureCsvCell`: protegen del inicio de fórmulas `= + - @`, equivalentes de anchura completa y prefijos invisibles. Las comillas y delimitadores continúan escapándose correctamente. Los CSV detallados **incluyen los valores de las filas** y la aplicación advierte antes de compartirlos.
+
+**Control de privacidad utilizable:** la demo avanzada muestra un recuento agregado de campos que parecen emails, direcciones externas a dominios de ejemplo, celdas que parecen fórmulas, celdas largas y revisiones pendientes. No devuelve ni registra los valores inspeccionados. Un segundo control permite eliminar intencionalmente las entradas, correcciones, búsquedas y estados temporales, las anotaciones humanas y configuraciones de escenarios e informes. La limpieza de `sessionStorage` se limita a las dos claves de RevOps identificadas; no elimina opciones de otros sitios. Después se cargan ejemplos ficticios. **No puede revocar archivos ya descargados ni vaciar el portapapeles del usuario**.
+
+Se han añadido pruebas adversariales de CSV, Unicode bidireccional, límites, aislamiento de datos, 18 juegos de ejemplo, recursos web de primera parte y ciclos Chrome/Firefox de exportación y limpieza. El módulo nuevo `assets/js/privacy-security.js` no usa red, dependencias, almacenamiento ni telemetría.
+
+Ver contrato y resultados: `docs/PR79-PRIVACIDAD-SEGURIDAD.md`. PR79 draft y apilada sobre PR78, sin fusión ni despliegue.
+
+## RevOps PR78 · Accesibilidad y reflujo, sin publicación
+
+La experiencia avanzada incorpora **navegación de registros exclusivamente por teclado**: flechas arriba/abajo, Inicio y Fin actúan sobre filas actualmente visibles sin modificar datos, mientras Intro/Espacio mantienen la acción nativa. Se incorporan enlaces para saltar al editor o resultados, ayuda de teclado en la propia página, resumen corto para lectores de pantalla, etiquetas de fila que explican estado y motivo, asociaciones entre cada campo problemático y su explicación, errores relacionados con el textarea e indicación `aria-invalid` coherente con el resultado de la validación. Los paneles de reglas, variantes, mapping e informes reciben foco en su título al abrirse; Escape cierra el panel correspondiente devolviendo el foco. El aviso de cambio de escenario atrapa temporalmente Tab y Mayús+Tab entre sus dos decisiones y puede cancelarse con Escape.
+
+La tabla móvil conserva identificación y acciones a ancho de 320 px, con objetivos táctiles de al menos 44 px para controles principales, cabecera menos invasiva a zoom elevado, desbordamientos de texto seguros, estado textual además del color, foco de alto contraste, soporte para colores forzados, `prefers-contrast: more` y movimiento reducido. **Las pruebas automáticas no equivalen a certificar WCAG ni sustituyen una auditoría manual con lectores de pantalla reales**. La CI incorpora pruebas de teclado, foco, reflujo equivalente a 400 % sobre pantalla de 1280 px y barridos axe de modos claro/oscuro.
+
+Código: `assets/js/a11y-workbench.js`, `assets/js/workflow-demo.js`, `assets/css/workflow-demo.css`; pruebas: `tests/a11y-workbench.test.js` y smoke Chrome/Firefox. Detalles: `docs/PR78-ACCESIBILIDAD.md`. PR draft sobre PR77, sin desplegar ni fusionar.
+
+## RevOps PR77 · Informes profesionales con PDF A4 real (NO PUBLICAR)
+
+La demo integra **Reporting Studio**: prepara a petición un informe ejecutivo PDF auténtico (`%PDF-1.4`, catálogo de objetos, referencias cruzadas, fuentes Helvetica/Helvetica-Bold con WinAnsi, páginas A4 numeradas y saltos de página). No se renombra HTML como PDF ni se utilizan proveedores externos. Además ofrece vista PDF en otra pestaña para imprimir con el visor del navegador, resumen TXT y JSON estructurado.
+
+El informe reúne un resumen ejecutivo, indicadores, calidad por columna, evidencia antes/después de la misma muestra, cobertura de reglas de PR75, anotaciones humanas *solo como recuentos*, escenarios PR76 compatibles, fases sugeridas, fuentes y límites. El documento **nunca incorpora filas, IDs, nombres, emails, notas de aprobación ni valores introducidos**: se construye sobre una instantánea de contadores y textos predefinidos, validada antes de codificar o descargar. Las aprobaciones reales y las ejecuciones externas se mantienen en cero. Revisa cualquier informe antes de compartirlo.
+
+Código: `assets/js/executive-pdf.js` y `assets/js/report-console.js`, cargados solo tras abrir el panel; pruebas PDF y navegador: `tests/executive-pdf.test.js`, `scripts/browser-smoke.mjs`; detalles y alcance: `docs/PR77-INFORMES-PDF.md`. Rama apilada sobre PR76, sin cambiar el motor V40 ni el despliegue.
+
+## RevOps PR76 · Scenario Builder (sin fusión ni lanzamiento)
+
+El modo avanzado incorpora un **Scenario Builder** opcional, descargado al abrirlo. Permite ensayar tres variantes *conservadoras* de la política de pedidos, soporte y datos sobre **el mismo CSV**, sin modificar el original: umbral de revisión para pedidos, escalado de prioridad media en soporte y umbral de valores elevados en conciliación. Incluye presets base/prudente/estricto, controles personalizados con límites, resumen antes/después, explicación por grupo de incidencias, protección de históricos, bloques y revisión existente, reversión explícita y plantillas JSON reutilizables sin registros.
+
+**Contrato de seguridad:** solo se permiten nuevas revisiones humanas de filas que el motor original daba por listas. Se preservan todos los bloqueos, revisiones humanas anteriores e históricos, y ningún candidato puede aprobar, desbloquear o ejecutar acciones reales. El TXT de comparación contiene únicamente agregados. La configuración JSON incluye solamente versión, tipo de escenario, un ajuste validado y la marca NOT_EXECUTED. No hay datos sensibles persistidos ni envío externo.
+
+Código: `assets/js/scenario-builder.js`, `assets/js/scenario-console.js`; pruebas: `tests/scenario-builder.test.js`, smoke Chrome/Firefox/320px; contrato: `docs/PR76-ESCENARIOS.md`. Rama apilada sobre PR75, borrador y fuera de `main`.
+
+## RevOps PR75 · Rules & Human Decision Studio (desarrollo sin publicación)
+
+La demo avanzada ofrece una consola de auditoría opcional y de carga diferida. **El motor y la auditoría comparten exactamente el mismo catálogo de reglas ordenadas** (`assets/js/workflow-policy.js`), en vez de mantener explicaciones duplicadas. Cada resultado se acompaña de un identificador estable de regla, precedencia, restricciones adicionales ocultas por reglas prioritarias, recuentos de aplicación y análisis de conflictos por fila. Si el resultado y la regla descrita no coinciden, la consola se niega a presentar una trazabilidad falsa.
+
+La bandeja de revisión humana (`assets/js/human-decision.js`) solo permite anotaciones de prueba en las filas que realmente tengan estado «revisar»: pendiente, en revisión, aprobación simulada o rechazo simulado. Requiere una justificación para aprobar/rechazar en la demo, no finge identidad verificable, y **no cambia el motor ni habilita la cola de acciones**. Toda anotación se borra al cambiar el archivo o escenario. El TXT de auditoría solo contiene reglas predefinidas y totales, nunca filas, IDs, emails o notas. No se ejecuta ni aprueba nada externamente.
+
+Contrato, límites y aceptación: `docs/PR75-DECISIONES.md`. Pruebas: `tests/decision-studio.test.js`, smoke de Chrome/Firefox/móvil y regresión V40. Mantener rama apilada en borrador, no fusionar ni desplegar.
+
+## RevOps PR74 · Mesa de correcciones profesional (sin lanzamiento)
+
+La mesa de trabajo añade **previsualización local del cambio antes de guardarlo**, recálculo real de estados, diferencias por campo, avisos de revisión humana, validaciones del motor existentes y botón inactivo cuando no existen diferencias. `assets/js/correction-workbench.js` proporciona una línea temporal acotada a 20 correcciones: múltiples deshacer/rehacer, salto entre estados, eliminación de futuras correcciones al ramificar e historial sin filas ni identificadores en etiquetas.
+
+La interfaz añade siguiente bloqueo, conservación de modificaciones al intentar navegar, restauración del foco, atajos Ctrl/Cmd+Z e Y fuera de campos editables, presets de filtros, orden y visibilidad de columnas. Las vistas guardadas por acción explícita en `sessionStorage` contienen **solo filtros/orden/densidad y dos opciones booleanas**, nunca registros ni texto de búsqueda; incluyen borrado. En móvil, los registros se leen como fichas con etiquetas, en vez de forzar una tabla desbordada. Los tres escenarios siguen usando el motor local V40 sin conexión a CRM.
+
+Pruebas y aceptación: `tests/correction-workbench.test.js`, los smoke de Chrome/Firefox y `docs/PR74-CORRECCIONES.md`. Esta rama depende de PR73 y permanece en borrador: no fusionar ni desplegar.
+
+## RevOps PR73 · Data Quality Cockpit (desarrollo sin lanzamiento)
+
+La demo añade un panel de análisis de calidad accesible en modo avanzado. El motor puro `assets/js/quality-cockpit.js` calcula campos vacíos, completitud, claves únicas, duplicados exactos, IDs contradictorios, distribución numérica, fechas inválidas, negativos, números inválidos y candidatos a valor atípico con IQR **solo cuando hay al menos cinco observaciones y dispersión suficiente**. Permite abrir la primera fila asociada a cada hallazgo, identifica el bloqueo más frecuente, mantiene la línea base de la ejecución y compara cambios tras corregir, deshacer o rehacer.
+
+La exportación TXT **solo contiene agregados**, sin filas, identificadores, emails ni valores originales. No hay ahorros simulados, ni envío a sistemas reales, ni cifras empresariales atribuidas a clientes. Integridad de celdas no equivale a exactitud, y un atípico no demuestra un error. Las comparaciones requieren mismo escenario y número de registros. Las mejoras y criterios de aceptación están en `docs/PR73-CALIDAD.md`.
+
+## RevOps PR72 · Importación profesional (rama acumulativa, NO PUBLICAR)
+
+La demo `demo.html` ahora valida archivos con el contrato puro `assets/js/import-contract.js` antes de tocar el editor: bytes UTF-8 estrictos (incluido BOM), rechazo de UTF-16/bytes ilegibles, límite de 32 KB/12.000 caracteres/80 filas, detección CSV/TSV, validación de columnas y reportes específicos de duplicados idénticos frente a IDs en conflicto. Importes con separadores regionales ambiguos se rechazan sin adivinar la conversión.
+
+El mapeador presenta un resumen de formato, filas, errores y decisiones; las columnas adicionales **requieren confirmación explícita** antes de descartarse del resultado. Se pueden descargar e importar perfiles JSON con escenario y nombres de columnas, sin filas, IDs de cliente ni valores. Los perfiles inválidos, de otro escenario o con campos repetidos se rechazan y el CSV anterior se conserva hasta que todo haya sido confirmado. La importación sigue siendo local y nunca ejecuta acciones en un CRM.
+
+Pruebas: `tests/import-contract.test.js` y smoke Chrome/Firefox/móvil. Alcance detallado en `docs/PR72-IMPORTACION.md`. No modifica el laboratorio V40 ni fusiona/despliega esta rama.
+
+## RevOps PR71 · Discovery Studio (desarrollo sin lanzamiento)
+
+La portada incorpora ahora un **Discovery Studio opcional** detrás del diagnóstico existente, cargado solo cuando se pulsa «Preparar brief de proyecto». El visitante puede definir perfil, objetivo a medir, prioridad, madurez del proceso, responsable, muestra disponible, dependencia de sistemas, sensibilidad y tres notas editables. El motor puro `assets/js/discovery-engine.js` produce una lectura de viabilidad y riesgos, fases, criterios de aceptación y una propuesta verificable sin prometer ejecución ni ROI.
+
+La salida es un **brief editable** que puede copiarse, descargarse como TXT o JSON y asociarse **voluntariamente** como extracto a la consulta. Si cambian las condiciones después de editar el texto, se avisa de que está desactualizado y se conservan las ediciones hasta regenerar expresamente. Solo el envío voluntario del formulario existente, con consentimiento, transmite el extracto al proveedor; ninguna opción lo envía por sí sola.
+
+Documentación detallada y criterios de aceptación: [PR71 · Discovery Studio](docs/PR71-DISCOVERY-STUDIO.md). Mantener en borrador y sin fusionar/desplegar. **El repositorio sigue siendo público** a pesar de estar en desarrollo.
+
+## RevOps R2 · Evidencia explicable «antes → después» (rama acumulada de desarrollo)
+
+La simulación local `demo.html` ahora presenta una comparación visual a dos columnas entre el **punto de partida real** y los resultados tras corregir un registro. `assets/js/workflow-comparison.js` calcula métricas agregadas, cambios de estado por posición y motivos de reglas reconocidas, sin exportar valores ni identificadores de clientes. En la vista guiada aparece junto al resultado; en herramientas avanzadas permanece visible durante las correcciones.
+
+- **Antes:** primer resultado del conjunto actual, procedente del motor determinista y no de métricas inventadas.
+- **Después:** la misma ejecución repetida sobre las filas modificadas, con propuestas preparadas, bloqueos y revisiones humanas, además de motivos «regla anterior → regla nueva».
+- **Control de cambios:** una corrección conserva el primer punto de partida; deshacer/rehacer recalcula la comparación. Cambiar de ejemplo, importar CSV, mapear columnas o editar el CSV manualmente reinicia ese punto de partida para evitar mezclas de datos.
+- **Salida responsable:** el botón «Descargar comparativa sin filas» genera un TXT exclusivamente agregado. «Preparadas» son propuestas sin ejecución, y las revisiones siguen siendo humanas. Acciones enviadas a sistemas externos: **cero**. No se indica ahorro, causalidad real, ni ROI.
+- **Límites:** se comparan las mismas posiciones del mismo escenario. El motor se niega a presentar comparaciones de escenarios o conjuntos con un número distinto de registros, en vez de fabricar resultados. Tampoco se guarda una historia de 20 cambios.
+
+**R2 se desarrolla encima de R1**, sin modificar el laboratorio V40 ni fusionar a `main`. La entrega es una fase de producto en desarrollo, no un anuncio de lanzamiento; la configuración de visibilidad GitHub permanece pendiente de decisión.
+
+## RevOps R1 · Plan de diagnóstico imprimible (rama de desarrollo, sin lanzamiento)
+
+El diagnóstico existente puede descargar un **plan HTML autónomo y listo para imprimir en PDF**, sin registro ni llamadas a red. El documento genera tres fases concretas (delimitar, piloto y validar/entregar), entradas necesarias, criterios de aceptación, riesgos, preguntas pendientes y una modalidad económica *orientativa*, no un presupuesto. Hay 48 combinaciones válidas de problema, herramienta y alcance.
+
+- El archivo se genera **solo** al pulsar «Descargar plan completo», mediante `assets/js/diagnostic-report.js` cargado dinámicamente; no aumenta las peticiones de la primera visita.
+- No incorpora filas, correos, nombres ni textos del formulario. Solo utiliza tres selecciones de un catálogo fijo. El documento no tiene scripts, enlaces a proveedores, fuentes remotas ni seguimiento.
+- Puede abrirse offline o imprimirse con Ctrl+P → «Guardar como PDF». La descarga no implica enviar una consulta ni aceptar una oferta.
+- El mapa breve que se adjunta voluntariamente a la consulta y el laboratorio V40 siguen sin cambios. No hay CRM conectado, automatización en producción ni resultados empresariales medidos.
+- **No publicado deliberadamente:** esta rama no debe fusionarse ni desplegarse hasta revisar el acceso al repositorio y al GitHub Pages. En GitHub el repositorio sigue figurando como público; no confundir un desarrollo no anunciado con código privado.
+
+### Validación R1
+
+`node --test tests/diagnostic-report.test.js` · `npm run verify` · smoke de Chrome y Firefox (descarga local de informe incluida).
+
+## RevOps Studio · Producto: diagnóstico guiado + web comercial (motor técnico V40)
+
+La portada de RevOps Studio se ha simplificado a cinco preguntas: qué problema resolvemos, qué entregamos, qué experiencia lo respalda, cuánto puede costar y cómo contactar. El laboratorio Control Room conserva el motor V40 por separado en `laboratorio.html`.
+
+### Evolución real del producto · diagnóstico guiado
+
+La web deja de ser solo una presentación: junto a los problemas principales incorpora una herramienta **utilizable por un visitante** en `#diagnostico`. El flujo funciona enteramente en el navegador, sin IA generativa, red, autenticación ni almacenamiento del diagnóstico hasta que el visitante decide adjuntarlo a una consulta.
+
+1. Selecciona qué le frena: tareas repetidas, datos sin cuadrar, conocimiento disperso o reglas de negocio complejas.
+2. Indica herramientas y alcance (una persona/proceso, equipo, varios departamentos).
+3. Obtiene un **mapa contextual**: especialidad recomendada, un primer paso verificable, entregable inicial y criterio para comprobarlo. Se sugiere *Quick win* o *Sistema a medida* como orientación, no presupuesto automático.
+4. Puede copiar el mapa, reiniciar o adjuntarlo a su consulta. La integración rellena únicamente campos vacíos y respeta servicio y descripción redactados. El contexto es visible y se puede quitar; cambiar el diagnóstico invalida el resumen previamente adjuntado.
+5. Si voluntariamente envía el formulario, el mapa se incluye en FormSubmit, la alternativa de correo y el resumen de confirmación. Las opciones no se envían automáticamente, no se almacenan como analítica y no se envía nada sin consentimiento.
+
+El motor de decisión es puro, inspeccionable y probado en `assets/js/diagnostic.js`. No se altera el laboratorio V40, ni se simulan métricas de clientes.
+
+### Producto en acción · simulador de procesos
+
+[**Abrir la demo real**](https://gracianb.github.io/revops-studio/demo.html) | [Diagnóstico guiado](https://gracianb.github.io/revops-studio/#diagnostico)
+
+La web tiene ahora una mesa de trabajo **interactiva y ejecutable**, separada del laboratorio V40 y de la portada comercial. A diferencia de una animación, las entradas son editables y el navegador aplica reglas reales, calcula estados, presenta una cola de revisión y exporta el resultado.
+
+- **Pedidos → CRM:** validación de identificador, cliente, email, importe y estado; detección de pedidos repetidos; estados listos, bloqueados o para revisión humana.
+- **Soporte:** tickets duplicados, urgencias, clasificación básica por prioridad, cola e historial. No se asegura haber creado incidencias en Zendesk.
+- **Datos y reporting:** reconciliación de registros, importes negativos, fechas inválidas y duplicados antes de preparar un dataset.
+- **Entrada CSV local:** delimitador coma o punto y coma, comillas escapadas y 80 filas máximo. El usuario puede editar ejemplos y probar errores. Salida CSV con protección básica contra fórmulas de hojas de cálculo.
+- **Resultados explicables:** 4 contadores de flujo, auditoría individual de decisiones, exportación local y resumen copiable. No se usan promesas de ahorro ni llamadas reales a APIs/CRM/IA.
+- **Continuidad comercial:** al pulsar *Consultar un proceso parecido* se pasa **solo** el nombre de la simulación y sus contadores al formulario mediante sessionStorage de la misma pestaña. Nunca viajan las filas, y la consulta sigue requiriendo consentimiento y envío explícito.
+- **Diseño:** página `demo.html` con `assets/js/workflow-engine.js` (reglas puras), `workflow-demo.js` (interfaz segura mediante textContent) y `assets/css/workflow-demo.css`. No hay dependencias externas añadidas ni importación del motor V40.
+
+**Importante:** se trata de una demostración local de reglas, no de una integración en producción. No pegues datos personales ni confidenciales. Todos los registros introducidos permanecen en la pestaña; si exportas el CSV, se guarda en el dispositivo. Los detalles de una integración real requieren alcance, permisos y revisión humana.
+
+### Producto útil · importación, corrección y revisión local
+
+La mesa de procesos `demo.html` ahora permite trabajar con **CSV propios, siempre anonimizados**; ya no exige corregir los registros editando todo el texto.
+
+- El botón **Importar CSV** lee archivos `.csv` o `.txt` localmente en el navegador (máx. 32 KB de archivo y 12.000 caracteres de contenido); valida las cabeceras del escenario antes de reemplazar los datos actuales. No hay peticiones para cargar archivos, ni almacenamiento persistente.
+- La tabla ofrece **Editar** en cada fila, incluso en duplicados. El formulario identifica los campos correspondientes, permite corregir ID, email, importe, fechas o estados, y ejecuta de nuevo todas las reglas tras guardar. El botón **Deshacer corrección** recupera los datos anteriores de esa edición sin persistirlos.
+- Filtros interactivos muestran **todos, bloqueados, a revisar o listos**. El filtro se mantiene al corregir y actualizar.
+- **Exportar cola lista** genera otro CSV, distinto del informe completo. Solo incluye las acciones listas para proponer, **excluye los históricos y cualquier registro bloqueado o pendiente de decisión**. La columna “ejecución” indica expresamente que está *preparado, NO ejecutado*. No se conecta con CRM, ERP ni Zendesk.
+- Los CSV exportados neutralizan los prefijos habituales de fórmulas de hojas de cálculo, incluidos los valores introducidos por el visitante. Se recomienda seguir importando únicamente conjuntos anonimizados.
+
+El motor puro `assets/js/workflow-engine.js` centraliza los cambios de fila y la separación de la cola. `workflow-demo.js` usa `textContent` y elementos DOM para mostrar los datos, sin interpretarlos como HTML. El laboratorio V40 no se modifica.
+
+### Producto · mapeo guiado de columnas CSV
+
+La demo acepta ahora importaciones locales aunque los encabezados de la hoja no coincidan con los nombres internos del escenario. En vez de rechazar sin contexto un archivo `Order ID;Company;Correo;Amount;Status`, muestra una **relación editable origen → destino**. No hay IA que adivine datos: las sugerencias se basan solo en nombres conocidos y son siempre revisables.
+
+- Una importación con nombres originales exactos conserva el acceso rápido. Las cabeceras diferentes, columnas extra o propuestas semánticas abren un panel de correspondencias antes de sustituir los datos.
+- El panel enseña hasta tres registros del archivo original, el total de filas, qué columnas sobrantes se ignorarán y qué campos faltan. Nunca transforma importes, identificadores con ceros a la izquierda ni datos no seleccionados sin consentimiento.
+- El visitante puede cambiar las sugerencias mediante controles accesibles. La adaptación queda **bloqueada** cuando falta una columna obligatoria o dos campos intentan usar la misma columna de origen. Cerrar el panel conserva intacto el CSV anterior.
+- También se puede abrir la función con **Relacionar columnas de los datos pegados**. Después de confirmar, se ejecutan las mismas reglas de validación, edición individual, deshacer, filtros y exportación de cola que existían.
+- No hay upload real, cookies adicionales, seguimiento de los nombres de columnas ni almacenamiento de filas en la URL. Sigue siendo una demo local con máximo 80 registros y 12.000 caracteres.
+
+Patrones consultados para esta mejora: [CSV import column mapping UI](https://appmaster.io/blog/csv-import-column-mapping-ui), [guías de mensajes de error de Nielsen Norman Group](https://www.nngroup.com/articles/errors-forms-design-guidelines/) y [riesgos de CSV según OWASP](https://owasp.org/www-community/attacks/CSV_Injection). La neutralización de fórmulas del CSV se trata como mitigación parcial; no se promete seguridad universal en todas las aplicaciones de hojas de cálculo.
+
+### Mesa de decisiones · leer, encontrar, corregir y demostrar un cambio
+
+Antes de añadir reglas personalizadas, la demostración comercial mejora su utilidad en cuatro situaciones fundamentales de un equipo de operaciones:
+
+1. **Empezar sin conocer la herramienta:** una guía breve propone elegir un proceso, revisar resultados y corregir una incidencia. El botón de ejemplo abre directamente el primer registro bloqueado.
+2. **Entender el resultado:** el panel «Qué nos dicen estos registros» diferencia las acciones que sí se podrían preparar, los históricos que nunca deben reabrirse, los casos para revisión humana y los bloqueos. Incluye proporción de registros accionables, distribución visual y próximos pasos clicables. Esta cifra **no representa ahorro ni rendimiento**.
+3. **Localizar problemas rápidamente:** búsqueda por identificador, motivo o acción, combinable con filtros de estado. Si no hay coincidencias, la interfaz lo explica y permite restablecer filtros.
+4. **Verificar el efecto de una corrección:** tras editar una fila aparece una comparación explícita de los contadores antes/después; deshacer recupera el estado anterior. Las cifras se recalculan con el motor real, nunca son una animación inventada.
+5. **Llevarse un resultado útil:** descarga un informe `.txt` con totales, tipos de bloqueo/revisión y recomendaciones. **No incluye filas de origen, identificadores, emails o nombres de clientes**. Los CSV detallados existentes siguen disponibles por separado, sin ejecutarse sobre CRM/ERP.
+
+La lógica de interpretación es independiente y determinista en `assets/js/workflow-insights.js`. Los textos son orientaciones de demostración, no un diagnóstico privado ni una auditoría de una empresa.
+
+Referencias de diseño: [Nielsen Norman Group, cuatro tareas fundamentales en tablas de datos](https://www.nngroup.com/articles/data-tables/) y [NN/g, diseño de estados vacíos](https://www.nngroup.com/articles/empty-state-interface-design/). Las precauciones de exportación se contrastaron con [OWASP CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection). Ningún escape CSV se presenta como universalmente seguro para Excel u otras hojas de cálculo.
+
+### Refinamiento de producto: biblioteca de escenarios y guía de reparación
+
+Antes de construir reglas nuevas, la demo se ha convertido en una herramienta de exploración más útil.
+
+- **18 juegos de datos ficticios ejecutables**: 6 recetas por cada uno de los tres procesos (mixto, correctos, duplicados, vacíos, revisión humana y casos límite). Elegir una receta no modifica el trabajo actual hasta pulsar *Cargar ejemplo*.
+- **Plantilla CSV local**: descarga un fichero con las cabeceras correctas y una fila ficticia, sin reutilizar registros importados.
+- **Vista de integridad**: porcentaje de celdas con contenido y distribución por columna. No representa exactitud, productividad ni ahorro de dinero.
+- **Ordenación estable** de la tabla: origen, prioridad de bloqueos, identificador y estado. Editar después de ordenar sigue corrigiendo la fila original.
+- **Editor explicativo**: 13 campos con etiqueta en lenguaje de negocio, ejemplo, instrucciones y señalamiento del campo asociado al error.
+- **Deshacer y rehacer** una corrección reciente con el motor real y sin recargar.
+- **Filtros cuantificados**, atajo Ctrl/⌘ + Intro para procesar, Escape para cerrar paneles secundarios, foco en los errores de ejecución.
+- **Compartir demo sin compartir datos**: el enlace contiene solo el escenario, nunca el CSV importado.
+- **Límite de honestidad**: estos ejemplos son exclusivamente ficticios y no conectan aplicaciones empresariales reales.
+
+La documentación de alcance [190 mejoras verificables](docs/PRODUCTO-190-MEJORAS.md) distingue punto por punto lo implementado de lo pendiente; **no se presenta ese catálogo como 190 funciones entregadas**. Lo ya existente se identifica como tal y los nuevos cambios están sustentados por archivos de código y pruebas.
+
+### Seguridad de trabajo · CSV de hojas de cálculo y exportación visible
+
+- **Excel y Google Sheets:** el lector acepta separación mediante tabulaciones (TSV) además de coma y punto y coma. Los campos entrecomillados que contienen tabulaciones se respetan. Admite `.tsv`, `.csv` y `.txt`, con límites de tamaño y cantidad.
+- **Protección al cambiar de proceso:** tras modificar, corregir o importar datos, cambiar de escenario no los descarta silenciosamente. La interfaz pide confirmación y permite conservar el trabajo. Restaurar el ejemplo actual sigue siendo una acción explícita.
+- **Exportar exactamente la vista:** con filtros, búsqueda u ordenación, el nuevo botón descarga solo las filas visibles en ese orden, usando el mismo escape para hojas de cálculo. Si no hay coincidencias, queda deshabilitado.
+- **Buscar por datos de fila:** además de identificador, motivo y acción, la búsqueda local encuentra valores introducidos en columnas. No se transmite ni se incluye en URL.
+- **Tabla revisable:** encabezados fijos en tablas largas, filas legibles y aviso de privacidad en exportaciones con registros detallados.
+
+No se añade sincronización, persistencia ni ejecución real en CRM. Estas medidas no garantizan que un CSV sea seguro en todas las aplicaciones.
+
+### Primera visita · recorrido guiado para clientes no técnicos
+
+El inicio de `demo.html` ya no obliga a entender archivos CSV, «cola de salida» o reglas de validación. Quien llega desde la portada sin parámetros entra en **modo sencillo**, con un recorrido real de cuatro pasos:
+
+1. Elegir un problema cotidiano («pedidos duplicados», «incidencias acumuladas» o «datos que no cuadran») en vez de una categoría técnica.
+2. Ver un resumen con contadores calculados por el motor real, distinguiendo bloqueos, revisión humana y acciones preparadas.
+3. Pulsar «Quiero corregir uno»: se abre directamente la fila problemática, marca el campo conflictivo y da instrucciones en lenguaje de negocio.
+4. Ver cómo han cambiado los contadores al guardar y descargar un informe agregado, sin IDs, correos ni filas. Si desea contratar, puede llevar solo el resumen al formulario, sin envío automático.
+
+**Modo avanzado siempre disponible:** botón visible para revelar toda la mesa original con 18 ejemplos, importaciones, mapeo de columnas, filtros, informes y exportaciones. El cambio de vista preserva la simulación. Las URL `?scenario=orders|support|data` continúan abriendo el modo completo para no romper enlaces existentes. `?scenario=orders&view=simple` abre la vista sencilla.
+
+Esta es una mejora fundada en un **caso de uso hipotético** y verificada con pruebas de navegador, no un estudio de usabilidad externo. Véase el [caso de uso completo](docs/CASO-USO-PRIMERA-VISITA.md), con puntos de abandono, solución y criterios de aceptación. Se inspira en [Nielsen Norman Group, Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/) y el [patrón de inicio de GOV.UK](https://design-system.service.gov.uk/patterns/start-using-a-service/).
+
+### Envío de consultas (activación verificada)
+
+La web está alojada en GitHub Pages y no tiene servidor de formularios propio. El formulario usa la API AJAX de **FormSubmit** (`https://formsubmit.co/ajax/gracianbaenagonzalez@gmail.com`) con validación nativa, campo antispam y consentimiento explícito. Los datos enviados son nombre, email, servicio, herramientas opcionales, horas opcionales y descripción.
+
+**Recepción verificada el 8 de octubre de 2026:** FormSubmit activado y prueba enviada desde la web publicada recibida en el Gmail del propietario. Referencia de prueba: `REVOPS-CONTACT-49-20261008`, recibida a las 08:03 UTC. Esta prueba verifica ese envío; no garantiza la entrega de todos los mensajes futuros. Una respuesta HTTP acredita aceptación por el proveedor, no entrega individual al buzón.
+
+Una respuesta que solicita activación se trata como pendiente incluso si incluye `success: true`: no abre la página de confirmación. Si el envío falla, la consulta se recupera al recargar la misma pestaña cuando el almacenamiento de sesión está disponible; el consentimiento debe marcarse de nuevo. El correo alternativo conserva los datos introducidos. Las pruebas de navegador simulan el proveedor y no envían consultas reales.
+
+Si el proveedor falla, el formulario no borra los datos: muestra una vía alternativa de correo `mailto:` precargada. También hay reserva de conversación a través del calendario existente. No se simulan contactos recibidos.
+
+**V42 · Del coste estimado a una consulta real:** la calculadora permite trasladar las horas por persona, el número de personas, el coste horario y el cálculo orientativo de 52 semanas al formulario, sin enviarlo automáticamente. El contexto es visible y se puede quitar; si cambian las horas del formulario, la estimación anterior se elimina para no enviarla desactualizada. Una confirmación de FormSubmit solo se muestra si la sesión actual registró previamente una respuesta de aceptación. Una URL de gracias compartida no certifica el envío.
+
+La privacidad se explica en `privacidad.html`. Revisar cumplimiento final antes de ofrecer el servicio públicamente a terceros: alojamiento externo, tratamiento por FormSubmit y plazos de conservación.
+
+### V43 · Evidencia profesional conectada con el contacto
+
+Los tres casos comerciales se contrastaron con la documentación de `GracianB/professional-deck` en `case.js`. Cada tarjeta explica reto, solución, evidencia accesible y límites; el desglose de decisiones se consulta con un `<details>` nativo accesible.
+
+- **Bodytone**: Help Center público verificable; la operación interna y los informes no se publican.
+- **Calculadora de gimnasios**: 200+ reglas coordinan modelos, espacio, transporte y propuesta; las tarifas, fórmulas y datos siguen privados.
+- **Outreach GenAI**: segmentación, borradores, revisión humana y seguimiento; no se muestran contactos ni métricas inventadas.
+
+Las tres tarjetas ofrecen una vía `Tengo un problema parecido` hacia el formulario: adjunta una *referencia opcional*, visible y eliminable, sin modificar el texto del visitante ni su elección de servicio. La referencia acompaña al correo alternativo, a la consulta consentida y a la recuperación de un envío fallido. No se envían consultas reales desde CI.
+
+### V44 · Cierre de navegación, filtros y responsive
+
+- Los cinco filtros de soluciones muestran únicamente las tarjetas correctas. El atributo `hidden` se respeta en CSS incluso con tarjetas `display:flex`, y el resultado anuncia el número visible mediante una región de estado accesible.
+- El menú móvil vuelve a enfocar el botón al cerrarse con Escape; se cierra al pulsar fuera o al ampliar la ventana, evitando scroll bloqueado. La lista permanece desplazable en pantallas de poca altura.
+- En tablet, el caso público Bodytone ocupa el ancho completo y los dos casos privados se presentan en la segunda fila. En móvil se apilan, se afinan márgenes y botones, y los enlaces se pueden leer sin scroll horizontal.
+- Smoke de Chrome y Firefox comprueba filtros 6/3/2/3/1, Escape/foco, responsive a 320, 390 y 850 px, y transición a 1024 px. Los formularios usan respuestas simuladas: las pruebas no envían mensajes reales.
+
+### V45 · Reducción de carga comercial sin modificar el laboratorio
+
+- La hoja original `assets/css/main.css` (~98,9 KB sin comprimir) se mantiene intacta y continúa sirviendo el laboratorio V40.
+- La portada, `privacidad.html` y `gracias.html` cargan `assets/css/commercial.css` (~52,7 KB sin comprimir): se excluyen exclusivamente ~46,3 KB del bloque de estilos antiguos y exclusivos del laboratorio. Reducción de ~47 % de bytes CSS de origen en estas páginas; no equivale a un porcentaje medido de mejora en tiempo de carga.
+- `node scripts/build-commercial-css.mjs` regenera el fichero desde `main.css`; `npm run css:check` impide publicar si la versión derivada está desincronizada. `npm run verify` incluye ese control.
+- El script externo opcional de analítica utiliza `async` y `fetchpriority="low"`, sin bloquear `DOMContentLoaded` como un script diferido. La recepción de contactos y el motor técnico no cambian.
+- El smoke de Chrome y Firefox compara estilo computado y dimensiones de la hoja antigua versus la nueva en portada de escritorio/móvil, página de privacidad y confirmación, modos claro/oscuro. El test de Node impone presupuestos de 55 KB para CSS comercial y 18,5 KB para JavaScript comercial. Los presupuestos son de *payload local sin comprimir*, no métricas de red del visitante.
+
+### V46 · Presupuestos de carga simulada
+
+El CI mide la portada en **Chrome real con caché deshabilitada y red/CPU simuladas**, servida desde un HTTP local reproducible. Se prueban 1366 px con perfil 4G (100 ms de latencia, ~1,68 Mbit/s) y 390 px con perfil 3G (250 ms, ~0,76 Mbit/s, CPU ×4). Recursos externos como la analítica se sustituyen en la prueba para aislar exclusivamente los activos propios; no se envían correos ni se contactan servicios de terceros.
+
+- **Presupuesto duro:** como máximo 130 000 bytes de transferencia *first-party* y 9 solicitudes, sin el CSS del laboratorio, `app.js` ni `laboratorio.html` en la portada. Se comprueba el HTML, hoja comercial, tema, `site.js` y su módulo de respuesta.
+- **Renderizado:** medición de First Contentful Paint (FCP), Largest Contentful Paint (LCP, cuando el navegador lo proporciona) y Cumulative Layout Shift (CLS). Los umbrales son conservadores para reducir ruido del runner y detectar regresiones severas, no reflejan una certificación Core Web Vitals para visitantes.
+- **Informe:** `scripts/performance-budget.mjs` crea `.ci-artifacts/performance-v46.json`. El workflow de validación lo adjunta como artefacto descargable durante 30 días, con bytes, solicitudes, perfiles y valores capturados.
+- **Reproducción:** `npm run perf:check` después de instalar `playwright-core@1.58.2` y tener Chrome disponible. `npm run verify` conserva las pruebas de unidad, el chequeo CSS y el motor V40.
+- **Límite de evidencia:** la simulación mide una página servida localmente, sin CDN externo, latencia de Internet real, ni condiciones de hardware auténticas. Para comparar el rendimiento experimentado por usuarios reales hacen falta métricas de campo como CrUX / RUM.
+
+### V47 · Auditoría HTTPS de la web publicada
+
+El informe de V46 era sintético y de red local, por lo que no se puede llamar «rendimiento de la web real». V47 incorpora `scripts/audit-live.mjs` y `.github/workflows/live-audit.yml` para analizar la URL publicada `https://gracianb.github.io/revops-studio/` **desde Chrome en un runner de GitHub**, sin convertir esa visita en una métrica de usuarios reales.
+
+- Se comprueba por SHA-256 que los archivos **CSS y JS publicados** coinciden con `main`, y que la página devuelve HTTP 200, presenta el contenido comercial y no carga el motor V40.
+- Hay **tres navegaciones en frío** por tamaño (1366 px y 390 px), con caché desactivada, sin alterar el ancho de banda ni la CPU del runner. Se miden TTFB, FCP, LCP y CLS cuando están disponibles, más bytes de red transferidos y solicitudes propias o de terceros, separadas.
+- El informe JSON guarda los valores individuales y su **mediana**, además de avisos de terceros o saltos de diseño. Las capturas de escritorio y móvil se adjuntan como evidencia visual.
+- La auditoría se inicia con cada push a `main`, pero **espera activamente** a que los hashes de los archivos CSS/JS publicados coincidan con el checkout (hasta unos 4 minutos), de modo que no mide inadvertidamente la versión anterior mientras Pages despliega. También se puede ejecutar manualmente desde Actions y se repite semanalmente los lunes. Los informes permanecen 30 días como artefactos de Actions.
+- **Política de CI:** la falta de CSS/JS publicado, una respuesta rota, un error JS propio o la ausencia de contenido comercial son fallos. Los **tiempos** y el comportamiento de proveedores externos son observaciones, no motivos para bloquear un despliegue por fluctuaciones de Internet.
+- No se envía ningún formulario, no se prueban datos personales y no se envían datos de empresas. Las cifras de Chrome en CI **no son datos de CrUX, RUM, Lighthouse ni usuarios reales**. Sin cobertura de campo, no se afirma que cumpla CWV reales.
+
+Para repetir: `npm run perf:live` tras instalar `playwright-core@1.58.2` y disponer de Chrome. Para simulaciones locales reproducibles continúa `npm run perf:check` (V46).
+
+### Diseño y QA
+- Tema claro y oscuro con preferencia del sistema, botón accesible y persistencia opcional.
+- Tres ámbitos de servicio; seis ejemplos reales de entregables; tres proyectos documentados como experiencia profesional, no testimonios inventados.
+- Precios desde 900 €, 4.000 € y 600 €/mes, orientativos y sujetos a presupuesto.
+- CI valida estructura, CSS, JS, navegación, formularios sin envío externo y laboratorio.
+- El motor V40 y sus contratos internos no se versionan de nuevo solo por actualizar la landing comercial.
+
+---
+
+# RevOps Studio
+
+**Servicios de automatización, datos y software a medida · con un laboratorio técnico abierto para demostrar cómo se construyen los sistemas.**
+
+[![Live](https://img.shields.io/badge/LIVE-DAA428?style=for-the-badge)](https://gracianb.github.io/revops-studio/)
+[![Tests](https://img.shields.io/badge/TESTS-300%2B-7AF3FF?style=for-the-badge)](https://github.com/GracianB/revops-studio/actions)
+[![JavaScript](https://img.shields.io/badge/JavaScript-181717?style=for-the-badge&logo=javascript)](https://github.com/GracianB/revops-studio)
+
+## Qué se contrata y qué se demuestra
+
+La home está dedicada a los servicios. `laboratorio.html` aloja el motor V40 completo sin obligar a los clientes a cargarlo. `site.js` controla únicamente navegación, filtros, calculadora orientativa y preparación local del brief.
+
+**Casos enlazados y alcance de la evidencia:** Bodytone Support OS es un caso público, con Help Center consultable. La calculadora comercial de 200+ reglas y Outreach GenAI son casos documentados cuyo núcleo privado y métricas internas no se publican. No son productos SaaS de RevOps Studio ni testimonios de clientes externos del estudio.
+
+**Conversión:** desde los paquetes se puede elegir tipo de servicio para rellenar el brief. Si sessionStorage está bloqueado, el formulario ofrece un correo preparado sin perder el texto en una navegación fallida. Ningún formulario envía un email automáticamente.
+
+## Servicios para empresas
+
+RevOps Studio es el escaparate de servicios de Gracián Baena: **automatización de procesos, BI/datos y aplicaciones internas a medida** para pymes y equipos operativos.
+
+La conversación comercial comienza con un problema, no con una tecnología:
+- Trabajo manual duplicado entre CRM, hojas y correo → automatización o integración con control de errores.
+- Informes dispersos o incoherentes → orden de datos, definiciones y dashboard útil.
+- Conocimiento y procesos dependientes de personas → herramienta interna, documentación y asistentes acotados.
+
+**Modalidades orientativas:** Quick win desde 900 €, sistema desde 4.000 € y continuidad opcional desde 600 €/mes. Alcance y precio se confirman tras diagnóstico. El formulario prepara un correo local que el visitante revisa y envía manualmente; no hay un backend que reciba el brief.
+
+**El laboratorio V40 no es el producto que se comercializa.** Es una demo local con datos sintéticos, scoring, previsión y política de aprobación. No ejecuta acciones sobre CRM ni demuestra ahorros económicos reales. Se ha trasladado al final de la página y se inicializa solo cuando el visitante lo abre para priorizar el rendimiento de la landing comercial.
+
+---
+
+## Laboratorio técnico y arquitectura
+
+RevOps Studio is the public technical proof behind a broader operating idea:
+
+> **Customer data should not only describe the pipeline. It should help an operator decide what happens next.**
+
+It is intentionally inspectable. The public application runs locally in the browser, uses deterministic logic, does not require a CRM, database or external API, and keeps consequential execution behind a human boundary.
+
+**Live:** https://gracianb.github.io/revops-studio/  
+**Source:** https://github.com/GracianB/revops-studio
+
+---
+
+## The decision loop
+
+```text
+Records
+   ↓
+Data-quality validation
+   ↓
+Weighted scoring
+   ↓
+Classification
+   ↓
+Commercial context
+   ↓
+Recommended action
+   ↓
+Human approval gate
+   ↓
+Decision Trace / audit
+```
+
+The important part is not the score.
+
+The important part is the contract between **data → reasoning → recommendation → human decision**.
+
+---
+
+## What the system demonstrates
+
+### Data quality
+
+Records are validated before scoring.
+
+Invalid or incomplete records can fail closed into a blocked state instead of receiving a misleading score.
+
+### Deterministic scoring
+
+Signals contribute explicitly to the final score.
+
+The active model exposes score contributions, thresholds and deltas so an operator can understand **why** a record moved.
+
+### Classification
+
+The engine turns score and context into an operational state rather than leaving the user with another dashboard.
+
+### Forecasting
+
+Forecast scenarios aggregate exact expected value before rounding, allowing baseline and stressed cases to be compared consistently.
+
+### Segmentation & account health
+
+The intelligence layer exposes owner, segment, cohort and account-health signals to identify concentration, stale context, material risk and opportunities.
+
+### Revenue leakage
+
+The system surfaces operational exposure such as stale pipeline, risk concentration and other rule-based leakage signals.
+
+### Executive priorities
+
+The control room turns model output into a ranked decision surface instead of a collection of disconnected charts.
+
+### Decision Trace
+
+Each run can expose the chain:
+
+```text
+input
+ → quality
+ → score
+ → commercial context
+ → risk
+ → proposal
+ → approval boundary
+ → execution boundary
+```
+
+This makes the model inspectable instead of magical.
+
+### V15 · Operational Workflow Control
+
+V15 extends the Decision Operating System from **traceable decisions** to a **traceable operating plan**.
+
+The workflow layer creates a deterministic plan from the current run:
+
+```text
+decision trace
+   ↓
+operational plan
+   ↓
+approval state
+   ↓
+execution envelope
+   ↓
+adapter boundary
+```
+
+Every planned action exposes rank, owner lane, SLA, proposal, approval state and execution state. The public adapter is intentionally disconnected, so the plan can be simulated without pretending to write to a CRM.
+
+V15 also adds a privacy-preserving run artifact. It contains run identity, dataset fingerprint, configuration, aggregate intelligence and decision outcomes, but does not export the raw records.
+
+A replay check can verify that an artifact belongs to the dataset currently loaded in the browser.
+---
+
+## V22 · Policy integrity
+
+V22 extends the controlled recalibration layer with a stricter policy contract:
+
+```text
+V20 recommendation
+   ↓
+V21 proposal
+   ↓
+V22 replay binding
+   ↓
+explicit approval
+   ↓
+versioned policy instance
+   ↓
+bounded effective forecast
+```
+
+The approved policy stays within an absolute ±0.15 multiplier from the base policy. The proposal carries a deterministic replay fingerprint and approval verifies that fingerprint together with the replay record count, multiplier and Brier improvement.
+
+This is a tamper-evident consistency layer for the local browser workflow, not a cryptographic trust boundary.
+
+## V23 · Proof-bound policy integrity
+
+V23 extends the controlled recalibration layer by binding approval to the observed outcome rows that produced the replay.
+
+```text
+observed outcomes
+   ↓
+row fingerprint
+   ↓
+replay calculation
+   ↓
+replay fingerprint
+   ↓
+explicit approval
+   ↓
+bounded policy instance
+```
+
+Approval is fail-closed unless the supplied rows reproduce the proposal's evidence fingerprint, record count, Brier values and replay fingerprint. Approved ledger entries also require a dataset scope and bounded multiplier.
+
+This is a deterministic evidence-consistency layer for the local browser workflow, not a cryptographic trust boundary.
+
+## V25 · Policy lineage replay
+
+V25 adds a deterministic verification layer over the governed policy ledger:
+
+```text
+policy proposal
+   ↓
+approval event
+   ↓
+policy instance
+   ↓
+historical ledger replay
+   ↓
+active-policy replay against current evidence
+   ↓
+VERIFIED / REJECTED
+```
+
+The system can now verify the complete policy history for a dataset scope, detect forged policy identities, reject invalid rollback events and replay the active policy against the exact observed evidence currently loaded.
+
+The Control Room exposes separate states for proposal integrity, historical ledger replay and active-policy replay. This makes a previously approved policy inspectable after the fact instead of treating the local ledger as inherently trustworthy.
+
+V25 remains a deterministic local-first control layer. The operator identity is still an assertion stored locally, not authentication, and the ledger fingerprints are tamper-evident rather than cryptographic proof.
+
+## V26 · Portable policy evidence
+
+V26 separates **policy state** from **policy evidence** by introducing a portable JSON evidence bundle:
+
+`POLICY → LEDGER → MANIFEST → VERIFY`
+
+The bundle contains the governed proposal, policy decision ledger and deterministic fingerprints, but it does **not** contain the raw CSV rows.
+
+A reviewer can verify the exported package in another browser or environment without mutating the active policy. Verification has two levels:
+
+- **FINGERPRINT_ONLY** verifies schema, dataset scope, proposal lineage, ledger replay and policy identity from the exported evidence.
+- **OBSERVED_ROWS** additionally replays the active policy against the original observed outcome rows when those rows are supplied separately.
+
+The export therefore remains privacy-preserving while making the policy lineage portable and independently inspectable.
+
+V26 is still local-first. The operator identity remains an assertion, not authentication, and the fingerprints remain integrity evidence rather than cryptographic signatures.
+
+## V27 · Cryptographic policy evidence signatures
+
+V27 adds a real cryptographic signing layer on top of the portable V26 evidence package:
+
+`EVIDENCE → SHA-256 DIGEST → ECDSA P-256 SIGNATURE → PUBLIC-KEY VERIFICATION`
+
+The Control Room can generate an ephemeral P-256 signing key, sign the current V26 evidence package and export the signed JSON. The private key is kept only in memory for the active browser tab and is never written to `localStorage`.
+
+The signed package contains:
+
+- the V26 evidence package;
+- the ECDSA P-256 public JWK;
+- a public-key fingerprint;
+- a SHA-256 fingerprint of the exact signed payload;
+- the ECDSA signature.
+
+Verification can run without a pinned key to prove internal cryptographic consistency, or with an expected public-key fingerprint to prove that the package matches a specific signer key.
+
+V27 does **not** claim enterprise identity or authentication. Anyone can create a different valid key and sign a different package. Trust comes from pinning or otherwise distributing the expected public-key fingerprint.
+
+## V28 · Trusted signer registry
+
+V28 adds a governed trust layer above the V27 cryptographic signature:
+
+`SIGNATURE → KEY FINGERPRINT → TRUST REGISTRY → TEMPORAL TRUST DECISION`
+
+The trust registry is an append-only local ledger with its own event fingerprints and head fingerprint.
+
+Supported lifecycle actions:
+
+- **REGISTER** creates an `ACTIVE` trusted signer.
+- **RETIRE** stops the signer for new evidence while preserving historical signatures created before retirement.
+- **ROTATE** retires the predecessor and activates a new signer at the declared effective time.
+- **REVOKE** is an emergency trust break. Evidence signed by that key is rejected even when the signature itself remains cryptographically valid.
+
+Trust verification evaluates the signer state **at the evidence signing time** and again at the current time. This makes routine key retirement different from emergency key revocation.
+
+The registry can be exported and re-imported only after its event fingerprints and head have been verified. The registry itself is still a local trust anchor, so moving it between machines is not equivalent to enterprise identity management. For a stronger deployment boundary, the exported registry head or approved signer fingerprints should be distributed and pinned through an external trusted channel.
+
+## V29 · Signed trust root
+
+V29 adds the missing distribution boundary above the V28 local trust registry:
+
+ROOT KEY → SIGNED REGISTRY SNAPSHOT → TRUST REGISTRY → SIGNED EVIDENCE
+
+The root layer signs the complete V28 registry, including its event fingerprints and head fingerprint, with an ECDSA P-256 key. The exported package contains the public root JWK, its deterministic RK29-* fingerprint, the registry snapshot, the exact signed-payload fingerprint and the signature.
+
+The browser keeps the root private key only in memory. The signed snapshot can be exported and verified independently, then used to verify V27 evidence through the full chain:
+
+ROOT → REGISTRY → SIGNER → EVIDENCE
+
+V29 supports an explicit external root pin. Verification without a pin proves only that the snapshot is internally consistent and cryptographically signed by the public key it carries. Verification with a pin proves that the snapshot matches a specific root identity distributed through another channel.
+
+This is still not enterprise authentication. The public application is intentionally local-first. A production deployment would distribute or pin the approved root fingerprint through an independent trust channel rather than trusting browser storage.
+
+## V30 · Trust Fabric & quorum verification
+
+V30 takes the trust model from a single root to an explicit M-of-N cryptographic trust fabric:
+
+ROOT SET → QUORUM CHECKPOINT → TRUST REGISTRY → TRUSTED SIGNER → POLICY EVIDENCE
+
+The fabric defines a fixed set of P-256 root identities and an explicit threshold. A checkpoint is valid only when enough distinct pinned roots sign the exact same registry state, governance metadata and timestamp.
+
+V30 also adds conflict analysis over multiple checkpoints. Divergent registry heads are reported as a trust-fabric fork. A single checkpoint cannot silently redefine the root set or quorum because the verification can require an externally supplied root fingerprint set and threshold.
+
+The Control Room can generate three cryptographic roots for demonstration, sign a 2-of-3 checkpoint, verify the quorum and verify signed policy evidence through the entire chain. This demonstrates the mechanism, but roots generated in one browser session are not operationally independent organisations or HSMs.
+
+Verification receipts expose the fabric fingerprint, registry head, threshold, achieved quorum and verified root identities. They are portable audit evidence, not authentication.
+
+V30 remains local-first. Independent trust still depends on distributing the approved root fingerprint set and quorum policy outside the snapshot, through a channel that the browser cannot rewrite.
+
+## V31 · Trust Transparency & Witness Log
+
+V31 adds the temporal transparency layer above the V30 trust fabric:
+
+`CHECKPOINT → APPEND-ONLY LOG → HEAD → WITNESS → RECEIPT`
+
+Each V30 checkpoint is anchored as a sequential transparency entry containing the previous entry fingerprint, checkpoint fingerprint, registry head, fabric fingerprint, payload fingerprint and an observed timestamp. The log has a deterministic TL31-* event fingerprint and a single verifiable head.
+
+The verifier fails closed on:
+
+- sequence gaps or duplicate sequence observations;
+- broken previous-entry links;
+- modified event fingerprints;
+- duplicate checkpoint anchors;
+- timestamp regression;
+- missing checkpoint references;
+- invalid V30 checkpoints;
+- external head-pin mismatch;
+- conflicting observations across transparency logs.
+
+V31 also introduces cryptographic witnesses using ECDSA P-256. A witness signs the exact log entry it observed and produces a portable WA31-* attestation. Witness keys are kept in browser memory only. Multiple valid attestations can be checked for a given head, and a witness that signs two different checkpoints for the same sequence is reported as witness equivocation.
+
+The exported transparency log carries the verified V30 checkpoint snapshots, so a reviewer can verify the chain without relying on browser state. A separate transparency receipt exposes the verified head, latest checkpoint and witness set.
+
+This closes an important gap left by V30: cryptographic validity proves that a checkpoint is well-formed, while transparency proves that the checkpoint also belongs to a consistent, auditable history. Multiple logs can be compared to detect conflicting observations at the same sequence.
+
+V31 is still local-first. A browser-generated witness demonstrates a real cryptographic signature, not an independently operated external organisation. Strong external trust requires distributing the approved transparency head and witness identities through a channel outside the application.
+
+## Human-in-the-loop by design
+
+RevOps Studio deliberately separates **recommendation** from **execution**.
+
+A sensitive simulated transition requires explicit approval.
+
+There is no hidden CRM write, no fake integration and no claim of autonomous execution.
+
+That boundary matters.
+
+AI and automation should reduce operational work without silently removing accountability.
+
+---
+
+## Local-first architecture
+
+```text
+Browser
+│
+├── index.html
+├── application controller
+├── CSS / UI
+├── CSV utilities
+└── deterministic RevOps engine
+      │
+      ├── validate
+      ├── score
+      ├── classify
+      ├── forecast
+      ├── segment
+      ├── recommend
+      ├── gate
+      └── audit
+```
+
+The public application can:
+
+- change model weights;
+- switch scenarios;
+- inspect record-level explanations;
+- import a compatible CSV locally;
+- export a run as JSON;
+- compare baseline vs active model;
+- inspect operational queues;
+- inspect decision traces;
+- generate an executive readout.
+
+No external runtime service is required.
+
+---
+
+## Engineering principles
+
+| Principle | Implementation |
+|---|---|
+| **Fail closed** | Invalid records are blocked rather than silently scored |
+| **Explainability** | Score contributions and model deltas are visible |
+| **Determinism** | Same inputs and configuration produce reproducible output |
+| **Human accountability** | Sensitive transitions require explicit approval |
+| **Local-first** | Demo data and CSV analysis remain in the browser |
+| **Small dependency surface** | Browser-native stack + Node test runner |
+| **Auditability** | Decision Trace records the reasoning boundary |
+| **Testability** | Engine, contracts and structural behaviour are covered by deterministic tests |
+
+---
+
+## Quality gates
+
+```bash
+npm test
+npm run validate
+npm run verify
+```
+
+The repository includes automated validation for:
+
+- engine behaviour;
+- CSV contracts;
+- score reconciliation;
+- exact forecast aggregation;
+- run analysis;
+- Decision Trace;
+- DOM contracts;
+- guided proof surfaces;
+- project structure;
+- JavaScript syntax.
+
+GitHub Actions runs the core quality gates on pushes and pull requests.
+
+---
+
+## Hiring-manager mode
+
+The public experience is designed to answer three questions quickly:
+
+1. **What capability does this project demonstrate?**
+2. **What was actually built?**
+3. **Where can the reviewer verify it?**
+
+The proof is intentionally evidence-first.
+
+No invented enterprise integrations.  
+No fake business results.  
+No hidden backend pretending to be production.
+
+---
+
+## Proof ecosystem
+
+| Project | Demonstrates |
+|---|---|
+| [Bodytone Support OS](https://bodytonehelp.zendesk.com/hc/es) | Customer Operations, Zendesk, workflows, automation |
+| [Professional Deck](https://gracianb.github.io/professional-deck/) | Customer Success, Data, Operations, career evidence |
+| [Project OHANA](https://github.com/GracianB/project-ohana) | Software engineering, simulation, testing, CI |
+| [Vórtice](https://github.com/GracianB/vortex) | WebGL, rendering, interaction |
+| [AiGoritmo](https://github.com/GracianB/aigoritmo) | Python, FastAPI, local AI |
+| [Systems Lab](https://github.com/GracianB/systems-lab) | Public systems experiments |
+
+---
+
+## Commercial surface
+
+RevOps Studio also exposes a deliberately simple service model for organisations that want to turn one operational bottleneck into a measurable system.
+
+| Package | From | Typical window |
+|---|---:|---:|
+| Quick win | €900 | 1–2 weeks |
+| System | €4,000 | 3–6 weeks |
+| Operate | €600/month | after the system exists |
+
+These are positioning examples, not claims of delivered revenue impact.
+
+---
+
+## Author
+
+**Gracián Baena González** · Murcia, Spain
+
+Customer Success · RevOps · Data · Automation · AI · Systems
+
+[LinkedIn](https://www.linkedin.com/in/gracianbaena) · [GitHub](https://github.com/GracianB) · [Professional Deck](https://gracianb.github.io/professional-deck/)
+
+
+### V16 · Workflow Replay & Impact Control
+
+V16 adds the missing pre-execution question: **what would change before we execute anything?**
+
+The Control Room now supports:
+
+- deterministic workflow impact preview without mutating the dataset;
+- stable action and decision digests for replay integrity;
+- run artifacts that can be verified against the current dataset and workflow contract;
+- an explicit integration contract with idempotency key, dry-run flag and fail-closed execution invariants.
+
+```text
+DECIDE → PLAN → PREVIEW → APPROVE → CONTRACT → ADAPTER
+```
+
+The public adapter remains disconnected. The prototype can demonstrate the handoff contract but cannot execute external CRM/API calls.
+
+### V17 · Execution Ledger & Integration Simulation
+
+V17 closes the control loop before any external write:
+
+`DECIDE → PLAN → PREVIEW → APPROVE → CONTRACT → SIMULATE → AUDIT → REPLAY`
+
+The new execution ledger is an append-only, hash-chained local evidence stream. Each event has a sequence, previous hash, deterministic event identity, idempotency key when applicable, actor, timestamp and payload.
+
+The integration adapter now produces a deterministic simulation outcome and an execution event. The public prototype still performs **zero external calls** and remains fail-closed.
+
+V17 regression coverage: **72 tests**.
+
+
+
+### V18 · Outcome & Feedback Control
+
+V18 closes the loop after an action is simulated or executed:
+
+`DECIDE → PLAN → PREVIEW → APPROVE → CONTRACT → SIMULATE → OUTCOME → MEASURE → REPLAY`
+
+The new outcome engine records explicit results such as response, meeting, opportunity, won, lost and no-response. It calculates action effectiveness, expected-versus-actual value variance, SLA adherence and forecast calibration.
+
+Feedback remains local-first. The public prototype can record and analyze outcomes supplied by the operator, but it does not send customer or CRM data to an external service.
+
+The V18 run artifact can include feedback summaries and observed outcomes while continuing to exclude raw CSV records.
+
+V18 regression coverage: **87 tests**.
+
+### V20 · Adaptive Calibration & Learning
+
+V20 turns forecast calibration from a static comparison into a bounded learning loop:
+
+`FORECAST → OUTCOME → OBSERVATION → WINDOW → DRIFT → RECOMMENDATION → HUMAN REVIEW`
+
+The adaptive calibration layer:
+
+- stores local calibration snapshots without exporting raw CSV records;
+- compares current and previous observation windows;
+- enforces minimum global, segment and cohort sample sizes;
+- measures calibration error, Brier score and observed-rate movement;
+- classifies drift as **STABLE**, **WATCH**, **WARNING**, **CRITICAL** or **INSUFFICIENT**;
+- isolates calibration history by dataset fingerprint;
+- distinguishes segment drift from cohort drift;
+- records a deterministic audit trail for snapshots, baseline state and drift alerts;
+- produces controlled recalibration recommendations without changing model assumptions automatically;
+- exports an aggregate V20 calibration summary in the existing run artifact without exporting the adaptive history rows.
+
+The Control Room exposes the current adaptive state locally in the browser. The execution boundary remains simulation-only.
+
+V20 adds deterministic regression coverage for temporal windows, sample sufficiency, cohort/segment drift, baseline establishment, bounded history, recommendation logic and replay-safe identities.
+
+
+
+### V21 · Controlled Recalibration Policy
+
+V21 is the approval boundary that V20 deliberately did not cross:
+
+`RECOMMENDATION → PROPOSAL → REPLAY → APPROVE / REJECT → APPLY → ROLLBACK`
+
+The policy layer:
+
+- builds a bounded probability multiplier from observed calibration bias;
+- clamps the step so a single approval cannot move stage probabilities by more than 0.15;
+- replays the candidate against the supplied outcomes and blocks it unless Brier improves;
+- requires an explicit operator decision before any forecast assumption changes;
+- applies the approved multiplier only to qualified, nurture and new probabilities;
+- leaves scoring weights, downside and upside untouched;
+- isolates decisions by dataset fingerprint;
+- supports reject and rollback without deleting the decision trail;
+- exports a V21 summary in the run artifact without exporting raw ledger rows.
+
+The public execution boundary remains simulation-only.

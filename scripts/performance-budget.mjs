@@ -6,6 +6,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { chromeLaunchSelection } from "./chromium-binary.mjs";
 
 const root = process.cwd();
 const mime = {".html":"text/html",".js":"text/javascript",".css":"text/css",".svg":"image/svg+xml"};
@@ -35,7 +36,7 @@ const budget={maxFirstPartyBytes:130000,maxFirstPartyRequests:9};
 const checks=[];
 let browser;
 try{
-  browser=await chromium.launch({channel:"chrome",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
+  browser=await chromium.launch({...chromeLaunchSelection(),headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
   for(const profile of profiles){
     const page=await browser.newPage({viewport:{width:profile.width,height:profile.height},
       reducedMotion:"reduce",serviceWorkers:"block"});

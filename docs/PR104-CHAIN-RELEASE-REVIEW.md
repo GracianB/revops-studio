@@ -1,5 +1,7 @@
 # PR104 · Auditoría completa del grafo de integración RevOps Studio
 
+> **Contexto histórico anterior a V104.** Este documento conserva el diseño y las condiciones de su PR original. Su contenido quedó integrado en la rama principal con `90371736c2636f1807382ddbd077baff9b9a019c`; las menciones a borrador, bloqueo de integración o ausencia de publicación corresponden a aquella etapa. Consulta [Publicación V104](V104-PUBLICACION-SITIO.md) para el alcance vigente. Los límites sobre integraciones reales, datos de clientes y aprobaciones externas siguen vigentes. El despliegue público actual requiere su propia comprobación HTTPS.
+
 **Fecha de comprobación:** 12 de octubre de 2026. **Producción:** NO-GO. **Promoción de ramas:** DETENIDA. **Operaciones realizadas:** lectura de metadata y código, creación de PR de auditoría. **Ninguna fusión ni publicación.**
 
 ## 1. Hallazgos verificados en GitHub
